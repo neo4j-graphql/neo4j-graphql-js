@@ -6,39 +6,41 @@ A GraphQL to Cypher query execution layer for Neo4j and JavaScript GraphQL imple
 
 *neo4j-graphql-js is in early development. There are rough edges and APIs may change. Please file issues for any bugs that you find or feature reqeuests.*
 
+## Installation and usage
+
+Install
+
+```
+npm install --save neo4j-graphql-js
+```
+
+
+Then call `neo4jgraphql()` in your GraphQL resolver. Your GraphQL query will be translated to Cypher and the query passed to Neo4j.
+
+~~~js
+import {neo4jgraphql} from 'neo4j-graphql-js';
+
+const resolvers = {
+  Query: {
+    Movie(object, params, ctx, resolveInfo) {
+      return neo4jgraphql(object, params, ctx, resolveInfo);
+    }
+  }
+};
+~~~
+
 ## What is `neo4j-graphql-js`
 
-A package to make it easier to use GraphQL and Neo4j together. `neo4j-graphql-js` translates GraphQL queries to a single Cypher query, eliminating the need to write queries in GraphQL resolvers. It also exposes the Cypher query language through GraphQL via the `@cypher` schema directive.
+A package to make it easier to use GraphQL and [Neo4j](https://neo4j.com/) together. `neo4j-graphql-js` translates GraphQL queries to a single [Cypher](https://neo4j.com/developer/cypher/) query, eliminating the need to write queries in GraphQL resolvers and for batching queries. It also exposes the Cypher query language through GraphQL via the `@cypher` schema directive.
 
 ### Goals
 
-* Translate GraphQL queries to Cypher to simply the process of writing GraphQL resolvers
+* Translate GraphQL queries to Cypher to simplify the process of writing GraphQL resolvers
 * Allow for custom logic by overriding of any resolver function
 * Work with `graphl-tools`, `graphql-js`, and `apollo-server`
 * Support GraphQL servers that need to resolve data from multiple data services/databases
 * Expose the power of Cypher through GraphQL via the `@cypher` directive
 
-## `@cypher` directive
-
-GraphQL is fairly limited when it comes to expressing complex queries such as filtering, or aggregations. We expose the graph querying language Cypher through GraphQL via the `@cypher` directive. Annotate a field in your schema with the `@cypher` directive to map the results of that query to the annotated GraphQL field. For example:
-
-~~~
-type Movie {
-  movieId: ID!
-  title: String
-  year: Int
-  plot: String
-  similar(first: Int = 3, offset: Int = 0): [Movie] @cypher(statement: "MATCH (this)-->(:Genre)<--(o:Movie) RETURN o ORDER BY COUNT(*) DESC")
-}
-~~~
-
-The field `similar` will be resolved using the Cypher query
-
-~~~
-MATCH (this)-->(:Genre)<--(o:Movie) RETURN o ORDER BY COUNT(*) DESC
-~~~
-
-to find movies with overlapping Genres. See the [examples](https://github.com/neo4j-graphql/neo4j-graphql-js/tree/master/example/graphql-tools) for more information.
 
 ## How it works
 
@@ -48,9 +50,6 @@ to find movies with overlapping Genres. See the [examples](https://github.com/ne
 * Inside resolver functions, GraphQL queries are translated to Cypher queries and can be sent to a Neo4j database by including a Neo4j driver instance in the context object of the GraphQL request.
 * Any resolver can be overridden by a custom resolver function implementation to allow for custom logic
 * Optionally, GraphQL fields can be resolved by a user defined Cypher query through the use of the `@cypher` schema directive.
-
-
-**NOTE: The `@cypher` directive has a dependency on the APOC procedure library, specifically the function `apoc.cypher.runFirstColumn` to run subqueries. If you'd like to make use of the `@cypher` feature you'll need to install [this version of APOC](https://github.com/neo4j-contrib/neo4j-apoc-procedures/releases/tag/3.2.0.5-beta) in Neo4j.**
 
 ### Start with a GraphQL schema
 
@@ -65,8 +64,8 @@ type Movie {
   plot: String
   poster: String
   imdbRating: Float
-  similar(first: Int = 3, offset: Int = 0): [Movie] @cypher(statement: "MATCH (this)--(:Genre)--(o:Movie) RETURN o")
-  degree: Int @cypher(statement: "RETURN SIZE((this)--())")
+  similar(first: Int = 3, offset: Int = 0): [Movie] @cypher(statement: "MATCH (this)-[:IN_GENRE]->(:Genre)<-[:IN_GENRE]-(o:Movie) RETURN o")
+  degree: Int @cypher(statement: "RETURN SIZE((this)-->())")
   actors(first: Int = 3, offset: Int = 0): [Actor] @relation(name: "ACTED_IN", direction:"IN")
 }
 
@@ -92,7 +91,7 @@ We define two types, `Movie` and `Actor` as well as a top level Query `Movie` wh
 
 ### Translate GraphQL To Cypher
 
-Inside each resolver, use `neo4j-graphql()` to generate the Cypher required to resolve the GraphQL query, passing through
+Inside each resolver, use `neo4j-graphql()` to generate the Cypher required to resolve the GraphQL query, passing through the query arguments, context and resolveInfo objects.
 
 ~~~
 import {neo4jgraphql} from 'neo4j-graphql-js';
@@ -107,7 +106,7 @@ const resolvers = {
 };
 ~~~
 
-`neo4j-graphql-js` GraphQL to Cypher translation works by inspecting the GraphQL schema, the GraphQL query and arguments. For example, this simple GraphQL query
+GraphQL to Cypher translation works by inspecting the GraphQL schema, the GraphQL query and arguments. For example, this simple GraphQL query
 
 ~~~
 {
@@ -152,8 +151,33 @@ AS movie
 SKIP 0
 ~~~
 
-Querying a field marked with a `@cypher` directive executes that query as a subquery:
+## `@cypher` directive
 
+**NOTE: The `@cypher` directive has a dependency on the APOC procedure library, specifically the function `apoc.cypher.runFirstColumn` to run subqueries. If you'd like to make use of the `@cypher` feature you'll need to install [this version of APOC](https://github.com/neo4j-contrib/neo4j-apoc-procedures/releases/tag/3.2.0.5-beta) in Neo4j 3.2.**
+
+GraphQL is fairly limited when it comes to expressing complex queries such as filtering, or aggregations. We expose the graph querying language Cypher through GraphQL via the `@cypher` directive. Annotate a field in your schema with the `@cypher` directive to map the results of that query to the annotated GraphQL field. For example:
+
+~~~
+type Movie {
+  movieId: ID!
+  title: String
+  year: Int
+  plot: String
+  similar(first: Int = 3, offset: Int = 0): [Movie] @cypher(statement: "MATCH (this)-[:IN_GENRE]->(:Genre)<-[:IN_GENRE]-(o:Movie) RETURN o ORDER BY COUNT(*) DESC")
+}
+~~~
+
+The field `similar` will be resolved using the Cypher query
+
+~~~
+MATCH (this)-[:IN_GENRE]->(:Genre)<-[:IN_GENRE]-(o:Movie) RETURN o ORDER BY COUNT(*) DESC
+~~~
+
+to find movies with overlapping Genres.
+
+Querying a GraphQL field marked with a `@cypher` directive executes that query as a subquery:
+
+*GraphQL:*
 ~~~
 {
   Movie(title: "River Runs Through It, A") {
@@ -170,13 +194,14 @@ Querying a field marked with a `@cypher` directive executes that query as a subq
 }
 ~~~
 
+*Cypher:*
 ~~~
 MATCH (movie:Movie {title:"River Runs Through It, A"})
 RETURN movie { .title , .year , .imdbRating,
   actors: [(movie)<-[ACTED_IN]-(movie_actors:Actor) | movie_actors { .name }],
   similar: [ x IN apoc.cypher.run("
         WITH {this} AS this
-        MATCH (this)--(:Genre)--(o:Movie)
+        MATCH (this)-[:IN_GENRE]->(:Genre)<-[:IN_GENRE]-(o:Movie)
         RETURN o",
         {this: movie}, true) | x { .title }][..3]
 } AS movie
@@ -210,6 +235,8 @@ server.use('/graphql', bodyParser.json(), graphqlExpress(request => ({
 ~~~
 
 See [examples](https://github.com/neo4j-graphql/neo4j-graphql-js/tree/master/example/graphql-tools) for complete examples using different GraphQL server libraries.
+
+# TODO: other libs
 
 ## Benefits
 
