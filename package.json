@@ -5,29 +5,33 @@
   "main": "./dist/index.js",
   "scripts": {
     "start": "nodemon ./example/graphql-tools/movies.js --exec babel-node -e js",
-    "build": "babel src --presets babel-preset-es2015 --out-dir dist",
+    "build": "babel src --presets babel-preset-env --out-dir dist",
     "prepublish": "npm run build",
     "test": "ava test/*.js"
   },
   "author": "William Lyon",
-  "license": "Apache 2.0",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/neo4j-graphql/neo4j-graphql-js"
+  },
   "devDependencies": {
     "ava": "^0.22.0",
-    "babel-cli": "^6.24.0",
+    "babel-cli": "^6.26.0",
     "babel-plugin-transform-async-generator-functions": "^6.24.1",
-    "babel-plugin-transform-object-rest-spread": "^6.23.0",
+    "babel-plugin-transform-object-rest-spread": "^6.26.0",
     "babel-plugin-transform-runtime": "^6.23.0",
-    "babel-preset-latest": "^6.23.0",
-    "nodemon": "^1.11.0"
+    "babel-preset-env": "^1.6.0",
+    "nodemon": "^1.12.1"
   },
   "dependencies": {
-    "body-parser": "^1.17.1",
-    "express": "^4.15.2",
-    "graphql": "^0.11.3",
+    "body-parser": "^1.18.2",
+    "express": "^4.16.1",
+    "graphql": "^0.11.7",
     "graphql-server-core": "^1.1.0",
-    "graphql-server-express": "^0.6.0",
-    "graphql-tools": "^1.2.2",
+    "graphql-server-express": "^1.1.2",
+    "graphql-tools": "^2.0.0",
     "lodash": "^4.17.4",
-    "neo4j-driver": "^1.4.0"
+    "neo4j-driver": "^1.4.1"
   }
 }
