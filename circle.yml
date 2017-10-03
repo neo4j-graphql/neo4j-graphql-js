@@ -1,0 +1,12 @@
+machine:
+  timezone: America/New_York
+  node:
+    version: 7.9.0
+
+dependencies:
+  override:
+    - npm install
+
+test:
+  override:
+    - npm test
