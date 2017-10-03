@@ -1,3 +1,5 @@
+![](https://circleci.com/gh/neo4j-graphql/neo4j-graphql-js.svg?style=shield&circle-token=d01ffa752fbeb43585631c78370f7dd40528fbd3)
+
 # neo4j-graphql-js
 
 A GraphQL to Cypher query execution layer for Neo4j and JavaScript GraphQL implementations.
