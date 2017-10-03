@@ -4,7 +4,7 @@
 
 A GraphQL to Cypher query execution layer for Neo4j and JavaScript GraphQL implementations.
 
-*neo4j-graphql-js is in early development. There are rough edges and APIs may change. Please file issues for any bugs that you find or feature reqeuests.*
+*neo4j-graphql-js is in early development. There are rough edges and APIs may change. Please file issues for any bugs that you find or feature requests.*
 
 ## Installation and usage
 
@@ -55,7 +55,7 @@ A package to make it easier to use GraphQL and [Neo4j](https://neo4j.com/) toget
 
 GraphQL First Development is all about starting with a well defined GraphQL schema. Here we'll use the GraphQL schema IDL syntax, compatible with graphql-tools (and other libraries) to define a simple schema:
 
-~~~
+~~~js
 const typeDefs = `
 type Movie {
   movieId: ID!
@@ -93,7 +93,7 @@ We define two types, `Movie` and `Actor` as well as a top level Query `Movie` wh
 
 Inside each resolver, use `neo4j-graphql()` to generate the Cypher required to resolve the GraphQL query, passing through the query arguments, context and resolveInfo objects.
 
-~~~
+~~~js
 import {neo4jgraphql} from 'neo4j-graphql-js';
 
 const resolvers = {
@@ -108,7 +108,7 @@ const resolvers = {
 
 GraphQL to Cypher translation works by inspecting the GraphQL schema, the GraphQL query and arguments. For example, this simple GraphQL query
 
-~~~
+~~~graphql
 {
   Movie(title: "River Runs Through It, A") {
     title
@@ -120,7 +120,7 @@ GraphQL to Cypher translation works by inspecting the GraphQL schema, the GraphQ
 
 is translated into the Cypher query
 
-~~~
+~~~cypher
 MATCH (movie:Movie {title:"River Runs Through It, A"})
 RETURN movie { .title , .year , .imdbRating } AS movie
 SKIP 0
@@ -128,7 +128,7 @@ SKIP 0
 
 A slightly more complicated traversal
 
-~~~
+~~~graphql
 {
   Movie(title: "River Runs Through It, A") {
     title
@@ -143,7 +143,7 @@ A slightly more complicated traversal
 
 becomes
 
-~~~
+~~~cypher
 MATCH (movie:Movie {title:"River Runs Through It, A"})
 RETURN movie { .title , .year , .imdbRating,
   actors: [(movie)<-[ACTED_IN]-(movie_actors:Actor) | movie_actors { .name }] }
@@ -157,7 +157,7 @@ SKIP 0
 
 GraphQL is fairly limited when it comes to expressing complex queries such as filtering, or aggregations. We expose the graph querying language Cypher through GraphQL via the `@cypher` directive. Annotate a field in your schema with the `@cypher` directive to map the results of that query to the annotated GraphQL field. For example:
 
-~~~
+~~~graphql
 type Movie {
   movieId: ID!
   title: String
@@ -169,7 +169,7 @@ type Movie {
 
 The field `similar` will be resolved using the Cypher query
 
-~~~
+~~~cypher
 MATCH (this)-[:IN_GENRE]->(:Genre)<-[:IN_GENRE]-(o:Movie) RETURN o ORDER BY COUNT(*) DESC
 ~~~
 
@@ -178,7 +178,7 @@ to find movies with overlapping Genres.
 Querying a GraphQL field marked with a `@cypher` directive executes that query as a subquery:
 
 *GraphQL:*
-~~~
+~~~graphql
 {
   Movie(title: "River Runs Through It, A") {
     title
@@ -195,7 +195,7 @@ Querying a GraphQL field marked with a `@cypher` directive executes that query a
 ~~~
 
 *Cypher:*
-~~~
+~~~cypher
 MATCH (movie:Movie {title:"River Runs Through It, A"})
 RETURN movie { .title , .year , .imdbRating,
   actors: [(movie)<-[ACTED_IN]-(movie_actors:Actor) | movie_actors { .name }],
@@ -214,7 +214,7 @@ SKIP 0
 Inject a Neo4j driver instance in the context of each GraphQL request and `neo4j-graphql-js` will query the Neo4j database and return the results to resolve the GraphQL query.
 
 
-~~~
+~~~js
 
 let driver;
 
@@ -226,7 +226,7 @@ function context(headers, secrets) {
 }
 ~~~
 
-~~~
+~~~js
 server.use('/graphql', bodyParser.json(), graphqlExpress(request => ({
   schema,
   rootValue,
@@ -234,9 +234,8 @@ server.use('/graphql', bodyParser.json(), graphqlExpress(request => ({
 })));
 ~~~
 
-See [examples](https://github.com/neo4j-graphql/neo4j-graphql-js/tree/master/example/graphql-tools) for complete examples using different GraphQL server libraries.
+See [/examples](https://github.com/neo4j-graphql/neo4j-graphql-js/tree/master/example/graphql-tools) for complete examples using different GraphQL server libraries.
 
-# TODO: other libs
 
 ## Benefits
 
@@ -258,7 +257,7 @@ Currently we only have simple unit tests verifying generated Cypher as translate
 
 ## Examples
 
-See [example/graphql-tools/movies.js](https://github.com/neo4j-graphql/neo4j-graphql-js/tree/master/example/graphql-tools)
+See [/examples](https://github.com/neo4j-graphql/neo4j-graphql-js/tree/master/example/graphql-tools)
 
 ## Features
 
