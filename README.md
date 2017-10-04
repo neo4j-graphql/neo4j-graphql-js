@@ -199,7 +199,7 @@ Querying a GraphQL field marked with a `@cypher` directive executes that query a
 MATCH (movie:Movie {title:"River Runs Through It, A"})
 RETURN movie { .title , .year , .imdbRating,
   actors: [(movie)<-[ACTED_IN]-(movie_actors:Actor) | movie_actors { .name }],
-  similar: [ x IN apoc.cypher.run("
+  similar: [ x IN apoc.cypher.runFirstColumn("
         WITH {this} AS this
         MATCH (this)-[:IN_GENRE]->(:Genre)<-[:IN_GENRE]-(o:Movie)
         RETURN o",

@@ -99,8 +99,6 @@ function buildCypherSelection(initial, selections, variable, schemaType, resolve
   let fieldHasCypherDirective = schemaType.getFields()[fieldName].astNode.directives.filter((e) => {return e.name.value === 'cypher'}).length > 0;
 
   if (fieldHasCypherDirective) {
-    // if field has @cypher directive
-    // degree: apoc.run.cypher("RETURN SIZE((this)-->())", {this: $variable}),
 
     let fieldIsScalar = fieldType.constructor.name === "GraphQLScalarType"; // FIXME: DRY
     let statement = schemaType.getFields()[fieldName].astNode.directives.find((e) => {
@@ -111,15 +109,15 @@ function buildCypherSelection(initial, selections, variable, schemaType, resolve
 
     if (fieldIsScalar) {
 
-      return buildCypherSelection(initial + `${fieldName}: apoc.cypher.run("${statement}", {this: ${variable}}, false)${tailSelections.length > 0 ? ',' : ''}`, tailSelections, variable, schemaType, resolveInfo);
+      return buildCypherSelection(initial + `${fieldName}: apoc.cypher.runFirstColumn("${statement}", {this: ${variable}}, false)${tailSelections.length > 0 ? ',' : ''}`, tailSelections, variable, schemaType, resolveInfo);
     } else {
-      // similar: [ x IN apoc.cypher.run("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie}, true) |x {.title}][1..2])
+      // similar: [ x IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie}, true) |x {.title}][1..2])
 
       let nestedVariable = variable + '_' + fieldName;
       let skipLimit = computeSkipLimit(headSelection);
       let fieldIsList = !!fieldType.ofType;
 
-      return buildCypherSelection(initial + `${fieldName}: ${fieldIsList ? "" : "head("}[ x IN apoc.cypher.run("${statement}", {this: ${variable}}, true) | x {${buildCypherSelection(``, headSelection.selectionSet.selections, nestedVariable, inner, resolveInfo)}}]${fieldIsList? "": ")"}${skipLimit} ${tailSelections.length > 0 ? ',' : ''}`, tailSelections, variable, schemaType, resolveInfo);
+      return buildCypherSelection(initial + `${fieldName}: ${fieldIsList ? "" : "head("}[ x IN apoc.cypher.runFirstColumn("${statement}", {this: ${variable}}, true) | x {${buildCypherSelection(``, headSelection.selectionSet.selections, nestedVariable, inner, resolveInfo)}}]${fieldIsList? "": ")"}${skipLimit} ${tailSelections.length > 0 ? ',' : ''}`, tailSelections, variable, schemaType, resolveInfo);
     }
 
   } else if (fieldType.constructor.name === "GraphQLScalarType") {

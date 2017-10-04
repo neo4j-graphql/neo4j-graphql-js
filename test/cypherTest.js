@@ -40,7 +40,7 @@ test('Cypher projection skip limit', t=> {
       }
     }
   }`,
-    expectedCypherQuery = 'MATCH (movie:Movie {title:"River Runs Through It, A"}) RETURN movie { .title ,actors: [(movie)<-[ACTED_IN]-(movie_actors:Actor) | movie_actors { .name }] ,similar: [ x IN apoc.cypher.run("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie}, true) | x { .title }][..3] } AS movie SKIP 0';
+    expectedCypherQuery = 'MATCH (movie:Movie {title:"River Runs Through It, A"}) RETURN movie { .title ,actors: [(movie)<-[ACTED_IN]-(movie_actors:Actor) | movie_actors { .name }] ,similar: [ x IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie}, true) | x { .title }][..3] } AS movie SKIP 0';
   cypherTestRunner(t, graphQLQuery, expectedCypherQuery);
 
 });
