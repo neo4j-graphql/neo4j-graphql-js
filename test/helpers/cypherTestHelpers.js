@@ -39,6 +39,7 @@ type User implements Person {
 
 type Query {
   Movie(id: ID, title: String, year: Int, plot: String, poster: String, imdbRating: Float, first: Int, offset: Int): [Movie]
+  MoviesByYear(year: Int): [Movie]
 }
 `;
 
@@ -50,9 +51,12 @@ type Query {
       Movie(object, params, ctx, resolveInfo) {
         let query = cypherQuery(params, ctx, resolveInfo);
         t.is(query, expectedCypherQuery);
-      }
+      },
+      MoviesByYear(object, params, ctx, resolveInfo){
+        let query = cypherQuery(params, ctx, resolveInfo);
+        t.is(query, expectedCypherQuery);
     }
-  };
+  }};
 
 
   const schema = makeExecutableSchema({

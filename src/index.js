@@ -56,13 +56,13 @@ export function cypherQuery(params, context, resolveInfo) {
 
 
 
-  let type = resolveInfo.fieldName,
+  let type = innerType(resolveInfo.returnType).toString(),
     variable = type.charAt(0).toLowerCase() + type.slice(1),
     schemaType = resolveInfo.schema.getType(type);
 
 
   let filteredFieldNodes = _.filter(resolveInfo.fieldNodes, function(o) {
-    if (o.name.value === type) {
+    if (o.name.value === resolveInfo.fieldName) {
       return true;
     }
   });

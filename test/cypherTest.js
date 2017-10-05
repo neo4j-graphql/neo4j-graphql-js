@@ -44,3 +44,14 @@ test('Cypher projection skip limit', t=> {
   cypherTestRunner(t, graphQLQuery, expectedCypherQuery);
 
 });
+
+test('Handle Query with name not aligning to type', t=> {
+  const graphQLQuery = `{
+  MoviesByYear(year: 2010) {
+    title
+  }
+}
+  `,
+    expectedCypherQuery = 'MATCH (movie:Movie {year:2010}) RETURN movie { .title } AS movie SKIP 0';
+  cypherTestRunner(t, graphQLQuery, expectedCypherQuery);
+});
