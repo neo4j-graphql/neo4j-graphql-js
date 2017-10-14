@@ -125,12 +125,27 @@ function buildCypherSelection(initial, selections, variable, schemaType, resolve
   } else {
     // field is an object
     let nestedVariable = variable + '_' + fieldName,
-        skipLimit = computeSkipLimit(headSelection),
-        relationDirective = schemaType.getFields()[fieldName].astNode.directives.find((e) => {return e.name.value === 'relation'}),
-        relType = relationDirective.arguments.find(e => {return e.name.value === 'name'}).value.value,
-        relDirection = relationDirective.arguments.find(e => {return e.name.value === 'direction'}).value.value;
+      skipLimit = computeSkipLimit(headSelection),
+      relationDirective = schemaType.getFields()[fieldName].astNode.directives.find((e) => { return e.name.value === 'relation' });
 
-    return buildCypherSelection(initial + `${fieldName}: [(${variable})${relDirection === 'in' || relDirection === 'IN' ? '<' : ''}-[${relType}]-${relDirection === 'out' || relDirection === 'OUT' ? '>' : ''}(${nestedVariable}:${inner.name}) | ${nestedVariable} {${buildCypherSelection(``, headSelection.selectionSet.selections, nestedVariable, inner, resolveInfo)}}]${skipLimit} ${tailSelections.length > 0 ? ',' : ''}`, tailSelections, variable, schemaType, resolveInfo);
+    if (!relationDirective) {
+      return buildCypherSelection(
+        initial + ` .${fieldName}${skipLimit}${tailSelections.length > 0 ? ',' : ''} `,
+        tailSelections,
+        variable,
+        schemaType,
+        resolveInfo);
+    }
+
+    let relType = relationDirective.arguments.find(e => { return e.name.value === 'name' }).value.value,
+      relDirection = relationDirective.arguments.find(e => { return e.name.value === 'direction' }).value.value;
+
+    return buildCypherSelection(
+      initial + `${fieldName}: [(${variable})${relDirection === 'in' || relDirection === 'IN' ? '<' : ''}-[${relType}]-${relDirection === 'out' || relDirection === 'OUT' ? '>' : ''}(${nestedVariable}:${inner.name}) | ${nestedVariable} {${buildCypherSelection(``, headSelection.selectionSet.selections, nestedVariable, inner, resolveInfo)}}]${skipLimit} ${tailSelections.length > 0 ? ',' : ''}`,
+      tailSelections,
+      variable,
+      schemaType,
+      resolveInfo);
   }
 
 
