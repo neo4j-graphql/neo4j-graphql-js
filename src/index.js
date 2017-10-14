@@ -120,7 +120,7 @@ function buildCypherSelection(initial, selections, variable, schemaType, resolve
       return buildCypherSelection(initial + `${fieldName}: ${fieldIsList ? "" : "head("}[ x IN apoc.cypher.runFirstColumn("${statement}", {this: ${variable}}, true) | x {${buildCypherSelection(``, headSelection.selectionSet.selections, nestedVariable, inner, resolveInfo)}}]${fieldIsList? "": ")"}${skipLimit} ${tailSelections.length > 0 ? ',' : ''}`, tailSelections, variable, schemaType, resolveInfo);
     }
 
-  } else if (fieldType.constructor.name === "GraphQLScalarType") {
+  } else if (innerType(fieldType).constructor.name === "GraphQLScalarType") {
     return buildCypherSelection(initial + ` .${fieldName} ${tailSelections.length > 0 ? ',' : ''}`, tailSelections, variable, schemaType, resolveInfo);
   } else {
     // field is an object

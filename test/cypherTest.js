@@ -55,3 +55,13 @@ test('Handle Query with name not aligning to type', t=> {
     expectedCypherQuery = 'MATCH (movie:Movie {year:2010}) RETURN movie { .title } AS movie SKIP 0';
   cypherTestRunner(t, graphQLQuery, expectedCypherQuery);
 });
+
+test('Query without arguments, non-null type', t=> {
+  const graphQLQuery = `query {
+  Movie {
+    movieId
+  }
+}`,
+    expectedCypherQuery = 'MATCH (movie:Movie {}) RETURN movie { .movieId } AS movie SKIP 0';
+  cypherTestRunner(t, graphQLQuery, expectedCypherQuery);
+});
