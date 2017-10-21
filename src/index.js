@@ -1,11 +1,16 @@
 const _ = require('lodash');
 
+const returnTypeEnum = {
+  OBJECT: 0,
+  ARRAY: 1
+};
+
 export function neo4jgraphql(object, params, context, resolveInfo) {
 
-  const returnTypeEnum = {
-    OBJECT: 0,
-    ARRAY: 1
-  };
+  // const returnTypeEnum = {
+  //   OBJECT: 0,
+  //   ARRAY: 1
+  // };
 
   let type = innerType(resolveInfo.returnType).toString(),
     variable = type.charAt(0).toLowerCase() + type.slice(1);
@@ -121,7 +126,9 @@ function buildCypherSelection(initial, selections, variable, schemaType, resolve
         relType = relationDirective.arguments.find(e => {return e.name.value === 'name'}).value.value,
         relDirection = relationDirective.arguments.find(e => {return e.name.value === 'direction'}).value.value;
 
-    return buildCypherSelection(initial + `${fieldName}: [(${variable})${relDirection === 'in' || relDirection === 'IN' ? '<' : ''}-[${relType}]-${relDirection === 'out' || relDirection === 'OUT' ? '>' : ''}(${nestedVariable}:${inner.name}) | ${nestedVariable} {${buildCypherSelection(``, headSelection.selectionSet.selections, nestedVariable, inner, resolveInfo)}}]${skipLimit} ${tailSelections.length > 0 ? ',' : ''}`, tailSelections, variable, schemaType, resolveInfo);
+    let returnType = fieldType.toString().startsWith("[") ? returnTypeEnum.ARRAY : returnTypeEnum.OBJECT;
+
+    return buildCypherSelection(initial + `${fieldName}: ${returnType === returnTypeEnum.OBJECT ? 'head(' : ''}[(${variable})${relDirection === 'in' || relDirection === 'IN' ? '<' : ''}-[${relType}]-${relDirection === 'out' || relDirection === 'OUT' ? '>' : ''}(${nestedVariable}:${inner.name}) | ${nestedVariable} {${buildCypherSelection(``, headSelection.selectionSet.selections, nestedVariable, inner, resolveInfo)}}]${returnType === returnTypeEnum.OBJECT ? ')' : ''}${skipLimit} ${tailSelections.length > 0 ? ',' : ''}`, tailSelections, variable, schemaType, resolveInfo);
   }
 
 

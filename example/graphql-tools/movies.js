@@ -22,6 +22,11 @@ type Movie {
   degree: Int @cypher(statement: "WITH {this} AS this RETURN SIZE((this)--())")
   actors(first: Int = 3, offset: Int = 0): [Actor] @relation(name: "ACTED_IN", direction:"IN")
   avgStars: Float
+  filmedIn: State @relation(name: "FILMED_IN", direction: "OUT")
+}
+
+type State {
+  name: String
 }
 
 interface Person {

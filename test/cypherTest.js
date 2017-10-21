@@ -76,3 +76,35 @@ test('Query single object', t=> {
     expectedCypherQuery = 'MATCH (movie:Movie {movieId:"18"}) RETURN movie { .title } AS movie SKIP 0';
   cypherTestRunner(t, graphQLQuery, expectedCypherQuery);
 });
+
+test('Query single object relation', t=> {
+  const graphQLQuery =`
+    {
+      MovieById(movieId: "3100") {
+        title
+        filmedIn {
+          name
+        }
+      }
+    }
+  `,
+    expectedCypherQuery = 'MATCH (movie:Movie {movieId:"3100"}) RETURN movie { .title ,filmedIn: head([(movie)-[FILMED_IN]->(movie_filmedIn:State) | movie_filmedIn { .name }]) } AS movie SKIP 0';
+  cypherTestRunner(t, graphQLQuery, expectedCypherQuery);
+});
+
+test('Query single object and array of objects relations', t=> {
+  const graphQLQuery = `
+    {
+      MovieById(movieId: "3100") {
+        title
+        actors {
+          name
+        }
+        filmedIn{
+          name
+        }
+      }
+    }`,
+    expectedCypherQuery = 'MATCH (movie:Movie {movieId:"3100"}) RETURN movie { .title ,actors: [(movie)<-[ACTED_IN]-(movie_actors:Actor) | movie_actors { .name }] ,filmedIn: head([(movie)-[FILMED_IN]->(movie_filmedIn:State) | movie_filmedIn { .name }]) } AS movie SKIP 0';
+  cypherTestRunner(t, graphQLQuery, expectedCypherQuery);
+});
