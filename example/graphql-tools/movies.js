@@ -45,6 +45,7 @@ type Query {
   Movie(id: ID, title: String, year: Int, plot: String, poster: String, imdbRating: Float, first: Int, offset: Int): [Movie]
   MoviesByYear(year: Int): [Movie]
   AllMovies: [Movie]
+  MovieById(movieId: ID!): Movie
 }
 `;
 
@@ -59,6 +60,9 @@ const resolvers = {
       return neo4jgraphql(object, params, ctx, resolveInfo);
     },
     AllMovies(object, params, ctx, resolveInfo) {
+      return neo4jgraphql(object, params, ctx, resolveInfo);
+    },
+    MovieById(object, params, ctx, resolveInfo) {
       return neo4jgraphql(object, params, ctx, resolveInfo);
     }
   }

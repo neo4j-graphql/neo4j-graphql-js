@@ -65,3 +65,14 @@ test('Query without arguments, non-null type', t=> {
     expectedCypherQuery = 'MATCH (movie:Movie {}) RETURN movie { .movieId } AS movie SKIP 0';
   cypherTestRunner(t, graphQLQuery, expectedCypherQuery);
 });
+
+test('Query single object', t=> {
+  const graphQLQuery = `
+  {
+    MovieById(movieId: "18") {
+      title
+    }
+  }`,
+    expectedCypherQuery = 'MATCH (movie:Movie {movieId:"18"}) RETURN movie { .title } AS movie SKIP 0';
+  cypherTestRunner(t, graphQLQuery, expectedCypherQuery);
+});

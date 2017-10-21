@@ -2,21 +2,12 @@ const _ = require('lodash');
 
 export function neo4jgraphql(object, params, context, resolveInfo) {
 
-  // get AST
-  // convert query AST to cypher
-  // execute query
-  // batching??
-  // return data
-
-  // retrieve result type from schema -> determine List/Single non-null (resolveInfo.returnType)
-  // If @cypher directive ignore
-
   const returnTypeEnum = {
     OBJECT: 0,
     ARRAY: 1
   };
 
-  let type = resolveInfo.fieldName,
+  let type = innerType(resolveInfo.returnType).toString(),
     variable = type.charAt(0).toLowerCase() + type.slice(1);
 
 
