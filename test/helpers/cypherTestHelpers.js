@@ -33,7 +33,7 @@ interface Person {
 type Actor implements Person {
   id: ID!
   name: String
-  movies: [Movie]
+  movies: [Movie] @relation(name: "ACTED_IN", direction:"OUT")
 }
 
 type User implements Person {

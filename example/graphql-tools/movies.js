@@ -34,10 +34,10 @@ interface Person {
   name: String
 }
 
-type Actor implements Person {
+type Actor {
   id: ID!
   name: String
-  movies: [Movie]
+  movies: [Movie] @relation(name: "ACTED_IN", direction: "OUT")
 }
 
 type User implements Person {
