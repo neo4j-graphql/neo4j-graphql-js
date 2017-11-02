@@ -136,3 +136,42 @@ test('Deeply nested object query', t=> {
     expectedCypherQuery = `MATCH (movie:Movie {title:"River Runs Through It, A"}) RETURN movie { .title ,actors: [(movie)<-[ACTED_IN]-(movie_actors:Actor) | movie_actors { .name ,movies: [(movie_actors)-[ACTED_IN]->(movie_actors_movies:Movie) | movie_actors_movies { .title ,actors: [(movie_actors_movies)<-[ACTED_IN]-(movie_actors_movies_actors:Actor) | movie_actors_movies_actors { .name ,movies: [(movie_actors_movies_actors)-[ACTED_IN]->(movie_actors_movies_actors_movies:Movie) | movie_actors_movies_actors_movies { .title , .year ,similar: [ x IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie_actors_movies_actors_movies}, true) | x { .title , .year }][..3] }] }] }] }] } AS movie SKIP 0`;
   cypherTestRunner(t, graphQLQuery, expectedCypherQuery);
 });
+
+test('Handle meta field at beginning of selection set', t=> {
+  const graphQLQuery = `
+  {
+    Movie(title:"River Runs Through It, A"){
+      __typename
+      title
+    }
+  }`,
+    expectedCypherQuery = `MATCH (movie:Movie {title:"River Runs Through It, A"}) RETURN movie { .title } AS movie SKIP 0`;
+  cypherTestRunner(t, graphQLQuery, expectedCypherQuery);
+});
+
+test('Handle meta field at end of selection set', t=> {
+  const graphQLQuery = `
+  {
+    Movie(title:"River Runs Through It, A"){
+      title
+      __typename
+    }
+  }
+  `,
+    expectedCypherQuery = `MATCH (movie:Movie {title:"River Runs Through It, A"}) RETURN movie {.title } AS movie SKIP 0`;
+  cypherTestRunner(t, graphQLQuery, expectedCypherQuery);
+});
+
+test('Handle meta field in middle of selection set', t=> {
+  const graphQLQuery = `
+  {
+    Movie(title:"River Runs Through It, A"){
+      title
+      __typename
+      year
+    }
+  }
+  `,
+    expectedCypherQuery = `MATCH (movie:Movie {title:"River Runs Through It, A"}) RETURN movie { .title , .year } AS movie SKIP 0`;
+  cypherTestRunner(t, graphQLQuery, expectedCypherQuery);
+});

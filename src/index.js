@@ -87,8 +87,12 @@ function buildCypherSelection(initial, selections, variable, schemaType, resolve
 
   const [headSelection, ...tailSelections] = selections;
 
-  let fieldName = headSelection.name.value,
-      fieldType = schemaType.getFields()[fieldName].type;
+  const fieldName = headSelection.name.value;
+  if (!schemaType.getFields()[fieldName]){
+    // meta field type
+    return buildCypherSelection(tailSelections.length === 0 ? initial.substring(initial.lastIndexOf(','), 1) : initial, tailSelections, variable, schemaType, resolveInfo);
+  }
+  const fieldType = schemaType.getFields()[fieldName].type;
 
   let inner = innerType(fieldType) ; // for target "type" aka label
 
