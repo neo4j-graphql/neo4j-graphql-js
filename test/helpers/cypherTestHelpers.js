@@ -2,7 +2,7 @@ import {cypherQuery} from '../../dist/index';
 import {graphql} from 'graphql';
 import {makeExecutableSchema} from 'graphql-tools';
 
-export function cypherTestRunner(t, graphqlQuery, expectedCypherQuery) {
+export function cypherTestRunner(t, graphqlQuery, graphqlParams, expectedCypherQuery) {
 
   const testMovieSchema = `
 type Movie {
@@ -75,7 +75,7 @@ type Query {
   });
 
   // query the test schema with the test query, assertion is in the resolver
-  return graphql(schema, graphqlQuery).then(function (data) {
+  return graphql(schema, graphqlQuery, null, null, graphqlParams).then(function (data) {
     // no data is actually resolved, we're just comparing the generated Cypher queries
   })
 }
