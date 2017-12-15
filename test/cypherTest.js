@@ -40,7 +40,7 @@ test('Cypher projection skip limit', t=> {
       }
     }
   }`,
-    expectedCypherQuery = 'MATCH (movie:Movie {title:"River Runs Through It, A"}) RETURN movie { .title ,actors: [(movie)<-[ACTED_IN]-(movie_actors:Actor) | movie_actors { .name }] ,similar: [ x IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie}, true) | x { .title }][..3] } AS movie SKIP 0';
+    expectedCypherQuery = 'MATCH (movie:Movie {title:"River Runs Through It, A"}) RETURN movie { .title ,actors: [(movie)<-[:ACTED_IN]-(movie_actors:Actor) | movie_actors { .name }] ,similar: [ x IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie}, true) | x { .title }][..3] } AS movie SKIP 0';
   cypherTestRunner(t, graphQLQuery, expectedCypherQuery);
 
 });
@@ -88,7 +88,7 @@ test('Query single object relation', t=> {
       }
     }
   `,
-    expectedCypherQuery = 'MATCH (movie:Movie {movieId:"3100"}) RETURN movie { .title ,filmedIn: head([(movie)-[FILMED_IN]->(movie_filmedIn:State) | movie_filmedIn { .name }]) } AS movie SKIP 0';
+    expectedCypherQuery = 'MATCH (movie:Movie {movieId:"3100"}) RETURN movie { .title ,filmedIn: head([(movie)-[:FILMED_IN]->(movie_filmedIn:State) | movie_filmedIn { .name }]) } AS movie SKIP 0';
   cypherTestRunner(t, graphQLQuery, expectedCypherQuery);
 });
 
@@ -105,7 +105,7 @@ test('Query single object and array of objects relations', t=> {
         }
       }
     }`,
-    expectedCypherQuery = 'MATCH (movie:Movie {movieId:"3100"}) RETURN movie { .title ,actors: [(movie)<-[ACTED_IN]-(movie_actors:Actor) | movie_actors { .name }] ,filmedIn: head([(movie)-[FILMED_IN]->(movie_filmedIn:State) | movie_filmedIn { .name }]) } AS movie SKIP 0';
+    expectedCypherQuery = 'MATCH (movie:Movie {movieId:"3100"}) RETURN movie { .title ,actors: [(movie)<-[:ACTED_IN]-(movie_actors:Actor) | movie_actors { .name }] ,filmedIn: head([(movie)-[:FILMED_IN]->(movie_filmedIn:State) | movie_filmedIn { .name }]) } AS movie SKIP 0';
   cypherTestRunner(t, graphQLQuery, expectedCypherQuery);
 });
 
@@ -133,7 +133,7 @@ test('Deeply nested object query', t=> {
     }
   }
 }`,
-    expectedCypherQuery = `MATCH (movie:Movie {title:"River Runs Through It, A"}) RETURN movie { .title ,actors: [(movie)<-[ACTED_IN]-(movie_actors:Actor) | movie_actors { .name ,movies: [(movie_actors)-[ACTED_IN]->(movie_actors_movies:Movie) | movie_actors_movies { .title ,actors: [(movie_actors_movies)<-[ACTED_IN]-(movie_actors_movies_actors:Actor) | movie_actors_movies_actors { .name ,movies: [(movie_actors_movies_actors)-[ACTED_IN]->(movie_actors_movies_actors_movies:Movie) | movie_actors_movies_actors_movies { .title , .year ,similar: [ x IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie_actors_movies_actors_movies}, true) | x { .title , .year }][..3] }] }] }] }] } AS movie SKIP 0`;
+    expectedCypherQuery = `MATCH (movie:Movie {title:"River Runs Through It, A"}) RETURN movie { .title ,actors: [(movie)<-[:ACTED_IN]-(movie_actors:Actor) | movie_actors { .name ,movies: [(movie_actors)-[:ACTED_IN]->(movie_actors_movies:Movie) | movie_actors_movies { .title ,actors: [(movie_actors_movies)<-[:ACTED_IN]-(movie_actors_movies_actors:Actor) | movie_actors_movies_actors { .name ,movies: [(movie_actors_movies_actors)-[:ACTED_IN]->(movie_actors_movies_actors_movies:Movie) | movie_actors_movies_actors_movies { .title , .year ,similar: [ x IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie_actors_movies_actors_movies}, true) | x { .title , .year }][..3] }] }] }] }] } AS movie SKIP 0`;
   cypherTestRunner(t, graphQLQuery, expectedCypherQuery);
 });
 
