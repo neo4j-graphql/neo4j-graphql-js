@@ -175,3 +175,9 @@ test('Handle meta field in middle of selection set', t=> {
     expectedCypherQuery = `MATCH (movie:Movie {title:"River Runs Through It, A"}) RETURN movie { .title , .year } AS movie SKIP 0`;
   cypherTestRunner(t, graphQLQuery, expectedCypherQuery);
 });
+
+test('Pass @cypher directive params to sub-query', t=> {
+  const graphQLQuery = ``,
+    expectedCypherQuery = ``;
+  cypherTestRunner(t, graphQLQuery, expectedCypherQuery);
+})
