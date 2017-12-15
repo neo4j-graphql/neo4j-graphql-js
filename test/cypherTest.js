@@ -177,7 +177,12 @@ test('Handle meta field in middle of selection set', t=> {
 });
 
 test('Pass @cypher directive params to sub-query', t=> {
-  const graphQLQuery = ``,
-    expectedCypherQuery = ``;
+  const graphQLQuery = `{
+    Movie(title: "River Runs Through It, A") {
+      returnArg(intArg: 3)
+    }
+  
+  }`,
+    expectedCypherQuery = `MATCH (movie:Movie {title:"River Runs Through It, A"}) RETURN movie {returnArg: apoc.cypher.runFirstColumn("WITH $intArg AS intArg RETURN intArg", {this: movie, intArg: 3}, false)} AS movie SKIP 0`;
   cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery);
 });

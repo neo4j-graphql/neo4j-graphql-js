@@ -19,6 +19,7 @@ type Movie {
   actors(first: Int = 3, offset: Int = 0): [Actor] @relation(name: "ACTED_IN", direction:"IN")
   avgStars: Float
   filmedIn: State @relation(name: "FILMED_IN", direction:"OUT")
+  returnArg(intArg: Int = 3): Int @cypher(statement: "WITH $intArg AS intArg RETURN intArg")
 }
 
 type State {
