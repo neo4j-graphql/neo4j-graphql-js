@@ -1,4 +1,5 @@
 const _ = require('lodash');
+import {cypherDirectiveArgs} from './utils';
 
 const returnTypeEnum = {
   OBJECT: 0,
@@ -109,7 +110,7 @@ function buildCypherSelection(initial, selections, variable, schemaType, resolve
 
     if (fieldIsScalar) {
 
-      return buildCypherSelection(initial + `${fieldName}: apoc.cypher.runFirstColumn("${statement}", ${cypherDirectiveArgs(variable, headSelection)}, false)${tailSelections.length > 0 ? ',' : ''}`, tailSelections, variable, schemaType, resolveInfo);
+      return buildCypherSelection(initial + `${fieldName}: apoc.cypher.runFirstColumn("${statement}", ${cypherDirectiveArgs(variable, headSelection, schemaType)}, false)${tailSelections.length > 0 ? ',' : ''}`, tailSelections, variable, schemaType, resolveInfo);
     } else {
       // similar: [ x IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie}, true) |x {.title}][1..2])
 
@@ -117,7 +118,7 @@ function buildCypherSelection(initial, selections, variable, schemaType, resolve
       let skipLimit = computeSkipLimit(headSelection);
       let fieldIsList = !!fieldType.ofType;
 
-      return buildCypherSelection(initial + `${fieldName}: ${fieldIsList ? "" : "head("}[ x IN apoc.cypher.runFirstColumn("${statement}", ${cypherDirectiveArgs(variable, headSelection)}, true) | x {${buildCypherSelection(``, headSelection.selectionSet.selections, nestedVariable, inner, resolveInfo)}}]${fieldIsList? "": ")"}${skipLimit} ${tailSelections.length > 0 ? ',' : ''}`, tailSelections, variable, schemaType, resolveInfo);
+      return buildCypherSelection(initial + `${fieldName}: ${fieldIsList ? "" : "head("}[ x IN apoc.cypher.runFirstColumn("${statement}", ${cypherDirectiveArgs(variable, headSelection, schemaType)}, true) | x {${buildCypherSelection(``, headSelection.selectionSet.selections, nestedVariable, inner, resolveInfo)}}]${fieldIsList? "": ")"}${skipLimit} ${tailSelections.length > 0 ? ',' : ''}`, tailSelections, variable, schemaType, resolveInfo);
     }
 
   } else if (innerType(fieldType).constructor.name === "GraphQLScalarType") {
@@ -155,35 +156,4 @@ function computeSkipLimit(selection) {
   if (offset === null) return `[..${first}]`;
   if (first === null) return `[${offset}..]`;
   return `[${offset}..${parseInt(offset)+parseInt(first)}]`
-}
-
-function parseArgs(args) {
-  const argArr = args.map((v) => {
-    const key = v.name.value,
-      value = v.value.value;
-    let obj = {};
-    obj[key] = value;
-    return obj;
-  } );
-
-  const [head, ...tail] = argArr;
-  return Object.assign(head, tail);
-}
-
-function cypherDirectiveArgs(variable, headSelection) {
-  const defaultArgs = {"this": variable};
-  const schemaArgs = {};
-  const queryArgs = parseArgs(headSelection.arguments);
-  console.log(queryArgs);
-
-  return `{this: ${variable}}`;
-
-  // strip quotes from object keys for schema and query args
-  //return JSON.stringify(Object.assign(defaultArgs, schemaArgs, queryArgs)).replace(/\"([^(\")"]+)\":/g,"$1:");
-
-  // strip quotes and braces for default arg this
-  //JSON.stringify(t).replace(/\"/g,'').replace(/{/g,'').replace(/}/g,'')
-
-  //var parse = function(a){a.map( function(v){return {v.name.value: v.value.value}; } )};
-
 }
