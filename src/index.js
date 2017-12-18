@@ -31,7 +31,13 @@ export function neo4jgraphql(object, params, context, resolveInfo) {
       if (returnType === returnTypeEnum.ARRAY) {
         return result.records.map(record => { return record.get(variable)})
       } else if (returnType === returnTypeEnum.OBJECT) {
-        return result.records[0].get(variable);
+        if (result.records.length > 0) {
+          // FIXME: use one of the new neo4j-driver consumers when upgrading neo4j-driver package
+          return result.records[0].get(variable);
+        } else {
+          return null;
+        }
+        
       }
 
 
