@@ -7,6 +7,7 @@
     "start": "nodemon ./example/graphql-tools/movies.js --exec babel-node -e js",
     "build": "babel src --presets babel-preset-env --out-dir dist",
     "prepublish": "npm run build",
+    "pretest": "npm run build",
     "test": "ava test/*.js"
   },
   "author": "William Lyon",

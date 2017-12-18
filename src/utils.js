@@ -43,8 +43,8 @@ export function cypherDirectiveArgs(variable, headSelection, schemaType) {
   const queryArgs = parseArgs(headSelection.arguments);
   console.log(queryArgs);
 
-  let args = JSON.stringify(Object.assign(defaultArgs, queryArgs)).replace(/\"([^(\")"]+)\":/g,"$1:");
+  let args = JSON.stringify(Object.assign(defaultArgs, queryArgs)).replace(/\"([^(\")"]+)\":/g," $1: ");
 
-  return `{this: ${variable},` + args.substring(1);
+  return args === "{}" ? `{this: ${variable}${args.substring(1)}` : `{this: ${variable},${args.substring(1)}`
 
 }
