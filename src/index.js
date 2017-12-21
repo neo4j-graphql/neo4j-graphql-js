@@ -107,14 +107,13 @@ function buildCypherSelection(initial, selections, variable, schemaType, resolve
 
   if (fieldHasCypherDirective) {
 
-    let fieldIsScalar = fieldType.constructor.name === "GraphQLScalarType"; // FIXME: DRY
     let statement = schemaType.getFields()[fieldName].astNode.directives.find((e) => {
       return e.name.value === 'cypher'
     }).arguments.find((e) => {
       return e.name.value === 'statement'
     }).value.value;
 
-    if (fieldIsScalar) {
+    if (inner.constructor.name === "GraphQLScalarType") {
 
       return buildCypherSelection(initial + `${fieldName}: apoc.cypher.runFirstColumn("${statement}", ${cypherDirectiveArgs(variable, headSelection, schemaType)}, false)${tailSelections.length > 0 ? ',' : ''}`, tailSelections, variable, schemaType, resolveInfo);
     } else {
