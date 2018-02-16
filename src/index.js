@@ -72,8 +72,15 @@ export function cypherQuery(params, context, resolveInfo) {
 
   // FIXME: how to handle multiple fieldNode matches
   let selections = filteredFieldNodes[0].selectionSet.selections;
+
+  let wherePredicate = ``;
+  if (_.has(params, '_id')) {
+    wherePredicate = `WHERE ID(${variable})=${params._id} `;
+    delete params._id;
+  }
+
   let argString = JSON.stringify(params).replace(/\"([^(\")"]+)\":/g,"$1:"); // FIXME: support IN for multiple values -> WHERE
-  let query = `MATCH (${variable}:${type} ${argString}) `;
+  let query = `MATCH (${variable}:${type} ${argString}) ${wherePredicate}`;
 
   query = query +  `RETURN ${variable} {` + buildCypherSelection(``, selections, variable, schemaType, resolveInfo);// ${variable} { ${selection} } as ${variable}`;
 
