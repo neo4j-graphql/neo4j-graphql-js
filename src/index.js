@@ -97,7 +97,7 @@ function buildCypherSelection(initial, selections, variable, schemaType, resolve
   const fieldName = headSelection.name.value;
   if (!schemaType.getFields()[fieldName]){
     // meta field type
-    return buildCypherSelection(tailSelections.length === 0 ? initial.substring(initial.lastIndexOf(','), 1) : initial, tailSelections, variable, schemaType, resolveInfo);
+    return buildCypherSelection(tailSelections.length === 0 ? initial.substring(initial.lastIndexOf(','), 0) : initial, tailSelections, variable, schemaType, resolveInfo);
   }
   const fieldType = schemaType.getFields()[fieldName].type;
 
