@@ -122,7 +122,7 @@ function buildCypherSelection(initial, selections, variable, schemaType, resolve
       let nestedVariable = variable + '_' + fieldName;
       let skipLimit = computeSkipLimit(headSelection);
       let fieldIsList = !!fieldType.ofType;
-      
+
       return buildCypherSelection(initial + `${fieldName}: ${fieldIsList ? "" : "head("}[ ${nestedVariable} IN apoc.cypher.runFirstColumn("${statement}", ${cypherDirectiveArgs(variable, headSelection, schemaType)}, true) | ${nestedVariable} {${buildCypherSelection(``, headSelection.selectionSet.selections, nestedVariable, inner, resolveInfo)}}]${fieldIsList? "": ")"}${skipLimit} ${tailSelections.length > 0 ? ',' : ''}`, tailSelections, variable, schemaType, resolveInfo);
     }
 
