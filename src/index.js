@@ -6,7 +6,7 @@ const returnTypeEnum = {
   ARRAY: 1
 };
 
-export function neo4jgraphql(object, params, context, resolveInfo) {
+export function neo4jgraphql(object, params, context, resolveInfo, debug = false) {
 
   // const returnTypeEnum = {
   //   OBJECT: 0,
@@ -19,8 +19,10 @@ export function neo4jgraphql(object, params, context, resolveInfo) {
 
   let query = cypherQuery(params, context, resolveInfo);
 
-
-  console.log(query);
+  if (debug) {
+    console.log(query);  
+  }
+  
 
   let returnType = resolveInfo.returnType.toString().startsWith("[") ? returnTypeEnum.ARRAY : returnTypeEnum.OBJECT;
 
