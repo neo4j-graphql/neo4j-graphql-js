@@ -6,7 +6,7 @@ const returnTypeEnum = {
   ARRAY: 1
 };
 
-export function neo4jgraphql(object, params, context, resolveInfo) {
+export function neo4jgraphql(object, params, context, resolveInfo, debug = false) {
 
   // const returnTypeEnum = {
   //   OBJECT: 0,
@@ -19,8 +19,10 @@ export function neo4jgraphql(object, params, context, resolveInfo) {
 
   let query = cypherQuery(params, context, resolveInfo);
 
-
-  console.log(query);
+  if (debug) {
+    console.log(query);  
+  }
+  
 
   let returnType = resolveInfo.returnType.toString().startsWith("[") ? returnTypeEnum.ARRAY : returnTypeEnum.OBJECT;
 
@@ -72,8 +74,15 @@ export function cypherQuery(params, context, resolveInfo) {
 
   // FIXME: how to handle multiple fieldNode matches
   let selections = filteredFieldNodes[0].selectionSet.selections;
+
+  let wherePredicate = ``;
+  if (_.has(params, '_id')) {
+    wherePredicate = `WHERE ID(${variable})=${params._id} `;
+    delete params._id;
+  }
+
   let argString = JSON.stringify(params).replace(/\"([^(\")"]+)\":/g,"$1:"); // FIXME: support IN for multiple values -> WHERE
-  let query = `MATCH (${variable}:${type} ${argString}) `;
+  let query = `MATCH (${variable}:${type} ${argString}) ${wherePredicate}`;
 
   query = query +  `RETURN ${variable} {` + buildCypherSelection(``, selections, variable, schemaType, resolveInfo);// ${variable} { ${selection} } as ${variable}`;
 
@@ -97,7 +106,7 @@ function buildCypherSelection(initial, selections, variable, schemaType, resolve
   const fieldName = headSelection.name.value;
   if (!schemaType.getFields()[fieldName]){
     // meta field type
-    return buildCypherSelection(tailSelections.length === 0 ? initial.substring(initial.lastIndexOf(','), 1) : initial, tailSelections, variable, schemaType, resolveInfo);
+    return buildCypherSelection(tailSelections.length === 0 ? initial.substring(initial.lastIndexOf(','), 0) : initial, tailSelections, variable, schemaType, resolveInfo);
   }
   const fieldType = schemaType.getFields()[fieldName].type;
 
@@ -123,7 +132,7 @@ function buildCypherSelection(initial, selections, variable, schemaType, resolve
       let skipLimit = computeSkipLimit(headSelection);
       let fieldIsList = !!fieldType.ofType;
 
-      return buildCypherSelection(initial + `${fieldName}: ${fieldIsList ? "" : "head("}[ x IN apoc.cypher.runFirstColumn("${statement}", ${cypherDirectiveArgs(variable, headSelection, schemaType)}, true) | x {${buildCypherSelection(``, headSelection.selectionSet.selections, nestedVariable, inner, resolveInfo)}}]${fieldIsList? "": ")"}${skipLimit} ${tailSelections.length > 0 ? ',' : ''}`, tailSelections, variable, schemaType, resolveInfo);
+      return buildCypherSelection(initial + `${fieldName}: ${fieldIsList ? "" : "head("}[ ${nestedVariable} IN apoc.cypher.runFirstColumn("${statement}", ${cypherDirectiveArgs(variable, headSelection, schemaType)}, true) | ${nestedVariable} {${buildCypherSelection(``, headSelection.selectionSet.selections, nestedVariable, inner, resolveInfo)}}]${fieldIsList? "": ")"}${skipLimit} ${tailSelections.length > 0 ? ',' : ''}`, tailSelections, variable, schemaType, resolveInfo);
     }
 
   } else if (innerType(fieldType).constructor.name === "GraphQLScalarType") {
