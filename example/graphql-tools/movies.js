@@ -67,19 +67,19 @@ const resolvers = {
   Query: {
     // fetch movies by title substring
     Movie(object, params, ctx, resolveInfo) {
-      return neo4jgraphql(object, params, ctx, resolveInfo);
+      return neo4jgraphql(object, params, ctx, resolveInfo, true);
     },
     MoviesByYear(object, params, ctx, resolveInfo) {
-      return neo4jgraphql(object, params, ctx, resolveInfo);
+      return neo4jgraphql(object, params, ctx, resolveInfo, true);
     },
     AllMovies(object, params, ctx, resolveInfo) {
-      return neo4jgraphql(object, params, ctx, resolveInfo);
+      return neo4jgraphql(object, params, ctx, resolveInfo, true);
     },
     MovieById(object, params, ctx, resolveInfo) {
-      return neo4jgraphql(object, params, ctx, resolveInfo);
+      return neo4jgraphql(object, params, ctx, resolveInfo, true);
     },
     GenresBySubstring(object, params, ctx, resolveInfo) {
-      return neo4jgraphql(object, params, ctx, resolveInfo);
+      return neo4jgraphql(object, params, ctx, resolveInfo, true);
     }
   }
 };
