@@ -158,7 +158,7 @@ test('Handle meta field at end of selection set', t=> {
     }
   }
   `,
-    expectedCypherQuery = `MATCH (movie:Movie {title:"River Runs Through It, A"}) RETURN movie {.title } AS movie SKIP 0`;
+    expectedCypherQuery = `MATCH (movie:Movie {title:"River Runs Through It, A"}) RETURN movie { .title } AS movie SKIP 0`;
   cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery);
 });
 
