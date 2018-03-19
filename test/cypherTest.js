@@ -211,3 +211,52 @@ test('Pass @cypher directive params to sub-query', t=> {
     expectedCypherQuery = `MATCH (movie:Movie {title:"River Runs Through It, A"}) RETURN movie {scaleRating: apoc.cypher.runFirstColumn("WITH $this AS this RETURN $scale * this.imdbRating", {this: movie, scale: 10}, false)} AS movie SKIP 0`;
   cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery);
 });
+
+test('Query for Neo4js internal _id', t=> {
+  const graphQLQuery = `{
+    Movie(_id: 0) {
+      title
+      year
+    }
+  
+  }`,
+    expectedCypherQuery = `MATCH (movie:Movie {}) WHERE ID(movie)=0 RETURN movie { .title , .year } AS movie SKIP 0`;
+  cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery);
+});
+
+test('Query for Neo4js internal _id and another param before _id', t=> {
+  const graphQLQuery = `{
+    Movie(title: "River Runs Through It, A", _id: 0) {
+      title
+      year
+    }
+  
+  }`,
+    expectedCypherQuery = `MATCH (movie:Movie {title:"River Runs Through It, A"}) WHERE ID(movie)=0 RETURN movie { .title , .year } AS movie SKIP 0`;
+  cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery);
+});
+
+test('Query for Neo4js internal _id and another param after _id', t=> {
+  const graphQLQuery = `{
+    Movie(_id: 0, year: 2010) {
+      title
+      year
+    }
+  
+  }`,
+    expectedCypherQuery = `MATCH (movie:Movie {year:2010}) WHERE ID(movie)=0 RETURN movie { .title , .year } AS movie SKIP 0`;
+  cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery);
+});
+
+test('Query for Neo4js internal _id by dedicated Query MovieBy_Id(_id: Int!)', t=> {
+  const graphQLQuery = `{
+    MovieBy_Id(_id: 0) {
+      title
+      year
+    }
+  
+  }`,
+    expectedCypherQuery = `MATCH (movie:Movie {}) WHERE ID(movie)=0 RETURN movie { .title , .year } AS movie SKIP 0`;
+  cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery);
+});
+
