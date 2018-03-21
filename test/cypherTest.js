@@ -260,3 +260,20 @@ test('Query for Neo4js internal _id by dedicated Query MovieBy_Id(_id: Int!)', t
   cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery);
 });
 
+test('Cypher subquery filters', t => {
+  const graphQLQuery = `
+  {
+    Movie(title: "River Runs Through It, A") {
+        title
+        actors(name: "Tom Hanks") {
+          name
+        }
+        similar(first: 3) {
+          title
+        }
+      }
+    }`,
+    expectedCypherQuery = 'MATCH (movie:Movie {title:"River Runs Through It, A"}) RETURN movie { .title ,actors: [(movie)<-[:ACTED_IN]-(movie_actors:Actor{name: "Tom Hanks"}) | movie_actors { .name }] ,similar: [ movie_similar IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie, first: 3, offset: 0}, true) | movie_similar { .title }][..3] } AS movie SKIP 0';
+
+  cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery);
+});

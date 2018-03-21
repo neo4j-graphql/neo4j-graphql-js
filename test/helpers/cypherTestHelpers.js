@@ -16,7 +16,7 @@ type Movie {
   similar(first: Int = 3, offset: Int = 0): [Movie] @cypher(statement: "WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o")
   mostSimilar: Movie @cypher(statement: "WITH {this} AS this RETURN this")
   degree: Int @cypher(statement: "WITH {this} AS this RETURN SIZE((this)--())")
-  actors(first: Int = 3, offset: Int = 0): [Actor] @relation(name: "ACTED_IN", direction:"IN")
+  actors(first: Int = 3, offset: Int = 0, name: String): [Actor] @relation(name: "ACTED_IN", direction:"IN")
   avgStars: Float
   filmedIn: State @relation(name: "FILMED_IN", direction:"OUT")
   scaleRating(scale: Int = 3): Float @cypher(statement: "WITH $this AS this RETURN $scale * this.imdbRating")
