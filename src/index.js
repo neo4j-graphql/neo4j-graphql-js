@@ -147,7 +147,18 @@ function buildCypherSelection(initial, selections, variable, schemaType, resolve
 
     let returnType = fieldType.toString().startsWith("[") ? returnTypeEnum.ARRAY : returnTypeEnum.OBJECT;
 
-    return buildCypherSelection(initial + `${fieldName}: ${returnType === returnTypeEnum.OBJECT ? 'head(' : ''}[(${variable})${relDirection === 'in' || relDirection === 'IN' ? '<' : ''}-[:${relType}]-${relDirection === 'out' || relDirection === 'OUT' ? '>' : ''}(${nestedVariable}:${inner.name}) | ${nestedVariable} {${buildCypherSelection(``, headSelection.selectionSet.selections, nestedVariable, inner, resolveInfo)}}]${returnType === returnTypeEnum.OBJECT ? ')' : ''}${skipLimit} ${tailSelections.length > 0 ? ',' : ''}`, tailSelections, variable, schemaType, resolveInfo);
+    let queryParams = '';
+
+    if (selections && selections.length && selections[0].arguments && selections[0].arguments.length) {
+        const filters = selections[0].arguments.map((x) => {
+            const filterValue = JSON.stringify(x.value.value).replace(/\"([^(\")"]+)\":/g, '$1:'); // FIXME: support IN for multiple values -> WHERE
+            return `${x.name.value}: ${filterValue}`;
+        });
+
+        queryParams = `{${filters.join(',')}}`;
+    }
+
+    return buildCypherSelection(initial + `${fieldName}: ${returnType === returnTypeEnum.OBJECT ? 'head(' : ''}[(${variable})${relDirection === 'in' || relDirection === 'IN' ? '<' : ''}-[:${relType}]-${relDirection === 'out' || relDirection === 'OUT' ? '>' : ''}(${nestedVariable}:${inner.name}${queryParams}) | ${nestedVariable} {${buildCypherSelection(``, headSelection.selectionSet.selections, nestedVariable, inner, resolveInfo)}}]${returnType === returnTypeEnum.OBJECT ? ')' : ''}${skipLimit} ${tailSelections.length > 0 ? ',' : ''}`, tailSelections, variable, schemaType, resolveInfo);
   }
 
 
