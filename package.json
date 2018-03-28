@@ -26,13 +26,18 @@
     "nodemon": "^1.12.1"
   },
   "dependencies": {
+    "apollo-cache-inmemory": "^1.1.12",
+    "apollo-client": "^2.2.8",
+    "apollo-link-http": "^1.5.3",
     "body-parser": "^1.18.2",
     "express": "^4.16.1",
     "graphql": "^0.11.7",
     "graphql-server-core": "^1.1.0",
     "graphql-server-express": "^1.1.2",
+    "graphql-tag": "^2.8.0",
     "graphql-tools": "^2.0.0",
     "lodash": "^4.17.4",
-    "neo4j-driver": "^1.4.1"
+    "neo4j-driver": "^1.4.1",
+    "node-fetch": "^2.1.2"
   }
 }
