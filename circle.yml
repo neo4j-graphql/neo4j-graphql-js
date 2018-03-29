@@ -21,7 +21,7 @@ jobs:
           command: node -r babel-register ./example/graphql-tools/movies.js
           background: true
       - run: sleep 30
-      - run: ./node_modules/.bin ava test/*.js
+      - run: ./node_modules/.bin/ava test/*.js
 
   neo4j32:
     docker:
@@ -44,7 +44,7 @@ jobs:
           command: node -r babel-register ./example/graphql-tools/movies.js
           background: true
       - run: sleep 30
-      - run: ./node_modules/.bin ava test/*.js
+      - run: ./node_modules/.bin/ava test/*.js
 workflows:
   version: 2
   integration_test:
