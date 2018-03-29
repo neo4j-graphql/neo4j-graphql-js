@@ -45,3 +45,9 @@ jobs:
           background: true
       - run: sleep 30
       - run: ava test/*.js
+workflows:
+  version: 2
+  integration_test:
+    jobs:
+      - neo4j33
+      - neo4j32
