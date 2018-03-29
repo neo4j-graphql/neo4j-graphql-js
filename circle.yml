@@ -1,6 +1,6 @@
 version: 2
 jobs:
-  build:
+  neo4j33:
     docker:
       - image: circleci/node:9-browsers
     steps:
@@ -16,11 +16,32 @@ jobs:
       - run: mv recommendations.db neo4j-enterprise-3.3.4/data/databases/graph.db
       - run: ./neo4j-enterprise-3.3.4/bin/neo4j start
       - run: sleep 30
-
       - run:
           name: starting GraphQL service
           command: node -r babel-register ./example/graphql-tools/movies.js
           background: true
-
       - run: sleep 30
-      - run: npm test
+      - run: ava test/*.js
+
+  neo4j32:
+    docker:
+      - image: circleci/node:9-browsers
+    steps:
+      - checkout
+      - run: npm install
+      - run: wget dist.neo4j.org/neo4j-enterprise-3.2.10-unix.tar.gz
+      - run: tar -xzf neo4j-enterprise-3.2.10-unix.tar.gz
+      - run: neo4j-enterprise-3.2.10/bin/neo4j-admin set-initial-password letmein
+      - run: curl -L https://github.com/neo4j-contrib/neo4j-apoc-procedures/releases/download/3.2.3.6/apoc-3.2.3.6-all.jar > ./neo4j-enterprise-3.2.10/plugins/apoc-3.2.3.6-all.jar
+      - run: wget https://s3.amazonaws.com/neo4j-sandbox-usecase-datastores/v3_2/recommendations.db.zip
+      - run: sudo apt-get install unzip
+      - run: unzip recommendations.db.zip
+      - run: mv recommendations.db neo4j-enterprise-3.2.10/data/databases/graph.db
+      - run: ./neo4j-enterprise-3.2.10/bin/neo4j start
+      - run: sleep 30
+      - run:
+          name: starting GraphQL service
+          command: node -r babel-register ./example/graphql-tools/movies.js
+          background: true
+      - run: sleep 30
+      - run: ava test/*.js
