@@ -150,12 +150,16 @@ function buildCypherSelection(initial, selections, variable, schemaType, resolve
     let queryParams = '';
 
     if (selections && selections.length && selections[0].arguments && selections[0].arguments.length) {
-        const filters = selections[0].arguments.map((x) => {
-            const filterValue = JSON.stringify(x.value.value).replace(/\"([^(\")"]+)\":/g, '$1:'); // FIXME: support IN for multiple values -> WHERE
-            return `${x.name.value}: ${filterValue}`;
+      const filters = selections[0].arguments
+        .filter((x) => {
+          return x.name.value !== 'first' && x.name.value !== 'offset';
+        })
+        .map((x) => {
+          const filterValue = JSON.stringify(x.value.value).replace(/\"([^(\")"]+)\":/g, '$1:'); // FIXME: support IN for multiple values -> WHERE
+          return `${x.name.value}: ${filterValue}`;
         });
 
-        queryParams = `{${filters.join(',')}}`;
+      queryParams = `{${filters.join(',')}}`;
     }
 
     return buildCypherSelection(initial + `${fieldName}: ${returnType === returnTypeEnum.OBJECT ? 'head(' : ''}[(${variable})${relDirection === 'in' || relDirection === 'IN' ? '<' : ''}-[:${relType}]-${relDirection === 'out' || relDirection === 'OUT' ? '>' : ''}(${nestedVariable}:${inner.name}${queryParams}) | ${nestedVariable} {${buildCypherSelection(``, headSelection.selectionSet.selections, nestedVariable, inner, resolveInfo)}}]${returnType === returnTypeEnum.OBJECT ? ')' : ''}${skipLimit} ${tailSelections.length > 0 ? ',' : ''}`, tailSelections, variable, schemaType, resolveInfo);

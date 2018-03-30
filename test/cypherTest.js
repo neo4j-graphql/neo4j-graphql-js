@@ -277,3 +277,21 @@ test('Cypher subquery filters', t => {
 
   cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery);
 });
+
+test('Cypher subquery filters with paging', t => {
+  const graphQLQuery = `
+  {
+    Movie(title: "River Runs Through It, A") {
+        title
+        actors(name: "Tom Hanks", first: 3) {
+          name
+        }
+        similar(first: 3) {
+          title
+        }
+      }
+    }`,
+    expectedCypherQuery = 'MATCH (movie:Movie {title:"River Runs Through It, A"}) RETURN movie { .title ,actors: [(movie)<-[:ACTED_IN]-(movie_actors:Actor{name: "Tom Hanks"}) | movie_actors { .name }][..3] ,similar: [ movie_similar IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie, first: 3, offset: 0}, true) | movie_similar { .title }][..3] } AS movie SKIP 0';
+
+  cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery);
+});
