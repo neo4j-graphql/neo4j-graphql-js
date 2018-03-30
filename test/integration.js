@@ -121,3 +121,36 @@ test('GraphQL query with @cypher directive', async t=> {
   })
 
 });
+
+test('basic mutation test', async t=> {
+  t.plan(1);
+
+  let expected = {
+    "data": {
+      "createMovie": {
+        "title": "Black Panther",
+        "year": 2018,
+        "actors": []
+      }
+    }
+  };
+
+  await client.query({
+    query: gql`mutation addMovie {
+        createMovie(id: "1825683", title:"Black Panther", year: 2018, plot:"T'Challa, the King of Wakanda, rises to the throne in the isolated, technologically advanced African nation, but his claim is challenged by a vengeful outsider who was a childhood victim of T'Challa's father's mistake.", poster: "https://ia.media-imdb.com/images/M/MV5BMTg1MTY2MjYzNV5BMl5BanBnXkFtZTgwMTc4NTMwNDI@._V1_UX182_CR0,0,182,268_AL_.jpg", imdbRating: 7.8) {
+            title
+            year
+            actors {
+                name
+            }
+        }
+    }`
+  })
+  .then(data => {
+    t.deepEqual(data.data, expected.data);
+  })
+  .catch(error => {
+    t.fail(error);
+  })
+
+});

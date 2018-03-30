@@ -1,4 +1,4 @@
-import {cypherQuery} from '../../dist/index';
+import { cypherQuery, cypherMutation } from '../../dist/index';
 import {graphql} from 'graphql';
 import {makeExecutableSchema} from 'graphql-tools';
 
@@ -50,6 +50,10 @@ type Query {
   MovieById(movieId: ID!): Movie
   MovieBy_Id(_id: Int!): Movie
 }
+
+type Mutation {
+    createMovie(movieId: ID!, title: String, year: Int, plot: String, poster: String, imdbRating: Float): Movie
+}
 `;
 
   t.plan(1);
@@ -73,7 +77,14 @@ type Query {
         let query = cypherQuery(params, ctx, resolveInfo);
         t.is(query, expectedCypherQuery);
       }
-  }};
+    },
+    Mutation: {
+      createMovie(object, params, ctx, resolveInfo) {
+        let query = cypherMutation(params, ctx, resolveInfo);
+        t.is(query, expectedCypherQuery);
+      }
+    }
+  };
 
 
   const schema = makeExecutableSchema({

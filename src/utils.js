@@ -48,3 +48,7 @@ export function cypherDirectiveArgs(variable, headSelection, schemaType) {
   return args === "{}" ? `{this: ${variable}${args.substring(1)}` : `{this: ${variable},${args.substring(1)}`
 
 }
+
+export function isMutation(resolveInfo) {
+  return resolveInfo.operation.operation === "mutation";
+}

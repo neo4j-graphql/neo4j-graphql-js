@@ -277,3 +277,19 @@ test('Cypher subquery filters', t => {
 
   cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery);
 });
+
+test('basic mutation test', t => {
+  const graphQLQuery = `mutation addMovie {
+  createMovie(movieId: "1825683", title:"Black Panther", year: 2018, plot:"T'Challa, the King of Wakanda, rises to the throne in the isolated, technologically advanced African nation, but his claim is challenged by a vengeful outsider who was a childhood victim of T'Challa's father's mistake.", poster: "https://ia.media-imdb.com/images/M/MV5BMTg1MTY2MjYzNV5BMl5BanBnXkFtZTgwMTc4NTMwNDI@._V1_UX182_CR0,0,182,268_AL_.jpg", imdbRating: 7.8) {
+		title
+    year
+    actors {
+      name
+    }
+  }
+}`,
+    expectedCypherQuery = `CREATE (movie:Movie) SET movie = $params RETURN movie { .title , .year ,actors: [(movie)<-[:ACTED_IN]-(movie_actors:Actor) | movie_actors { .name }] } AS movie`;
+
+  cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery);
+
+});

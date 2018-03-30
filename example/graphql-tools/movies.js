@@ -60,6 +60,12 @@ type Query {
   MovieById(movieId: ID!): Movie
   GenresBySubstring(substring: String): [Genre] @cypher(statement: "MATCH (g:Genre) WHERE toLower(g.name) CONTAINS toLower($substring) RETURN g")
 }
+
+type Mutation {
+  createMovie(id: ID, title: String, year: Int, plot: String, poster: String, imdbRating: Float): Movie
+  
+}
+
 `;
 
 const resolvers = {
@@ -79,6 +85,11 @@ const resolvers = {
       return neo4jgraphql(object, params, ctx, resolveInfo, true);
     },
     GenresBySubstring(object, params, ctx, resolveInfo) {
+      return neo4jgraphql(object, params, ctx, resolveInfo, true);
+    }
+  },
+  Mutation: {
+    createMovie(object, params, ctx, resolveInfo) {
       return neo4jgraphql(object, params, ctx, resolveInfo, true);
     }
   }

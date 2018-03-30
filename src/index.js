@@ -1,5 +1,5 @@
 const _ = require('lodash');
-import {cypherDirectiveArgs} from './utils';
+import {cypherDirectiveArgs, isMutation} from './utils';
 
 const returnTypeEnum = {
   OBJECT: 0,
@@ -16,8 +16,16 @@ export function neo4jgraphql(object, params, context, resolveInfo, debug = false
   let type = innerType(resolveInfo.returnType).toString(),
     variable = type.charAt(0).toLowerCase() + type.slice(1);
 
+  // is this GraphQL operation a mutation or a query?
+  let mutation = isMutation(resolveInfo);
 
-  let query = cypherQuery(params, context, resolveInfo);
+  let query;
+
+  if (isMutation(resolveInfo)) {
+    query = cypherMutation(params, context, resolveInfo);
+  } else {
+    query = cypherQuery(params, context, resolveInfo);
+  }
 
   if (debug) {
     console.log(query);  
@@ -27,6 +35,11 @@ export function neo4jgraphql(object, params, context, resolveInfo, debug = false
   let returnType = resolveInfo.returnType.toString().startsWith("[") ? returnTypeEnum.ARRAY : returnTypeEnum.OBJECT;
 
   let session = context.driver.session();
+
+  if (mutation) {
+    params = {params: params};
+  }
+
   let data = session.run(query, params)
     .then( result => {
 
@@ -50,6 +63,31 @@ export function neo4jgraphql(object, params, context, resolveInfo, debug = false
 
 };
 
+export function cypherMutation(params, context, resolveInfo) {
+
+  // FIXME: lots of duplication here with cypherQuery, extract into util module
+  let type = innerType(resolveInfo.returnType).toString(),
+    variable = type.charAt(0).toLowerCase() + type.slice(1),
+    schemaType = resolveInfo.schema.getType(type);
+
+  let filteredFieldNodes = _.filter(resolveInfo.fieldNodes, function(o) {
+    if (o.name.value === resolveInfo.fieldName) {
+      return true;
+    }
+  });
+
+  let selections = filteredFieldNodes[0].selectionSet.selections;
+
+  let query = `CREATE (${variable}:${type}) `;
+      query += `SET ${variable} = $params `;
+      //query += `RETURN ${variable}`;
+      query += `RETURN ${variable} {` + buildCypherSelection(``, selections, variable, schemaType, resolveInfo);
+      query += `} AS ${variable}`;
+
+  return query;
+}
+
+// this function is exported so it can be used for Cypher query generation only
 export function cypherQuery(params, context, resolveInfo) {
   let pageParams = {
     "first": params['first'] === undefined ? -1 : params['first'],
