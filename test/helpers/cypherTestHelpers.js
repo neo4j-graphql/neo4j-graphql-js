@@ -1,9 +1,13 @@
-import {cypherQuery} from '../../dist/index';
-import {graphql} from 'graphql';
-import {makeExecutableSchema} from 'graphql-tools';
+import { cypherQuery } from '../../dist/index';
+import { graphql } from 'graphql';
+import { makeExecutableSchema } from 'graphql-tools';
 
-export function cypherTestRunner(t, graphqlQuery, graphqlParams, expectedCypherQuery) {
-
+export function cypherTestRunner(
+  t,
+  graphqlQuery,
+  graphqlParams,
+  expectedCypherQuery
+) {
   const testMovieSchema = `
 type Movie {
   movieId: ID!
@@ -54,14 +58,13 @@ type Query {
 
   t.plan(1);
 
-
   const resolvers = {
     Query: {
       Movie(object, params, ctx, resolveInfo) {
         let query = cypherQuery(params, ctx, resolveInfo);
         t.is(query, expectedCypherQuery);
       },
-      MoviesByYear(object, params, ctx, resolveInfo){
+      MoviesByYear(object, params, ctx, resolveInfo) {
         let query = cypherQuery(params, ctx, resolveInfo);
         t.is(query, expectedCypherQuery);
       },
@@ -73,16 +76,18 @@ type Query {
         let query = cypherQuery(params, ctx, resolveInfo);
         t.is(query, expectedCypherQuery);
       }
-  }};
-
+    }
+  };
 
   const schema = makeExecutableSchema({
     typeDefs: testMovieSchema,
-    resolvers,
+    resolvers
   });
 
   // query the test schema with the test query, assertion is in the resolver
-  return graphql(schema, graphqlQuery, null, null, graphqlParams).then(function (data) {
+  return graphql(schema, graphqlQuery, null, null, graphqlParams).then(function(
+    data
+  ) {
     // no data is actually resolved, we're just comparing the generated Cypher queries
-  })
+  });
 }
