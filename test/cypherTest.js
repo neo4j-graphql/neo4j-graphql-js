@@ -1,8 +1,7 @@
 import test from 'ava';
-import {cypherTestRunner} from "./helpers/cypherTestHelpers";
+import { cypherTestRunner } from './helpers/cypherTestHelpers';
 
-
-test('simple Cypher query', t=> {
+test('simple Cypher query', t => {
   const graphQLQuery = `{
     Movie(title: "River Runs Through It, A") {
       title
@@ -10,10 +9,10 @@ test('simple Cypher query', t=> {
   }`,
     expectedCypherQuery = `MATCH (movie:Movie {title:"River Runs Through It, A"}) RETURN movie { .title } AS movie SKIP 0`;
 
-  cypherTestRunner(t,graphQLQuery, {}, expectedCypherQuery);
+  cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery);
 });
 
-test('Simple skip limit', t=> {
+test('Simple skip limit', t => {
   const graphQLQuery = `{
   Movie(title: "River Runs Through It, A", first: 1, offset: 0) {
     title
@@ -21,14 +20,13 @@ test('Simple skip limit', t=> {
   }
 }
   `,
-    expectedCypherQuery = 'MATCH (movie:Movie {title:"River Runs Through It, A"}) RETURN movie { .title , .year } AS movie SKIP 0 LIMIT 1';
+    expectedCypherQuery =
+      'MATCH (movie:Movie {title:"River Runs Through It, A"}) RETURN movie { .title , .year } AS movie SKIP 0 LIMIT 1';
 
   cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery);
-
 });
 
-
-test('Cypher projection skip limit', t=> {
+test('Cypher projection skip limit', t => {
   const graphQLQuery = `{
     Movie(title: "River Runs Through It, A") {
       title
@@ -40,45 +38,48 @@ test('Cypher projection skip limit', t=> {
       }
     }
   }`,
-    expectedCypherQuery = 'MATCH (movie:Movie {title:"River Runs Through It, A"}) RETURN movie { .title ,actors: [(movie)<-[:ACTED_IN]-(movie_actors:Actor) | movie_actors { .name }] ,similar: [ movie_similar IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie, first: 3, offset: 0}, true) | movie_similar { .title }][..3] } AS movie SKIP 0';
+    expectedCypherQuery =
+      'MATCH (movie:Movie {title:"River Runs Through It, A"}) RETURN movie { .title ,actors: [(movie)<-[:ACTED_IN]-(movie_actors:Actor) | movie_actors { .name }] ,similar: [ movie_similar IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie, first: 3, offset: 0}, true) | movie_similar { .title }][..3] } AS movie SKIP 0';
   cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery);
-
 });
 
-test('Handle Query with name not aligning to type', t=> {
+test('Handle Query with name not aligning to type', t => {
   const graphQLQuery = `{
   MoviesByYear(year: 2010) {
     title
   }
 }
   `,
-    expectedCypherQuery = 'MATCH (movie:Movie {year:2010}) RETURN movie { .title } AS movie SKIP 0';
+    expectedCypherQuery =
+      'MATCH (movie:Movie {year:2010}) RETURN movie { .title } AS movie SKIP 0';
   cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery);
 });
 
-test('Query without arguments, non-null type', t=> {
+test('Query without arguments, non-null type', t => {
   const graphQLQuery = `query {
   Movie {
     movieId
   }
 }`,
-    expectedCypherQuery = 'MATCH (movie:Movie {}) RETURN movie { .movieId } AS movie SKIP 0';
+    expectedCypherQuery =
+      'MATCH (movie:Movie {}) RETURN movie { .movieId } AS movie SKIP 0';
   cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery);
 });
 
-test('Query single object', t=> {
+test('Query single object', t => {
   const graphQLQuery = `
   {
     MovieById(movieId: "18") {
       title
     }
   }`,
-    expectedCypherQuery = 'MATCH (movie:Movie {movieId:"18"}) RETURN movie { .title } AS movie SKIP 0';
+    expectedCypherQuery =
+      'MATCH (movie:Movie {movieId:"18"}) RETURN movie { .title } AS movie SKIP 0';
   cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery);
 });
 
-test('Query single object relation', t=> {
-  const graphQLQuery =`
+test('Query single object relation', t => {
+  const graphQLQuery = `
     {
       MovieById(movieId: "3100") {
         title
@@ -88,11 +89,12 @@ test('Query single object relation', t=> {
       }
     }
   `,
-    expectedCypherQuery = 'MATCH (movie:Movie {movieId:"3100"}) RETURN movie { .title ,filmedIn: head([(movie)-[:FILMED_IN]->(movie_filmedIn:State) | movie_filmedIn { .name }]) } AS movie SKIP 0';
+    expectedCypherQuery =
+      'MATCH (movie:Movie {movieId:"3100"}) RETURN movie { .title ,filmedIn: head([(movie)-[:FILMED_IN]->(movie_filmedIn:State) | movie_filmedIn { .name }]) } AS movie SKIP 0';
   cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery);
 });
 
-test('Query single object and array of objects relations', t=> {
+test('Query single object and array of objects relations', t => {
   const graphQLQuery = `
     {
       MovieById(movieId: "3100") {
@@ -105,11 +107,12 @@ test('Query single object and array of objects relations', t=> {
         }
       }
     }`,
-    expectedCypherQuery = 'MATCH (movie:Movie {movieId:"3100"}) RETURN movie { .title ,actors: [(movie)<-[:ACTED_IN]-(movie_actors:Actor) | movie_actors { .name }] ,filmedIn: head([(movie)-[:FILMED_IN]->(movie_filmedIn:State) | movie_filmedIn { .name }]) } AS movie SKIP 0';
+    expectedCypherQuery =
+      'MATCH (movie:Movie {movieId:"3100"}) RETURN movie { .title ,actors: [(movie)<-[:ACTED_IN]-(movie_actors:Actor) | movie_actors { .name }] ,filmedIn: head([(movie)-[:FILMED_IN]->(movie_filmedIn:State) | movie_filmedIn { .name }]) } AS movie SKIP 0';
   cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery);
 });
 
-test('Deeply nested object query', t=> {
+test('Deeply nested object query', t => {
   const graphQLQuery = `
  {
   Movie(title: "River Runs Through It, A") {
@@ -137,7 +140,7 @@ test('Deeply nested object query', t=> {
   cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery);
 });
 
-test('Handle meta field at beginning of selection set', t=> {
+test('Handle meta field at beginning of selection set', t => {
   const graphQLQuery = `
   {
     Movie(title:"River Runs Through It, A"){
@@ -149,7 +152,7 @@ test('Handle meta field at beginning of selection set', t=> {
   cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery);
 });
 
-test('Handle meta field at end of selection set', t=> {
+test('Handle meta field at end of selection set', t => {
   const graphQLQuery = `
   {
     Movie(title:"River Runs Through It, A"){
@@ -162,7 +165,7 @@ test('Handle meta field at end of selection set', t=> {
   cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery);
 });
 
-test('Handle meta field in middle of selection set', t=> {
+test('Handle meta field in middle of selection set', t => {
   const graphQLQuery = `
   {
     Movie(title:"River Runs Through It, A"){
@@ -176,7 +179,7 @@ test('Handle meta field in middle of selection set', t=> {
   cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery);
 });
 
-test('Handle @cypher directive without any params for sub-query', t=> {
+test('Handle @cypher directive without any params for sub-query', t => {
   const graphQLQuery = `{
     Movie(title: "River Runs Through It, A") {
       mostSimilar {
@@ -190,7 +193,7 @@ test('Handle @cypher directive without any params for sub-query', t=> {
   cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery);
 });
 
-test('Pass @cypher directive default params to sub-query', t=> {
+test('Pass @cypher directive default params to sub-query', t => {
   const graphQLQuery = `{
     Movie(title: "River Runs Through It, A") {
       scaleRating
@@ -201,7 +204,7 @@ test('Pass @cypher directive default params to sub-query', t=> {
   cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery);
 });
 
-test('Pass @cypher directive params to sub-query', t=> {
+test('Pass @cypher directive params to sub-query', t => {
   const graphQLQuery = `{
     Movie(title: "River Runs Through It, A") {
       scaleRating(scale: 10)
@@ -212,7 +215,7 @@ test('Pass @cypher directive params to sub-query', t=> {
   cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery);
 });
 
-test('Query for Neo4js internal _id', t=> {
+test('Query for Neo4js internal _id', t => {
   const graphQLQuery = `{
     Movie(_id: 0) {
       title
@@ -224,7 +227,7 @@ test('Query for Neo4js internal _id', t=> {
   cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery);
 });
 
-test('Query for Neo4js internal _id and another param before _id', t=> {
+test('Query for Neo4js internal _id and another param before _id', t => {
   const graphQLQuery = `{
     Movie(title: "River Runs Through It, A", _id: 0) {
       title
@@ -236,7 +239,7 @@ test('Query for Neo4js internal _id and another param before _id', t=> {
   cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery);
 });
 
-test('Query for Neo4js internal _id and another param after _id', t=> {
+test('Query for Neo4js internal _id and another param after _id', t => {
   const graphQLQuery = `{
     Movie(_id: 0, year: 2010) {
       title
@@ -248,7 +251,7 @@ test('Query for Neo4js internal _id and another param after _id', t=> {
   cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery);
 });
 
-test('Query for Neo4js internal _id by dedicated Query MovieBy_Id(_id: Int!)', t=> {
+test('Query for Neo4js internal _id by dedicated Query MovieBy_Id(_id: Int!)', t => {
   const graphQLQuery = `{
     MovieBy_Id(_id: 0) {
       title
@@ -273,7 +276,8 @@ test('Cypher subquery filters', t => {
         }
       }
     }`,
-    expectedCypherQuery = 'MATCH (movie:Movie {title:"River Runs Through It, A"}) RETURN movie { .title ,actors: [(movie)<-[:ACTED_IN]-(movie_actors:Actor{name: "Tom Hanks"}) | movie_actors { .name }] ,similar: [ movie_similar IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie, first: 3, offset: 0}, true) | movie_similar { .title }][..3] } AS movie SKIP 0';
+    expectedCypherQuery =
+      'MATCH (movie:Movie {title:"River Runs Through It, A"}) RETURN movie { .title ,actors: [(movie)<-[:ACTED_IN]-(movie_actors:Actor{name: "Tom Hanks"}) | movie_actors { .name }] ,similar: [ movie_similar IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie, first: 3, offset: 0}, true) | movie_similar { .title }][..3] } AS movie SKIP 0';
 
   cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery);
 });
@@ -291,7 +295,8 @@ test('Cypher subquery filters with paging', t => {
         }
       }
     }`,
-    expectedCypherQuery = 'MATCH (movie:Movie {title:"River Runs Through It, A"}) RETURN movie { .title ,actors: [(movie)<-[:ACTED_IN]-(movie_actors:Actor{name: "Tom Hanks"}) | movie_actors { .name }][..3] ,similar: [ movie_similar IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie, first: 3, offset: 0}, true) | movie_similar { .title }][..3] } AS movie SKIP 0';
+    expectedCypherQuery =
+      'MATCH (movie:Movie {title:"River Runs Through It, A"}) RETURN movie { .title ,actors: [(movie)<-[:ACTED_IN]-(movie_actors:Actor{name: "Tom Hanks"}) | movie_actors { .name }][..3] ,similar: [ movie_similar IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie, first: 3, offset: 0}, true) | movie_similar { .title }][..3] } AS movie SKIP 0';
 
   cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery);
 });

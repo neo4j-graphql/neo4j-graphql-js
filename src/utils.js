@@ -7,13 +7,12 @@ export function parseArgs(args) {
     return {};
   }
 
-  return args.reduce( (acc, arg) => {
-
+  return args.reduce((acc, arg) => {
     switch (arg.value.kind) {
-      case "IntValue":
+      case 'IntValue':
         acc[arg.name.value] = parseInt(arg.value.value);
         break;
-      case "FloatValue":
+      case 'FloatValue':
         acc[arg.name.value] = parseFloat(arg.value.value);
         break;
       default:
@@ -21,7 +20,7 @@ export function parseArgs(args) {
     }
 
     return acc;
-  }, {})
+  }, {});
 }
 
 function getDefaultArguments(fieldName, schemaType) {
@@ -31,20 +30,25 @@ function getDefaultArguments(fieldName, schemaType) {
     return schemaType._fields[fieldName].args.reduce((acc, arg) => {
       acc[arg.name] = arg.defaultValue;
       return acc;
-    }, {})
+    }, {});
   } catch (err) {
     return {};
   }
 }
 
 export function cypherDirectiveArgs(variable, headSelection, schemaType) {
-  const defaultArgs = getDefaultArguments(headSelection.name.value, schemaType)//{"this": variable};
+  // { "this": variable };
+  const defaultArgs = getDefaultArguments(headSelection.name.value, schemaType);
   const schemaArgs = {}; // FIXME: what's the differenc between schemargs and defaultargs?
   const queryArgs = parseArgs(headSelection.arguments);
   console.log(queryArgs);
 
-  let args = JSON.stringify(Object.assign(defaultArgs, queryArgs)).replace(/\"([^(\")"]+)\":/g," $1: ");
+  let args = JSON.stringify(Object.assign(defaultArgs, queryArgs)).replace(
+    /\"([^(\")"]+)\":/g,
+    ' $1: '
+  );
 
-  return args === "{}" ? `{this: ${variable}${args.substring(1)}` : `{this: ${variable},${args.substring(1)}`
-
+  return args === '{}'
+    ? `{this: ${variable}${args.substring(1)}`
+    : `{this: ${variable},${args.substring(1)}`;
 }

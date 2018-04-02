@@ -9,89 +9,89 @@ import fetch from 'node-fetch';
 
 let client;
 
-test.before( () => {
+test.before(() => {
   client = new ApolloClient({
-    link: new HttpLink({uri: "http://localhost:3000/graphql", fetch: fetch}),
-    cache: new InMemoryCache(),
+    link: new HttpLink({ uri: 'http://localhost:3000/graphql', fetch: fetch }),
+    cache: new InMemoryCache()
   });
 });
 
-test('hello world', t=> {
+test('hello world', t => {
   t.plan(1);
-  t.is("true", "true");
+  t.is('true', 'true');
 });
 
-test('basic GraphQL query', async t=>{
-
+test('basic GraphQL query', async t => {
   t.plan(1);
 
   let expected = {
     data: {
       Movie: [
         {
-          title: "River Runs Through It, A",
-          __typename: "Movie"
+          title: 'River Runs Through It, A',
+          __typename: 'Movie'
         }
       ]
     }
   };
 
-  await client.query({
-    query: gql`{
-        Movie(title: "River Runs Through It, A") {
+  await client
+    .query({
+      query: gql`
+        {
+          Movie(title: "River Runs Through It, A") {
             title
+          }
         }
-    }`
-  })
+      `
+    })
     .then(data => {
-
       t.deepEqual(data.data, expected.data);
     })
     .catch(error => {
       t.fail(error);
-    })
-
+    });
 });
 
-test('GraphQL query with @cypher directive', async t=> {
+test('GraphQL query with @cypher directive', async t => {
   t.plan(1);
 
   let expected = {
-    "data": {
-      "Movie": [
+    data: {
+      Movie: [
         {
-          "__typename": "Movie",
-          "title": "River Runs Through It, A",
-          "actors": [
+          __typename: 'Movie',
+          title: 'River Runs Through It, A',
+          actors: [
             {
-              "__typename": "Actor",
-              "name": " Tom Skerritt"
+              __typename: 'Actor',
+              name: ' Tom Skerritt'
             },
             {
-              "__typename": "Actor",
-              "name": " Brad Pitt"
+              __typename: 'Actor',
+              name: ' Brad Pitt'
             },
             {
-              "__typename": "Actor",
-              "name": " Brenda Blethyn"
+              __typename: 'Actor',
+              name: ' Brenda Blethyn'
             },
             {
-              "__typename": "Actor",
-              "name": "Craig Sheffer"
+              __typename: 'Actor',
+              name: 'Craig Sheffer'
             }
           ],
-          "similar": [
+          similar: [
             {
-              "__typename": "Movie",
-              "title": "Dracula Untold"
+              __typename: 'Movie',
+              title: 'Dracula Untold'
             },
             {
-              "__typename": "Movie",
-              "title": "Captive, The"
+              __typename: 'Movie',
+              title: 'Captive, The'
             },
             {
-              "__typename": "Movie",
-              "title": "Helter Skelter"
+              __typename: 'Movie',
+              title: 'Helter Skelter'
             }
           ]
         }
@@ -99,25 +99,26 @@ test('GraphQL query with @cypher directive', async t=> {
     }
   };
 
-
-  await client.query({
-    query: gql`{
-        Movie(title: "River Runs Through It, A") {
+  await client
+    .query({
+      query: gql`
+        {
+          Movie(title: "River Runs Through It, A") {
             title
             actors {
-                name
+              name
             }
             similar(first: 3) {
-                title
+              title
             }
+          }
         }
-    }`
-  })
-  .then(data => {
-    t.deepEqual(data.data, expected.data);
-  })
-  .catch(error => {
-    t.fail(error);
-  })
-
+      `
+    })
+    .then(data => {
+      t.deepEqual(data.data, expected.data);
+    })
+    .catch(error => {
+      t.fail(error);
+    });
 });
