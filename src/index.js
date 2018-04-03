@@ -1,280 +1,263 @@
-const _ = require('lodash');
+import filter from 'lodash/filter';
 import { cypherDirectiveArgs } from './utils';
 
-const returnTypeEnum = {
-  OBJECT: 0,
-  ARRAY: 1
-};
-
-export function neo4jgraphql(
+export async function neo4jgraphql(
   object,
   params,
   context,
   resolveInfo,
   debug = false
 ) {
-  // const returnTypeEnum = {
-  //   OBJECT: 0,
-  //   ARRAY: 1
-  // };
-
-  let type = innerType(resolveInfo.returnType).toString(),
-    variable = type.charAt(0).toLowerCase() + type.slice(1);
-
-  let query = cypherQuery(params, context, resolveInfo);
+  const query = cypherQuery(params, context, resolveInfo);
 
   if (debug) {
     console.log(query);
   }
 
-  let returnType = resolveInfo.returnType.toString().startsWith('[')
-    ? returnTypeEnum.ARRAY
-    : returnTypeEnum.OBJECT;
-
-  let session = context.driver.session();
-  let data = session.run(query, params).then(result => {
-    if (returnType === returnTypeEnum.ARRAY) {
-      return result.records.map(record => {
-        return record.get(variable);
-      });
-    } else if (returnType === returnTypeEnum.OBJECT) {
-      if (result.records.length > 0) {
-        // FIXME: use one of the new neo4j-driver consumers when upgrading
-        // neo4j-driver package
-        return result.records[0].get(variable);
-      } else {
-        return null;
-      }
-    }
-  });
-
-  return data;
+  const session = context.driver.session();
+  const result = await session.run(query, params);
+  return extractQueryResult(result, resolveInfo.returnType);
 }
 
-export function cypherQuery(params, context, resolveInfo) {
-  let pageParams = {
-    first: params['first'] === undefined ? -1 : params['first'],
-    offset: params['offset'] || 0
-  };
+export function cypherQuery(
+  { first = -1, offset = 0, _id, ...otherParams },
+  context,
+  resolveInfo
+) {
+  const { typeName, variableName } = typeIdentifiers(resolveInfo.returnType);
+  const schemaType = resolveInfo.schema.getType(typeName);
 
-  delete params['first'];
-  delete params['offset'];
-
-  let type = innerType(resolveInfo.returnType).toString(),
-    variable = type.charAt(0).toLowerCase() + type.slice(1),
-    schemaType = resolveInfo.schema.getType(type);
-
-  let filteredFieldNodes = _.filter(resolveInfo.fieldNodes, function(o) {
-    if (o.name.value === resolveInfo.fieldName) {
-      return true;
-    }
-  });
+  const filteredFieldNodes = filter(
+    resolveInfo.fieldNodes,
+    n => n.name.value === resolveInfo.fieldName
+  );
 
   // FIXME: how to handle multiple fieldNode matches
-  let selections = filteredFieldNodes[0].selectionSet.selections;
-
-  let wherePredicate = ``;
-  if (_.has(params, '_id')) {
-    wherePredicate = `WHERE ID(${variable})=${params._id} `;
-    delete params._id;
-  }
+  const selections = filteredFieldNodes[0].selectionSet.selections;
 
   // FIXME: support IN for multiple values -> WHERE
-  let argString = JSON.stringify(params).replace(/\"([^(\")"]+)\":/g, '$1:');
-  let query = `MATCH (${variable}:${type} ${argString}) ${wherePredicate}`;
+  const argString = JSON.stringify(otherParams).replace(
+    /\"([^(\")"]+)\":/g,
+    '$1:'
+  );
 
-  query =
-    query +
-    // ${variable} { ${selection} } as ${variable}`;
-    `RETURN ${variable} {` +
-    buildCypherSelection(``, selections, variable, schemaType, resolveInfo);
+  const idWherePredicate =
+    typeof _id !== 'undefined' ? `WHERE ID(${variableName})=${_id} ` : '';
+  const outerSkipLimit = `SKIP ${offset}${first > -1 ? ' LIMIT ' + first : ''}`;
 
-  query = query + `} AS ${variable}`;
-
-  query =
-    query +
-    ` SKIP ${pageParams.offset}${
-      pageParams.first > -1 ? ' LIMIT ' + pageParams.first : ''
-    }`;
+  const query =
+    `MATCH (${variableName}:${typeName} ${argString}) ${idWherePredicate}` +
+    // ${variableName} { ${selection} } as ${variableName}`;
+    `RETURN ${variableName} {${buildCypherSelection({
+      initial: '',
+      selections,
+      variableName,
+      schemaType,
+      resolveInfo
+    })}} AS ${variableName} ${outerSkipLimit}`;
 
   return query;
 }
 
-function buildCypherSelection(
+function buildCypherSelection({
   initial,
   selections,
-  variable,
-  schemaType,
-  resolveInfo
-) {
-  //FIXME: resolveInfo not needed
-
-  if (selections.length === 0) {
+  variableName,
+  schemaType
+}) {
+  if (!selections.length) {
     return initial;
   }
 
   const [headSelection, ...tailSelections] = selections;
 
+  const tailParams = {
+    selections: tailSelections,
+    variableName,
+    schemaType
+  };
+
   const fieldName = headSelection.name.value;
+
   if (!schemaType.getFields()[fieldName]) {
     // meta field type
-    return buildCypherSelection(
-      tailSelections.length === 0
-        ? initial.substring(initial.lastIndexOf(','), 0)
-        : initial,
-      tailSelections,
-      variable,
-      schemaType,
-      resolveInfo
-    );
+    return buildCypherSelection({
+      initial: tailSelections.length
+        ? initial
+        : initial.substring(0, initial.lastIndexOf(',')),
+      ...tailParams
+    });
   }
+
+  const commaIfTail = tailSelections.length > 0 ? ',' : '';
+
   const fieldType = schemaType.getFields()[fieldName].type;
+  const innerSchemaType = innerType(fieldType); // for target "type" aka label
 
-  let inner = innerType(fieldType); // for target "type" aka label
+  const { statement: customCypher } = cypherDirective(schemaType, fieldName);
 
-  let fieldHasCypherDirective =
-    schemaType.getFields()[fieldName].astNode.directives.filter(e => {
-      return e.name.value === 'cypher';
-    }).length > 0;
-
-  if (fieldHasCypherDirective) {
-    let statement = schemaType
-      .getFields()
-      [fieldName].astNode.directives.find(e => {
-        return e.name.value === 'cypher';
-      })
-      .arguments.find(e => {
-        return e.name.value === 'statement';
-      }).value.value;
-
-    if (inner.constructor.name === 'GraphQLScalarType') {
-      return buildCypherSelection(
-        initial +
-          `${fieldName}: apoc.cypher.runFirstColumn("${statement}", ${cypherDirectiveArgs(
-            variable,
-            headSelection,
-            schemaType
-          )}, false)${tailSelections.length > 0 ? ',' : ''}`,
-        tailSelections,
-        variable,
-        schemaType,
-        resolveInfo
-      );
-    } else {
-      // similar: [ x IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie}, true) |x {.title}][1..2])
-
-      let nestedVariable = variable + '_' + fieldName;
-      let skipLimit = computeSkipLimit(headSelection);
-      let fieldIsList = !!fieldType.ofType;
-
-      return buildCypherSelection(
-        initial +
-          `${fieldName}: ${
-            fieldIsList ? '' : 'head('
-          }[ ${nestedVariable} IN apoc.cypher.runFirstColumn("${statement}", ${cypherDirectiveArgs(
-            variable,
-            headSelection,
-            schemaType
-          )}, true) | ${nestedVariable} {${buildCypherSelection(
-            ``,
-            headSelection.selectionSet.selections,
-            nestedVariable,
-            inner,
-            resolveInfo
-          )}}]${fieldIsList ? '' : ')'}${skipLimit} ${
-            tailSelections.length > 0 ? ',' : ''
-          }`,
-        tailSelections,
-        variable,
-        schemaType,
-        resolveInfo
-      );
-    }
-  } else if (innerType(fieldType).constructor.name === 'GraphQLScalarType') {
-    return buildCypherSelection(
-      initial + ` .${fieldName} ${tailSelections.length > 0 ? ',' : ''}`,
-      tailSelections,
-      variable,
-      schemaType,
-      resolveInfo
-    );
-  } else {
-    // field is an object
-    let nestedVariable = variable + '_' + fieldName,
-      skipLimit = computeSkipLimit(headSelection),
-      relationDirective = schemaType
-        .getFields()
-        [fieldName].astNode.directives.find(e => {
-          return e.name.value === 'relation';
-        }),
-      relType = relationDirective.arguments.find(e => {
-        return e.name.value === 'name';
-      }).value.value,
-      relDirection = relationDirective.arguments.find(e => {
-        return e.name.value === 'direction';
-      }).value.value;
-
-    let returnType = fieldType.toString().startsWith('[')
-      ? returnTypeEnum.ARRAY
-      : returnTypeEnum.OBJECT;
-
-    let queryParams = '';
-
-    if (
-      selections &&
-      selections.length &&
-      selections[0].arguments &&
-      selections[0].arguments.length
-    ) {
-      const filters = selections[0].arguments
-        .filter(x => {
-          return x.name.value !== 'first' && x.name.value !== 'offset';
-        })
-        .map(x => {
-          const filterValue = JSON.stringify(x.value.value).replace(
-            /\"([^(\")"]+)\":/g,
-            '$1:'
-          ); // FIXME: support IN for multiple values -> WHERE
-          return `${x.name.value}: ${filterValue}`;
-        });
-
-      queryParams = `{${filters.join(',')}}`;
+  if (isGraphqlScalarType(innerSchemaType)) {
+    if (customCypher) {
+      return buildCypherSelection({
+        initial: `${initial}${fieldName}: apoc.cypher.runFirstColumn("${customCypher}", ${cypherDirectiveArgs(
+          variableName,
+          headSelection,
+          schemaType
+        )}, false)${commaIfTail}`,
+        ...tailParams
+      });
     }
 
-    return buildCypherSelection(
-      initial +
-        `${fieldName}: ${
-          returnType === returnTypeEnum.OBJECT ? 'head(' : ''
-        }[(${variable})${
-          relDirection === 'in' || relDirection === 'IN' ? '<' : ''
-        }-[:${relType}]-${
-          relDirection === 'out' || relDirection === 'OUT' ? '>' : ''
-        }(${nestedVariable}:${
-          inner.name
-        }${queryParams}) | ${nestedVariable} {${buildCypherSelection(
-          ``,
-          headSelection.selectionSet.selections,
-          nestedVariable,
-          inner,
-          resolveInfo
-        )}}]${returnType === returnTypeEnum.OBJECT ? ')' : ''}${skipLimit} ${
-          tailSelections.length > 0 ? ',' : ''
-        }`,
-      tailSelections,
-      variable,
-      schemaType,
-      resolveInfo
-    );
+    // graphql scalar type, no custom cypher statement
+    return buildCypherSelection({
+      initial: `${initial} .${fieldName} ${commaIfTail}`,
+      ...tailParams
+    });
   }
+
+  // We have a graphql object type
+
+  const nestedVariable = variableName + '_' + fieldName;
+  const skipLimit = computeSkipLimit(headSelection);
+
+  const nestedParams = {
+    initial: '',
+    selections: headSelection.selectionSet.selections,
+    variableName: nestedVariable,
+    schemaType: innerSchemaType
+  };
+
+  if (customCypher) {
+    // similar: [ x IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie}, true) |x {.title}][1..2])
+    const fieldIsList = !!fieldType.ofType;
+
+    return buildCypherSelection({
+      initial: `${initial}${fieldName}: ${
+        fieldIsList ? '' : 'head('
+      }[ ${nestedVariable} IN apoc.cypher.runFirstColumn("${customCypher}", ${cypherDirectiveArgs(
+        variableName,
+        headSelection,
+        schemaType
+      )}, true) | ${nestedVariable} {${buildCypherSelection({
+        ...nestedParams
+      })}}]${fieldIsList ? '' : ')'}${skipLimit} ${commaIfTail}`,
+      ...tailParams
+    });
+  }
+
+  // graphql object type, no custom cypher
+
+  const { name: relType, direction: relDirection } = relationDirective(
+    schemaType,
+    fieldName
+  );
+
+  const queryParams = innerFilterParams(selections);
+
+  return buildCypherSelection({
+    initial: `${initial}${fieldName}: ${
+      !isArrayType(fieldType) ? 'head(' : ''
+    }[(${variableName})${
+      relDirection === 'in' || relDirection === 'IN' ? '<' : ''
+    }-[:${relType}]-${
+      relDirection === 'out' || relDirection === 'OUT' ? '>' : ''
+    }(${nestedVariable}:${
+      innerSchemaType.name
+    }${queryParams}) | ${nestedVariable} {${buildCypherSelection({
+      ...nestedParams
+    })}}]${!isArrayType(fieldType) ? ')' : ''}${skipLimit} ${commaIfTail}`,
+    ...tailParams
+  });
+}
+
+function typeIdentifiers(returnType) {
+  const typeName = innerType(returnType).toString();
+  return {
+    variableName: lowFirstLetter(typeName),
+    typeName
+  };
+}
+
+function isGraphqlScalarType(type) {
+  return type.constructor.name === 'GraphQLScalarType';
+}
+
+function isArrayType(type) {
+  return type.toString().startsWith('[');
+}
+
+function lowFirstLetter(word) {
+  return word.charAt(0).toLowerCase() + word.slice(1);
 }
 
 function innerType(type) {
   return type.ofType ? innerType(type.ofType) : type;
 }
 
+const directiveWithArgs = (directiveName, args) => (schemaType, fieldName) => {
+  function fieldDirective(schemaType, fieldName, directiveName) {
+    return schemaType
+      .getFields()
+      [fieldName].astNode.directives.find(e => e.name.value === directiveName);
+  }
+
+  function directiveArgument(directive, name) {
+    return directive.arguments.find(e => e.name.value === name).value.value;
+  }
+
+  const directive = fieldDirective(schemaType, fieldName, directiveName);
+  const ret = {};
+  if (directive) {
+    Object.assign(
+      ret,
+      ...args.map(key => ({
+        [key]: directiveArgument(directive, key)
+      }))
+    );
+  }
+  return ret;
+};
+
+const cypherDirective = directiveWithArgs('cypher', ['statement']);
+const relationDirective = directiveWithArgs('relation', ['name', 'direction']);
+
+function innerFilterParams(selections) {
+  let queryParams = '';
+
+  if (
+    selections &&
+    selections.length &&
+    selections[0].arguments &&
+    selections[0].arguments.length
+  ) {
+    const filters = selections[0].arguments
+      .filter(x => {
+        return x.name.value !== 'first' && x.name.value !== 'offset';
+      })
+      .map(x => {
+        const filterValue = JSON.stringify(x.value.value).replace(
+          /\"([^(\")"]+)\":/g,
+          '$1:'
+        ); // FIXME: support IN for multiple values -> WHERE
+        return `${x.name.value}: ${filterValue}`;
+      });
+
+    queryParams = `{${filters.join(',')}}`;
+  }
+  return queryParams;
+}
+
 function argumentValue(selection, name) {
   let arg = selection.arguments.find(a => a.name.value === name);
   return arg === undefined ? null : arg.value.value;
+}
+
+function extractQueryResult({ records }, returnType) {
+  const { variableName } = typeIdentifiers(returnType);
+
+  return isArrayType(returnType)
+    ? records.map(record => record.get(variableName))
+    : records.length ? records[0].get(variableName) : null;
 }
 
 function computeSkipLimit(selection) {
