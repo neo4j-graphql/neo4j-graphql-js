@@ -15,12 +15,12 @@ jobs:
       - run: unzip recommendations.db.zip
       - run: mv recommendations.db neo4j-enterprise-3.3.4/data/databases/graph.db
       - run: ./neo4j-enterprise-3.3.4/bin/neo4j start
-      - run: sleep 30
+      - run: sleep 60
       - run:
           name: starting GraphQL service
           command: node -r babel-register ./example/graphql-tools/movies.js
           background: true
-      - run: sleep 30
+      - run: sleep 60
       - run: ./node_modules/.bin/ava test/*.js
 
   neo4j32:
@@ -38,12 +38,12 @@ jobs:
       - run: unzip recommendations.db.zip
       - run: mv recommendations.db neo4j-enterprise-3.2.10/data/databases/graph.db
       - run: ./neo4j-enterprise-3.2.10/bin/neo4j start
-      - run: sleep 30
+      - run: sleep 60
       - run:
           name: starting GraphQL service
           command: node -r babel-register ./example/graphql-tools/movies.js
           background: true
-      - run: sleep 30
+      - run: sleep 60
       - run: ./node_modules/.bin/ava test/*.js
 workflows:
   version: 2
