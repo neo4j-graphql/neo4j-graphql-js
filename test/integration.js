@@ -122,3 +122,52 @@ test('GraphQL query with @cypher directive', async t => {
       t.fail(error);
     });
 });
+
+test('Handle @cypher directive on QueryType', async t => {
+  t.plan(1);
+
+  let expected = {
+    data: {
+      GenresBySubstring: [
+        {
+          name: "Action",
+          __typename: "Genre",
+          movies: [
+            {
+              __typename: "Movie",
+              title: "Dracula Untold"
+            },
+            {
+              __typename: "Movie",
+              title: "Stretch"
+            },
+            {
+              __typename: "Movie",
+              title: "Predestination"
+            }
+          ]
+        }
+      ]
+    }
+  };
+
+  await client
+    .query({
+      query: gql`
+      {
+        GenresBySubstring(substring:"Action") {
+          name
+          movies(first: 3) {
+            title
+          }
+        }
+       }
+      `
+    })
+    .then(data => {
+      t.deepEqual(data.data, expected.data);
+    })
+    .catch(error => {
+      t.fail(error);
+    })
+});

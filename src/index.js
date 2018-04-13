@@ -45,16 +45,37 @@ export function cypherQuery(
     typeof _id !== 'undefined' ? `WHERE ID(${variableName})=${_id} ` : '';
   const outerSkipLimit = `SKIP ${offset}${first > -1 ? ' LIMIT ' + first : ''}`;
 
-  const query =
-    `MATCH (${variableName}:${typeName} ${argString}) ${idWherePredicate}` +
-    // ${variableName} { ${selection} } as ${variableName}`;
-    `RETURN ${variableName} {${buildCypherSelection({
+  let query;
+  const queryTypeCypherDirective = resolveInfo.schema.getQueryType().getFields()[resolveInfo.fieldName].astNode.directives.filter( x => {
+    return x.name.value === "cypher";
+  })[0];
+
+  if (queryTypeCypherDirective) {
+    // QueryType with a @cypher directive
+    const cypherQueryArg = queryTypeCypherDirective.arguments.filter( x=> {
+      return x.name.value === "statement";
+    })[0];
+
+    query = `WITH apoc.cypher.runFirstColumn("${cypherQueryArg.value.value}", ${argString}, True) AS x UNWIND x AS ${variableName}
+    RETURN ${variableName} {${buildCypherSelection({
       initial: '',
       selections,
       variableName,
       schemaType,
       resolveInfo
     })}} AS ${variableName} ${outerSkipLimit}`;
+  } else {
+    // No @cypher directive on QueryType
+    query = `MATCH (${variableName}:${typeName} ${argString}) ${idWherePredicate}` +
+      // ${variableName} { ${selection} } as ${variableName}`;
+      `RETURN ${variableName} {${buildCypherSelection({
+        initial: '',
+        selections,
+        variableName,
+        schemaType,
+        resolveInfo
+      })}} AS ${variableName} ${outerSkipLimit}`;
+  }
 
   return query;
 }
@@ -194,6 +215,8 @@ function innerType(type) {
   return type.ofType ? innerType(type.ofType) : type;
 }
 
+// handles field level schema directives
+// TODO: refactor to handle Query/Mutation type schema directives
 const directiveWithArgs = (directiveName, args) => (schemaType, fieldName) => {
   function fieldDirective(schemaType, fieldName, directiveName) {
     return schemaType
@@ -268,4 +291,8 @@ function computeSkipLimit(selection) {
   if (offset === null) return `[..${first}]`;
   if (first === null) return `[${offset}..]`;
   return `[${offset}..${parseInt(offset) + parseInt(first)}]`;
+}
+
+function getSchemaDirective(fieldNode, directiveName, schema) {
+  
 }

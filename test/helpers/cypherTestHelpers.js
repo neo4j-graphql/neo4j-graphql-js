@@ -16,7 +16,7 @@ type Movie {
   plot: String
   poster: String
   imdbRating: Float
-  genres: [String]
+  genres: [Genre] @relation(name: "IN_GENRE", direction: "OUT")
   similar(first: Int = 3, offset: Int = 0): [Movie] @cypher(statement: "WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o")
   mostSimilar: Movie @cypher(statement: "WITH {this} AS this RETURN this")
   degree: Int @cypher(statement: "WITH {this} AS this RETURN SIZE((this)--())")
@@ -26,6 +26,12 @@ type Movie {
   scaleRating(scale: Int = 3): Float @cypher(statement: "WITH $this AS this RETURN $scale * this.imdbRating")
   scaleRatingFloat(scale: Float = 1.5): Float @cypher(statement: "WITH $this AS this RETURN $scale * this.imdbRating")
   actorMovies: [Movie] @cypher(statement: "MATCH (this)-[:ACTED_IN*2]-(other:Movie) RETURN other")
+}
+
+type Genre {
+  name: String
+  movies(first: Int = 3, offset: Int = 0): [Movie] @relation(name: "IN_GENRE", direction: "IN")
+  highestRatedMovie: Movie @cypher(statement: "MATCH (m:Movie)-[:IN_GENRE]->(this) RETURN m ORDER BY m.imdbRating DESC LIMIT 1")
 }
 
 type State {
@@ -53,6 +59,7 @@ type Query {
   MoviesByYear(year: Int): [Movie]
   MovieById(movieId: ID!): Movie
   MovieBy_Id(_id: Int!): Movie
+  GenresBySubstring(substring: String): [Genre] @cypher(statement: "MATCH (g:Genre) WHERE toLower(g.name) CONTAINS toLower($substring) RETURN g")
 }
 `;
 
@@ -73,6 +80,10 @@ type Query {
         t.is(query, expectedCypherQuery);
       },
       MovieBy_Id(object, params, ctx, resolveInfo) {
+        let query = cypherQuery(params, ctx, resolveInfo);
+        t.is(query, expectedCypherQuery);
+      },
+      GenresBySubstring(object, params, ctx, resolveInfo) {
         let query = cypherQuery(params, ctx, resolveInfo);
         t.is(query, expectedCypherQuery);
       }

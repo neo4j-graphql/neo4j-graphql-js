@@ -300,3 +300,21 @@ test('Cypher subquery filters with paging', t => {
 
   cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery);
 });
+
+test('Handle @cypher directive on Query Type', t => {
+  const graphQLQuery = `
+  {
+  GenresBySubstring(substring:"Action") {
+    name
+    movies(first: 3) {
+      title
+    }
+  }
+}
+  `,
+    expectedCypherQuery =
+      `WITH apoc.cypher.runFirstColumn("MATCH (g:Genre) WHERE toLower(g.name) CONTAINS toLower($substring) RETURN g", {substring:"Action"}, True) AS x UNWIND x AS genre
+    RETURN genre { .name ,movies: [(genre)<-[:IN_GENRE]-(genre_movies:Movie{}) | genre_movies { .title }][..3] } AS genre SKIP 0`;
+
+  cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery);
+});
