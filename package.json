@@ -1,11 +1,10 @@
 {
   "name": "neo4j-graphql-js",
-  "version": "0.1.10",
+  "version": "0.1.11",
   "description": "A GraphQL to Cypher query execution layer for Neo4j. ",
   "main": "./dist/index.js",
   "scripts": {
-    "start":
-      "nodemon ./example/graphql-tools/movies.js --exec babel-node -e js",
+    "start": "nodemon ./example/graphql-tools/movies.js --exec babel-node -e js",
     "build": "babel src --presets babel-preset-env --out-dir dist",
     "precommit": "lint-staged",
     "prepublish": "npm run build",
@@ -49,6 +48,9 @@
     "singleQuote": true
   },
   "lint-staged": {
-    "*.{js,json,css,md}": ["prettier --write", "git add"]
+    "*.{js,json,css,md}": [
+      "prettier --write",
+      "git add"
+    ]
   }
 }
