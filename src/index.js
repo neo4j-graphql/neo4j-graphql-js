@@ -84,7 +84,8 @@ function buildCypherSelection({
   initial,
   selections,
   variableName,
-  schemaType
+  schemaType,
+  resolveInfo
 }) {
   if (!selections.length) {
     return initial;
@@ -95,7 +96,8 @@ function buildCypherSelection({
   const tailParams = {
     selections: tailSelections,
     variableName,
-    schemaType
+    schemaType,
+    resolveInfo
   };
 
   const fieldName = headSelection.name.value;
@@ -123,7 +125,8 @@ function buildCypherSelection({
         initial: `${initial}${fieldName}: apoc.cypher.runFirstColumn("${customCypher}", ${cypherDirectiveArgs(
           variableName,
           headSelection,
-          schemaType
+          schemaType,
+          resolveInfo
         )}, false)${commaIfTail}`,
         ...tailParams
       });
@@ -139,13 +142,14 @@ function buildCypherSelection({
   // We have a graphql object type
 
   const nestedVariable = variableName + '_' + fieldName;
-  const skipLimit = computeSkipLimit(headSelection);
+  const skipLimit = computeSkipLimit(headSelection, resolveInfo.variableValues);
 
   const nestedParams = {
     initial: '',
     selections: headSelection.selectionSet.selections,
     variableName: nestedVariable,
-    schemaType: innerSchemaType
+    schemaType: innerSchemaType,
+    resolveInfo
   };
 
   if (customCypher) {
@@ -158,7 +162,8 @@ function buildCypherSelection({
       }[ ${nestedVariable} IN apoc.cypher.runFirstColumn("${customCypher}", ${cypherDirectiveArgs(
         variableName,
         headSelection,
-        schemaType
+        schemaType,
+        resolveInfo
       )}, true) | ${nestedVariable} {${buildCypherSelection({
         ...nestedParams
       })}}]${fieldIsList ? '' : ')'}${skipLimit} ${commaIfTail}`,
@@ -270,9 +275,15 @@ function innerFilterParams(selections) {
   return queryParams;
 }
 
-function argumentValue(selection, name) {
+function argumentValue(selection, name, variableValues) {
   let arg = selection.arguments.find(a => a.name.value === name);
-  return arg === undefined ? null : arg.value.value;
+  if (!arg) {
+    return null;
+  } else if (!arg.value.value && name in variableValues && arg.value.kind === "Variable") {
+    return variableValues[name];
+  }  else {
+    return arg.value.value;
+  }
 }
 
 function extractQueryResult({ records }, returnType) {
@@ -283,9 +294,9 @@ function extractQueryResult({ records }, returnType) {
     : records.length ? records[0].get(variableName) : null;
 }
 
-function computeSkipLimit(selection) {
-  let first = argumentValue(selection, 'first');
-  let offset = argumentValue(selection, 'offset');
+function computeSkipLimit(selection, variableValues) {
+  let first = argumentValue(selection, 'first', variableValues);
+  let offset = argumentValue(selection, 'offset', variableValues);
 
   if (first === null && offset === null) return '';
   if (offset === null) return `[..${first}]`;
