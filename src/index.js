@@ -303,7 +303,3 @@ function computeSkipLimit(selection, variableValues) {
   if (first === null) return `[${offset}..]`;
   return `[${offset}..${parseInt(offset) + parseInt(first)}]`;
 }
-
-function getSchemaDirective(fieldNode, directiveName, schema) {
-  
-}
