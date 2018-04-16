@@ -1,4 +1,8 @@
-export function parseArgs(args) {
+export function parseArgs(args, variableValues) {
+  // get args from selection.arguments object
+  // or from resolveInfo.variableValues if arg is a variable
+  // note that variable values override default values
+
   if (!args) {
     return {};
   }
@@ -15,6 +19,9 @@ export function parseArgs(args) {
       case 'FloatValue':
         acc[arg.name.value] = parseFloat(arg.value.value);
         break;
+      case 'Variable':
+        acc[arg.name.value] = variableValues[arg.name.value];
+        break;
       default:
         acc[arg.name.value] = arg.value.value;
     }
@@ -24,7 +31,7 @@ export function parseArgs(args) {
 }
 
 function getDefaultArguments(fieldName, schemaType) {
-  // FIXME: check that these things exist
+  // get default arguments for this field from schema
 
   try {
     return schemaType._fields[fieldName].args.reduce((acc, arg) => {
@@ -36,12 +43,10 @@ function getDefaultArguments(fieldName, schemaType) {
   }
 }
 
-export function cypherDirectiveArgs(variable, headSelection, schemaType) {
-  // { "this": variable };
+export function cypherDirectiveArgs(variable, headSelection, schemaType, resolveInfo) {
+
   const defaultArgs = getDefaultArguments(headSelection.name.value, schemaType);
-  const schemaArgs = {}; // FIXME: what's the differenc between schemargs and defaultargs?
-  const queryArgs = parseArgs(headSelection.arguments);
-  console.log(queryArgs);
+  const queryArgs = parseArgs(headSelection.arguments, resolveInfo.variableValues);
 
   let args = JSON.stringify(Object.assign(defaultArgs, queryArgs)).replace(
     /\"([^(\")"]+)\":/g,

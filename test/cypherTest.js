@@ -319,7 +319,7 @@ test('Handle @cypher directive on Query Type', t => {
   cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery);
 });
 
-test('Handle GraphQL variables in nested selection - first', t=> {
+test('Handle GraphQL variables in nested selection - first/offset', t=> {
   const graphQLQuery = `query ($year: Int!, $first: Int!) {
 
   Movie(year: $year) {
@@ -331,7 +331,25 @@ test('Handle GraphQL variables in nested selection - first', t=> {
   }
 }`,
     expectedCypherQuery =
-      `MATCH (movie:Movie {year:2016}) RETURN movie { .title , .year ,similar: [ movie_similar IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie, offset: 0}, true) | movie_similar { .title }][..3] } AS movie SKIP 0`;
+      `MATCH (movie:Movie {year:2016}) RETURN movie { .title , .year ,similar: [ movie_similar IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie, first: 3, offset: 0}, true) | movie_similar { .title }][..3] } AS movie SKIP 0`;
 
   cypherTestRunner(t, graphQLQuery, {year: 2016, first: 3}, expectedCypherQuery);
+});
+
+test('Handle GraphQL variables in nest selection - @cypher param (not first/offset)', t=> {
+  const graphQLQuery  = `query ($year: Int = 2016, $first: Int = 2, $scale:Int) {
+
+  Movie(year: $year) {
+    title
+    year
+    similar(first: $first) {
+      title
+      scaleRating(scale:$scale) 
+    }
+    
+  }
+}`,
+    expectedCypherQuery = `MATCH (movie:Movie {year:2016}) RETURN movie { .title , .year ,similar: [ movie_similar IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie, first: 3, offset: 0}, true) | movie_similar { .title ,scaleRating: apoc.cypher.runFirstColumn("WITH $this AS this RETURN $scale * this.imdbRating", {this: movie_similar, scale: 5}, false)}][..3] } AS movie SKIP 0`;
+
+  cypherTestRunner(t, graphQLQuery, {year: 2016, first: 3, scale: 5}, expectedCypherQuery);
 });
