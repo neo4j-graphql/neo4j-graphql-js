@@ -353,3 +353,21 @@ test('Handle GraphQL variables in nest selection - @cypher param (not first/offs
 
   cypherTestRunner(t, graphQLQuery, {year: 2016, first: 3, scale: 5}, expectedCypherQuery);
 });
+
+test('Return internal node id for _id field', t=> {
+  const graphQLQuery = `{
+  Movie(year: 2016) {
+    _id
+    title
+    year
+    genres {
+      _id
+      name
+    }
+  }
+}
+`,
+    expectedCypherQuery = `MATCH (movie:Movie {year:2016}) RETURN movie {_id: ID(movie), .title , .year ,genres: [(movie)-[:IN_GENRE]->(movie_genres:Genre) | movie_genres {_id: ID(movie_genres), .name }] } AS movie SKIP 0`;
+
+  cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery);
+});

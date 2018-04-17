@@ -8,6 +8,7 @@ import { v1 as neo4j } from 'neo4j-driver';
 // Simple Movie schema
 const typeDefs = `
 type Movie {
+  _id: ID
   movieId: ID!
   title: String
   year: Int
@@ -26,6 +27,7 @@ type Movie {
 }
 
 type Genre {
+  _id: ID!
   name: String
   movies(first: Int = 3, offset: Int = 0): [Movie] @relation(name: "IN_GENRE", direction: "IN")
   highestRatedMovie: Movie @cypher(statement: "MATCH (m:Movie)-[:IN_GENRE]->(this) RETURN m ORDER BY m.imdbRating DESC LIMIT 1")

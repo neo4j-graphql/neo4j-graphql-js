@@ -101,24 +101,33 @@ function buildCypherSelection({
   };
 
   const fieldName = headSelection.name.value;
+  const commaIfTail = tailSelections.length > 0 ? ',' : '';
 
+  // Schema meta fields(__schema, __typename, etc)
   if (!schemaType.getFields()[fieldName]) {
-    // meta field type
+
+      return buildCypherSelection({
+        initial: tailSelections.length
+          ? initial
+          : initial.substring(0, initial.lastIndexOf(',')),
+        ...tailParams
+      });
+  }
+
+  const fieldType = schemaType.getFields()[fieldName].type;
+  const innerSchemaType = innerType(fieldType); // for target "type" aka label
+  const { statement: customCypher } = cypherDirective(schemaType, fieldName);
+
+
+  // Database meta fields(_id)
+  if (fieldName === '_id') {
     return buildCypherSelection({
-      initial: tailSelections.length
-        ? initial
-        : initial.substring(0, initial.lastIndexOf(',')),
+      initial: `${initial}${fieldName}: ID(${variableName})${commaIfTail}`,
       ...tailParams
     });
   }
 
-  const commaIfTail = tailSelections.length > 0 ? ',' : '';
-
-  const fieldType = schemaType.getFields()[fieldName].type;
-  const innerSchemaType = innerType(fieldType); // for target "type" aka label
-
-  const { statement: customCypher } = cypherDirective(schemaType, fieldName);
-
+  // Main control flow
   if (isGraphqlScalarType(innerSchemaType)) {
     if (customCypher) {
       return buildCypherSelection({
