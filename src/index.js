@@ -214,7 +214,7 @@ function typeIdentifiers(returnType) {
 }
 
 function isGraphqlScalarType(type) {
-  return type.constructor.name === 'GraphQLScalarType';
+  return type.constructor.name === 'GraphQLScalarType' || type.constructor.name === 'GraphQLEnumType';
 }
 
 function isArrayType(type) {

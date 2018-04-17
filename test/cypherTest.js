@@ -371,3 +371,15 @@ test('Return internal node id for _id field', t=> {
 
   cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery);
 });
+
+test('Treat enum as a scalar', t=> {
+  const graphQLQuery = `
+  {
+    Books {
+      genre
+    }
+  }`,
+    expectedCypherQuery = `MATCH (book:Book {}) RETURN book { .genre } AS book SKIP 0`;
+
+  cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery);
+});

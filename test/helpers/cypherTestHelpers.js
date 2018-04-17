@@ -56,12 +56,23 @@ type User implements Person {
 	name: String
 }
 
+enum BookGenre {
+  Mystery,
+  Science,
+  Math
+}
+
+type Book {
+  genre: BookGenre
+}
+
 type Query {
   Movie(_id: Int, id: ID, title: String, year: Int, plot: String, poster: String, imdbRating: Float, first: Int, offset: Int): [Movie]
   MoviesByYear(year: Int): [Movie]
   MovieById(movieId: ID!): Movie
   MovieBy_Id(_id: Int!): Movie
   GenresBySubstring(substring: String): [Genre] @cypher(statement: "MATCH (g:Genre) WHERE toLower(g.name) CONTAINS toLower($substring) RETURN g")
+  Books: [Book]
 }
 `;
 
@@ -86,6 +97,10 @@ type Query {
         t.is(query, expectedCypherQuery);
       },
       GenresBySubstring(object, params, ctx, resolveInfo) {
+        let query = cypherQuery(params, ctx, resolveInfo);
+        t.is(query, expectedCypherQuery);
+      },
+      Books(object, params, ctx, resolveInfo) {
         let query = cypherQuery(params, ctx, resolveInfo);
         t.is(query, expectedCypherQuery);
       }

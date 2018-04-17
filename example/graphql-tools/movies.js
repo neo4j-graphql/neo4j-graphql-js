@@ -53,6 +53,15 @@ type User implements Person {
 	name: String
 }
 
+enum BookGenre {
+  Mystery,
+  Science,
+  Math
+}
+
+type Book {
+  genre: BookGenre
+}
 
 type Query {
   Movie(id: ID, title: String, year: Int, plot: String, poster: String, imdbRating: Float, first: Int, offset: Int): [Movie]
@@ -60,6 +69,7 @@ type Query {
   AllMovies: [Movie]
   MovieById(movieId: ID!): Movie
   GenresBySubstring(substring: String): [Genre] @cypher(statement: "MATCH (g:Genre) WHERE toLower(g.name) CONTAINS toLower($substring) RETURN g")
+  Books: [Book]
 }
 `;
 
@@ -80,6 +90,9 @@ const resolvers = {
       return neo4jgraphql(object, params, ctx, resolveInfo, true);
     },
     GenresBySubstring(object, params, ctx, resolveInfo) {
+      return neo4jgraphql(object, params, ctx, resolveInfo, true);
+    },
+    Books(object, params, ctx, resolveInfo) {
       return neo4jgraphql(object, params, ctx, resolveInfo, true);
     }
   }
