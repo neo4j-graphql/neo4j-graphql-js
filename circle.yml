@@ -50,4 +50,4 @@ workflows:
   integration_test:
     jobs:
       - neo4j33
-      - neo4j32
+#      - neo4j32
