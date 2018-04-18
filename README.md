@@ -268,11 +268,10 @@ See [/examples](https://github.com/neo4j-graphql/neo4j-graphql-js/tree/master/ex
 * [x] translate basic GraphQL queries to Cypher
 * [x] `first` and `offset` arguments for pagination
 * [x] `@cypher` schema directive for exposing Cypher through GraphQL
-* [ ] Handle enumeration types
+* [x] Handle enumeration types
+* [x] Handle fragments
 * [ ] Handle interface types
-* [ ] Handle fragments
-* [ ] Handle named fragments
+* [ ] Handle inline fragments
 * [ ] Ordering
-* [ ] Example with `graphql-js`
-* [ ] Example with `apollo-server`
-* [ ] Example with Apollo Launchpad
+
+
