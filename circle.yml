@@ -73,5 +73,5 @@ workflows:
   integration_test:
     jobs:
       - neo4j33ee
-      - neo4j33cd
+      - neo4j33ce
       - neo4j32ee
