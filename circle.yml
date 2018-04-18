@@ -72,5 +72,6 @@ workflows:
   version: 2
   integration_test:
     jobs:
-      - neo4j33
-      - neo4j32
+      - neo4j33ee
+      - neo4j33cd
+      - neo4j32ee
