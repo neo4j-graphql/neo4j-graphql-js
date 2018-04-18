@@ -33,7 +33,7 @@ export function cypherQuery(
   );
 
   // FIXME: how to handle multiple fieldNode matches
-  const selections = filteredFieldNodes[0].selectionSet.selections;
+  const selections = extractSelections(filteredFieldNodes[0].selectionSet.selections, resolveInfo.fragments);
 
   // FIXME: support IN for multiple values -> WHERE
   const argString = JSON.stringify(otherParams).replace(
@@ -311,4 +311,15 @@ function computeSkipLimit(selection, variableValues) {
   if (offset === null) return `[..${first}]`;
   if (first === null) return `[${offset}..]`;
   return `[${offset}..${parseInt(offset) + parseInt(first)}]`;
+}
+
+function extractSelections(selections, fragments) {
+// extract any fragment selection sets into a single array of selections
+  return selections.reduce((acc, cur) => {
+    if (cur.kind === "FragmentSpread") {
+      return [...acc, ...fragments[cur.name.value].selectionSet.selections];
+    } else {
+      return [...acc, cur];
+    }
+  }, [])
 }

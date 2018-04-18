@@ -383,3 +383,48 @@ test('Treat enum as a scalar', t=> {
 
   cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery);
 });
+
+test('Handle query fragment', t=> {
+  const graphQLQuery = `
+fragment myTitle on Movie {
+  title
+  actors {
+    name
+  }
+}
+
+query getMovie {
+  Movie(title: "River Runs Through It, A") {
+    ...myTitle
+    year
+  }
+}`,
+    expectedCypherQuery = `MATCH (movie:Movie {title:"River Runs Through It, A"}) RETURN movie { .title ,actors: [(movie)<-[:ACTED_IN]-(movie_actors:Actor) | movie_actors { .name }] , .year } AS movie SKIP 0`;
+
+  cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery);
+});
+
+test('Handle multiple query fragments', t=> {
+  const graphQLQuery = `
+    fragment myTitle on Movie {
+  title
+}
+
+fragment myActors on Movie {
+  actors {
+    name
+  }
+}
+
+query getMovie {
+  Movie(title: "River Runs Through It, A") {
+    ...myTitle
+    ...myActors
+    year
+  }
+}
+  `,
+    expectedCypherQuery = `MATCH (movie:Movie {title:"River Runs Through It, A"}) RETURN movie { .title ,actors: [(movie)<-[:ACTED_IN]-(movie_actors:Actor) | movie_actors { .name }] , .year } AS movie SKIP 0`;
+  
+  cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery);
+});
