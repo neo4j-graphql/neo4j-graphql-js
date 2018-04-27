@@ -1,5 +1,5 @@
 import filter from 'lodash/filter';
-import { cypherDirectiveArgs } from './utils';
+import { cypherDirectiveArgs, isMutation } from './utils';
 
 export async function neo4jgraphql(
   object,
@@ -8,10 +8,20 @@ export async function neo4jgraphql(
   resolveInfo,
   debug = false
 ) {
-  const query = cypherQuery(params, context, resolveInfo);
+  let query;
+
+  if (isMutation(resolveInfo)) {
+    query = cypherMutation(params, context, resolveInfo);
+  } else {
+    query = cypherQuery(params, context, resolveInfo);
+  }
 
   if (debug) {
     console.log(query);
+  }
+
+  if (isMutation(resolveInfo)) {
+    params = { params: params };
   }
 
   const session = context.driver.session();
@@ -33,7 +43,10 @@ export function cypherQuery(
   );
 
   // FIXME: how to handle multiple fieldNode matches
-  const selections = extractSelections(filteredFieldNodes[0].selectionSet.selections, resolveInfo.fragments);
+  const selections = extractSelections(
+    filteredFieldNodes[0].selectionSet.selections,
+    resolveInfo.fragments
+  );
 
   // FIXME: support IN for multiple values -> WHERE
   const argString = JSON.stringify(otherParams).replace(
@@ -46,17 +59,22 @@ export function cypherQuery(
   const outerSkipLimit = `SKIP ${offset}${first > -1 ? ' LIMIT ' + first : ''}`;
 
   let query;
-  const queryTypeCypherDirective = resolveInfo.schema.getQueryType().getFields()[resolveInfo.fieldName].astNode.directives.filter( x => {
-    return x.name.value === "cypher";
-  })[0];
+  const queryTypeCypherDirective = resolveInfo.schema
+    .getQueryType()
+    .getFields()
+    [resolveInfo.fieldName].astNode.directives.filter(x => {
+      return x.name.value === 'cypher';
+    })[0];
 
   if (queryTypeCypherDirective) {
     // QueryType with a @cypher directive
-    const cypherQueryArg = queryTypeCypherDirective.arguments.filter( x=> {
-      return x.name.value === "statement";
+    const cypherQueryArg = queryTypeCypherDirective.arguments.filter(x => {
+      return x.name.value === 'statement';
     })[0];
 
-    query = `WITH apoc.cypher.runFirstColumn("${cypherQueryArg.value.value}", ${argString}, True) AS x UNWIND x AS ${variableName}
+    query = `WITH apoc.cypher.runFirstColumn("${
+      cypherQueryArg.value.value
+    }", ${argString}, True) AS x UNWIND x AS ${variableName}
     RETURN ${variableName} {${buildCypherSelection({
       initial: '',
       selections,
@@ -66,7 +84,8 @@ export function cypherQuery(
     })}} AS ${variableName} ${outerSkipLimit}`;
   } else {
     // No @cypher directive on QueryType
-    query = `MATCH (${variableName}:${typeName} ${argString}) ${idWherePredicate}` +
+    query =
+      `MATCH (${variableName}:${typeName} ${argString}) ${idWherePredicate}` +
       // ${variableName} { ${selection} } as ${variableName}`;
       `RETURN ${variableName} {${buildCypherSelection({
         initial: '',
@@ -77,6 +96,99 @@ export function cypherQuery(
       })}} AS ${variableName} ${outerSkipLimit}`;
   }
 
+  return query;
+}
+
+export function cypherMutation(
+  { first = -1, offset = 0, _id, ...otherParams },
+  context,
+  resolveInfo
+) {
+  // FIXME: lots of duplication here with cypherQuery, extract into util module
+
+  const { typeName, variableName } = typeIdentifiers(resolveInfo.returnType);
+  const schemaType = resolveInfo.schema.getType(typeName);
+
+  const filteredFieldNodes = filter(
+    resolveInfo.fieldNodes,
+    n => n.name.value === resolveInfo.fieldName
+  );
+
+  // FIXME: how to handle multiple fieldNode matches
+  const selections = extractSelections(
+    filteredFieldNodes[0].selectionSet.selections,
+    resolveInfo.fragments
+  );
+
+  // FIXME: support IN for multiple values -> WHERE
+  const argString = JSON.stringify(otherParams).replace(
+    /\"([^(\")"]+)\":/g,
+    '$1:'
+  );
+
+  const idWherePredicate =
+    typeof _id !== 'undefined' ? `WHERE ID(${variableName})=${_id} ` : '';
+  const outerSkipLimit = `SKIP ${offset}${first > -1 ? ' LIMIT ' + first : ''}`;
+
+  let query;
+  const mutationTypeCypherDirective = resolveInfo.schema
+    .getMutationType()
+    .getFields()
+    [resolveInfo.fieldName].astNode.directives.filter(x => {
+      return x.name.value === 'cypher';
+    })[0];
+
+  if (mutationTypeCypherDirective) {
+    const cypherQueryArg = mutationTypeCypherDirective.arguments.filter(x => {
+      return x.name.value === 'statement';
+    })[0];
+
+    query = `CALL apoc.cypher.doIt("${
+      cypherQueryArg.value.value
+    }", ${argString}) YIELD value
+    WITH apoc.map.values(value, [keys(value)[0]])[0] AS ${variableName}
+    RETURN ${variableName} {${buildCypherSelection({
+      initial: '',
+      selections,
+      variableName,
+      schemaType,
+      resolveInfo
+    })}} AS ${variableName} ${outerSkipLimit}`;
+  } else if (
+    resolveInfo.fieldName.startsWith('Create') ||
+    resolveInfo.fieldName.startsWith('create')
+  ) {
+    // CREATE node
+    // TODO: handle for create relationship
+    // TODO: update / delete
+    // TODO: augment schema
+    query = `CREATE (${variableName}:${typeName}) `;
+    query += `SET ${variableName} = $params `;
+    //query += `RETURN ${variable}`;
+    query +=
+      `RETURN ${variableName} {` +
+      buildCypherSelection({
+        initial: ``,
+        selections,
+        variableName,
+        schemaType,
+        resolveInfo
+      });
+    query += `} AS ${variableName}`;
+  } else if (
+    resolveInfo.fieldName.startsWith('Add') ||
+    resolveInfo.fieldName.startsWith('add')
+  ) {
+    // create relationship
+    // convention to use type for variables (ID)
+    // what about relationship name???
+    //   -- need to inspect from @relation directive?
+    // need to handle one-to-one and one-to-many
+    throw new Error('Add relationship mutations are not yet implemented');
+  } else {
+    // throw error - don't know how to handle this type of mutation
+    throw new Error('Mutation does not follow naming convention.');
+  }
   return query;
 }
 
@@ -105,19 +217,17 @@ function buildCypherSelection({
 
   // Schema meta fields(__schema, __typename, etc)
   if (!schemaType.getFields()[fieldName]) {
-
-      return buildCypherSelection({
-        initial: tailSelections.length
-          ? initial
-          : initial.substring(0, initial.lastIndexOf(',')),
-        ...tailParams
-      });
+    return buildCypherSelection({
+      initial: tailSelections.length
+        ? initial
+        : initial.substring(0, initial.lastIndexOf(',')),
+      ...tailParams
+    });
   }
 
   const fieldType = schemaType.getFields()[fieldName].type;
   const innerSchemaType = innerType(fieldType); // for target "type" aka label
   const { statement: customCypher } = cypherDirective(schemaType, fieldName);
-
 
   // Database meta fields(_id)
   if (fieldName === '_id') {
@@ -214,7 +324,10 @@ function typeIdentifiers(returnType) {
 }
 
 function isGraphqlScalarType(type) {
-  return type.constructor.name === 'GraphQLScalarType' || type.constructor.name === 'GraphQLEnumType';
+  return (
+    type.constructor.name === 'GraphQLScalarType' ||
+    type.constructor.name === 'GraphQLEnumType'
+  );
 }
 
 function isArrayType(type) {
@@ -288,9 +401,13 @@ function argumentValue(selection, name, variableValues) {
   let arg = selection.arguments.find(a => a.name.value === name);
   if (!arg) {
     return null;
-  } else if (!arg.value.value && name in variableValues && arg.value.kind === "Variable") {
+  } else if (
+    !arg.value.value &&
+    name in variableValues &&
+    arg.value.kind === 'Variable'
+  ) {
     return variableValues[name];
-  }  else {
+  } else {
     return arg.value.value;
   }
 }
@@ -300,7 +417,9 @@ function extractQueryResult({ records }, returnType) {
 
   return isArrayType(returnType)
     ? records.map(record => record.get(variableName))
-    : records.length ? records[0].get(variableName) : null;
+    : records.length
+      ? records[0].get(variableName)
+      : null;
 }
 
 function computeSkipLimit(selection, variableValues) {
@@ -314,12 +433,12 @@ function computeSkipLimit(selection, variableValues) {
 }
 
 function extractSelections(selections, fragments) {
-// extract any fragment selection sets into a single array of selections
+  // extract any fragment selection sets into a single array of selections
   return selections.reduce((acc, cur) => {
-    if (cur.kind === "FragmentSpread") {
+    if (cur.kind === 'FragmentSpread') {
       return [...acc, ...fragments[cur.name.value].selectionSet.selections];
     } else {
       return [...acc, cur];
     }
-  }, [])
+  }, []);
 }

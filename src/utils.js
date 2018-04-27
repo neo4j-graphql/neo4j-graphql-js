@@ -43,10 +43,17 @@ function getDefaultArguments(fieldName, schemaType) {
   }
 }
 
-export function cypherDirectiveArgs(variable, headSelection, schemaType, resolveInfo) {
-
+export function cypherDirectiveArgs(
+  variable,
+  headSelection,
+  schemaType,
+  resolveInfo
+) {
   const defaultArgs = getDefaultArguments(headSelection.name.value, schemaType);
-  const queryArgs = parseArgs(headSelection.arguments, resolveInfo.variableValues);
+  const queryArgs = parseArgs(
+    headSelection.arguments,
+    resolveInfo.variableValues
+  );
 
   let args = JSON.stringify(Object.assign(defaultArgs, queryArgs)).replace(
     /\"([^(\")"]+)\":/g,
@@ -56,4 +63,8 @@ export function cypherDirectiveArgs(variable, headSelection, schemaType, resolve
   return args === '{}'
     ? `{this: ${variable}${args.substring(1)}`
     : `{this: ${variable},${args.substring(1)}`;
+}
+
+export function isMutation(resolveInfo) {
+  return resolveInfo.operation.operation === 'mutation';
 }

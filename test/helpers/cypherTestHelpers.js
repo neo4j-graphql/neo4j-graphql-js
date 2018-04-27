@@ -1,4 +1,4 @@
-import { cypherQuery } from '../../dist/index';
+import { cypherQuery, cypherMutation } from '../../dist/index';
 import { graphql } from 'graphql';
 import { makeExecutableSchema } from 'graphql-tools';
 
@@ -74,6 +74,12 @@ type Query {
   GenresBySubstring(substring: String): [Genre] @cypher(statement: "MATCH (g:Genre) WHERE toLower(g.name) CONTAINS toLower($substring) RETURN g")
   Books: [Book]
 }
+
+type Mutation {
+    CreateGenre(name: String): Genre @cypher(statement: "CREATE (g:Genre) SET g.name = $name RETURN g")
+    CreateMovie(movieId: ID!, title: String, year: Int, plot: String, poster: String, imdbRating: Float): Movie
+    AddMovieGenre(movieId: ID!, name: String): Movie @MutationMeta(relationship: "IN_GENRE", from:"Movie", to:"Genre")
+}
 `;
 
   t.plan(1);
@@ -103,6 +109,23 @@ type Query {
       Books(object, params, ctx, resolveInfo) {
         let query = cypherQuery(params, ctx, resolveInfo);
         t.is(query, expectedCypherQuery);
+      }
+    },
+    Mutation: {
+      CreateGenre(object, params, ctx, resolveInfo) {
+        let query = cypherMutation(params, ctx, resolveInfo);
+        t.is(query, expectedCypherQuery);
+        t.end();
+      },
+      CreateMovie(object, params, ctx, resolveInfo) {
+        let query = cypherMutation(params, ctx, resolveInfo);
+        t.is(query, expectedCypherQuery);
+        t.end();
+      },
+      AddMovieGenre(object, params, ctx, resolveInfo) {
+        let query = cypherMutation(params, ctx, resolveInfo);
+        t.is(query, expectedCypherQuery);
+        t.end();
       }
     }
   };

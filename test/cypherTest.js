@@ -312,14 +312,42 @@ test('Handle @cypher directive on Query Type', t => {
   }
 }
   `,
-    expectedCypherQuery =
-      `WITH apoc.cypher.runFirstColumn("MATCH (g:Genre) WHERE toLower(g.name) CONTAINS toLower($substring) RETURN g", {substring:"Action"}, True) AS x UNWIND x AS genre
+    expectedCypherQuery = `WITH apoc.cypher.runFirstColumn("MATCH (g:Genre) WHERE toLower(g.name) CONTAINS toLower($substring) RETURN g", {substring:"Action"}, True) AS x UNWIND x AS genre
     RETURN genre { .name ,movies: [(genre)<-[:IN_GENRE]-(genre_movies:Movie{}) | genre_movies { .title }][..3] } AS genre SKIP 0`;
 
   cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery);
 });
 
-test('Handle GraphQL variables in nested selection - first/offset', t=> {
+test.cb('Handle @cypher directive on Mutation type', t => {
+  const graphQLQuery = `mutation someMutation {
+  CreateGenre(name: "Wildlife Documentary") {
+    name
+  }
+}`,
+    expectedCypherQuery = `CALL apoc.cypher.doIt("CREATE (g:Genre) SET g.name = $name RETURN g", {name:"Wildlife Documentary"}) YIELD value
+    WITH apoc.map.values(value, [keys(value)[0]])[0] AS genre
+    RETURN genre { .name } AS genre SKIP 0`;
+
+  cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery);
+});
+
+test.cb('Create node mutation', t => {
+  const graphQLQuery = `	mutation someMutation {
+  	CreateMovie(movieId: "12dd334d5", title:"My Super Awesome Movie", year:2018, plot:"An unending saga", poster:"www.movieposter.com/img.png", imdbRating: 1.0) {
+			_id
+      title
+      genres {
+        name
+      }
+    }
+  }`,
+    expectedCypherQuery = `CREATE (movie:Movie) SET movie = $params RETURN movie {_id: ID(movie), .title ,genres: [(movie)-[:IN_GENRE]->(movie_genres:Genre) | movie_genres { .name }] } AS movie`;
+
+  // FIXME: Cypher params are not tested here
+  cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery);
+});
+
+test('Handle GraphQL variables in nested selection - first/offset', t => {
   const graphQLQuery = `query ($year: Int!, $first: Int!) {
 
   Movie(year: $year) {
@@ -330,14 +358,18 @@ test('Handle GraphQL variables in nested selection - first/offset', t=> {
     }
   }
 }`,
-    expectedCypherQuery =
-      `MATCH (movie:Movie {year:2016}) RETURN movie { .title , .year ,similar: [ movie_similar IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie, first: 3, offset: 0}, true) | movie_similar { .title }][..3] } AS movie SKIP 0`;
+    expectedCypherQuery = `MATCH (movie:Movie {year:2016}) RETURN movie { .title , .year ,similar: [ movie_similar IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie, first: 3, offset: 0}, true) | movie_similar { .title }][..3] } AS movie SKIP 0`;
 
-  cypherTestRunner(t, graphQLQuery, {year: 2016, first: 3}, expectedCypherQuery);
+  cypherTestRunner(
+    t,
+    graphQLQuery,
+    { year: 2016, first: 3 },
+    expectedCypherQuery
+  );
 });
 
-test('Handle GraphQL variables in nest selection - @cypher param (not first/offset)', t=> {
-  const graphQLQuery  = `query ($year: Int = 2016, $first: Int = 2, $scale:Int) {
+test('Handle GraphQL variables in nest selection - @cypher param (not first/offset)', t => {
+  const graphQLQuery = `query ($year: Int = 2016, $first: Int = 2, $scale:Int) {
 
   Movie(year: $year) {
     title
@@ -351,10 +383,15 @@ test('Handle GraphQL variables in nest selection - @cypher param (not first/offs
 }`,
     expectedCypherQuery = `MATCH (movie:Movie {year:2016}) RETURN movie { .title , .year ,similar: [ movie_similar IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie, first: 3, offset: 0}, true) | movie_similar { .title ,scaleRating: apoc.cypher.runFirstColumn("WITH $this AS this RETURN $scale * this.imdbRating", {this: movie_similar, scale: 5}, false)}][..3] } AS movie SKIP 0`;
 
-  cypherTestRunner(t, graphQLQuery, {year: 2016, first: 3, scale: 5}, expectedCypherQuery);
+  cypherTestRunner(
+    t,
+    graphQLQuery,
+    { year: 2016, first: 3, scale: 5 },
+    expectedCypherQuery
+  );
 });
 
-test('Return internal node id for _id field', t=> {
+test('Return internal node id for _id field', t => {
   const graphQLQuery = `{
   Movie(year: 2016) {
     _id
@@ -372,7 +409,7 @@ test('Return internal node id for _id field', t=> {
   cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery);
 });
 
-test('Treat enum as a scalar', t=> {
+test('Treat enum as a scalar', t => {
   const graphQLQuery = `
   {
     Books {
@@ -384,7 +421,7 @@ test('Treat enum as a scalar', t=> {
   cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery);
 });
 
-test('Handle query fragment', t=> {
+test('Handle query fragment', t => {
   const graphQLQuery = `
 fragment myTitle on Movie {
   title
@@ -404,7 +441,7 @@ query getMovie {
   cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery);
 });
 
-test('Handle multiple query fragments', t=> {
+test('Handle multiple query fragments', t => {
   const graphQLQuery = `
     fragment myTitle on Movie {
   title
@@ -425,6 +462,6 @@ query getMovie {
 }
   `,
     expectedCypherQuery = `MATCH (movie:Movie {title:"River Runs Through It, A"}) RETURN movie { .title ,actors: [(movie)<-[:ACTED_IN]-(movie_actors:Actor) | movie_actors { .name }] , .year } AS movie SKIP 0`;
-  
+
   cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery);
 });
