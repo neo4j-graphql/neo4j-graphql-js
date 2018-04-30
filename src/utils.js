@@ -68,3 +68,11 @@ export function cypherDirectiveArgs(
 export function isMutation(resolveInfo) {
   return resolveInfo.operation.operation === 'mutation';
 }
+
+export function isAddRelationshipMutation(resolveInfo) {
+  return (
+    resolveInfo.operation.operation === 'mutation' &&
+    (resolveInfo.fieldName.startsWith('Add') ||
+      resolveInfo.fieldName.startsWith('add'))
+  );
+}

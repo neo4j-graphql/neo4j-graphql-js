@@ -1,5 +1,9 @@
 import filter from 'lodash/filter';
-import { cypherDirectiveArgs, isMutation } from './utils';
+import {
+  cypherDirectiveArgs,
+  isMutation,
+  isAddRelationshipMutation
+} from './utils';
 
 export async function neo4jgraphql(
   object,
@@ -12,16 +16,16 @@ export async function neo4jgraphql(
 
   if (isMutation(resolveInfo)) {
     query = cypherMutation(params, context, resolveInfo);
+    if (!isAddRelationshipMutation(resolveInfo)) {
+      params = { params: params };
+    }
   } else {
     query = cypherQuery(params, context, resolveInfo);
   }
 
   if (debug) {
     console.log(query);
-  }
-
-  if (isMutation(resolveInfo)) {
-    params = { params: params };
+    console.log(params);
   }
 
   const session = context.driver.session();
@@ -59,6 +63,8 @@ export function cypherQuery(
   const outerSkipLimit = `SKIP ${offset}${first > -1 ? ' LIMIT ' + first : ''}`;
 
   let query;
+
+  //TODO: wrap in try catch
   const queryTypeCypherDirective = resolveInfo.schema
     .getQueryType()
     .getFields()
@@ -179,12 +185,64 @@ export function cypherMutation(
     resolveInfo.fieldName.startsWith('Add') ||
     resolveInfo.fieldName.startsWith('add')
   ) {
-    // create relationship
-    // convention to use type for variables (ID)
-    // what about relationship name???
-    //   -- need to inspect from @relation directive?
-    // need to handle one-to-one and one-to-many
-    throw new Error('Add relationship mutations are not yet implemented');
+    let mutationMeta, relationshipNameArg, fromTypeArg, toTypeArg;
+
+    try {
+      mutationMeta = resolveInfo.schema
+        .getMutationType()
+        .getFields()
+        [resolveInfo.fieldName].astNode.directives.filter(x => {
+          return x.name.value === 'MutationMeta';
+        })[0];
+    } catch (e) {
+      throw new Error(
+        'Missing required MutationMeta directive on add relationship directive'
+      );
+    }
+
+    try {
+      relationshipNameArg = mutationMeta.arguments.filter(x => {
+        return x.name.value === 'relationship';
+      })[0];
+
+      fromTypeArg = mutationMeta.arguments.filter(x => {
+        return x.name.value === 'from';
+      })[0];
+
+      toTypeArg = mutationMeta.arguments.filter(x => {
+        return x.name.value === 'to';
+      })[0];
+    } catch (e) {
+      throw new Error(
+        'Missing required argument in MutationMeta directive (relationship, from, or to)'
+      );
+    }
+    //TODO: need to handle one-to-one and one-to-many
+
+    const fromType = fromTypeArg.value.value,
+      toType = toTypeArg.value.value,
+      fromVar = lowFirstLetter(fromType),
+      toVar = lowFirstLetter(toType),
+      relationshipName = relationshipNameArg.value.value,
+      fromParam = resolveInfo.schema.getMutationType().getFields()[
+        resolveInfo.fieldName
+      ].astNode.arguments[0].name.value,
+      toParam = resolveInfo.schema.getMutationType().getFields()[
+        resolveInfo.fieldName
+      ].astNode.arguments[1].name.value;
+
+    let query = `MATCH (${fromVar}:${fromType} {${fromParam}: $${fromParam}})
+       MATCH (${toVar}:${toType} {${toParam}: $${toParam}})
+      CREATE (${fromVar})-[:${relationshipName}]->(${toVar})
+      RETURN ${fromVar} {${buildCypherSelection({
+      initial: '',
+      selections,
+      variableName,
+      schemaType,
+      resolveInfo
+    })}} AS ${fromVar};`;
+
+    return query;
   } else {
     // throw error - don't know how to handle this type of mutation
     throw new Error('Mutation does not follow naming convention.');

@@ -130,20 +130,20 @@ test('Handle @cypher directive on QueryType', async t => {
     data: {
       GenresBySubstring: [
         {
-          name: "Action",
-          __typename: "Genre",
+          name: 'Action',
+          __typename: 'Genre',
           movies: [
             {
-              __typename: "Movie",
-              title: "Dracula Untold"
+              __typename: 'Movie',
+              title: 'Dracula Untold'
             },
             {
-              __typename: "Movie",
-              title: "Stretch"
+              __typename: 'Movie',
+              title: 'Stretch'
             },
             {
-              __typename: "Movie",
-              title: "Predestination"
+              __typename: 'Movie',
+              title: 'Predestination'
             }
           ]
         }
@@ -154,14 +154,14 @@ test('Handle @cypher directive on QueryType', async t => {
   await client
     .query({
       query: gql`
-      {
-        GenresBySubstring(substring:"Action") {
-          name
-          movies(first: 3) {
-            title
+        {
+          GenresBySubstring(substring: "Action") {
+            name
+            movies(first: 3) {
+              title
+            }
           }
         }
-       }
       `
     })
     .then(data => {
@@ -169,5 +169,135 @@ test('Handle @cypher directive on QueryType', async t => {
     })
     .catch(error => {
       t.fail(error);
-    })
+    });
 });
+
+test('Mutation with @cypher directive', async t => {
+  t.plan(1);
+
+  let expected = {
+    data: {
+      CreateGenre: {
+        name: 'Wildlife Documentary',
+        __typename: 'Genre'
+      }
+    }
+  };
+
+  await client
+    .mutate({
+      mutation: gql`
+        mutation someMutation {
+          CreateGenre(name: "Wildlife Documentary") {
+            name
+          }
+        }
+      `
+    })
+    .then(data => {
+      t.deepEqual(data.data, expected.data);
+    })
+    .catch(error => {
+      t.fail(error);
+    });
+});
+
+test('Create node mutation', async t => {
+  t.plan(1);
+
+  let expected = {
+    data: {
+      CreateMovie: {
+        __typename: 'Movie',
+        title: 'My Super Awesome Movie',
+        year: 2018,
+        plot: 'An unending saga',
+        poster: 'www.movieposter.com/img.png',
+        imdbRating: 1
+      }
+    }
+  };
+
+  await client
+    .mutate({
+      mutation: gql`
+        mutation someMutation {
+          CreateMovie(
+            movieId: "12dd334d5zaaaa"
+            title: "My Super Awesome Movie"
+            year: 2018
+            plot: "An unending saga"
+            poster: "www.movieposter.com/img.png"
+            imdbRating: 1.0
+          ) {
+            title
+            year
+            plot
+            poster
+            imdbRating
+          }
+        }
+      `
+    })
+    .then(data => {
+      t.deepEqual(data.data, expected.data);
+    })
+    .catch(error => {
+      t.fail(error);
+    });
+});
+
+test('Add relationship mutation', async t => {
+  t.plan(1);
+
+  let expected = {
+    data: {
+      AddMovieGenre: {
+        _id: '128',
+        __typename: 'Movie',
+        title: 'Chungking Express (Chung Hing sam lam)',
+        genres: [
+          {
+            name: 'Mystery',
+            __typename: 'Genre'
+          },
+          {
+            name: 'Drama',
+            __typename: 'Genre'
+          },
+          {
+            name: 'Romance',
+            __typename: 'Genre'
+          },
+          {
+            name: 'Action',
+            __typename: 'Genre'
+          }
+        ]
+      }
+    }
+  };
+
+  await client
+    .mutate({
+      mutation: gql`
+        mutation someMutation {
+          AddMovieGenre(movieId: "123", name: "Action") {
+            _id
+            title
+            genres {
+              name
+            }
+          }
+        }
+      `
+    })
+    .then(data => {
+      t.deepEqual(data.data, expected.data);
+    })
+    .catch(error => {
+      t.fail(error);
+    });
+});
+
+// TODO: mutation with variables
