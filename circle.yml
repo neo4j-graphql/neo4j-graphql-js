@@ -68,6 +68,31 @@ jobs:
           background: true
       - run: sleep 60
       - run: ./node_modules/.bin/ava test/*.js
+
+  neo4j34ee:
+    docker:
+      - image: circleci/node:9-browsers
+    steps:
+      - checkout
+      - run: npm install
+      - run: wget dist.neo4j.org/neo4j-enterprise-3.4.0-rc01-unix.tar.gz
+      - run: tar -xzf neo4j-enterprise-3.4.0-rc01-unix.tar.gz
+      - run: neo4j-enterprise-3.4.0-rc01/bin/neo4j-admin set-initial-password letmein
+      # FIXME: there is not currently an apoc release for Neo4j 3.4
+      #- run: curl -L https://github.com/neo4j-contrib/neo4j-apoc-procedures/releases/download/3.2.3.6/apoc-3.2.3.6-all.jar > ./neo4j-enterprise-3.2.10/plugins/apoc-3.2.3.6-all.jar
+      - run: wget https://s3.amazonaws.com/neo4j-sandbox-usecase-datastores/v3_3/recommendations.db.zip
+      - run: sudo apt-get install unzip
+      - run: unzip recommendations.db.zip
+      - run: mv recommendations.db neo4j-enterprise-3.4.0-rc01/data/databases/graph.db
+      - run: ./neo4j-enterprise-3.4.0-rc01/bin/neo4j start
+      - run: sleep 60
+      - run:
+          name: starting GraphQL service
+          command: node -r babel-register ./example/graphql-tools/movies.js
+          background: true
+      - run: sleep 60
+      - run: ./node_modules/.bin/ava test/*.js
+
 workflows:
   version: 2
   integration_test:
@@ -75,3 +100,4 @@ workflows:
       - neo4j33ee
       - neo4j33ce
       - neo4j32ee
+      - neo4j34ee
