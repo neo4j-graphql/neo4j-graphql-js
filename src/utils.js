@@ -76,3 +76,134 @@ export function isAddRelationshipMutation(resolveInfo) {
       resolveInfo.fieldName.startsWith('add'))
   );
 }
+
+export function typeIdentifiers(returnType) {
+  const typeName = innerType(returnType).toString();
+  return {
+    variableName: lowFirstLetter(typeName),
+    typeName
+  };
+}
+
+export function isGraphqlScalarType(type) {
+  return (
+    type.constructor.name === 'GraphQLScalarType' ||
+    type.constructor.name === 'GraphQLEnumType'
+  );
+}
+
+export function isArrayType(type) {
+  return type.toString().startsWith('[');
+}
+
+export function lowFirstLetter(word) {
+  return word.charAt(0).toLowerCase() + word.slice(1);
+}
+
+export function innerType(type) {
+  return type.ofType ? innerType(type.ofType) : type;
+}
+
+// handles field level schema directives
+// TODO: refactor to handle Query/Mutation type schema directives
+const directiveWithArgs = (directiveName, args) => (schemaType, fieldName) => {
+  function fieldDirective(schemaType, fieldName, directiveName) {
+    return schemaType
+      .getFields()
+      [fieldName].astNode.directives.find(e => e.name.value === directiveName);
+  }
+
+  function directiveArgument(directive, name) {
+    return directive.arguments.find(e => e.name.value === name).value.value;
+  }
+
+  const directive = fieldDirective(schemaType, fieldName, directiveName);
+  const ret = {};
+  if (directive) {
+    Object.assign(
+      ret,
+      ...args.map(key => ({
+        [key]: directiveArgument(directive, key)
+      }))
+    );
+  }
+  return ret;
+};
+
+export const cypherDirective = directiveWithArgs('cypher', ['statement']);
+export const relationDirective = directiveWithArgs('relation', [
+  'name',
+  'direction'
+]);
+
+export function innerFilterParams(selections) {
+  let queryParams = '';
+
+  if (
+    selections &&
+    selections.length &&
+    selections[0].arguments &&
+    selections[0].arguments.length
+  ) {
+    const filters = selections[0].arguments
+      .filter(x => {
+        return x.name.value !== 'first' && x.name.value !== 'offset';
+      })
+      .map(x => {
+        const filterValue = JSON.stringify(x.value.value).replace(
+          /\"([^(\")"]+)\":/g,
+          '$1:'
+        ); // FIXME: support IN for multiple values -> WHERE
+        return `${x.name.value}: ${filterValue}`;
+      });
+
+    queryParams = `{${filters.join(',')}}`;
+  }
+  return queryParams;
+}
+
+function argumentValue(selection, name, variableValues) {
+  let arg = selection.arguments.find(a => a.name.value === name);
+  if (!arg) {
+    return null;
+  } else if (
+    !arg.value.value &&
+    name in variableValues &&
+    arg.value.kind === 'Variable'
+  ) {
+    return variableValues[name];
+  } else {
+    return arg.value.value;
+  }
+}
+
+export function extractQueryResult({ records }, returnType) {
+  const { variableName } = typeIdentifiers(returnType);
+
+  return isArrayType(returnType)
+    ? records.map(record => record.get(variableName))
+    : records.length
+      ? records[0].get(variableName)
+      : null;
+}
+
+export function computeSkipLimit(selection, variableValues) {
+  let first = argumentValue(selection, 'first', variableValues);
+  let offset = argumentValue(selection, 'offset', variableValues);
+
+  if (first === null && offset === null) return '';
+  if (offset === null) return `[..${first}]`;
+  if (first === null) return `[${offset}..]`;
+  return `[${offset}..${parseInt(offset) + parseInt(first)}]`;
+}
+
+export function extractSelections(selections, fragments) {
+  // extract any fragment selection sets into a single array of selections
+  return selections.reduce((acc, cur) => {
+    if (cur.kind === 'FragmentSpread') {
+      return [...acc, ...fragments[cur.name.value].selectionSet.selections];
+    } else {
+      return [...acc, cur];
+    }
+  }, []);
+}
