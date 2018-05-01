@@ -130,20 +130,20 @@ test('Handle @cypher directive on QueryType', async t => {
     data: {
       GenresBySubstring: [
         {
-          name: 'Action',
+          name: 'Children',
           __typename: 'Genre',
           movies: [
             {
               __typename: 'Movie',
-              title: 'Dracula Untold'
+              title: 'Boxtrolls, The'
             },
             {
               __typename: 'Movie',
-              title: 'Stretch'
+              title: 'Challenge to Lassie'
             },
             {
               __typename: 'Movie',
-              title: 'Predestination'
+              title: 'Maleficent'
             }
           ]
         }
@@ -155,7 +155,7 @@ test('Handle @cypher directive on QueryType', async t => {
     .query({
       query: gql`
         {
-          GenresBySubstring(substring: "Action") {
+          GenresBySubstring(substring: "Children") {
             name
             movies(first: 3) {
               title
