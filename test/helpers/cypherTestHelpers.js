@@ -132,7 +132,10 @@ type Mutation {
 
   const schema = makeExecutableSchema({
     typeDefs: testMovieSchema,
-    resolvers
+    resolvers,
+    resolverValidationOptions: {
+      requireResolversForResolveType: false
+    }
   });
 
   // query the test schema with the test query, assertion is in the resolver
