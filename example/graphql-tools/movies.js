@@ -1,14 +1,13 @@
 import { makeExecutableSchema } from 'graphql-tools';
-import { neo4jgraphql } from '../../src/index';
+import { neo4jgraphql, augmentSchema } from '../../src/index';
 import express from 'express';
-import { graphqlExpress, graphiqlExpress } from 'graphql-server-express';
+import { graphqlExpress, graphiqlExpress } from 'apollo-server-express';
 import bodyParser from 'body-parser';
 import { v1 as neo4j } from 'neo4j-driver';
 
 // Simple Movie schema
 const typeDefs = `
 type Movie {
-  _id: ID
   movieId: ID!
   title: String
   year: Int
@@ -27,7 +26,6 @@ type Movie {
 }
 
 type Genre {
-  _id: ID!
   name: String
   movies(first: Int = 3, offset: Int = 0): [Movie] @relation(name: "IN_GENRE", direction: "IN")
   highestRatedMovie: Movie @cypher(statement: "MATCH (m:Movie)-[:IN_GENRE]->(this) RETURN m ORDER BY m.imdbRating DESC LIMIT 1")
@@ -70,14 +68,7 @@ type Query {
   MovieById(movieId: ID!): Movie
   GenresBySubstring(substring: String): [Genre] @cypher(statement: "MATCH (g:Genre) WHERE toLower(g.name) CONTAINS toLower($substring) RETURN g")
   Books: [Book]
-}
-
-type Mutation {
-  CreateGenre(name: String): Genre @cypher(statement: "CREATE (g:Genre) SET g.name = $name RETURN g")
-  CreateMovie(movieId: ID!, title: String, year: Int, plot: String, poster: String, imdbRating: Float): Movie
-  AddMovieGenre(movieId: ID!, name: String): Movie @MutationMeta(relationship: "IN_GENRE", from:"Movie", to:"Genre")
-}
-`;
+}`;
 
 const resolvers = {
   // root entry point to GraphQL service
@@ -101,24 +92,31 @@ const resolvers = {
     Books(object, params, ctx, resolveInfo) {
       return neo4jgraphql(object, params, ctx, resolveInfo, true);
     }
-  },
-  Mutation: {
-    CreateGenre(object, params, ctx, resolveInfo) {
-      return neo4jgraphql(object, params, ctx, resolveInfo, true);
-    },
-    CreateMovie(object, params, ctx, resolveInfo) {
-      return neo4jgraphql(object, params, ctx, resolveInfo, true);
-    },
-    AddMovieGenre(object, params, ctx, resolveInfo) {
-      return neo4jgraphql(object, params, ctx, resolveInfo, true);
-    }
   }
 };
 
+// Mutation: {
+//   CreateGenre(object, params, ctx, resolveInfo) {
+//     return neo4jgraphql(object, params, ctx, resolveInfo, true);
+//   },
+//   CreateMovie(object, params, ctx, resolveInfo) {
+//     return neo4jgraphql(object, params, ctx, resolveInfo, true);
+//   },
+//   AddMovieGenre(object, params, ctx, resolveInfo) {
+//     return neo4jgraphql(object, params, ctx, resolveInfo, true);
+//   }
+// }
+
 const schema = makeExecutableSchema({
   typeDefs,
-  resolvers
+  resolvers,
+  resolverValidationOptions: {
+    requireResolversForResolveType: false
+  }
 });
+
+// Add auto-generated mutations
+const augmentedSchema = augmentSchema(schema);
 
 let driver;
 
@@ -147,7 +145,7 @@ server.use(
   '/graphql',
   bodyParser.json(),
   graphqlExpress(request => ({
-    schema,
+    schema: augmentedSchema,
     rootValue,
     context: context(request.headers, process.env)
   }))

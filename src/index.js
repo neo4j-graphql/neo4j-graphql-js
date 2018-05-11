@@ -8,13 +8,14 @@ import {
   extractSelections
 } from './utils';
 import { buildCypherSelection } from './selections';
+import { addMutationsToSchema } from './augmentSchema';
 
 export async function neo4jgraphql(
   object,
   params,
   context,
   resolveInfo,
-  debug = false
+  debug = true
 ) {
   let query;
 
@@ -26,6 +27,9 @@ export async function neo4jgraphql(
   } else {
     query = cypherQuery(params, context, resolveInfo);
   }
+
+  console.log(query);
+  console.log(params);
 
   if (debug) {
     console.log(query);
@@ -125,10 +129,18 @@ export function cypherMutation(
   );
 
   // FIXME: how to handle multiple fieldNode matches
-  const selections = extractSelections(
+  let selections = extractSelections(
     filteredFieldNodes[0].selectionSet.selections,
     resolveInfo.fragments
   );
+
+  if (selections.length === 0) {
+    // FIXME: why aren't the selections found in the filteredFieldNode?
+    selections = extractSelections(
+      resolveInfo.operation.selectionSet.selections,
+      resolveInfo.fragments
+    );
+  }
 
   // FIXME: support IN for multiple values -> WHERE
   const argString = JSON.stringify(otherParams).replace(
@@ -254,6 +266,8 @@ export function cypherMutation(
   return query;
 }
 
-export function addMutationsToSchema(schema) {
-  return schema;
+export function augmentSchema(schema) {
+  const mutationSchema = addMutationsToSchema(schema);
+
+  return mutationSchema;
 }
