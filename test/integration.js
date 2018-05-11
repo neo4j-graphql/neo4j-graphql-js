@@ -253,7 +253,6 @@ test('Add relationship mutation', async t => {
   let expected = {
     data: {
       AddMovieGenre: {
-        _id: '128',
         __typename: 'Movie',
         title: 'Chungking Express (Chung Hing sam lam)',
         genres: [
@@ -283,7 +282,6 @@ test('Add relationship mutation', async t => {
       mutation: gql`
         mutation someMutation {
           AddMovieGenre(movieId: "123", name: "Action") {
-            _id
             title
             genres {
               name
