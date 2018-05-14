@@ -59,6 +59,7 @@ export function addMutationsToSchema(schema) {
 
   const onTypeConflict = (left, right, info) => {
     // FIXME: throws away type extensions
+    // FIXME: use schema transform for type augmentation
     return left;
   };
 
@@ -118,7 +119,7 @@ function augmentTypes(types, schema, sdl) {
 }
 
 function augmentMutations(types, schema, sdl) {
-  // FIXME: requires placeholder Query type
+  // FIXME: requires placeholder Query type?
   return (
     sdl +
     `
