@@ -28,9 +28,6 @@ export async function neo4jgraphql(
     query = cypherQuery(params, context, resolveInfo);
   }
 
-  console.log(query);
-  console.log(params);
-
   if (debug) {
     console.log(query);
     console.log(params);
