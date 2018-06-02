@@ -73,7 +73,13 @@ export function isAddRelationshipMutation(resolveInfo) {
   return (
     resolveInfo.operation.operation === 'mutation' &&
     (resolveInfo.fieldName.startsWith('Add') ||
-      resolveInfo.fieldName.startsWith('add'))
+      resolveInfo.fieldName.startsWith('add')) &&
+    resolveInfo.schema
+      .getMutationType()
+      .getFields()
+      [resolveInfo.fieldName].astNode.directives.filter(x => {
+        return x.name.value === 'MutationMeta';
+      }).length > 0
   );
 }
 
@@ -206,4 +212,82 @@ export function extractSelections(selections, fragments) {
       return [...acc, cur];
     }
   }, []);
+}
+
+export function fixParamsForAddRelationshipMutation(params, resolveInfo) {
+  // FIXME: find a better way to map param name in schema to datamodel
+  let mutationMeta, fromTypeArg, toTypeArg;
+
+  try {
+    mutationMeta = resolveInfo.schema
+      .getMutationType()
+      .getFields()
+      [resolveInfo.fieldName].astNode.directives.filter(x => {
+        return x.name.value === 'MutationMeta';
+      })[0];
+  } catch (e) {
+    throw new Error(
+      'Missing required MutationMeta directive on add relationship directive'
+    );
+  }
+
+  try {
+    fromTypeArg = mutationMeta.arguments.filter(x => {
+      return x.name.value === 'from';
+    })[0];
+
+    toTypeArg = mutationMeta.arguments.filter(x => {
+      return x.name.value === 'to';
+    })[0];
+  } catch (e) {
+    throw new Error(
+      'Missing required argument in MutationMeta directive (relationship, from, or to)'
+    );
+  }
+  //TODO: need to handle one-to-one and one-to-many
+
+  const fromType = fromTypeArg.value.value,
+    toType = toTypeArg.value.value,
+    fromVar = lowFirstLetter(fromType),
+    toVar = lowFirstLetter(toType),
+    fromParam = resolveInfo.schema
+      .getMutationType()
+      .getFields()
+      [resolveInfo.fieldName].astNode.arguments[0].name.value.substr(
+        fromVar.length
+      ),
+    toParam = resolveInfo.schema
+      .getMutationType()
+      .getFields()
+      [resolveInfo.fieldName].astNode.arguments[1].name.value.substr(
+        toVar.length
+      );
+
+  params[toParam] =
+    params[
+      resolveInfo.schema.getMutationType().getFields()[
+        resolveInfo.fieldName
+      ].astNode.arguments[1].name.value
+    ];
+
+  params[fromParam] =
+    params[
+      resolveInfo.schema.getMutationType().getFields()[
+        resolveInfo.fieldName
+      ].astNode.arguments[0].name.value
+    ];
+
+  delete params[
+    resolveInfo.schema.getMutationType().getFields()[resolveInfo.fieldName]
+      .astNode.arguments[1].name.value
+  ];
+
+  delete params[
+    resolveInfo.schema.getMutationType().getFields()[resolveInfo.fieldName]
+      .astNode.arguments[0].name.value
+  ];
+
+  console.log(params);
+
+  return params;
 }

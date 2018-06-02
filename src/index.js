@@ -5,7 +5,8 @@ import {
   typeIdentifiers,
   lowFirstLetter,
   extractQueryResult,
-  extractSelections
+  extractSelections,
+  fixParamsForAddRelationshipMutation
 } from './utils';
 import { buildCypherSelection } from './selections';
 import { addMutationsToSchema } from './augmentSchema';
@@ -21,8 +22,10 @@ export async function neo4jgraphql(
 
   if (isMutation(resolveInfo)) {
     query = cypherMutation(params, context, resolveInfo);
-    if (!isAddRelationshipMutation(resolveInfo)) {
-      params = { params: params };
+    if (isAddRelationshipMutation(resolveInfo)) {
+      params = fixParamsForAddRelationshipMutation(params, resolveInfo);
+    } else {
+      params = { params };
     }
   } else {
     query = cypherQuery(params, context, resolveInfo);
@@ -237,12 +240,18 @@ export function cypherMutation(
       fromVar = lowFirstLetter(fromType),
       toVar = lowFirstLetter(toType),
       relationshipName = relationshipNameArg.value.value,
-      fromParam = resolveInfo.schema.getMutationType().getFields()[
-        resolveInfo.fieldName
-      ].astNode.arguments[0].name.value,
-      toParam = resolveInfo.schema.getMutationType().getFields()[
-        resolveInfo.fieldName
-      ].astNode.arguments[1].name.value;
+      fromParam = resolveInfo.schema
+        .getMutationType()
+        .getFields()
+        [resolveInfo.fieldName].astNode.arguments[0].name.value.substr(
+          fromVar.length
+        ),
+      toParam = resolveInfo.schema
+        .getMutationType()
+        .getFields()
+        [resolveInfo.fieldName].astNode.arguments[1].name.value.substr(
+          toVar.length
+        );
 
     let query = `MATCH (${fromVar}:${fromType} {${fromParam}: $${fromParam}})
        MATCH (${toVar}:${toType} {${toParam}: $${toParam}})

@@ -416,7 +416,7 @@ test.cb('Create node mutation', t => {
 test.cb('Add relationship mutation', t => {
   // FIXME: test Cypher params
   const graphQLQuery = `mutation someMutation {
-  AddMovieGenre(movieId:"123", name: "Action") {
+  AddMovieGenre(moviemovieId:"123", genrename: "Action") {
     _id
     title
     genres {
@@ -436,7 +436,7 @@ test.cb('Add relationship mutation', t => {
 test.cb('Add relationship mutation with GraphQL variables', t => {
   // FIXME: test Cypher params
   const graphQLQuery = `mutation someMutation($movieParam:ID!) {
-  AddMovieGenre(movieId:$movieParam, name: "Action") {
+  AddMovieGenre(moviemovieId:$movieParam, genrename: "Action") {
     _id
     title
     genres {
