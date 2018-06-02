@@ -281,7 +281,7 @@ test('Add relationship mutation', async t => {
     .mutate({
       mutation: gql`
         mutation someMutation {
-          AddMovieGenre(movieId: "123", name: "Action") {
+          AddMovieGenre(moviemovieId: "123", genrename: "Action") {
             title
             genres {
               name
