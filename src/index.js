@@ -23,7 +23,7 @@ export async function neo4jgraphql(
   if (isMutation(resolveInfo)) {
     query = cypherMutation(params, context, resolveInfo);
     if (isAddRelationshipMutation(resolveInfo)) {
-      params = fixParamsForAddRelationshipMutation(params, resolveInfo);
+      //params = fixParamsForAddRelationshipMutation(params, resolveInfo);
     } else {
       params = { params };
     }
@@ -253,8 +253,14 @@ export function cypherMutation(
           toVar.length
         );
 
-    let query = `MATCH (${fromVar}:${fromType} {${fromParam}: $${fromParam}})
-       MATCH (${toVar}:${toType} {${toParam}: $${toParam}})
+    let query = `MATCH (${fromVar}:${fromType} {${fromParam}: $${
+      resolveInfo.schema.getMutationType().getFields()[resolveInfo.fieldName]
+        .astNode.arguments[0].name.value
+    }})
+       MATCH (${toVar}:${toType} {${toParam}: $${
+      resolveInfo.schema.getMutationType().getFields()[resolveInfo.fieldName]
+        .astNode.arguments[1].name.value
+    }})
       CREATE (${fromVar})-[:${relationshipName}]->(${toVar})
       RETURN ${fromVar} {${buildCypherSelection({
       initial: '',

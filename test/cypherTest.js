@@ -424,8 +424,8 @@ test.cb('Add relationship mutation', t => {
     }
   }
 }`,
-    expectedCypherQuery = `MATCH (movie:Movie {movieId: $movieId})
-       MATCH (genre:Genre {name: $name})
+    expectedCypherQuery = `MATCH (movie:Movie {movieId: $moviemovieId})
+       MATCH (genre:Genre {name: $genrename})
       CREATE (movie)-[:IN_GENRE]->(genre)
       RETURN movie {_id: ID(movie), .title ,genres: [(movie)-[:IN_GENRE]->(movie_genres:Genre) | movie_genres { .name }] } AS movie;`;
 
@@ -444,8 +444,8 @@ test.cb('Add relationship mutation with GraphQL variables', t => {
     }
   }
 }`,
-    expectedCypherQuery = `MATCH (movie:Movie {movieId: $movieId})
-       MATCH (genre:Genre {name: $name})
+    expectedCypherQuery = `MATCH (movie:Movie {movieId: $moviemovieId})
+       MATCH (genre:Genre {name: $genrename})
       CREATE (movie)-[:IN_GENRE]->(genre)
       RETURN movie {_id: ID(movie), .title ,genres: [(movie)-[:IN_GENRE]->(movie_genres:Genre) | movie_genres { .name }] } AS movie;`;
 
