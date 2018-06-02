@@ -50,11 +50,11 @@ type Movie {
 
 type Mutation {
   CreateMovie(movieId: ID, title: String, year: Int, plot: String, poster: String, imdbRating: Float, degree: Int, avgStars: Float, scaleRating: Float, scaleRatingFloat: Float): Movie
-  AddMovieGenre(_id: ID!): Movie
-  AddMovieState(_id: ID!, name: String!): Movie
+  AddMovieGenre(movie_id: ID!, genre_id: ID!): Movie
+  AddMovieState(movie_id: ID!, statename: String!): Movie
   CreateGenre(name: String): Genre
   CreateActor(id: ID, name: String): Actor
-  AddActorMovie(id: ID!, _id: ID!): Actor
+  AddActorMovie(actorid: ID!, movie_id: ID!): Actor
   CreateState(name: String): State
   CreateBook(genre: BookGenre): Book
   CreateUser(id: ID, name: String): User

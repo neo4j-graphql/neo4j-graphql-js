@@ -1,6 +1,7 @@
 import { makeExecutableSchema, mergeSchemas } from 'graphql-tools';
 import { neo4jgraphql } from './index';
 import { printSchema } from 'graphql';
+import { lowFirstLetter } from './utils';
 
 export function addMutationsToSchema(schema) {
   const types = typesToAugment(schema);
@@ -201,9 +202,11 @@ function addRelationshipMutations(type, namesOnly = false) {
 
     // FIXME: could add relationship properties here
     mutations += `
-    Add${fromType.name}${toType.name}(${fromPk.name}: ${
-      innerType(fromPk.type).name
-    }!, ${toPk.name}: ${innerType(toPk.type).name}!): ${
+    Add${fromType.name}${toType.name}(${lowFirstLetter(
+      fromType.name + fromPk.name
+    )}: ${innerType(fromPk.type).name}!, ${lowFirstLetter(
+      toType.name + toPk.name
+    )}: ${innerType(toPk.type).name}!): ${
       fromType.name
     } @MutationMeta(relationship: "${relTypeArg.value.value}", from: "${
       fromType.name
