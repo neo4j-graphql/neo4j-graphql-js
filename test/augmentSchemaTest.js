@@ -33,6 +33,7 @@ type Movie {
   movieId: ID!
   title: String
   year: Int
+  released: Boolean
   plot: String
   poster: String
   imdbRating: Float
@@ -49,7 +50,7 @@ type Movie {
 }
 
 type Mutation {
-  CreateMovie(movieId: ID, title: String, year: Int, plot: String, poster: String, imdbRating: Float, degree: Int, avgStars: Float, scaleRating: Float, scaleRatingFloat: Float): Movie
+  CreateMovie(movieId: ID, title: String, year: Int, released: Boolean, plot: String, poster: String, imdbRating: Float, degree: Int, avgStars: Float, scaleRating: Float, scaleRatingFloat: Float): Movie
   AddMovieGenre(movie_id: ID!, genre_id: ID!): Movie
   AddMovieState(movie_id: ID!, statename: String!): Movie
   CreateGenre(name: String): Genre
@@ -66,7 +67,7 @@ interface Person {
 }
 
 type Query {
-  Movie(_id: Int, id: ID, title: String, year: Int, plot: String, poster: String, imdbRating: Float, first: Int, offset: Int): [Movie]
+  Movie(_id: Int, id: ID, title: String, year: Int, released: Boolean, plot: String, poster: String, imdbRating: Float, first: Int, offset: Int): [Movie]
   MoviesByYear(year: Int): [Movie]
   MovieById(movieId: ID!): Movie
   MovieBy_Id(_id: Int!): Movie

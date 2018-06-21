@@ -41,6 +41,8 @@ export async function neo4jgraphql(
   return extractQueryResult(result, resolveInfo.returnType);
 }
 
+const JSON_TO_PARAM_REGEX = /\"([^(\")"]+)\":/g;
+
 export function cypherQuery(
   { first = -1, offset = 0, _id, ...otherParams },
   context,
@@ -60,14 +62,21 @@ export function cypherQuery(
     resolveInfo.fragments
   );
 
-  // FIXME: support IN for multiple values -> WHERE
-  const argString = JSON.stringify(otherParams).replace(
-    /\"([^(\")"]+)\":/g,
+  const [nullParams, nonNullParams] = Object.entries(otherParams).reduce(
+    ([nulls, nonNulls], [key, value]) => {
+      if (value === null) {
+        nulls[key] = value;
+      } else {
+        nonNulls[key] = value;
+      }
+      return [nulls, nonNulls];
+    },
+    [{}, {}]
+  );
+  const argString = JSON.stringify(nonNullParams).replace(
+    JSON_TO_PARAM_REGEX,
     '$1:'
   );
-
-  const idWherePredicate =
-    typeof _id !== 'undefined' ? `WHERE ID(${variableName})=${_id} ` : '';
   const outerSkipLimit = `SKIP ${offset}${first > -1 ? ' LIMIT ' + first : ''}`;
 
   let query;
@@ -98,8 +107,21 @@ export function cypherQuery(
     })}} AS ${variableName} ${outerSkipLimit}`;
   } else {
     // No @cypher directive on QueryType
+
+    // FIXME: support IN for multiple values -> WHERE
+    const idWherePredicate =
+      typeof _id !== 'undefined' ? `ID(${variableName})=${_id}` : '';
+    console.log(nullParams);
+    const nullFieldPredicates = Object.keys(nullParams).map(
+      key => `${variableName}.${key} IS NULL`
+    );
+    const predicateClauses = [idWherePredicate, ...nullFieldPredicates]
+      .filter(predicate => !!predicate)
+      .join(' AND ');
+    const predicate = predicateClauses ? `WHERE ${predicateClauses} ` : '';
+
     query =
-      `MATCH (${variableName}:${typeName} ${argString}) ${idWherePredicate}` +
+      `MATCH (${variableName}:${typeName} ${argString}) ${predicate}` +
       // ${variableName} { ${selection} } as ${variableName}`;
       `RETURN ${variableName} {${buildCypherSelection({
         initial: '',
