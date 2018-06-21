@@ -111,7 +111,6 @@ export function cypherQuery(
     // FIXME: support IN for multiple values -> WHERE
     const idWherePredicate =
       typeof _id !== 'undefined' ? `ID(${variableName})=${_id}` : '';
-    console.log(nullParams);
     const nullFieldPredicates = Object.keys(nullParams).map(
       key => `${variableName}.${key} IS NULL`
     );
