@@ -1,0 +1,174 @@
+shared:
+  node_8: &node_8
+    - image: circleci/node:8-browsers
+  node_9: &node_9
+    - image: circleci/node:9-browsers
+
+  attach_workspace: &attach_workspace
+    attach_workspace:
+      at: ~/project
+
+  npm_cache_key: &npm_cache_key
+    v1-dependency-npm-{{ checksum "package-lock.json" }}
+
+  restore_node_modules: &restore_node_modules
+    restore_cache:
+      keys:
+        - *npm_cache_key
+        - v1-dependency-npm-
+
+  cache_node_modules: &cache_node_modules
+    save_cache:
+      key: *npm_cache_key
+      paths:
+        - ./node_modules/
+
+  install_node_modules: &install_node_modules
+      - checkout
+
+      - *restore_node_modules
+      - run:
+          name: Install dependencies
+          command: npm install --no-save
+
+      - *cache_node_modules
+
+      - persist_to_workspace:
+          root: .
+          paths:
+            - .
+
+  install_neo4j: &install_neo4j
+      - run:
+        name: Provision neo4j
+        command: |
+          wget dist.neo4j.org/neo4j-$NEO4j_DIST-$NEO4J_VERSION-unix.tar.gz
+          tar -xzf neo4j-$NEO4j_DIST-$NEO4J_VERSION-unix.tar.gz
+          neo4j-$NEO4j_DIST-$NEO4J_VERSION/bin/neo4j-admin set-initial-password letmein
+          curl -L https://github.com/neo4j-contrib/neo4j-apoc-procedures/releases/download/$APOCH_VERSION/apoc-$APOCH_VERSION-all.jar > ./neo4j-$NEO4j_DIST-$NEO4J_VERSION/plugins/apoc-$APOCH_VERSION-all.jar
+          wget https://s3.amazonaws.com/neo4j-sandbox-usecase-datastores/v3_3/recommendations.db.zip
+          sudo apt-get install unzip
+          unzip recommendations.db.zip
+          mv recommendations.db neo4j-$NEO4j_DIST-$NEO4J_VERSION/data/databases/graph.db
+          ./neo4j-$NEO4j_DIST-$NEO4J_VERSION/bin/neo4j start
+          sleep 60
+
+  start_graphql: &start_graphql
+      - run:
+        name: Start GraphQL Server
+        command: node -r babel-register ./example/graphql-tools/movies.js
+        background: true
+
+      - run: sleep 60
+
+  run_tests: &run_tests
+      - run:
+        name: Run Tests
+        command: ./node_modules/.bin/ava test/*.js
+
+  env_neo4j33ee: &env_neo4j33ee
+      NEO4j_DIST: 'enterprise'
+      NEO4J_VERSION: '3.3.5'
+      APOCH_VERSION: '3.3.0.2'
+  env_neo4j33ce: &env_neo4j33ce
+      NEO4j_DIST: 'community'
+      NEO4J_VERSION: '3.3.5'
+      APOCH_VERSION: '3.3.0.2'
+  env_neo4j32ee: &env_neo4j32ee
+      NEO4j_DIST: 'enterprise'
+      NEO4J_VERSION: '3.2.10'
+      APOCH_VERSION: '3.2.3.6'
+  env_neo4j34ee: &env_neo4j34ee
+      NEO4j_DIST: 'enterprise'
+      NEO4J_VERSION: '3.4.0'
+      APOCH_VERSION: '3.4.0.1'
+
+  shared_tests: &shared_tests
+    - *attach_workspace
+    - *install_neo4j
+    - *start_graphql
+    - *run_tests
+
+version: 2
+jobs:
+  # Node 8
+  install_node_8:
+    docker: *node_8
+    steps: *install_node_modules
+
+  neo4j33ee_node8:
+    docker: *node_8
+    environment: env_neo4j33ee
+    steps: *shared_tests
+
+  neo4j33ce_node8:
+    docker: *node_8
+    environment: env_neo4j33ce
+    steps: *shared_tests
+
+  neo4j32ee_node8:
+    docker: *node_8
+    environment: env_neo4j32ee
+    steps: *shared_tests
+
+  neo4j34ee_node8:
+    docker: *node_8
+    environment: env_neo4j34ee
+    steps: *shared_tests
+
+  # Node 9
+  install_node_9:
+    docker: *node_9
+    steps: *install_node_modules
+
+  neo4j33ee_node9:
+    docker: *node_9
+    environment: env_neo4j33ee
+    steps: *shared_tests
+
+  neo4j33ce_node9:
+    docker: *node_9
+    environment: env_neo4j33ce
+    steps: *shared_tests
+
+  neo4j32ee_node9:
+    docker: *node_9
+    environment: env_neo4j32ee
+    steps: *shared_tests
+
+  neo4j34ee_node9:
+    docker: *node_9
+    environment: env_neo4j34ee
+    steps: *shared_tests
+
+workflows:
+  version: 2
+  integration_test:
+    jobs:
+      - install_node_8
+      - install_node_9
+      - neo4j33ee_node8:
+        requires:
+          - install_node_8
+      - neo4j33ce_node8:
+        requires:
+          - install_node_8
+      - neo4j32ee_node8:
+        requires:
+          - install_node_8
+      - neo4j34ee_node8:
+        requires:
+          - install_node_8
+
+      - neo4j33ee_node9:
+        requires:
+          - install_node_9
+      - neo4j33ce_node9:
+        requires:
+          - install_node_9
+      - neo4j32ee_node9:
+        requires:
+          - install_node_9
+      - neo4j34ee_node9:
+        requires:
+          - install_node_9
