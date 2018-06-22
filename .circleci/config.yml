@@ -119,7 +119,7 @@ references:
 
 jobs:
   # Node 8
-  install_node8:
+  install_for_node8:
     docker: *node8
     steps: *install_node_modules_steps
 
@@ -144,7 +144,7 @@ jobs:
     steps: *run_tests_steps
 
   # Node 10
-  install_node10:
+  install_for_node10:
     docker: *node10
     steps: *install_node_modules_steps
 
@@ -172,30 +172,30 @@ workflows:
   version: 2
   integration_test:
     jobs:
-      - install_node8
+      - install_for_node8
       - neo4j33ee_node8:
           requires:
-            - install_node8
+            - install_for_node8
       - neo4j33ce_node8:
           requires:
-            - install_node8
+            - install_for_node8
       - neo4j32ee_node8:
           requires:
-            - install_node8
+            - install_for_node8
       - neo4j34ee_node8:
           requires:
-            - install_node8
+            - install_for_node8
 
-      - install_node10
+      - install_for_node10
       - neo4j33ee_node10:
           requires:
-            - install_node10
+            - install_for_node10
       - neo4j33ce_node10:
           requires:
-            - install_node10
+            - install_for_node10
       - neo4j32ee_node10:
           requires:
-            - install_node10
+            - install_for_node10
       - neo4j34ee_node10:
           requires:
-            - install_node10
+            - install_for_node10
