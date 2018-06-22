@@ -7,7 +7,7 @@ if [ ! -d "neo4j/data/databases/graph.db" ]; then
     exit 1
 else
     # Set initial and max heap to workaround JVM in docker issues
-    dbms_memory_heap_initial_size="2048" dbms_memory_heap_max_size="2048" ./neo4j/bin/neo4j start
+    dbms_memory_heap_initial_size="2048m" dbms_memory_heap_max_size="2048m" ./neo4j/bin/neo4j start
     echo "Waiting up to 2 minutes for neo4j bolt port ($BOLT_PORT)"
 
     for i in {1..120};
