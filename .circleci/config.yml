@@ -37,7 +37,7 @@ references:
 
   cache_neo4j: &cache_neo4j
     save_cache:
-      key: *npm_cache_key
+      key: *neo4j_cache_key
       paths:
         - ./neo4j/
 
