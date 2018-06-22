@@ -156,12 +156,12 @@ server.use(
   graphiqlExpress({
     endpointURL: '/graphql',
     query: `{
-  
+
 }`
   })
 );
 
-server.listen(PORT, () => {
+server.listen(PORT, '0.0.0.0', () => {
   console.log(
     `GraphQL Server is now running on http://localhost:${PORT}/graphql`
   );
