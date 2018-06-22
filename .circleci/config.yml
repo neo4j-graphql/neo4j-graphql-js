@@ -46,7 +46,7 @@ references:
 
       - run:
           name: Create Node/NPM cache key
-          command: echo "$(node -v)\n$(npm -v)"" > node-version
+          command: echo "$(node -v)\n$(npm -v)" > node-version
 
       - *restore_node_modules
 
