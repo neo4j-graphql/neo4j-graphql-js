@@ -17,5 +17,3 @@ for i in {1..120};
         echo -n "."
 done
 echo
-# Wait a further 60 seconds after the port is available
-sleep 60
