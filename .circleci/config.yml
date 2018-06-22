@@ -80,7 +80,13 @@ references:
   start_graphql: &start_graphql
     run:
       name: Start GraphQL Server
-      command: ./scripts/start-graphql.sh
+      command: node -r babel-register ./example/graphql-tools/movies.js
+      background: true
+
+  wait_for_graphql: &wait_for_graphql
+    run:
+      name: Wait for GraphQL server to be available
+      command: ./scripts/wait-for-graphql.sh
 
   run_tests: &run_tests
     run:
@@ -122,6 +128,7 @@ references:
     - *restore_neo4j
     - *start_neo4j
     - *start_graphql
+    - *wait_for_graphql
     - *run_tests
 
 jobs:

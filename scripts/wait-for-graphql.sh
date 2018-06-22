@@ -2,7 +2,6 @@
 
 HTTP_PORT=3000
 
-node -r babel-register ./example/graphql-tools/movies.js &
 echo "Waiting up to 2 minutes for graphql http port ($HTTP_PORT)"
 
 for i in {1..120};
