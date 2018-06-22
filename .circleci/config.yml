@@ -100,6 +100,7 @@ references:
       APOCH_VERSION: '3.4.0.1'
 
   install_neo4j_steps: &install_neo4j_steps
+    - checkout
     - *restore_neo4j
     - *install_neo4j
     - *cache_neo4j
