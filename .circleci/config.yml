@@ -28,7 +28,7 @@ references:
         - ./node_modules/
 
   neo4j_cache_key: &neo4j_cache_key
-    v1-dependency-neo4j-{{ .Environment.NEO4j_DIST }}-{{ .Environment.NEO4J_VERSION }}-{{ .Environment.APOCH_VERSION }}
+    v1-dependency-neo4j-{{ checksum "neo4j-version" }}
 
   restore_neo4j: &restore_neo4j
     restore_cache:
@@ -40,6 +40,12 @@ references:
       key: *neo4j_cache_key
       paths:
         - ./neo4j/
+
+  # can only use CircleCI or context environment variables in cache keys, so write to file
+  create_neo4j_cache_key: &create_neo4j_cache_key
+    run:
+        name: Create Neo4j cache key
+        command: echo "NEO4J_DIST\n$NEO4J_VERSION\nAPOCH_VERSION" > neo4j-version
 
   install_node_modules_steps: &install_node_modules_steps
       - checkout
@@ -83,30 +89,32 @@ references:
       command: ./node_modules/.bin/ava test/*.js
 
   env_neo4j33ee: &env_neo4j33ee
-      NEO4j_DIST: 'enterprise'
+      NEO4J_DIST: 'enterprise'
       NEO4J_VERSION: '3.3.5'
       APOCH_VERSION: '3.3.0.2'
   env_neo4j33ce: &env_neo4j33ce
-      NEO4j_DIST: 'community'
+      NEO4J_DIST: 'community'
       NEO4J_VERSION: '3.3.5'
       APOCH_VERSION: '3.3.0.2'
   env_neo4j32ee: &env_neo4j32ee
-      NEO4j_DIST: 'enterprise'
+      NEO4J_DIST: 'enterprise'
       NEO4J_VERSION: '3.2.10'
       APOCH_VERSION: '3.2.3.6'
   env_neo4j34ee: &env_neo4j34ee
-      NEO4j_DIST: 'enterprise'
+      NEO4J_DIST: 'enterprise'
       NEO4J_VERSION: '3.4.0'
       APOCH_VERSION: '3.4.0.1'
 
   install_neo4j_steps: &install_neo4j_steps
     - checkout
+    - *create_neo4j_cache_key
     - *restore_neo4j
     - *install_neo4j
     - *cache_neo4j
 
   run_tests_steps: &run_tests_steps
     - *attach_workspace
+    - *create_neo4j_cache_key
     - *restore_neo4j
     - *start_neo4j
     - *start_graphql

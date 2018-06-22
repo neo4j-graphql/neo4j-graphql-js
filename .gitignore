@@ -64,3 +64,4 @@ typings/
 dist/
 
 node-version
+neo4j-version
