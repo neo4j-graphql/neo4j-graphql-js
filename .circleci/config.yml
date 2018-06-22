@@ -1,20 +1,24 @@
-shared:
-  node_8: &node_8
+version: 2
+
+references:
+
+  node8: &node8
     - image: circleci/node:8-browsers
-  node_9: &node_9
-    - image: circleci/node:9-browsers
+  node10: &node10
+    - image: circleci/node:10-browsers
 
   attach_workspace: &attach_workspace
     attach_workspace:
       at: ~/project
 
   npm_cache_key: &npm_cache_key
-    v1-dependency-npm-{{ checksum "package-lock.json" }}
+    v1-dependency-npm-{{ checksum "package-lock.json" }}-{{checksum "node-version" }}
 
   restore_node_modules: &restore_node_modules
     restore_cache:
       keys:
         - *npm_cache_key
+        - v1-dependency-npm-{{ checksum "package-lock.json" }}
         - v1-dependency-npm-
 
   cache_node_modules: &cache_node_modules
@@ -23,10 +27,29 @@ shared:
       paths:
         - ./node_modules/
 
-  install_node_modules: &install_node_modules
+  neo4j_cache_key: &neo4j_cache_key
+    v1-dependency-neo4j-{{ .Environment.NEO4j_DIST }}-{{ .Environment.NEO4J_VERSION }}-{{ .Environment.APOCH_VERSION }}
+
+  restore_neo4j: &restore_neo4j
+    restore_cache:
+      keys:
+        - *neo4j_cache_key
+
+  cache_neo4j: &cache_neo4j
+    save_cache:
+      key: *npm_cache_key
+      paths:
+        - ./neo4j/
+
+  install_node_modules_steps: &install_node_modules_steps
       - checkout
 
+      - run:
+          name: Create Node/NPM cache key
+          command: echo "$(node -v)\n$(npm -v)"" > node-version
+
       - *restore_node_modules
+
       - run:
           name: Install dependencies
           command: npm install --no-save
@@ -39,32 +62,34 @@ shared:
             - .
 
   install_neo4j: &install_neo4j
-      - run:
-        name: Provision neo4j
-        command: |
-          wget dist.neo4j.org/neo4j-$NEO4j_DIST-$NEO4J_VERSION-unix.tar.gz
-          tar -xzf neo4j-$NEO4j_DIST-$NEO4J_VERSION-unix.tar.gz
-          neo4j-$NEO4j_DIST-$NEO4J_VERSION/bin/neo4j-admin set-initial-password letmein
-          curl -L https://github.com/neo4j-contrib/neo4j-apoc-procedures/releases/download/$APOCH_VERSION/apoc-$APOCH_VERSION-all.jar > ./neo4j-$NEO4j_DIST-$NEO4J_VERSION/plugins/apoc-$APOCH_VERSION-all.jar
-          wget https://s3.amazonaws.com/neo4j-sandbox-usecase-datastores/v3_3/recommendations.db.zip
-          sudo apt-get install unzip
-          unzip recommendations.db.zip
-          mv recommendations.db neo4j-$NEO4j_DIST-$NEO4J_VERSION/data/databases/graph.db
-          ./neo4j-$NEO4j_DIST-$NEO4J_VERSION/bin/neo4j start
-          sleep 60
+    run:
+      name: Provision neo4j
+      command: >
+        if [ ! -d "neo4j/data/databases/graph.db" ]; then
+          wget dist.neo4j.org/neo4j-$NEO4j_DIST-$NEO4J_VERSION-unix.tar.gz && \
+          tar -xzf neo4j-$NEO4j_DIST-$NEO4J_VERSION-unix.tar.gz -C neo4j --strip-components 1  && \
+          neo4j/bin/neo4j-admin set-initial-password letmein  && \
+          curl -L https://github.com/neo4j-contrib/neo4j-apoc-procedures/releases/download/$APOCH_VERSION/apoc-$APOCH_VERSION-all.jar > ./neo4j/plugins/apoc-$APOCH_VERSION-all.jar && \
+          wget https://s3.amazonaws.com/neo4j-sandbox-usecase-datastores/v3_3/recommendations.db.zip && \
+          sudo apt-get install unzip && \
+          unzip recommendations.db.zip && \
+          mv recommendations.db neo4j/data/databases/graph.db
+        else
+          echo "Database is already installed, skipping"
+        fi
+        ./neo4j/bin/neo4j start
+        sleep 60
 
   start_graphql: &start_graphql
-      - run:
-        name: Start GraphQL Server
-        command: node -r babel-register ./example/graphql-tools/movies.js
-        background: true
-
-      - run: sleep 60
+    run:
+      name: Start GraphQL Server
+      command: node -r babel-register ./example/graphql-tools/movies.js
+      background: true
 
   run_tests: &run_tests
-      - run:
-        name: Run Tests
-        command: ./node_modules/.bin/ava test/*.js
+    run:
+      name: Run Tests
+      command: ./node_modules/.bin/ava test/*.js
 
   env_neo4j33ee: &env_neo4j33ee
       NEO4j_DIST: 'enterprise'
@@ -83,92 +108,94 @@ shared:
       NEO4J_VERSION: '3.4.0'
       APOCH_VERSION: '3.4.0.1'
 
-  shared_tests: &shared_tests
+  run_tests_steps: &run_tests_steps
     - *attach_workspace
+    - *restore_neo4j
     - *install_neo4j
+    - *cache_neo4j
     - *start_graphql
+    - run: sleep 60
     - *run_tests
 
-version: 2
 jobs:
   # Node 8
-  install_node_8:
-    docker: *node_8
-    steps: *install_node_modules
+  install_node8:
+    docker: *node8
+    steps: *install_node_modules_steps
 
   neo4j33ee_node8:
-    docker: *node_8
-    environment: env_neo4j33ee
-    steps: *shared_tests
+    docker: *node8
+    environment: *env_neo4j33ee
+    steps: *run_tests_steps
 
   neo4j33ce_node8:
-    docker: *node_8
-    environment: env_neo4j33ce
-    steps: *shared_tests
+    docker: *node8
+    environment: *env_neo4j33ce
+    steps: *run_tests_steps
 
   neo4j32ee_node8:
-    docker: *node_8
-    environment: env_neo4j32ee
-    steps: *shared_tests
+    docker: *node8
+    environment: *env_neo4j32ee
+    steps: *run_tests_steps
 
   neo4j34ee_node8:
-    docker: *node_8
-    environment: env_neo4j34ee
-    steps: *shared_tests
+    docker: *node8
+    environment: *env_neo4j34ee
+    steps: *run_tests_steps
 
-  # Node 9
-  install_node_9:
-    docker: *node_9
-    steps: *install_node_modules
+  # Node 10
+  install_node10:
+    docker: *node10
+    steps: *install_node_modules_steps
 
-  neo4j33ee_node9:
-    docker: *node_9
-    environment: env_neo4j33ee
-    steps: *shared_tests
+  neo4j33ee_node10:
+    docker: *node10
+    environment: *env_neo4j33ee
+    steps: *run_tests_steps
 
-  neo4j33ce_node9:
-    docker: *node_9
-    environment: env_neo4j33ce
-    steps: *shared_tests
+  neo4j33ce_node10:
+    docker: *node10
+    environment: *env_neo4j33ce
+    steps: *run_tests_steps
 
-  neo4j32ee_node9:
-    docker: *node_9
-    environment: env_neo4j32ee
-    steps: *shared_tests
+  neo4j32ee_node10:
+    docker: *node10
+    environment: *env_neo4j32ee
+    steps: *run_tests_steps
 
-  neo4j34ee_node9:
-    docker: *node_9
-    environment: env_neo4j34ee
-    steps: *shared_tests
+  neo4j34ee_node10:
+    docker: *node10
+    environment: *env_neo4j34ee
+    steps: *run_tests_steps
 
 workflows:
   version: 2
   integration_test:
     jobs:
-      - install_node_8
-      - install_node_9
+      - install_node8
       - neo4j33ee_node8:
-        requires:
-          - install_node_8
+          requires:
+            - install_node8
       - neo4j33ce_node8:
-        requires:
-          - install_node_8
+          requires:
+            - install_node8
       - neo4j32ee_node8:
-        requires:
-          - install_node_8
+          requires:
+            - install_node8
       - neo4j34ee_node8:
-        requires:
-          - install_node_8
+          requires:
+            - install_node8
 
-      - neo4j33ee_node9:
-        requires:
-          - install_node_9
-      - neo4j33ce_node9:
-        requires:
-          - install_node_9
-      - neo4j32ee_node9:
-        requires:
-          - install_node_9
-      - neo4j34ee_node9:
-        requires:
-          - install_node_9
+      - install_node10
+      - neo4j33ee_node10:
+          requires:
+            - install_node10
+      - neo4j33ce_node10:
+          requires:
+            - install_node10
+      - neo4j32ee_node10:
+          requires:
+            - install_node10
+      - neo4j34ee_node10:
+          requires:
+            - install_node10
