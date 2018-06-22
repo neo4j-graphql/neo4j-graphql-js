@@ -64,9 +64,12 @@ references:
   install_neo4j: &install_neo4j
     run:
       name: Provision neo4j
-      command: |
-        ./scripts/install-neo4j.sh
-        ./scripts/start-neo4j.sh
+      command: ./scripts/install-neo4j.sh
+
+  start_neo4j: &start_neo4j
+    run:
+      name: Start Neo4j Server
+      command: ./scripts/start-neo4j.sh
 
   start_graphql: &start_graphql
     run:
@@ -96,16 +99,42 @@ references:
       NEO4J_VERSION: '3.4.0'
       APOCH_VERSION: '3.4.0.1'
 
-  run_tests_steps: &run_tests_steps
-    - *attach_workspace
+  install_neo4j_steps: &install_neo4j_steps
     - *restore_neo4j
     - *install_neo4j
     - *cache_neo4j
+
+  run_tests_steps: &run_tests_steps
+    - *attach_workspace
+    - *restore_neo4j
+    - *start_neo4j
     - *start_graphql
     - run: sleep 60
     - *run_tests
 
 jobs:
+
+  # Neo4j installations - cache these so fan out is faster
+  install_neo4j33ee:
+    docker: *node10
+    environment: *env_neo4j33ee
+    steps: *install_neo4j_steps
+
+  install_neo4j33ce:
+    docker: *node10
+    environment: *env_neo4j33ce
+    steps: *install_neo4j_steps
+
+  install_neo4j32ee:
+    docker: *node10
+    environment: *env_neo4j32ee
+    steps: *install_neo4j_steps
+
+  install_neo4j34ee:
+    docker: *node10
+    environment: *env_neo4j34ee
+    steps: *install_neo4j_steps
+
   # Node 8
   install_for_node8:
     docker: *node8
@@ -161,29 +190,42 @@ workflows:
   integration_test:
     jobs:
       - install_for_node8
+      - install_for_node10
+      - install_neo4j33ee
+      - install_neo4j33ce
+      - install_neo4j32ee
+      - install_neo4j34ee
+
       - neo4j33ee_node8:
           requires:
+            - install_neo4j33ee
             - install_for_node8
       - neo4j33ce_node8:
           requires:
+            - install_neo4j33ce
             - install_for_node8
       - neo4j32ee_node8:
           requires:
+            - install_neo4j32ee
             - install_for_node8
       - neo4j34ee_node8:
           requires:
+            - install_neo4j34ee
             - install_for_node8
 
-      - install_for_node10
       - neo4j33ee_node10:
           requires:
+            - install_neo4j33ee
             - install_for_node10
       - neo4j33ce_node10:
           requires:
+            - install_neo4j33ce
             - install_for_node10
       - neo4j32ee_node10:
           requires:
+            - install_neo4j32ee
             - install_for_node10
       - neo4j34ee_node10:
           requires:
+            - install_neo4j34ee
             - install_for_node10
