@@ -7,7 +7,7 @@ echo "Waiting up to 2 minutes for graphql http port ($HTTP_PORT)"
 
 for i in {1..120};
     do
-        nc -z 127.0.0.1 $HTTP_PORT
+        nc -z localhost $HTTP_PORT
         is_up=$?
         if [ $is_up -eq 0 ]; then
             echo
@@ -18,5 +18,5 @@ for i in {1..120};
         echo -n "."
 done
 echo
-# Wait a further 5 seconds after the port is available
-sleep 5
+# Wait a further 30 seconds after the port is available
+sleep 30
