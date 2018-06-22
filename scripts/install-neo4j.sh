@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -xe
+
 if [ ! -d "neo4j/data/databases/graph.db" ]; then
     mkdir -p neo4j
     wget dist.neo4j.org/neo4j-$NEO4J_DIST-$NEO4J_VERSION-unix.tar.gz

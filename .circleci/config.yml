@@ -80,8 +80,7 @@ references:
   start_graphql: &start_graphql
     run:
       name: Start GraphQL Server
-      command: node -r babel-register ./example/graphql-tools/movies.js
-      background: true
+      command: ./scripts/start-graphql.sh
 
   run_tests: &run_tests
     run:
@@ -118,7 +117,6 @@ references:
     - *restore_neo4j
     - *start_neo4j
     - *start_graphql
-    - run: sleep 60
     - *run_tests
 
 jobs:
