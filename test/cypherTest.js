@@ -323,12 +323,12 @@ test('Query for Neo4js internal _id by dedicated Query MovieBy_Id(_id: Int!)', t
 
 test(`Query for null value translates to 'IS NULL' WHERE clause`, t => {
   const graphQLQuery = `{
-    Movie(released: null) {
+    Movie(poster: null) {
       title
       year
     }
   }`,
-    expectedCypherQuery = `MATCH (movie:Movie {}) WHERE movie.released IS NULL RETURN movie { .title , .year } AS movie SKIP 0`;
+    expectedCypherQuery = `MATCH (movie:Movie {}) WHERE movie.poster IS NULL RETURN movie { .title , .year } AS movie SKIP 0`;
 
   t.plan(2);
   cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery);
@@ -337,12 +337,12 @@ test(`Query for null value translates to 'IS NULL' WHERE clause`, t => {
 
 test(`Query for null value combined with internal ID and another param`, t => {
   const graphQLQuery = `{
-      Movie(released: null, _id: 0, year: 2010) {
+      Movie(poster: null, _id: 0, year: 2010) {
         title
         year
       }
     }`,
-    expectedCypherQuery = `MATCH (movie:Movie {year:2010}) WHERE ID(movie)=0 AND movie.released IS NULL RETURN movie { .title , .year } AS movie SKIP 0`;
+    expectedCypherQuery = `MATCH (movie:Movie {year:2010}) WHERE ID(movie)=0 AND movie.poster IS NULL RETURN movie { .title , .year } AS movie SKIP 0`;
 
   t.plan(2);
   cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery);
