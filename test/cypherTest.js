@@ -224,7 +224,7 @@ test('Handle @cypher directive without any params for sub-query', t => {
         year
       }
     }
-  
+
   }`,
     expectedCypherQuery = `MATCH (movie:Movie {title:"River Runs Through It, A"}) RETURN movie {mostSimilar: head([ movie_mostSimilar IN apoc.cypher.runFirstColumn("WITH {this} AS this RETURN this", {this: movie}, true) | movie_mostSimilar { .title , .year }]) } AS movie SKIP 0`;
 
@@ -238,7 +238,7 @@ test('Pass @cypher directive default params to sub-query', t => {
     Movie(title: "River Runs Through It, A") {
       scaleRating
     }
-  
+
   }`,
     expectedCypherQuery = `MATCH (movie:Movie {title:"River Runs Through It, A"}) RETURN movie {scaleRating: apoc.cypher.runFirstColumn("WITH $this AS this RETURN $scale * this.imdbRating", {this: movie, scale: 3}, false)} AS movie SKIP 0`;
 
@@ -252,7 +252,7 @@ test('Pass @cypher directive params to sub-query', t => {
     Movie(title: "River Runs Through It, A") {
       scaleRating(scale: 10)
     }
-  
+
   }`,
     expectedCypherQuery = `MATCH (movie:Movie {title:"River Runs Through It, A"}) RETURN movie {scaleRating: apoc.cypher.runFirstColumn("WITH $this AS this RETURN $scale * this.imdbRating", {this: movie, scale: 10}, false)} AS movie SKIP 0`;
 
@@ -267,7 +267,7 @@ test('Query for Neo4js internal _id', t => {
       title
       year
     }
-  
+
   }`,
     expectedCypherQuery = `MATCH (movie:Movie {}) WHERE ID(movie)=0 RETURN movie { .title , .year } AS movie SKIP 0`;
 
@@ -282,7 +282,7 @@ test('Query for Neo4js internal _id and another param before _id', t => {
       title
       year
     }
-  
+
   }`,
     expectedCypherQuery = `MATCH (movie:Movie {title:"River Runs Through It, A"}) WHERE ID(movie)=0 RETURN movie { .title , .year } AS movie SKIP 0`;
 
@@ -297,7 +297,7 @@ test('Query for Neo4js internal _id and another param after _id', t => {
       title
       year
     }
-  
+
   }`,
     expectedCypherQuery = `MATCH (movie:Movie {year:2010}) WHERE ID(movie)=0 RETURN movie { .title , .year } AS movie SKIP 0`;
 
@@ -312,9 +312,37 @@ test('Query for Neo4js internal _id by dedicated Query MovieBy_Id(_id: Int!)', t
       title
       year
     }
-  
+
   }`,
     expectedCypherQuery = `MATCH (movie:Movie {}) WHERE ID(movie)=0 RETURN movie { .title , .year } AS movie SKIP 0`;
+
+  t.plan(2);
+  cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery);
+  augmentedSchemaCypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery);
+});
+
+test(`Query for null value translates to 'IS NULL' WHERE clause`, t => {
+  const graphQLQuery = `{
+    Movie(poster: null) {
+      title
+      year
+    }
+  }`,
+    expectedCypherQuery = `MATCH (movie:Movie {}) WHERE movie.poster IS NULL RETURN movie { .title , .year } AS movie SKIP 0`;
+
+  t.plan(2);
+  cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery);
+  augmentedSchemaCypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery);
+});
+
+test(`Query for null value combined with internal ID and another param`, t => {
+  const graphQLQuery = `{
+      Movie(poster: null, _id: 0, year: 2010) {
+        title
+        year
+      }
+    }`,
+    expectedCypherQuery = `MATCH (movie:Movie {year:2010}) WHERE ID(movie)=0 AND movie.poster IS NULL RETURN movie { .title , .year } AS movie SKIP 0`;
 
   t.plan(2);
   cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery);
@@ -491,9 +519,9 @@ test('Handle GraphQL variables in nest selection - @cypher param (not first/offs
     year
     similar(first: $first) {
       title
-      scaleRating(scale:$scale) 
+      scaleRating(scale:$scale)
     }
-    
+
   }
 }`,
     expectedCypherQuery = `MATCH (movie:Movie {year:2016}) RETURN movie { .title , .year ,similar: [ movie_similar IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie, first: 3, offset: 0}, true) | movie_similar { .title ,scaleRating: apoc.cypher.runFirstColumn("WITH $this AS this RETURN $scale * this.imdbRating", {this: movie_similar, scale: 5}, false)}][..3] } AS movie SKIP 0`;
