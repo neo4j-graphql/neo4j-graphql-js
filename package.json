@@ -1,6 +1,6 @@
 {
   "name": "neo4j-graphql-js",
-  "version": "0.1.21",
+  "version": "0.1.22",
   "description": "A GraphQL to Cypher query execution layer for Neo4j. ",
   "main": "./dist/index.js",
   "scripts": {
@@ -50,6 +50,9 @@
     "singleQuote": true
   },
   "lint-staged": {
-    "*.{js,json,css,md}": ["prettier --write", "git add"]
+    "*.{js,json,css,md}": [
+      "prettier --write",
+      "git add"
+    ]
   }
 }
