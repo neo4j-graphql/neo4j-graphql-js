@@ -1,0 +1,250 @@
+version: 2
+
+references:
+
+  node8: &node8
+    - image: circleci/node:8-browsers
+  node10: &node10
+    - image: circleci/node:10-browsers
+
+  attach_workspace: &attach_workspace
+    attach_workspace:
+      at: ~/project
+
+  npm_cache_key: &npm_cache_key
+    v1-dependency-npm-{{ checksum "package-lock.json" }}-{{checksum "node-version" }}
+
+  restore_node_modules: &restore_node_modules
+    restore_cache:
+      keys:
+        - *npm_cache_key
+        - v1-dependency-npm-{{ checksum "package-lock.json" }}
+        - v1-dependency-npm-
+
+  cache_node_modules: &cache_node_modules
+    save_cache:
+      key: *npm_cache_key
+      paths:
+        - ./node_modules/
+
+  neo4j_cache_key: &neo4j_cache_key
+    v1-dependency-neo4j-{{ checksum "neo4j-version" }}
+
+  restore_neo4j: &restore_neo4j
+    restore_cache:
+      keys:
+        - *neo4j_cache_key
+
+  cache_neo4j: &cache_neo4j
+    save_cache:
+      key: *neo4j_cache_key
+      paths:
+        - ./neo4j/
+
+  # can only use CircleCI or context environment variables in cache keys, so write to file
+  create_neo4j_cache_key: &create_neo4j_cache_key
+    run:
+        name: Create Neo4j cache key
+        command: echo "$NEO4J_DIST\n$NEO4J_VERSION\n$APOCH_VERSION\n$DATASTORE_VERSION" > neo4j-version
+
+  install_node_modules_steps: &install_node_modules_steps
+      - checkout
+
+      - run:
+          name: Create Node/NPM cache key
+          command: echo "$(node -v)\n$(npm -v)" > node-version
+
+      - *restore_node_modules
+
+      - run:
+          name: Install dependencies
+          command: npm install --no-save
+
+      - *cache_node_modules
+
+      - persist_to_workspace:
+          root: .
+          paths:
+            - .
+
+  install_neo4j: &install_neo4j
+    run:
+      name: Provision neo4j
+      command: ./scripts/install-neo4j.sh
+
+  start_neo4j: &start_neo4j
+    run:
+      name: Start Neo4j Server
+      command: ./scripts/start-neo4j.sh
+
+  start_graphql: &start_graphql
+    run:
+      name: Start GraphQL Server
+      command: node -r babel-register ./example/graphql-tools/movies.js
+      background: true
+
+  wait_for_graphql: &wait_for_graphql
+    run:
+      name: Wait for GraphQL server to be available
+      command: ./scripts/wait-for-graphql.sh
+
+  run_tests: &run_tests
+    run:
+      name: Run Tests
+      command: ./node_modules/.bin/ava test/*.js
+
+  env_neo4j33ee: &env_neo4j33ee
+      NEO4J_DIST: 'enterprise'
+      NEO4J_VERSION: '3.3.5'
+      APOCH_VERSION: '3.3.0.2'
+      DATASTORE_VERSION: '3_3'
+  env_neo4j33ce: &env_neo4j33ce
+      NEO4J_DIST: 'community'
+      NEO4J_VERSION: '3.3.5'
+      APOCH_VERSION: '3.3.0.2'
+      DATASTORE_VERSION: '3_3'
+  env_neo4j32ee: &env_neo4j32ee
+      NEO4J_DIST: 'enterprise'
+      NEO4J_VERSION: '3.2.10'
+      APOCH_VERSION: '3.2.3.6'
+      DATASTORE_VERSION: '3_2'
+  env_neo4j34ee: &env_neo4j34ee
+      NEO4J_DIST: 'enterprise'
+      NEO4J_VERSION: '3.4.0'
+      APOCH_VERSION: '3.4.0.1'
+      # FIXME: use 3.4 datastore version
+      DATASTORE_VERSION: '3_3'
+
+  install_neo4j_steps: &install_neo4j_steps
+    - checkout
+    - *create_neo4j_cache_key
+    - *restore_neo4j
+    - *install_neo4j
+    - *cache_neo4j
+
+  run_tests_steps: &run_tests_steps
+    - *attach_workspace
+    - *create_neo4j_cache_key
+    - *restore_neo4j
+    - *start_neo4j
+    - *start_graphql
+    - *wait_for_graphql
+    - *run_tests
+
+jobs:
+
+  # Neo4j installations - cache these so fan out is faster
+  install_neo4j33ee:
+    docker: *node10
+    environment: *env_neo4j33ee
+    steps: *install_neo4j_steps
+
+  install_neo4j33ce:
+    docker: *node10
+    environment: *env_neo4j33ce
+    steps: *install_neo4j_steps
+
+  install_neo4j32ee:
+    docker: *node10
+    environment: *env_neo4j32ee
+    steps: *install_neo4j_steps
+
+  install_neo4j34ee:
+    docker: *node10
+    environment: *env_neo4j34ee
+    steps: *install_neo4j_steps
+
+  # Node 8
+  install_for_node8:
+    docker: *node8
+    steps: *install_node_modules_steps
+
+  neo4j33ee_node8:
+    docker: *node8
+    environment: *env_neo4j33ee
+    steps: *run_tests_steps
+
+  neo4j33ce_node8:
+    docker: *node8
+    environment: *env_neo4j33ce
+    steps: *run_tests_steps
+
+  neo4j32ee_node8:
+    docker: *node8
+    environment: *env_neo4j32ee
+    steps: *run_tests_steps
+
+  neo4j34ee_node8:
+    docker: *node8
+    environment: *env_neo4j34ee
+    steps: *run_tests_steps
+
+  # Node 10
+  install_for_node10:
+    docker: *node10
+    steps: *install_node_modules_steps
+
+  neo4j33ee_node10:
+    docker: *node10
+    environment: *env_neo4j33ee
+    steps: *run_tests_steps
+
+  neo4j33ce_node10:
+    docker: *node10
+    environment: *env_neo4j33ce
+    steps: *run_tests_steps
+
+  neo4j32ee_node10:
+    docker: *node10
+    environment: *env_neo4j32ee
+    steps: *run_tests_steps
+
+  neo4j34ee_node10:
+    docker: *node10
+    environment: *env_neo4j34ee
+    steps: *run_tests_steps
+
+workflows:
+  version: 2
+  integration_test:
+    jobs:
+      - install_for_node8
+      - install_for_node10
+      - install_neo4j33ee
+      - install_neo4j33ce
+      - install_neo4j32ee
+      - install_neo4j34ee
+
+      - neo4j33ee_node8:
+          requires:
+            - install_neo4j33ee
+            - install_for_node8
+      - neo4j33ce_node8:
+          requires:
+            - install_neo4j33ce
+            - install_for_node8
+      - neo4j32ee_node8:
+          requires:
+            - install_neo4j32ee
+            - install_for_node8
+      - neo4j34ee_node8:
+          requires:
+            - install_neo4j34ee
+            - install_for_node8
+
+      - neo4j33ee_node10:
+          requires:
+            - install_neo4j33ee
+            - install_for_node10
+      - neo4j33ce_node10:
+          requires:
+            - install_neo4j33ce
+            - install_for_node10
+      - neo4j32ee_node10:
+          requires:
+            - install_neo4j32ee
+            - install_for_node10
+      - neo4j34ee_node10:
+          requires:
+            - install_neo4j34ee
+            - install_for_node10

@@ -12,6 +12,9 @@
     "pretest": "npm run build",
     "test": "ava test/cypherTest.js test/augmentSchemaTest.js --verbose"
   },
+  "engines": {
+    "node": "> 8"
+  },
   "author": "William Lyon",
   "license": "Apache-2.0",
   "repository": {
