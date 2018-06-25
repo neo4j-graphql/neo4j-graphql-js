@@ -110,7 +110,7 @@ references:
       DATASTORE_VERSION: '3_2'
   env_neo4j34ee: &env_neo4j34ee
       NEO4J_DIST: 'enterprise'
-      NEO4J_VERSION: '3.4.0'
+      NEO4J_VERSION: '3.4.1'
       APOCH_VERSION: '3.4.0.1'
       # FIXME: use 3.4 datastore version
       DATASTORE_VERSION: '3_3'
