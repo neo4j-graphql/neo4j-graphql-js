@@ -112,8 +112,7 @@ references:
       NEO4J_DIST: 'enterprise'
       NEO4J_VERSION: '3.4.1'
       APOCH_VERSION: '3.4.0.1'
-      # FIXME: use 3.4 datastore version
-      DATASTORE_VERSION: '3_3'
+      DATASTORE_VERSION: '3_4'
 
   install_neo4j_steps: &install_neo4j_steps
     - checkout
