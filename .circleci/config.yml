@@ -45,7 +45,7 @@ references:
   create_neo4j_cache_key: &create_neo4j_cache_key
     run:
         name: Create Neo4j cache key
-        command: echo "$NEO4J_DIST\n$NEO4J_VERSION\n$APOCH_VERSION\n$DATASTORE_VERSION" > neo4j-version
+        command: echo "$NEO4J_DIST\n$NEO4J_VERSION\n$APOC_VERSION\n$DATASTORE_VERSION" > neo4j-version
 
   install_node_modules_steps: &install_node_modules_steps
       - checkout
@@ -96,22 +96,22 @@ references:
   env_neo4j33ee: &env_neo4j33ee
       NEO4J_DIST: 'enterprise'
       NEO4J_VERSION: '3.3.5'
-      APOCH_VERSION: '3.3.0.2'
+      APOC_VERSION: '3.3.0.2'
       DATASTORE_VERSION: '3_3'
   env_neo4j33ce: &env_neo4j33ce
       NEO4J_DIST: 'community'
       NEO4J_VERSION: '3.3.5'
-      APOCH_VERSION: '3.3.0.2'
+      APOC_VERSION: '3.3.0.2'
       DATASTORE_VERSION: '3_3'
   env_neo4j32ee: &env_neo4j32ee
       NEO4J_DIST: 'enterprise'
       NEO4J_VERSION: '3.2.10'
-      APOCH_VERSION: '3.2.3.6'
+      APOC_VERSION: '3.2.3.6'
       DATASTORE_VERSION: '3_2'
   env_neo4j34ee: &env_neo4j34ee
       NEO4J_DIST: 'enterprise'
       NEO4J_VERSION: '3.4.1'
-      APOCH_VERSION: '3.4.0.1'
+      APOC_VERSION: '3.4.0.1'
       DATASTORE_VERSION: '3_4'
 
   install_neo4j_steps: &install_neo4j_steps
