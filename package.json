@@ -12,7 +12,7 @@
     "test": "ava test/cypherTest.js test/augmentSchemaTest.js --verbose"
   },
   "engines": {
-    "node": "> 8"
+    "node": ">=8"
   },
   "author": "William Lyon",
   "license": "Apache-2.0",
