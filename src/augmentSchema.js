@@ -2,6 +2,7 @@ import { makeExecutableSchema, mergeSchemas } from 'graphql-tools';
 import { neo4jgraphql } from './index';
 import { printSchema } from 'graphql';
 import { lowFirstLetter } from './utils';
+import { GraphQLID, astFromValue, buildSchema, GraphQLList } from 'graphql';
 
 export function addMutationsToSchema(schema) {
   const types = typesToAugment(schema);
@@ -74,6 +75,124 @@ export function addMutationsToSchema(schema) {
 
   return finalSchema;
 }
+
+export const addIdFieldToSchema = schema => {
+  const types = typesToAugment(schema);
+
+  const idSchemaTypeDefs = `
+  type Node {
+    _id: ID
+  }
+  `;
+
+  const idSchema = buildSchema(idSchemaTypeDefs);
+
+  const idField = idSchema._typeMap.Node._fields._id;
+
+  types.forEach(t => {
+    schema._typeMap[t]._fields['_id'] = idField;
+  });
+
+  return schema;
+};
+
+const addOrderByFields = schema => {
+  throw new Error('addOrderByFields is not yet implemented');
+
+  // FIXME: this approach seems to create duplicate arg fields somehow and fails schema validation
+  const types = arrayQueryFieldsAndTypes(schema);
+
+  types.forEach(({ field, type }) => {
+    const orderByArg = {
+      astNode: undefined,
+      defaultValue: undefined,
+      description: '',
+      name: 'orderBy',
+      type: schema._typeMap[`_${type}Ordering`]
+    };
+
+    schema._queryType._fields[field].args.push(orderByArg);
+    schema._typeMap.Query._fields[field].args.push(orderByArg);
+  });
+};
+
+const addOrderByEnumTypes = schema => {
+  // FIXME: initially this will only work on query types
+
+  // for each query type return type (that returns an array)
+  // add `field`_asc and `field`_desc
+
+  const types = arrayQueryTypes(schema);
+
+  const enumTypeSDL = types.reduce((acc, t) => {
+    return (
+      acc +
+      `
+      enum _${t}Ordering {
+        ${Object.keys(schema.getTypeMap()[t]._fields).reduce((fieldStr, k) => {
+          return (
+            fieldStr +
+            `
+            ${k}_asc,
+            ${k}_desc,
+          `
+          );
+        }, '')}
+      }
+    `
+    );
+  }, '');
+
+  const enumSchema = buildSchema(enumTypeSDL);
+
+  const mergedSchema = mergeSchemas({
+    schemas: [schema, enumSchema]
+  });
+
+  return mergedSchema;
+};
+
+const arrayQueryFieldsAndTypes = schema => {
+  // [{field: "MoviesByYear", type: "Movie"}]
+
+  const queryTypeNames = Object.keys(schema._queryType._fields).filter(f => {
+    return schema._queryType._fields[f].type.constructor === GraphQLList;
+  });
+
+  return queryTypeNames.map(t => {
+    return {
+      field: t,
+      type: innerType(schema._queryType._fields[t].type).name
+    };
+  });
+};
+
+const arrayQueryTypes = schema => {
+  // return the type names for all query types returned as an array
+
+  const queryTypeNames = Object.keys(schema._queryType._fields).filter(f => {
+    return schema._queryType._fields[f].type.constructor === GraphQLList;
+  });
+
+  const queryTypes = queryTypeNames.map(f => {
+    return innerType(schema._queryType._fields[f].type).name;
+  });
+
+  return Array.from(new Set(queryTypes));
+};
+
+/**
+ * Given a GraphQLSchema return a new schema where orderBy
+ * field has been added to each type as well as corresponding
+ * enums for specifying order
+ * @param {*} schema
+ */
+export const addOrderByToSchema = schema => {
+  schema = addOrderByEnumTypes(schema);
+  schema = addOrderByFields(schema);
+
+  return schema;
+};
 
 /**
  * Given a GraphQLSchema return an array of the type names,
@@ -278,6 +397,7 @@ function innerType(type) {
 function firstNonNullAndIdField(type) {
   let fields = Object.keys(type.getFields()).filter(t => {
     return (
+      t !== '_id' &&
       type.getFields()[t].type.constructor.name === 'GraphQLNonNull' &&
       innerType(type.getFields()[t].type.name === 'ID')
     );
@@ -292,7 +412,7 @@ function firstNonNullAndIdField(type) {
 
 function firstIdField(type) {
   let fields = Object.keys(type.getFields()).filter(t => {
-    return innerType(type.getFields()[t].type.name === 'ID');
+    return t !== '_id' && innerType(type.getFields()[t].type.name === 'ID');
   });
 
   if (fields.length === 0) {
@@ -304,7 +424,9 @@ function firstIdField(type) {
 
 function firstNonNullField(type) {
   let fields = Object.keys(type.getFields()).filter(t => {
-    return type.getFields()[t].type.constructor.name === 'GraphQLNonNull';
+    return (
+      (t !== type.getFields()[t].type.constructor.name) === 'GraphQLNonNull'
+    );
   });
 
   if (fields.length === 0) {
@@ -315,5 +437,8 @@ function firstNonNullField(type) {
 }
 
 function firstField(type) {
-  return type.getFields()[Object.keys(type.getFields())[0]];
+  let fields = Object.keys(type.getFields()).filter(t => {
+    return t !== '_id';
+  });
+  return type.getFields()[fields[0]];
 }

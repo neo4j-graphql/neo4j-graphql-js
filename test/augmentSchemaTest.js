@@ -9,10 +9,12 @@ test.cb('Test augmented schema', t => {
   id: ID!
   name: String
   movies: [Movie]
+  _id: ID
 }
 
 type Book {
   genre: BookGenre
+  _id: ID
 }
 
 enum BookGenre {
@@ -22,7 +24,7 @@ enum BookGenre {
 }
 
 type Genre {
-  _id: ID!
+  _id: ID
   name: String
   movies(first: Int = 3, offset: Int = 0): [Movie]
   highestRatedMovie: Movie
@@ -50,11 +52,11 @@ type Movie {
 
 type Mutation {
   CreateMovie(movieId: ID, title: String, year: Int, plot: String, poster: String, imdbRating: Float, degree: Int, avgStars: Float, scaleRating: Float, scaleRatingFloat: Float): Movie
-  AddMovieGenre(movie_id: ID!, genre_id: ID!): Movie
-  AddMovieState(movie_id: ID!, statename: String!): Movie
+  AddMovieGenre(moviemovieId: ID!, genrename: String!): Movie
+  AddMovieState(moviemovieId: ID!, statename: String!): Movie
   CreateGenre(name: String): Genre
   CreateActor(id: ID, name: String): Actor
-  AddActorMovie(actorid: ID!, movie_id: ID!): Actor
+  AddActorMovie(actorid: ID!, moviemovieId: ID!): Actor
   CreateState(name: String): State
   CreateBook(genre: BookGenre): Book
   CreateUser(id: ID, name: String): User
@@ -76,11 +78,13 @@ type Query {
 
 type State {
   name: String
+  _id: ID
 }
 
 type User implements Person {
   id: ID!
   name: String
+  _id: ID
 }
 `;
 

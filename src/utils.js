@@ -153,7 +153,11 @@ export function innerFilterParams(selections) {
   ) {
     const filters = selections[0].arguments
       .filter(x => {
-        return x.name.value !== 'first' && x.name.value !== 'offset';
+        return (
+          x.name.value !== 'first' &&
+          x.name.value !== 'offset' &&
+          x.name.value !== 'orderBy'
+        );
       })
       .map(x => {
         const filterValue = JSON.stringify(x.value.value).replace(
@@ -166,6 +170,21 @@ export function innerFilterParams(selections) {
     queryParams = `{${filters.join(',')}}`;
   }
   return queryParams;
+}
+
+function _argumentValue(selection, name, variableValues) {
+  let arg = selection.arguments.find(a => a.name.value === name);
+  if (!arg) {
+    return null;
+  } else {
+    const key = arg.value.name.value;
+
+    try {
+      return variableValues[key];
+    } catch (e) {
+      return argumentValue(selection, name, variableValues);
+    }
+  }
 }
 
 function argumentValue(selection, name, variableValues) {
@@ -202,6 +221,26 @@ export function computeSkipLimit(selection, variableValues) {
   if (first === null) return `[${offset}..]`;
   return `[${offset}..${parseInt(offset) + parseInt(first)}]`;
 }
+
+export const computeOrderBy = (resolveInfo, selection) => {
+  const orderByVar = _argumentValue(
+    resolveInfo.operation.selectionSet.selections[0],
+    'orderBy',
+    resolveInfo.variableValues
+  );
+
+  if (orderByVar == undefined) {
+    return '';
+  } else {
+    const splitIndex = orderByVar.lastIndexOf('_');
+    const order = orderByVar.substring(splitIndex + 1);
+    const orderBy = orderByVar.substring(0, splitIndex);
+    const { variableName } = typeIdentifiers(resolveInfo.returnType);
+    return ` ORDER BY ${variableName}.${orderBy} ${
+      order === 'asc' ? 'ASC' : 'DESC'
+    } `;
+  }
+};
 
 export function extractSelections(selections, fragments) {
   // extract any fragment selection sets into a single array of selections
@@ -287,7 +326,7 @@ export function fixParamsForAddRelationshipMutation(params, resolveInfo) {
       .astNode.arguments[0].name.value
   ];
 
-  console.log(params);
+  //console.log(params);
 
   return params;
 }

@@ -6,10 +6,15 @@ import {
   lowFirstLetter,
   extractQueryResult,
   extractSelections,
-  fixParamsForAddRelationshipMutation
+  fixParamsForAddRelationshipMutation,
+  computeOrderBy
 } from './utils';
 import { buildCypherSelection } from './selections';
-import { addMutationsToSchema } from './augmentSchema';
+import {
+  addIdFieldToSchema,
+  addOrderByToSchema,
+  addMutationsToSchema
+} from './augmentSchema';
 
 export async function neo4jgraphql(
   object,
@@ -44,7 +49,7 @@ export async function neo4jgraphql(
 const JSON_TO_PARAM_REGEX = /\"([^(\")"]+)\":/g;
 
 export function cypherQuery(
-  { first = -1, offset = 0, _id, ...otherParams },
+  { first = -1, offset = 0, _id, orderBy, ...otherParams },
   context,
   resolveInfo
 ) {
@@ -78,6 +83,7 @@ export function cypherQuery(
     '$1:'
   );
   const outerSkipLimit = `SKIP ${offset}${first > -1 ? ' LIMIT ' + first : ''}`;
+  const orderByValue = computeOrderBy(resolveInfo, selections);
 
   let query;
 
@@ -104,7 +110,7 @@ export function cypherQuery(
       variableName,
       schemaType,
       resolveInfo
-    })}} AS ${variableName} ${outerSkipLimit}`;
+    })}} AS ${variableName}${orderByValue} ${outerSkipLimit}`;
   } else {
     // No @cypher directive on QueryType
 
@@ -128,14 +134,14 @@ export function cypherQuery(
         variableName,
         schemaType,
         resolveInfo
-      })}} AS ${variableName} ${outerSkipLimit}`;
+      })}} AS ${variableName}${orderByValue} ${outerSkipLimit}`;
   }
 
   return query;
 }
 
 export function cypherMutation(
-  { first = -1, offset = 0, _id, ...otherParams },
+  { first = -1, offset = 0, _id, orderBy, ...otherParams },
   context,
   resolveInfo
 ) {
@@ -172,6 +178,7 @@ export function cypherMutation(
   const idWherePredicate =
     typeof _id !== 'undefined' ? `WHERE ID(${variableName})=${_id} ` : '';
   const outerSkipLimit = `SKIP ${offset}${first > -1 ? ' LIMIT ' + first : ''}`;
+  const orderByValue = computeOrderBy(resolveInfo, selections);
 
   let query;
   const mutationTypeCypherDirective = resolveInfo.schema
@@ -196,7 +203,7 @@ export function cypherMutation(
       variableName,
       schemaType,
       resolveInfo
-    })}} AS ${variableName} ${outerSkipLimit}`;
+    })}} AS ${variableName}${orderByValue} ${outerSkipLimit}`;
   } else if (
     resolveInfo.fieldName.startsWith('Create') ||
     resolveInfo.fieldName.startsWith('create')
@@ -300,7 +307,13 @@ export function cypherMutation(
 }
 
 export function augmentSchema(schema) {
-  const mutationSchema = addMutationsToSchema(schema);
+  // FIXME: better composable API for schema augmentation
+  schema = addMutationsToSchema(schema);
+  schema = addIdFieldToSchema(schema);
 
-  return mutationSchema;
+  // FIXME: adding order by fields to the query types doesn't
+  //        quite work yet so don't include those in schema augmentation yet
+  //schema = addOrderByToSchema(schema);
+
+  return schema;
 }
