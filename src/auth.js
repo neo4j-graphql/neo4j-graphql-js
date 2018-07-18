@@ -5,5 +5,11 @@
 *  have been defined.
 */
 export const checkRequestError = context => {
-  return context.req.error || context.error;
+  if (context && context.req && context.req.error) {
+    return context.req.error;
+  } else if (context && context.error) {
+    return context.error;
+  } else {
+    return false;
+  }
 };
