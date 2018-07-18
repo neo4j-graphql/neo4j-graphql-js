@@ -4,7 +4,7 @@
   "description": "A GraphQL to Cypher query execution layer for Neo4j. ",
   "main": "./dist/index.js",
   "scripts": {
-    "start": "nodemon ./example/graphql-tools/movies.js --exec babel-node -e js",
+    "start": "nodemon ./example/apollo-server/movies.js --exec babel-node -e js",
     "build": "babel src --presets babel-preset-env --out-dir dist",
     "precommit": "lint-staged",
     "prepublish": "npm run build",
@@ -25,7 +25,7 @@
     "apollo-cache-inmemory": "^1.2.5",
     "apollo-client": "^2.3.5",
     "apollo-link-http": "^1.5.4",
-    "apollo-server-express": "^1.3.6",
+    "apollo-server": "2.0.0-rc.12",
     "ava": "^0.25.0",
     "babel-cli": "^6.26.0",
     "babel-plugin-transform-async-generator-functions": "^6.24.1",

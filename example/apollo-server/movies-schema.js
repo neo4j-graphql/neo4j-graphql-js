@@ -1,12 +1,6 @@
-import { makeExecutableSchema } from 'graphql-tools';
-import { neo4jgraphql, augmentSchema } from '../../src/index';
-import express from 'express';
-import { graphqlExpress, graphiqlExpress } from 'apollo-server-express';
-import bodyParser from 'body-parser';
-import { v1 as neo4j } from 'neo4j-driver';
+import { neo4jgraphql } from '../../src/index';
 
-// Simple Movie schema
-const typeDefs = `
+export const typeDefs = `
 type Movie {
   movieId: ID!
   title: String
@@ -79,7 +73,7 @@ type Query {
   Books: [Book]
 }`;
 
-const resolvers = {
+export const resolvers = {
   // root entry point to GraphQL service
   Query: {
     Movie(object, params, ctx, resolveInfo) {
@@ -114,64 +108,3 @@ const resolvers = {
 //     return neo4jgraphql(object, params, ctx, resolveInfo, true);
 //   }
 // }
-
-const schema = makeExecutableSchema({
-  typeDefs,
-  resolvers,
-  resolverValidationOptions: {
-    requireResolversForResolveType: false
-  }
-});
-
-// Add auto-generated mutations
-const augmentedSchema = augmentSchema(schema);
-
-let driver;
-
-function context(headers, secrets) {
-  if (!driver) {
-    driver = neo4j.driver(
-      secrets.NEO4J_URI || 'bolt://localhost:7687',
-      neo4j.auth.basic(
-        secrets.NEO4J_USER || 'neo4j',
-        secrets.NEO4J_PASSWORD || 'letmein'
-      )
-    );
-  }
-  return {
-    driver,
-    headers
-  };
-}
-
-const rootValue = {};
-
-const PORT = 3000;
-const server = express();
-
-server.use(
-  '/graphql',
-  bodyParser.json(),
-  graphqlExpress(request => ({
-    schema: augmentedSchema,
-    rootValue,
-    context: context(request.headers, process.env)
-  }))
-);
-
-server.use(
-  '/graphiql',
-  graphiqlExpress({
-    endpointURL: '/graphql',
-    query: `{
-
-}`
-  })
-);
-
-server.listen(PORT, '0.0.0.0', () => {
-  console.log(
-    `GraphQL Server is now running on http://localhost:${PORT}/graphql`
-  );
-  console.log(`View GraphiQL at http://localhost:${PORT}/graphiql`);
-});

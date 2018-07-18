@@ -11,7 +11,7 @@ let client;
 
 test.before(() => {
   client = new ApolloClient({
-    link: new HttpLink({ uri: 'http://localhost:3000/graphql', fetch: fetch }),
+    link: new HttpLink({ uri: 'http://localhost:3000', fetch: fetch }),
     cache: new InMemoryCache()
   });
 });
