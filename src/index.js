@@ -15,6 +15,7 @@ import {
   addOrderByToSchema,
   addMutationsToSchema
 } from './augmentSchema';
+import { checkRequestError } from './auth';
 
 export async function neo4jgraphql(
   object,
@@ -23,6 +24,11 @@ export async function neo4jgraphql(
   resolveInfo,
   debug = true
 ) {
+  // throw error if context.req.error exists
+  if (checkRequestError(context)) {
+    throw new Error(checkRequestError(context));
+  }
+
   let query;
 
   if (isMutation(resolveInfo)) {

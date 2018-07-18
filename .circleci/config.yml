@@ -80,7 +80,7 @@ references:
   start_graphql: &start_graphql
     run:
       name: Start GraphQL Server
-      command: node -r babel-register ./example/apollo-server/movies.js
+      command: node -r babel-register ./example/apollo-server/movies-middleware.js
       background: true
 
   wait_for_graphql: &wait_for_graphql
