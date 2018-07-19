@@ -1,3 +1,5 @@
+import { resolve } from 'url';
+
 function parseArg(arg, variableValues) {
   switch (arg.value.kind) {
     case 'IntValue':
@@ -19,11 +21,7 @@ export function parseArgs(args, variableValues) {
   // or from resolveInfo.variableValues if arg is a variable
   // note that variable values override default values
 
-  if (!args) {
-    return {};
-  }
-
-  if (args.length === 0) {
+  if (!args || args.length === 0) {
     return {};
   }
 
@@ -73,17 +71,29 @@ export function isMutation(resolveInfo) {
   return resolveInfo.operation.operation === 'mutation';
 }
 
+export function _isNamedMutation(name) {
+  return function(resolveInfo) {
+    return (
+      isMutation(resolveInfo) &&
+      resolveInfo.fieldName.split(/(?=[A-Z])/)[0].toLowerCase() ===
+        name.toLowerCase()
+    );
+  };
+}
+
+export const isCreateMutation = _isNamedMutation('create');
+
+export const isAddMutation = _isNamedMutation('add');
+
 export function isAddRelationshipMutation(resolveInfo) {
   return (
-    resolveInfo.operation.operation === 'mutation' &&
-    (resolveInfo.fieldName.startsWith('Add') ||
-      resolveInfo.fieldName.startsWith('add')) &&
+    isAddMutation(resolveInfo) &&
     resolveInfo.schema
       .getMutationType()
       .getFields()
-      [resolveInfo.fieldName].astNode.directives.filter(x => {
-        return x.name.value === 'MutationMeta';
-      }).length > 0
+      [resolveInfo.fieldName].astNode.directives.some(
+        x => x.name.value === 'MutationMeta'
+      )
   );
 }
 

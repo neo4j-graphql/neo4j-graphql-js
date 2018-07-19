@@ -566,12 +566,16 @@ test.cb('Handle @cypher directive on Mutation type', t => {
     name
   }
 }`,
-    expectedCypherQuery = `CALL apoc.cypher.doIt("CREATE (g:Genre) SET g.name = $name RETURN g", {name:"Wildlife Documentary"}) YIELD value
+    expectedCypherQuery = `CALL apoc.cypher.doIt("CREATE (g:Genre) SET g.name = $name RETURN g", {name:$name}) YIELD value
     WITH apoc.map.values(value, [keys(value)[0]])[0] AS genre
     RETURN genre { .name } AS genre SKIP $offset`;
 
-  t.plan(1);
-  return cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery, {});
+  t.plan(2);
+  cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery, {
+    name: 'Wildlife Documentary',
+    first: -1,
+    offset: 0
+  });
 });
 
 test.cb('Create node mutation', t => {
@@ -586,13 +590,22 @@ test.cb('Create node mutation', t => {
   }`,
     expectedCypherQuery = `CREATE (movie:Movie) SET movie = $params RETURN movie {_id: ID(movie), .title ,genres: [(movie)-[:IN_GENRE]->(movie_genres:Genre) | movie_genres { .name }] } AS movie`;
 
-  t.plan(1);
-  // FIXME: Cypher params are not tested here
-  return cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery, {});
+  t.plan(2);
+  cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery, {
+    params: {
+      movieId: '12dd334d5',
+      title: 'My Super Awesome Movie',
+      year: 2018,
+      plot: 'An unending saga',
+      poster: 'www.movieposter.com/img.png',
+      imdbRating: 1.0
+    },
+    first: -1,
+    offset: 0
+  });
 });
 
 test.cb('Add relationship mutation', t => {
-  // FIXME: test Cypher params
   const graphQLQuery = `mutation someMutation {
   AddMovieGenre(moviemovieId:"123", genrename: "Action") {
     _id
@@ -607,12 +620,16 @@ test.cb('Add relationship mutation', t => {
       CREATE (movie)-[:IN_GENRE]->(genre)
       RETURN movie {_id: ID(movie), .title ,genres: [(movie)-[:IN_GENRE]->(movie_genres:Genre) | movie_genres { .name }] } AS movie;`;
 
-  t.plan(1);
-  cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery, {});
+  t.plan(2);
+  cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery, {
+    moviemovieId: '123',
+    genrename: 'Action',
+    first: -1,
+    offset: 0
+  });
 });
 
 test.cb('Add relationship mutation with GraphQL variables', t => {
-  // FIXME: test Cypher params
   const graphQLQuery = `mutation someMutation($movieParam:ID!) {
   AddMovieGenre(moviemovieId:$movieParam, genrename: "Action") {
     _id
@@ -627,12 +644,18 @@ test.cb('Add relationship mutation with GraphQL variables', t => {
       CREATE (movie)-[:IN_GENRE]->(genre)
       RETURN movie {_id: ID(movie), .title ,genres: [(movie)-[:IN_GENRE]->(movie_genres:Genre) | movie_genres { .name }] } AS movie;`;
 
-  t.plan(1);
-  return cypherTestRunner(
+  t.plan(2);
+  cypherTestRunner(
     t,
     graphQLQuery,
     { movieParam: '123' },
-    expectedCypherQuery
+    expectedCypherQuery,
+    {
+      genrename: 'Action',
+      moviemovieId: '123',
+      first: -1,
+      offset: 0
+    }
   );
 });
 
@@ -852,7 +875,7 @@ query getMovie {
 //   }
 // }`,
 //     expectedCypherQuery = `CREATE (genre:Genre) SET genre = $params RETURN genre { .name } AS genre`;
-//   t.plan(1);
+//   t.plan(2);
 //   // FIXME: not testing Cypher params
 //   // { params: { name: 'Boring' } }
 //
