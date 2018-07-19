@@ -1,30 +1,32 @@
+import { resolve } from 'url';
+
+function parseArg(arg, variableValues) {
+  switch (arg.value.kind) {
+    case 'IntValue':
+      return parseInt(arg.value.value);
+      break;
+    case 'FloatValue':
+      return parseFloat(arg.value.value);
+      break;
+    case 'Variable':
+      return variableValues[arg.name.value];
+      break;
+    default:
+      return arg.value.value;
+  }
+}
+
 export function parseArgs(args, variableValues) {
   // get args from selection.arguments object
   // or from resolveInfo.variableValues if arg is a variable
   // note that variable values override default values
 
-  if (!args) {
-    return {};
-  }
-
-  if (args.length === 0) {
+  if (!args || args.length === 0) {
     return {};
   }
 
   return args.reduce((acc, arg) => {
-    switch (arg.value.kind) {
-      case 'IntValue':
-        acc[arg.name.value] = parseInt(arg.value.value);
-        break;
-      case 'FloatValue':
-        acc[arg.name.value] = parseFloat(arg.value.value);
-        break;
-      case 'Variable':
-        acc[arg.name.value] = variableValues[arg.name.value];
-        break;
-      default:
-        acc[arg.name.value] = arg.value.value;
-    }
+    acc[arg.name.value] = parseArg(arg, variableValues);
 
     return acc;
   }, {});
@@ -69,17 +71,29 @@ export function isMutation(resolveInfo) {
   return resolveInfo.operation.operation === 'mutation';
 }
 
+export function _isNamedMutation(name) {
+  return function(resolveInfo) {
+    return (
+      isMutation(resolveInfo) &&
+      resolveInfo.fieldName.split(/(?=[A-Z])/)[0].toLowerCase() ===
+        name.toLowerCase()
+    );
+  };
+}
+
+export const isCreateMutation = _isNamedMutation('create');
+
+export const isAddMutation = _isNamedMutation('add');
+
 export function isAddRelationshipMutation(resolveInfo) {
   return (
-    resolveInfo.operation.operation === 'mutation' &&
-    (resolveInfo.fieldName.startsWith('Add') ||
-      resolveInfo.fieldName.startsWith('add')) &&
+    isAddMutation(resolveInfo) &&
     resolveInfo.schema
       .getMutationType()
       .getFields()
-      [resolveInfo.fieldName].astNode.directives.filter(x => {
-        return x.name.value === 'MutationMeta';
-      }).length > 0
+      [resolveInfo.fieldName].astNode.directives.some(
+        x => x.name.value === 'MutationMeta'
+      )
   );
 }
 
@@ -142,34 +156,49 @@ export const relationDirective = directiveWithArgs('relation', [
   'direction'
 ]);
 
-export function innerFilterParams(selections) {
-  let queryParams = '';
-
+export function filtersFromSelections(selections, variableValues) {
   if (
     selections &&
     selections.length &&
     selections[0].arguments &&
     selections[0].arguments.length
   ) {
-    const filters = selections[0].arguments
-      .filter(x => {
-        return (
-          x.name.value !== 'first' &&
-          x.name.value !== 'offset' &&
-          x.name.value !== 'orderBy'
-        );
-      })
-      .map(x => {
-        const filterValue = JSON.stringify(x.value.value).replace(
-          /\"([^(\")"]+)\":/g,
-          '$1:'
-        ); // FIXME: support IN for multiple values -> WHERE
-        return `${x.name.value}: ${filterValue}`;
-      });
-
-    queryParams = `{${filters.join(',')}}`;
+    return selections[0].arguments.reduce((result, x) => {
+      (result[x.name.value] = argumentValue(
+        selections[0],
+        x.name.value,
+        variableValues
+      )) || x.value.value;
+      return result;
+    }, {});
   }
-  return queryParams;
+  return {};
+}
+
+export function getFilterParams(filters, index) {
+  return Object.entries(filters).reduce((result, [key, value]) => {
+    result[key] = index
+      ? {
+          value,
+          index
+        }
+      : value;
+    return result;
+  }, {});
+}
+
+export function innerFilterParams(filters) {
+  return Object.keys(filters).length > 0
+    ? `{${Object.entries(filters)
+        .filter(([key]) => !['first', 'offset', 'orderBy'].includes(key))
+        .map(
+          ([key, value]) =>
+            `${key}:$${
+              typeof value.index === 'undefined' ? key : `${value.index}-${key}`
+            }`
+        )
+        .join(',')}}`
+    : '';
 }
 
 function _argumentValue(selection, name, variableValues) {
@@ -191,14 +220,8 @@ function argumentValue(selection, name, variableValues) {
   let arg = selection.arguments.find(a => a.name.value === name);
   if (!arg) {
     return null;
-  } else if (
-    !arg.value.value &&
-    name in variableValues &&
-    arg.value.kind === 'Variable'
-  ) {
-    return variableValues[name];
   } else {
-    return arg.value.value;
+    return parseArg(arg, variableValues);
   }
 }
 
@@ -325,8 +348,6 @@ export function fixParamsForAddRelationshipMutation(params, resolveInfo) {
     resolveInfo.schema.getMutationType().getFields()[resolveInfo.fieldName]
       .astNode.arguments[0].name.value
   ];
-
-  //console.log(params);
 
   return params;
 }
