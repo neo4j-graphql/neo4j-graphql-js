@@ -11,20 +11,10 @@ import {
   computeOrderBy
 } from './utils';
 import { buildCypherSelection } from './selections';
-import {
-  addIdFieldToSchema,
-  addOrderByToSchema,
-  addMutationsToSchema
-} from './augmentSchema';
+import { addIdFieldToSchema, addOrderByToSchema, addMutationsToSchema } from './augmentSchema';
 import { checkRequestError } from './auth';
 
-export async function neo4jgraphql(
-  object,
-  params,
-  context,
-  resolveInfo,
-  debug = true
-) {
+export async function neo4jgraphql(object, params, context, resolveInfo, debug = true) {
   // throw error if context.req.error exists
   if (checkRequestError(context)) {
     throw new Error(checkRequestError(context));
@@ -54,26 +44,19 @@ export async function neo4jgraphql(
   return extractQueryResult(result, resolveInfo.returnType);
 }
 
-export function cypherQuery(
-  { first = -1, offset = 0, _id, orderBy, ...otherParams },
-  context,
-  resolveInfo
-) {
+export function cypherQuery({ first = -1, offset = 0, _id, orderBy, ...otherParams }, context, resolveInfo) {
   const { typeName, variableName } = typeIdentifiers(resolveInfo.returnType);
   const schemaType = resolveInfo.schema.getType(typeName);
 
-  const filteredFieldNodes = filter(
-    resolveInfo.fieldNodes,
-    n => n.name.value === resolveInfo.fieldName
-  );
+  const filteredFieldNodes = filter(resolveInfo.fieldNodes, n => n.name.value === resolveInfo.fieldName);
 
   // FIXME: how to handle multiple fieldNode matches
-  const selections = extractSelections(
-    filteredFieldNodes[0].selectionSet.selections,
-    resolveInfo.fragments
-  );
+  const selections = extractSelections(filteredFieldNodes[0].selectionSet.selections, resolveInfo.fragments);
 
-  const [nullParams, nonNullParams] = Object.entries(otherParams).reduce(
+  const [nullParams, nonNullParams] = Object.entries({
+    ...{ offset, first },
+    ...otherParams
+  }).reduce(
     ([nulls, nonNulls], [key, value]) => {
       if (value === null) {
         nulls[key] = value;
@@ -86,7 +69,7 @@ export function cypherQuery(
   );
   const argString = innerFilterParams(getFilterParams(nonNullParams));
 
-  const outerSkipLimit = `SKIP ${offset}${first > -1 ? ' LIMIT ' + first : ''}`;
+  const outerSkipLimit = `SKIP $offset${first > -1 ? ' LIMIT $first' : ''}`;
   const orderByValue = computeOrderBy(resolveInfo, selections);
 
   let query;
@@ -122,11 +105,8 @@ export function cypherQuery(
     // No @cypher directive on QueryType
 
     // FIXME: support IN for multiple values -> WHERE
-    const idWherePredicate =
-      typeof _id !== 'undefined' ? `ID(${variableName})=${_id}` : '';
-    const nullFieldPredicates = Object.keys(nullParams).map(
-      key => `${variableName}.${key} IS NULL`
-    );
+    const idWherePredicate = typeof _id !== 'undefined' ? `ID(${variableName})=${_id}` : '';
+    const nullFieldPredicates = Object.keys(nullParams).map(key => `${variableName}.${key} IS NULL`);
     const predicateClauses = [idWherePredicate, ...nullFieldPredicates]
       .filter(predicate => !!predicate)
       .join(' AND ');
@@ -151,30 +131,20 @@ export function cypherMutation(
   const { typeName, variableName } = typeIdentifiers(resolveInfo.returnType);
   const schemaType = resolveInfo.schema.getType(typeName);
 
-  const filteredFieldNodes = filter(
-    resolveInfo.fieldNodes,
-    n => n.name.value === resolveInfo.fieldName
-  );
+  const filteredFieldNodes = filter(resolveInfo.fieldNodes, n => n.name.value === resolveInfo.fieldName);
 
   // FIXME: how to handle multiple fieldNode matches
-  let selections = extractSelections(
-    filteredFieldNodes[0].selectionSet.selections,
-    resolveInfo.fragments
-  );
+  let selections = extractSelections(filteredFieldNodes[0].selectionSet.selections, resolveInfo.fragments);
 
   if (selections.length === 0) {
     // FIXME: why aren't the selections found in the filteredFieldNode?
-    selections = extractSelections(
-      resolveInfo.operation.selectionSet.selections,
-      resolveInfo.fragments
-    );
+    selections = extractSelections(resolveInfo.operation.selectionSet.selections, resolveInfo.fragments);
   }
 
   // FIXME: support IN for multiple values -> WHERE
   const argString = innerFilterParams(getFilterParams(otherParams));
 
-  const idWherePredicate =
-    typeof _id !== 'undefined' ? `WHERE ID(${variableName})=${_id} ` : '';
+  const idWherePredicate = typeof _id !== 'undefined' ? `WHERE ID(${variableName})=${_id} ` : '';
   const outerSkipLimit = `SKIP ${offset}${first > -1 ? ' LIMIT ' + first : ''}`;
   const orderByValue = computeOrderBy(resolveInfo, selections);
 
@@ -191,9 +161,7 @@ export function cypherMutation(
       return x.name.value === 'statement';
     })[0];
 
-    query = `CALL apoc.cypher.doIt("${
-      cypherQueryArg.value.value
-    }", ${argString}) YIELD value
+    query = `CALL apoc.cypher.doIt("${cypherQueryArg.value.value}", ${argString}) YIELD value
     WITH apoc.map.values(value, [keys(value)[0]])[0] AS ${variableName}
     RETURN ${variableName} {${buildCypherSelection({
       initial: '',
@@ -202,10 +170,7 @@ export function cypherMutation(
       schemaType,
       resolveInfo
     })}} AS ${variableName}${orderByValue} ${outerSkipLimit}`;
-  } else if (
-    resolveInfo.fieldName.startsWith('Create') ||
-    resolveInfo.fieldName.startsWith('create')
-  ) {
+  } else if (resolveInfo.fieldName.startsWith('Create') || resolveInfo.fieldName.startsWith('create')) {
     // CREATE node
     // TODO: handle for create relationship
     // TODO: update / delete
@@ -223,10 +188,7 @@ export function cypherMutation(
         resolveInfo
       });
     query += `} AS ${variableName}`;
-  } else if (
-    resolveInfo.fieldName.startsWith('Add') ||
-    resolveInfo.fieldName.startsWith('add')
-  ) {
+  } else if (resolveInfo.fieldName.startsWith('Add') || resolveInfo.fieldName.startsWith('add')) {
     let mutationMeta, relationshipNameArg, fromTypeArg, toTypeArg;
 
     try {
@@ -237,9 +199,7 @@ export function cypherMutation(
           return x.name.value === 'MutationMeta';
         })[0];
     } catch (e) {
-      throw new Error(
-        'Missing required MutationMeta directive on add relationship directive'
-      );
+      throw new Error('Missing required MutationMeta directive on add relationship directive');
     }
 
     try {
@@ -255,9 +215,7 @@ export function cypherMutation(
         return x.name.value === 'to';
       })[0];
     } catch (e) {
-      throw new Error(
-        'Missing required argument in MutationMeta directive (relationship, from, or to)'
-      );
+      throw new Error('Missing required argument in MutationMeta directive (relationship, from, or to)');
     }
     //TODO: need to handle one-to-one and one-to-many
 
@@ -269,23 +227,17 @@ export function cypherMutation(
       fromParam = resolveInfo.schema
         .getMutationType()
         .getFields()
-        [resolveInfo.fieldName].astNode.arguments[0].name.value.substr(
-          fromVar.length
-        ),
+        [resolveInfo.fieldName].astNode.arguments[0].name.value.substr(fromVar.length),
       toParam = resolveInfo.schema
         .getMutationType()
         .getFields()
-        [resolveInfo.fieldName].astNode.arguments[1].name.value.substr(
-          toVar.length
-        );
+        [resolveInfo.fieldName].astNode.arguments[1].name.value.substr(toVar.length);
 
     let query = `MATCH (${fromVar}:${fromType} {${fromParam}: $${
-      resolveInfo.schema.getMutationType().getFields()[resolveInfo.fieldName]
-        .astNode.arguments[0].name.value
+      resolveInfo.schema.getMutationType().getFields()[resolveInfo.fieldName].astNode.arguments[0].name.value
     }})
        MATCH (${toVar}:${toType} {${toParam}: $${
-      resolveInfo.schema.getMutationType().getFields()[resolveInfo.fieldName]
-        .astNode.arguments[1].name.value
+      resolveInfo.schema.getMutationType().getFields()[resolveInfo.fieldName].astNode.arguments[1].name.value
     }})
       CREATE (${fromVar})-[:${relationshipName}]->(${toVar})
       RETURN ${fromVar} {${buildCypherSelection({

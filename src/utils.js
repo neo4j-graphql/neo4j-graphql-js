@@ -43,26 +43,13 @@ function getDefaultArguments(fieldName, schemaType) {
   }
 }
 
-export function cypherDirectiveArgs(
-  variable,
-  headSelection,
-  schemaType,
-  resolveInfo
-) {
+export function cypherDirectiveArgs(variable, headSelection, schemaType, resolveInfo) {
   const defaultArgs = getDefaultArguments(headSelection.name.value, schemaType);
-  const queryArgs = parseArgs(
-    headSelection.arguments,
-    resolveInfo.variableValues
-  );
+  const queryArgs = parseArgs(headSelection.arguments, resolveInfo.variableValues);
 
-  let args = JSON.stringify(Object.assign(defaultArgs, queryArgs)).replace(
-    /\"([^(\")"]+)\":/g,
-    ' $1: '
-  );
+  let args = JSON.stringify(Object.assign(defaultArgs, queryArgs)).replace(/\"([^(\")"]+)\":/g, ' $1: ');
 
-  return args === '{}'
-    ? `{this: ${variable}${args.substring(1)}`
-    : `{this: ${variable},${args.substring(1)}`;
+  return args === '{}' ? `{this: ${variable}${args.substring(1)}` : `{this: ${variable},${args.substring(1)}`;
 }
 
 export function isMutation(resolveInfo) {
@@ -72,8 +59,7 @@ export function isMutation(resolveInfo) {
 export function isAddRelationshipMutation(resolveInfo) {
   return (
     resolveInfo.operation.operation === 'mutation' &&
-    (resolveInfo.fieldName.startsWith('Add') ||
-      resolveInfo.fieldName.startsWith('add')) &&
+    (resolveInfo.fieldName.startsWith('Add') || resolveInfo.fieldName.startsWith('add')) &&
     resolveInfo.schema
       .getMutationType()
       .getFields()
@@ -92,10 +78,7 @@ export function typeIdentifiers(returnType) {
 }
 
 export function isGraphqlScalarType(type) {
-  return (
-    type.constructor.name === 'GraphQLScalarType' ||
-    type.constructor.name === 'GraphQLEnumType'
-  );
+  return type.constructor.name === 'GraphQLScalarType' || type.constructor.name === 'GraphQLEnumType';
 }
 
 export function isArrayType(type) {
@@ -114,9 +97,7 @@ export function innerType(type) {
 // TODO: refactor to handle Query/Mutation type schema directives
 const directiveWithArgs = (directiveName, args) => (schemaType, fieldName) => {
   function fieldDirective(schemaType, fieldName, directiveName) {
-    return schemaType
-      .getFields()
-      [fieldName].astNode.directives.find(e => e.name.value === directiveName);
+    return schemaType.getFields()[fieldName].astNode.directives.find(e => e.name.value === directiveName);
   }
 
   function directiveArgument(directive, name) {
@@ -137,18 +118,10 @@ const directiveWithArgs = (directiveName, args) => (schemaType, fieldName) => {
 };
 
 export const cypherDirective = directiveWithArgs('cypher', ['statement']);
-export const relationDirective = directiveWithArgs('relation', [
-  'name',
-  'direction'
-]);
+export const relationDirective = directiveWithArgs('relation', ['name', 'direction']);
 
 export function filtersFromSelections(selections) {
-  if (
-    selections &&
-    selections.length &&
-    selections[0].arguments &&
-    selections[0].arguments.length
-  ) {
+  if (selections && selections.length && selections[0].arguments && selections[0].arguments.length) {
     return selections[0].arguments.reduce((result, x) => {
       result[x.name.value] = x.value.value;
       return result;
@@ -172,14 +145,9 @@ export function getFilterParams(filters, index) {
 export function innerFilterParams(filters) {
   return Object.keys(filters).length > 0
     ? `{${Object.entries(filters)
-        .filter(
-          ([key]) => key !== 'first' && key !== 'offset' && key !== 'orderBy'
-        )
+        .filter(([key]) => !['first', 'offset', 'orderBy'].includes(key))
         .map(
-          ([key, value]) =>
-            `${key}:$${
-              typeof value.index === 'undefined' ? key : `${value.index}-${key}`
-            }`
+          ([key, value]) => `${key}:$${typeof value.index === 'undefined' ? key : `${value.index}-${key}`}`
         )
         .join(',')}}`
     : '';
@@ -204,11 +172,7 @@ function argumentValue(selection, name, variableValues) {
   let arg = selection.arguments.find(a => a.name.value === name);
   if (!arg) {
     return null;
-  } else if (
-    !arg.value.value &&
-    name in variableValues &&
-    arg.value.kind === 'Variable'
-  ) {
+  } else if (!arg.value.value && name in variableValues && arg.value.kind === 'Variable') {
     return variableValues[name];
   } else {
     return arg.value.value;
@@ -249,9 +213,7 @@ export const computeOrderBy = (resolveInfo, selection) => {
     const order = orderByVar.substring(splitIndex + 1);
     const orderBy = orderByVar.substring(0, splitIndex);
     const { variableName } = typeIdentifiers(resolveInfo.returnType);
-    return ` ORDER BY ${variableName}.${orderBy} ${
-      order === 'asc' ? 'ASC' : 'DESC'
-    } `;
+    return ` ORDER BY ${variableName}.${orderBy} ${order === 'asc' ? 'ASC' : 'DESC'} `;
   }
 };
 
@@ -278,9 +240,7 @@ export function fixParamsForAddRelationshipMutation(params, resolveInfo) {
         return x.name.value === 'MutationMeta';
       })[0];
   } catch (e) {
-    throw new Error(
-      'Missing required MutationMeta directive on add relationship directive'
-    );
+    throw new Error('Missing required MutationMeta directive on add relationship directive');
   }
 
   try {
@@ -292,9 +252,7 @@ export function fixParamsForAddRelationshipMutation(params, resolveInfo) {
       return x.name.value === 'to';
     })[0];
   } catch (e) {
-    throw new Error(
-      'Missing required argument in MutationMeta directive (relationship, from, or to)'
-    );
+    throw new Error('Missing required argument in MutationMeta directive (relationship, from, or to)');
   }
   //TODO: need to handle one-to-one and one-to-many
 
@@ -305,38 +263,28 @@ export function fixParamsForAddRelationshipMutation(params, resolveInfo) {
     fromParam = resolveInfo.schema
       .getMutationType()
       .getFields()
-      [resolveInfo.fieldName].astNode.arguments[0].name.value.substr(
-        fromVar.length
-      ),
+      [resolveInfo.fieldName].astNode.arguments[0].name.value.substr(fromVar.length),
     toParam = resolveInfo.schema
       .getMutationType()
       .getFields()
-      [resolveInfo.fieldName].astNode.arguments[1].name.value.substr(
-        toVar.length
-      );
+      [resolveInfo.fieldName].astNode.arguments[1].name.value.substr(toVar.length);
 
   params[toParam] =
     params[
-      resolveInfo.schema.getMutationType().getFields()[
-        resolveInfo.fieldName
-      ].astNode.arguments[1].name.value
+      resolveInfo.schema.getMutationType().getFields()[resolveInfo.fieldName].astNode.arguments[1].name.value
     ];
 
   params[fromParam] =
     params[
-      resolveInfo.schema.getMutationType().getFields()[
-        resolveInfo.fieldName
-      ].astNode.arguments[0].name.value
+      resolveInfo.schema.getMutationType().getFields()[resolveInfo.fieldName].astNode.arguments[0].name.value
     ];
 
   delete params[
-    resolveInfo.schema.getMutationType().getFields()[resolveInfo.fieldName]
-      .astNode.arguments[1].name.value
+    resolveInfo.schema.getMutationType().getFields()[resolveInfo.fieldName].astNode.arguments[1].name.value
   ];
 
   delete params[
-    resolveInfo.schema.getMutationType().getFields()[resolveInfo.fieldName]
-      .astNode.arguments[0].name.value
+    resolveInfo.schema.getMutationType().getFields()[resolveInfo.fieldName].astNode.arguments[0].name.value
   ];
 
   return params;
