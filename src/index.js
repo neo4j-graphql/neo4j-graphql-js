@@ -4,9 +4,10 @@ import {
   isAddRelationshipMutation,
   typeIdentifiers,
   lowFirstLetter,
+  getFilterParams,
+  innerFilterParams,
   extractQueryResult,
   extractSelections,
-  fixParamsForAddRelationshipMutation,
   computeOrderBy
 } from './utils';
 import { buildCypherSelection } from './selections';
@@ -30,29 +31,28 @@ export async function neo4jgraphql(
   }
 
   let query;
+  let cypherParams;
 
   if (isMutation(resolveInfo)) {
     query = cypherMutation(params, context, resolveInfo);
     if (isAddRelationshipMutation(resolveInfo)) {
       //params = fixParamsForAddRelationshipMutation(params, resolveInfo);
     } else {
-      params = { params };
+      cypherParams = { params };
     }
   } else {
-    query = cypherQuery(params, context, resolveInfo);
+    [query, cypherParams] = cypherQuery(params, context, resolveInfo);
   }
 
   if (debug) {
     console.log(query);
-    console.log(params);
+    console.log(cypherParams);
   }
 
   const session = context.driver.session();
-  const result = await session.run(query, params);
+  const result = await session.run(query, cypherParams);
   return extractQueryResult(result, resolveInfo.returnType);
 }
-
-const JSON_TO_PARAM_REGEX = /\"([^(\")"]+)\":/g;
 
 export function cypherQuery(
   { first = -1, offset = 0, _id, orderBy, ...otherParams },
@@ -84,10 +84,8 @@ export function cypherQuery(
     },
     [{}, {}]
   );
-  const argString = JSON.stringify(nonNullParams).replace(
-    JSON_TO_PARAM_REGEX,
-    '$1:'
-  );
+  const argString = innerFilterParams(getFilterParams(nonNullParams));
+
   const outerSkipLimit = `SKIP ${offset}${first > -1 ? ' LIMIT ' + first : ''}`;
   const orderByValue = computeOrderBy(resolveInfo, selections);
 
@@ -101,6 +99,15 @@ export function cypherQuery(
       return x.name.value === 'cypher';
     })[0];
 
+  const [subQuery, subParams] = buildCypherSelection({
+    initial: '',
+    selections,
+    variableName,
+    schemaType,
+    resolveInfo,
+    paramIndex: 1
+  });
+
   if (queryTypeCypherDirective) {
     // QueryType with a @cypher directive
     const cypherQueryArg = queryTypeCypherDirective.arguments.filter(x => {
@@ -110,13 +117,7 @@ export function cypherQuery(
     query = `WITH apoc.cypher.runFirstColumn("${
       cypherQueryArg.value.value
     }", ${argString}, True) AS x UNWIND x AS ${variableName}
-    RETURN ${variableName} {${buildCypherSelection({
-      initial: '',
-      selections,
-      variableName,
-      schemaType,
-      resolveInfo
-    })}} AS ${variableName}${orderByValue} ${outerSkipLimit}`;
+    RETURN ${variableName} {${subQuery}} AS ${variableName}${orderByValue} ${outerSkipLimit}`;
   } else {
     // No @cypher directive on QueryType
 
@@ -134,16 +135,10 @@ export function cypherQuery(
     query =
       `MATCH (${variableName}:${typeName} ${argString}) ${predicate}` +
       // ${variableName} { ${selection} } as ${variableName}`;
-      `RETURN ${variableName} {${buildCypherSelection({
-        initial: '',
-        selections,
-        variableName,
-        schemaType,
-        resolveInfo
-      })}} AS ${variableName}${orderByValue} ${outerSkipLimit}`;
+      `RETURN ${variableName} {${subQuery}} AS ${variableName}${orderByValue} ${outerSkipLimit}`;
   }
 
-  return query;
+  return [query, { ...nonNullParams, ...subParams }];
 }
 
 export function cypherMutation(
@@ -176,10 +171,7 @@ export function cypherMutation(
   }
 
   // FIXME: support IN for multiple values -> WHERE
-  const argString = JSON.stringify(otherParams).replace(
-    /\"([^(\")"]+)\":/g,
-    '$1:'
-  );
+  const argString = innerFilterParams(getFilterParams(otherParams));
 
   const idWherePredicate =
     typeof _id !== 'undefined' ? `WHERE ID(${variableName})=${_id} ` : '';

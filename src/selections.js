@@ -2,7 +2,9 @@ import {
   computeSkipLimit,
   cypherDirective,
   cypherDirectiveArgs,
+  filtersFromSelections,
   innerFilterParams,
+  getFilterParams,
   innerType,
   isArrayType,
   isGraphqlScalarType,
@@ -14,11 +16,24 @@ export function buildCypherSelection({
   selections,
   variableName,
   schemaType,
-  resolveInfo
+  resolveInfo,
+  paramIndex
 }) {
   if (!selections.length) {
-    return initial;
+    return [initial, {}];
   }
+
+  const filterParams = getFilterParams(
+    filtersFromSelections(selections),
+    paramIndex
+  );
+  const shallowFilterParams = Object.entries(filterParams).reduce(
+    (result, [key, value]) => {
+      result[`${value.index}-${key}`] = value.value;
+      return result;
+    },
+    {}
+  );
 
   const [headSelection, ...tailSelections] = selections;
 
@@ -29,12 +44,22 @@ export function buildCypherSelection({
     resolveInfo
   };
 
+  const recurse = args => {
+    paramIndex =
+      Object.keys(shallowFilterParams).length > 0 ? paramIndex + 1 : paramIndex;
+    const [subSelection, subFilterParams] = buildCypherSelection({
+      ...args,
+      ...{ paramIndex }
+    });
+    return [subSelection, { ...shallowFilterParams, ...subFilterParams }];
+  };
+
   const fieldName = headSelection.name.value;
   const commaIfTail = tailSelections.length > 0 ? ',' : '';
 
   // Schema meta fields(__schema, __typename, etc)
   if (!schemaType.getFields()[fieldName]) {
-    return buildCypherSelection({
+    return recurse({
       initial: tailSelections.length
         ? initial
         : initial.substring(0, initial.lastIndexOf(',')),
@@ -48,7 +73,7 @@ export function buildCypherSelection({
 
   // Database meta fields(_id)
   if (fieldName === '_id') {
-    return buildCypherSelection({
+    return recurse({
       initial: `${initial}${fieldName}: ID(${variableName})${commaIfTail}`,
       ...tailParams
     });
@@ -57,7 +82,7 @@ export function buildCypherSelection({
   // Main control flow
   if (isGraphqlScalarType(innerSchemaType)) {
     if (customCypher) {
-      return buildCypherSelection({
+      return recurse({
         initial: `${initial}${fieldName}: apoc.cypher.runFirstColumn("${customCypher}", ${cypherDirectiveArgs(
           variableName,
           headSelection,
@@ -69,7 +94,7 @@ export function buildCypherSelection({
     }
 
     // graphql scalar type, no custom cypher statement
-    return buildCypherSelection({
+    return recurse({
       initial: `${initial} .${fieldName} ${commaIfTail}`,
       ...tailParams
     });
@@ -80,19 +105,21 @@ export function buildCypherSelection({
   const nestedVariable = variableName + '_' + fieldName;
   const skipLimit = computeSkipLimit(headSelection, resolveInfo.variableValues);
 
-  const nestedParams = {
+  const subSelection = recurse({
     initial: '',
     selections: headSelection.selectionSet.selections,
     variableName: nestedVariable,
     schemaType: innerSchemaType,
     resolveInfo
-  };
+  });
+
+  let selection;
 
   if (customCypher) {
     // similar: [ x IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie}, true) |x {.title}][1..2])
     const fieldIsList = !!fieldType.ofType;
 
-    return buildCypherSelection({
+    selection = recurse({
       initial: `${initial}${fieldName}: ${
         fieldIsList ? '' : 'head('
       }[ ${nestedVariable} IN apoc.cypher.runFirstColumn("${customCypher}", ${cypherDirectiveArgs(
@@ -100,34 +127,36 @@ export function buildCypherSelection({
         headSelection,
         schemaType,
         resolveInfo
-      )}, true) | ${nestedVariable} {${buildCypherSelection({
-        ...nestedParams
-      })}}]${fieldIsList ? '' : ')'}${skipLimit} ${commaIfTail}`,
+      )}, true) | ${nestedVariable} {${subSelection[0]}}]${
+        fieldIsList ? '' : ')'
+      }${skipLimit} ${commaIfTail}`,
+      ...tailParams
+    });
+  } else {
+    // graphql object type, no custom cypher
+
+    const { name: relType, direction: relDirection } = relationDirective(
+      schemaType,
+      fieldName
+    );
+
+    const queryParams = innerFilterParams(filterParams);
+
+    selection = recurse({
+      initial: `${initial}${fieldName}: ${
+        !isArrayType(fieldType) ? 'head(' : ''
+      }[(${variableName})${
+        relDirection === 'in' || relDirection === 'IN' ? '<' : ''
+      }-[:${relType}]-${
+        relDirection === 'out' || relDirection === 'OUT' ? '>' : ''
+      }(${nestedVariable}:${
+        innerSchemaType.name
+      }${queryParams}) | ${nestedVariable} {${subSelection[0]}}]${
+        !isArrayType(fieldType) ? ')' : ''
+      }${skipLimit} ${commaIfTail}`,
       ...tailParams
     });
   }
 
-  // graphql object type, no custom cypher
-
-  const { name: relType, direction: relDirection } = relationDirective(
-    schemaType,
-    fieldName
-  );
-
-  const queryParams = innerFilterParams(selections);
-
-  return buildCypherSelection({
-    initial: `${initial}${fieldName}: ${
-      !isArrayType(fieldType) ? 'head(' : ''
-    }[(${variableName})${
-      relDirection === 'in' || relDirection === 'IN' ? '<' : ''
-    }-[:${relType}]-${
-      relDirection === 'out' || relDirection === 'OUT' ? '>' : ''
-    }(${nestedVariable}:${
-      innerSchemaType.name
-    }${queryParams}) | ${nestedVariable} {${buildCypherSelection({
-      ...nestedParams
-    })}}]${!isArrayType(fieldType) ? ')' : ''}${skipLimit} ${commaIfTail}`,
-    ...tailParams
-  });
+  return [selection[0], { ...selection[1], ...subSelection[1] }];
 }

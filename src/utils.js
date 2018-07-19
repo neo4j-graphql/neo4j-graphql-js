@@ -142,34 +142,47 @@ export const relationDirective = directiveWithArgs('relation', [
   'direction'
 ]);
 
-export function innerFilterParams(selections) {
-  let queryParams = '';
-
+export function filtersFromSelections(selections) {
   if (
     selections &&
     selections.length &&
     selections[0].arguments &&
     selections[0].arguments.length
   ) {
-    const filters = selections[0].arguments
-      .filter(x => {
-        return (
-          x.name.value !== 'first' &&
-          x.name.value !== 'offset' &&
-          x.name.value !== 'orderBy'
-        );
-      })
-      .map(x => {
-        const filterValue = JSON.stringify(x.value.value).replace(
-          /\"([^(\")"]+)\":/g,
-          '$1:'
-        ); // FIXME: support IN for multiple values -> WHERE
-        return `${x.name.value}: ${filterValue}`;
-      });
-
-    queryParams = `{${filters.join(',')}}`;
+    return selections[0].arguments.reduce((result, x) => {
+      result[x.name.value] = x.value.value;
+      return result;
+    }, {});
   }
-  return queryParams;
+  return {};
+}
+
+export function getFilterParams(filters, index) {
+  return Object.entries(filters).reduce((result, [key, value]) => {
+    result[key] = index
+      ? {
+          value,
+          index
+        }
+      : value;
+    return result;
+  }, {});
+}
+
+export function innerFilterParams(filters) {
+  return Object.keys(filters).length > 0
+    ? `{${Object.entries(filters)
+        .filter(
+          ([key]) => key !== 'first' && key !== 'offset' && key !== 'orderBy'
+        )
+        .map(
+          ([key, value]) =>
+            `${key}:$${
+              typeof value.index === 'undefined' ? key : `${value.index}-${key}`
+            }`
+        )
+        .join(',')}}`
+    : '';
 }
 
 function _argumentValue(selection, name, variableValues) {
@@ -325,8 +338,6 @@ export function fixParamsForAddRelationshipMutation(params, resolveInfo) {
     resolveInfo.schema.getMutationType().getFields()[resolveInfo.fieldName]
       .astNode.arguments[0].name.value
   ];
-
-  //console.log(params);
 
   return params;
 }

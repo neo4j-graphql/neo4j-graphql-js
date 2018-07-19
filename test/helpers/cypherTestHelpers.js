@@ -7,13 +7,12 @@ export function cypherTestRunner(
   t,
   graphqlQuery,
   graphqlParams,
-  expectedCypherQuery
+  expectedCypherQuery,
+  expectedCypherParams
 ) {
   const testMovieSchema =
     testSchema +
     `
-
-
 type Mutation {
     CreateGenre(name: String): Genre @cypher(statement: "CREATE (g:Genre) SET g.name = $name RETURN g")
     CreateMovie(movieId: ID!, title: String, year: Int, plot: String, poster: String, imdbRating: Float): Movie
@@ -21,49 +20,56 @@ type Mutation {
 }
 `;
 
-  //t.plan(2);
-
   const resolvers = {
     Query: {
       Movie(object, params, ctx, resolveInfo) {
-        let query = cypherQuery(params, ctx, resolveInfo);
+        const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
         t.is(query, expectedCypherQuery);
+        t.deepEqual(queryParams, expectedCypherParams);
       },
       MoviesByYear(object, params, ctx, resolveInfo) {
-        let query = cypherQuery(params, ctx, resolveInfo);
+        const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
         t.is(query, expectedCypherQuery);
+        t.deepEqual(queryParams, expectedCypherParams);
       },
       MovieById(object, params, ctx, resolveInfo) {
-        let query = cypherQuery(params, ctx, resolveInfo);
+        const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
         t.is(query, expectedCypherQuery);
+        t.deepEqual(queryParams, expectedCypherParams);
       },
       MovieBy_Id(object, params, ctx, resolveInfo) {
-        let query = cypherQuery(params, ctx, resolveInfo);
+        const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
         t.is(query, expectedCypherQuery);
+        t.deepEqual(queryParams, expectedCypherParams);
       },
       GenresBySubstring(object, params, ctx, resolveInfo) {
-        let query = cypherQuery(params, ctx, resolveInfo);
+        const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
         t.is(query, expectedCypherQuery);
+        t.deepEqual(queryParams, expectedCypherParams);
       },
       Books(object, params, ctx, resolveInfo) {
-        let query = cypherQuery(params, ctx, resolveInfo);
+        const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
         t.is(query, expectedCypherQuery);
+        t.deepEqual(queryParams, expectedCypherParams);
       }
     },
     Mutation: {
       CreateGenre(object, params, ctx, resolveInfo) {
-        let query = cypherMutation(params, ctx, resolveInfo);
+        const [query, queryParams] = cypherMutation(params, ctx, resolveInfo);
         t.is(query, expectedCypherQuery);
+        t.deepEqual(queryParams, expectedCypherParams);
         t.end();
       },
       CreateMovie(object, params, ctx, resolveInfo) {
-        let query = cypherMutation(params, ctx, resolveInfo);
+        const [query, queryParams] = cypherMutation(params, ctx, resolveInfo);
         t.is(query, expectedCypherQuery);
+        t.deepEqual(queryParams, expectedCypherParams);
         t.end();
       },
       AddMovieGenre(object, params, ctx, resolveInfo) {
-        let query = cypherMutation(params, ctx, resolveInfo);
+        const [query, queryParams] = cypherMutation(params, ctx, resolveInfo);
         t.is(query, expectedCypherQuery);
+        t.deepEqual(queryParams, expectedCypherParams);
         t.end();
       }
     }
@@ -78,11 +84,7 @@ type Mutation {
   });
 
   // query the test schema with the test query, assertion is in the resolver
-  return graphql(schema, graphqlQuery, null, null, graphqlParams).then(function(
-    data
-  ) {
-    // no data is actually resolved, we're just comparing the generated Cypher queries
-  });
+  return graphql(schema, graphqlQuery, null, null, graphqlParams);
 }
 
 export function augmentedSchemaCypherTestRunner(
@@ -95,28 +97,34 @@ export function augmentedSchemaCypherTestRunner(
   const resolvers = {
     Query: {
       Movie(object, params, ctx, resolveInfo) {
-        let query = cypherQuery(params, ctx, resolveInfo);
+        let [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
         t.is(query, expectedCypherQuery);
+        t.deepEqual(queryParams, expectedCypherParams);
       },
       MoviesByYear(object, params, ctx, resolveInfo) {
-        let query = cypherQuery(params, ctx, resolveInfo);
+        let [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
         t.is(query, expectedCypherQuery);
+        t.deepEqual(queryParams, expectedCypherParams);
       },
       MovieById(object, params, ctx, resolveInfo) {
-        let query = cypherQuery(params, ctx, resolveInfo);
+        let [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
         t.is(query, expectedCypherQuery);
+        t.deepEqual(queryParams, expectedCypherParams);
       },
       MovieBy_Id(object, params, ctx, resolveInfo) {
-        let query = cypherQuery(params, ctx, resolveInfo);
+        let [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
         t.is(query, expectedCypherQuery);
+        t.deepEqual(queryParams, expectedCypherParams);
       },
       GenresBySubstring(object, params, ctx, resolveInfo) {
-        let query = cypherQuery(params, ctx, resolveInfo);
+        let [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
         t.is(query, expectedCypherQuery);
+        t.deepEqual(queryParams, expectedCypherParams);
       },
       Books(object, params, ctx, resolveInfo) {
-        let query = cypherQuery(params, ctx, resolveInfo);
+        let [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
         t.is(query, expectedCypherQuery);
+        t.deepEqual(queryParams, expectedCypherParams);
       }
     }
   };
@@ -131,11 +139,7 @@ export function augmentedSchemaCypherTestRunner(
 
   const augmentedSchema = augmentSchema(schema);
 
-  return graphql(augmentedSchema, graphqlQuery, null, null, graphqlParams).then(
-    d => {
-      // no data actually resolved, just need to generate the Cypher query
-    }
-  );
+  return graphql(augmentedSchema, graphqlQuery, null, null, graphqlParams);
 }
 
 export function augmentedSchema() {
