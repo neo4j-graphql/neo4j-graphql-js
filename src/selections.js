@@ -17,14 +17,14 @@ export function buildCypherSelection({
   variableName,
   schemaType,
   resolveInfo,
-  paramIndex
+  paramIndex = 1
 }) {
   if (!selections.length) {
     return [initial, {}];
   }
 
   const filterParams = getFilterParams(
-    filtersFromSelections(selections),
+    filtersFromSelections(selections, resolveInfo.variableValues),
     paramIndex
   );
   const shallowFilterParams = Object.entries(filterParams).reduce(
