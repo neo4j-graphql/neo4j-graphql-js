@@ -43,7 +43,13 @@ export async function neo4jgraphql(
   }
 
   const session = context.driver.session();
-  const result = await session.run(query, cypherParams);
+  let result;
+
+  try {
+    result = await session.run(query, cypherParams);
+  } finally {
+    session.close();
+  }
   return extractQueryResult(result, resolveInfo.returnType);
 }
 
