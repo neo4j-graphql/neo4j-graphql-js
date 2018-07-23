@@ -882,3 +882,32 @@ query getMovie {
 //   augmentedSchemaCypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery);
 //
 // });
+
+test('nested fragments', t => {
+  const graphQLQuery = `
+    query movieItems {
+      Movie(year:2010) {
+        ...Foo
+      }
+    }
+    
+    fragment Foo on Movie {
+      title
+      ...Bar
+    }
+    
+    fragment Bar on Movie {
+      year
+    }`,
+    expectedCypherQuery = `MATCH (movie:Movie {year:$year}) RETURN movie { .title, .year } AS movie SKIP $offset`;
+
+  t.plan(3);
+  return Promise.all([
+    cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery, {
+      year: 2010,
+      first: -1,
+      offset: 0
+    }),
+    augmentedSchemaCypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery)
+  ]);
+});
