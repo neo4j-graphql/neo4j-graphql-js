@@ -899,7 +899,7 @@ test('nested fragments', t => {
     fragment Bar on Movie {
       year
     }`,
-    expectedCypherQuery = `MATCH (movie:Movie {year:$year}) RETURN movie { .title, .year } AS movie SKIP $offset`;
+    expectedCypherQuery = `MATCH (movie:Movie {year:$year}) RETURN movie { .title , .year } AS movie SKIP $offset`;
 
   t.plan(3);
   return Promise.all([
