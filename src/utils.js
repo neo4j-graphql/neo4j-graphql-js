@@ -269,7 +269,11 @@ export function extractSelections(selections, fragments) {
   // extract any fragment selection sets into a single array of selections
   return selections.reduce((acc, cur) => {
     if (cur.kind === 'FragmentSpread') {
-      return [...acc, ...fragments[cur.name.value].selectionSet.selections];
+      const recursivelyExtractedSelections = extractSelections(
+        fragments[cur.name.value].selectionSet.selections,
+        fragments,
+      );
+      return [...acc, ...recursivelyExtractedSelections];
     } else {
       return [...acc, cur];
     }
