@@ -261,7 +261,7 @@ Currently we only have simple unit tests verifying generated Cypher as translate
 
 ## Examples
 
-See [/examples](https://github.com/neo4j-graphql/neo4j-graphql-js/tree/master/example/graphql-tools)
+See [/examples](https://github.com/neo4j-graphql/neo4j-graphql-js/tree/master/example/apollo-server)
 
 ## Middleware
 
@@ -288,7 +288,7 @@ This request object will then be available inside your GraphQL resolver function
 
 and will throw an error if any of the above are defined.
 
-See [movies-middleware.js](/examples/apollo-server/movies-middleware.js) for an example using a middleware function that checks for an `x-error` header.
+See [movies-middleware.js](https://github.com/neo4j-graphql/neo4j-graphql-js/tree/master/example/apollo-server/movies-middleware.js) for an example using a middleware function that checks for an `x-error` header.
 
 ## Features
 
