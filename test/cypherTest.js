@@ -911,3 +911,61 @@ test('nested fragments', t => {
     augmentedSchemaCypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery)
   ]);
 });
+
+test('fragments on relations', t => {
+  const graphQLQuery = `
+    query movieItems {
+      Movie(year:2010) {
+        title
+        actors {
+          ...Foo
+        }
+      }
+    }
+    
+    fragment Foo on Actor {
+      name
+    }`,
+    expectedCypherQuery = `MATCH (movie:Movie {year:$year}) RETURN movie { .title ,actors: [(movie)<-[:ACTED_IN]-(movie_actors:Actor) | movie_actors { .name }] } AS movie SKIP $offset`;
+
+  t.plan(3);
+  return Promise.all([
+    cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery, {
+      year: 2010,
+      first: -1,
+      offset: 0
+    }),
+    augmentedSchemaCypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery)
+  ]);
+});
+
+test('nested fragments on relations', t => {
+  const graphQLQuery = `
+    query movieItems {
+      Movie(year:2010) {
+        ...Foo
+      }
+    }
+    
+    fragment Foo on Movie {
+      title
+      actors {
+        ...Bar
+      }
+    }
+    
+    fragment Bar on Actor {
+      name
+    }`,
+    expectedCypherQuery = `MATCH (movie:Movie {year:$year}) RETURN movie { .title ,actors: [(movie)<-[:ACTED_IN]-(movie_actors:Actor) | movie_actors { .name }] } AS movie SKIP $offset`;
+
+  t.plan(3);
+  return Promise.all([
+    cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery, {
+      year: 2010,
+      first: -1,
+      offset: 0
+    }),
+    augmentedSchemaCypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery)
+  ]);
+});

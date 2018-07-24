@@ -8,6 +8,7 @@ import {
   innerType,
   isArrayType,
   isGraphqlScalarType,
+  extractSelections,
   relationDirective
 } from './utils';
 
@@ -105,9 +106,14 @@ export function buildCypherSelection({
   const nestedVariable = variableName + '_' + fieldName;
   const skipLimit = computeSkipLimit(headSelection, resolveInfo.variableValues);
 
+  const subSelections = extractSelections(
+    headSelection.selectionSet.selections,
+    resolveInfo.fragments
+  );
+
   const subSelection = recurse({
     initial: '',
-    selections: headSelection.selectionSet.selections,
+    selections: subSelections,
     variableName: nestedVariable,
     schemaType: innerSchemaType,
     resolveInfo
