@@ -239,7 +239,7 @@ server.use(
 );
 ```
 
-See [/examples](https://github.com/neo4j-graphql/neo4j-graphql-js/tree/master/example/graphql-tools) for complete examples using different GraphQL server libraries.
+See [/examples](https://github.com/neo4j-graphql/neo4j-graphql-js/tree/master/example/apollo-server) for complete examples using different GraphQL server libraries.
 
 ## Benefits
 
