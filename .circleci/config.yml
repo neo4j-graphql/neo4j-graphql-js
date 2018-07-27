@@ -91,7 +91,7 @@ references:
   run_tests: &run_tests
     run:
       name: Run Tests
-      command: ./node_modules/.bin/ava test/*.js
+      command: ./node_modules/.bin/nyc ./node_modules/.bin/ava test/*.js
 
   env_neo4j33ee: &env_neo4j33ee
       NEO4J_DIST: 'enterprise'

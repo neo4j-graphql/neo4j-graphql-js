@@ -10,7 +10,7 @@
     "precommit": "lint-staged",
     "prepublish": "npm run build",
     "pretest": "npm run build",
-    "test": "ava test/cypherTest.js test/augmentSchemaTest.js --verbose",
+    "test": "nyc ava test/cypherTest.js test/augmentSchemaTest.js --verbose",
     "debug": "nodemon ./example/graphql-tools/movies.js --exec babel-node --inspect-brk=9229 --nolazy"
   },
   "engines": {
@@ -28,7 +28,6 @@
     "apollo-link-http": "^1.5.4",
     "apollo-server": "2.0.0-rc.12",
     "apollo-server-express": "2.0.0-rc.12",
-    "express": "^4.16.3",
     "ava": "^0.25.0",
     "babel-cli": "^6.26.0",
     "babel-plugin-transform-async-generator-functions": "^6.24.1",
@@ -36,12 +35,14 @@
     "babel-plugin-transform-runtime": "^6.23.0",
     "babel-preset-env": "^1.7.0",
     "body-parser": "^1.18.3",
+    "express": "^4.16.3",
     "graphql-tag": "^2.9.2",
     "graphql-tools": "^3.0.2",
     "husky": "^0.14.3",
     "lint-staged": "^7.2.0",
     "node-fetch": "^2.1.2",
     "nodemon": "^1.17.5",
+    "nyc": "^12.0.2",
     "prettier": "^1.13.5"
   },
   "dependencies": {
