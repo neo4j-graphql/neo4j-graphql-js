@@ -301,3 +301,88 @@ test('Add relationship mutation', async t => {
 });
 
 // TODO: mutation with variables
+
+test('Top level orderBy', async t => {
+  t.plan(1);
+
+  let expected = {
+    data: {
+      Movie: [
+        {
+          title: '10 Years',
+          __typename: 'Movie',
+          actors: [
+            {
+              __typename: 'Actor',
+              name: 'Channing Tatum'
+            },
+            {
+              __typename: 'Actor',
+              name: ' Jenna Dewan Tatum'
+            },
+            {
+              __typename: 'Actor',
+              name: ' Justin Long'
+            }
+          ]
+        },
+        {
+          title: '30 Minutes or Less',
+          __typename: 'Movie',
+          actors: [
+            {
+              name: ' Nick Swardson',
+              __typename: 'Actor'
+            },
+            {
+              name: 'Jesse Eisenberg',
+              __typename: 'Actor'
+            },
+            {
+              name: ' Aziz Ansari',
+              __typename: 'Actor'
+            }
+          ]
+        },
+        {
+          title: '50/50',
+          __typename: 'Movie',
+          actors: [
+            {
+              name: 'Joseph Gordon-Levitt',
+              __typename: 'Actor'
+            },
+            {
+              name: ' Seth Rogen',
+              __typename: 'Actor'
+            },
+            {
+              name: ' Anna Kendrick',
+              __typename: 'Actor'
+            }
+          ]
+        }
+      ]
+    }
+  };
+
+  await client
+    .query({
+      query: gql`
+        {
+          Movie(year: 2011, orderBy: title_asc, first: 3) {
+            title
+            actors(first: 3) {
+              name
+            }
+          }
+        }
+      `
+    })
+    .then(data => {
+      t.deepEqual(data.data, expected.data);
+    })
+    .catch(error => {
+      t.fail(error);
+    });
+});

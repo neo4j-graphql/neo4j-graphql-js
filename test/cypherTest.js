@@ -969,3 +969,31 @@ test('nested fragments on relations', t => {
     augmentedSchemaCypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery)
   ]);
 });
+
+test('orderBy test - descending, top level - augmented schema', t => {
+  const graphQLQuery = `{
+    Movie(year: 2010, orderBy:title_desc, first: 10) {
+      title
+      actors(first:3) {
+        name
+      }
+    }
+  }
+  `,
+    expectedCypherQuery = `MATCH (movie:Movie {year:$year}) RETURN movie { .title ,actors: [(movie)<-[:ACTED_IN]-(movie_actors:Actor{}) | movie_actors { .name }][..3] } AS movie ORDER BY movie.title DESC  SKIP $offset LIMIT $first`;
+
+  t.plan(1);
+
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {},
+    expectedCypherQuery,
+    {
+      offset: 0,
+      first: 10,
+      year: 2010,
+      '1-first': 3
+    }
+  );
+});

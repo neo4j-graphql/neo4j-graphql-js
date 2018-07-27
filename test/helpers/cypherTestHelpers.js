@@ -2,7 +2,6 @@ import { cypherQuery, cypherMutation, augmentSchema } from '../../dist/index';
 import { graphql } from 'graphql';
 import { makeExecutableSchema } from 'graphql-tools';
 import { testSchema } from './testSchema';
-
 export function cypherTestRunner(
   t,
   graphqlQuery,

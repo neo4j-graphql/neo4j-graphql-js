@@ -5,7 +5,17 @@ import { printSchema } from 'graphql';
 test.cb('Test augmented schema', t => {
   let schema = augmentedSchema();
 
-  let expectedSchema = `type Actor implements Person {
+  let expectedSchema = `enum _GenreOrdering {
+  name_desc
+  name_asc
+}
+
+enum _MovieOrdering {
+  title_desc
+  title_asc
+}
+
+type Actor implements Person {
   id: ID!
   name: String
   movies: [Movie]
@@ -68,7 +78,7 @@ interface Person {
 }
 
 type Query {
-  Movie(_id: Int, id: ID, title: String, year: Int, plot: String, poster: String, imdbRating: Float, first: Int, offset: Int): [Movie]
+  Movie(_id: Int, id: ID, title: String, year: Int, plot: String, poster: String, imdbRating: Float, first: Int, offset: Int, orderBy: _MovieOrdering): [Movie]
   MoviesByYear(year: Int): [Movie]
   MovieById(movieId: ID!): Movie
   MovieBy_Id(_id: Int!): Movie
