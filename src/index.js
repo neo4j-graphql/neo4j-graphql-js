@@ -7,6 +7,9 @@ import {
   innerFilterParams,
   isAddMutation,
   isCreateMutation,
+  isUpdateMutation,
+  isRemoveMutation,
+  isDeleteMutation,
   isMutation,
   lowFirstLetter,
   typeIdentifiers
@@ -187,7 +190,8 @@ export function cypherMutation(
     });
 
   let params =
-    isCreateMutation(resolveInfo) && !mutationTypeCypherDirective
+    (isCreateMutation(resolveInfo) || isUpdateMutation(resolveInfo)) &&
+    !mutationTypeCypherDirective
       ? { params: otherParams, ...{ first, offset } }
       : { ...otherParams, ...{ first, offset } };
 
@@ -217,10 +221,6 @@ export function cypherMutation(
     WITH apoc.map.values(value, [keys(value)[0]])[0] AS ${variableName}
     RETURN ${variableName} {${subQuery}} AS ${variableName}${orderByValue} ${outerSkipLimit}`;
   } else if (isCreateMutation(resolveInfo)) {
-    // CREATE node
-    // TODO: handle for create relationship
-    // TODO: update / delete
-    // TODO: augment schema
     query = `CREATE (${variableName}:${typeName}) `;
     query += `SET ${variableName} = $params `;
     //query += `RETURN ${variable}`;
@@ -309,9 +309,132 @@ export function cypherMutation(
     }})
       CREATE (${fromVar})-[:${relationshipName}]->(${toVar})
       RETURN ${fromVar} {${subQuery}} AS ${fromVar};`;
+  } else if (isUpdateMutation(resolveInfo)) {
+    const idParam = resolveInfo.schema.getMutationType().getFields()[
+      resolveInfo.fieldName
+    ].astNode.arguments[0].name.value;
+
+    query = `MATCH (${variableName}:${typeName} {${idParam}: $params.${
+      resolveInfo.schema.getMutationType().getFields()[resolveInfo.fieldName]
+        .astNode.arguments[0].name.value
+    }}) `;
+    query += `SET ${variableName} += $params `;
+
+    const [subQuery, subParams] = buildCypherSelection({
+      initial: ``,
+      selections,
+      variableName,
+      schemaType,
+      resolveInfo,
+      paramIndex: 1
+    });
+    params = { ...params, ...subParams };
+
+    query += `RETURN ${variableName} {${subQuery}} AS ${variableName}`;
+  } else if (isDeleteMutation(resolveInfo)) {
+    const idParam = resolveInfo.schema.getMutationType().getFields()[
+      resolveInfo.fieldName
+    ].astNode.arguments[0].name.value;
+
+    const [subQuery, subParams] = buildCypherSelection({
+      initial: ``,
+      selections,
+      variableName,
+      schemaType,
+      resolveInfo,
+      paramIndex: 1
+    });
+    params = { ...params, ...subParams };
+
+    // Cannot execute a map projection on a deleted node in Neo4j
+    // so the projection is executed and aliased before the delete
+    query = `MATCH (${variableName}:${typeName} {${idParam}: $${
+      resolveInfo.schema.getMutationType().getFields()[resolveInfo.fieldName]
+        .astNode.arguments[0].name.value
+    }})
+WITH ${variableName} AS ${variableName +
+      '_toDelete'}, ${variableName} {${subQuery}} AS ${variableName}
+DETACH DELETE ${variableName + '_toDelete'}
+RETURN ${variableName}`;
+  } else if (isRemoveMutation(resolveInfo)) {
+    let mutationMeta, relationshipNameArg, fromTypeArg, toTypeArg;
+
+    try {
+      mutationMeta = resolveInfo.schema
+        .getMutationType()
+        .getFields()
+        [resolveInfo.fieldName].astNode.directives.find(x => {
+          return x.name.value === 'MutationMeta';
+        });
+    } catch (e) {
+      throw new Error(
+        'Missing required MutationMeta directive on add relationship directive'
+      );
+    }
+
+    try {
+      relationshipNameArg = mutationMeta.arguments.find(x => {
+        return x.name.value === 'relationship';
+      });
+
+      fromTypeArg = mutationMeta.arguments.find(x => {
+        return x.name.value === 'from';
+      });
+
+      toTypeArg = mutationMeta.arguments.find(x => {
+        return x.name.value === 'to';
+      });
+    } catch (e) {
+      throw new Error(
+        'Missing required argument in MutationMeta directive (relationship, from, or to)'
+      );
+    }
+    //TODO: need to handle one-to-one and one-to-many
+
+    const fromType = fromTypeArg.value.value,
+      toType = toTypeArg.value.value,
+      fromVar = lowFirstLetter(fromType),
+      toVar = lowFirstLetter(toType),
+      relationshipName = relationshipNameArg.value.value,
+      fromParam = resolveInfo.schema
+        .getMutationType()
+        .getFields()
+        [resolveInfo.fieldName].astNode.arguments[0].name.value.substr(
+          fromVar.length
+        ),
+      toParam = resolveInfo.schema
+        .getMutationType()
+        .getFields()
+        [resolveInfo.fieldName].astNode.arguments[1].name.value.substr(
+          toVar.length
+        );
+
+    const [subQuery, subParams] = buildCypherSelection({
+      initial: '',
+      selections,
+      variableName,
+      schemaType,
+      resolveInfo,
+      paramIndex: 1
+    });
+    params = { ...params, ...subParams };
+
+    query = `MATCH (${fromVar}:${fromType} {${fromParam}: $${
+      resolveInfo.schema.getMutationType().getFields()[resolveInfo.fieldName]
+        .astNode.arguments[0].name.value
+    }})
+MATCH (${toVar}:${toType} {${toParam}: $${
+      resolveInfo.schema.getMutationType().getFields()[resolveInfo.fieldName]
+        .astNode.arguments[1].name.value
+    }})
+OPTIONAL MATCH (${fromVar})-[${fromVar + toVar}:${relationshipName}]->(${toVar})
+DELETE ${fromVar + toVar}
+RETURN ${fromVar} {${subQuery}} AS ${fromVar};`;
   } else {
     // throw error - don't know how to handle this type of mutation
-    throw new Error('Mutation does not follow naming convention.');
+    throw new Error(
+      'Do not know how to handle this type of mutation. Mutation does not follow naming convention.'
+    );
   }
   return [query, params];
 }

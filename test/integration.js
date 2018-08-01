@@ -247,6 +247,38 @@ test('Create node mutation', async t => {
     });
 });
 
+test('Update node mutation', async t => {
+  t.plan(1);
+
+  let expected = {
+    data: {
+      UpdateMovie: {
+        __typename: 'Movie',
+        title: 'Sabrina',
+        year: 2010
+      }
+    }
+  };
+
+  await client
+    .mutate({
+      mutation: gql`
+        mutation updateMutation {
+          UpdateMovie(movieId: "7", year: 2010) {
+            title
+            year
+          }
+        }
+      `
+    })
+    .then(data => {
+      t.deepEqual(data.data, expected.data);
+    })
+    .catch(error => {
+      t.fail(error);
+    });
+});
+
 test('Add relationship mutation', async t => {
   t.plan(1);
 
@@ -300,6 +332,67 @@ test('Add relationship mutation', async t => {
     });
 });
 
+test('Remove relationship mutation', async t => {
+  t.plan(1);
+
+  await client
+    .mutate({
+      mutation: gql`
+        mutation removeMovieGenre {
+          RemoveMovieGenre(moviemovieId: "123", genrename: "Action") {
+            title
+            genres {
+              name
+            }
+          }
+        }
+      `
+    })
+    .then(data => {
+      t.is(data.data.RemoveMovieGenre.genres.length, 3);
+    })
+    .catch(error => {
+      t.fail(error);
+    });
+});
+
+test('Delete node mutation', async t => {
+  t.plan(1);
+
+  await client
+    .mutate({
+      mutation: gql`
+        mutation deleteNode {
+          DeleteMovie(movieId: "24") {
+            title
+          }
+        }
+      `
+    })
+    .then(d => {
+      //
+    })
+    .catch(error => {
+      t.fail(error);
+    });
+
+  await client
+    .query({
+      query: gql`
+        {
+          Movie(movieId: "24") {
+            title
+          }
+        }
+      `
+    })
+    .then(data => {
+      t.is(data.data.Movie.length, 0);
+    })
+    .catch(error => {
+      t.fail(error);
+    });
+});
 // TODO: mutation with variables
 
 test('Top level orderBy', async t => {

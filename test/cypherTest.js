@@ -605,6 +605,47 @@ test.cb('Create node mutation', t => {
   });
 });
 
+test.cb('Update node mutation', t => {
+  const graphQLQuery = `mutation updateMutation {
+    UpdateMovie(movieId: "12dd334d5", year: 2010) {
+      _id
+      title
+      year
+    }
+  }`,
+    expectedCypherQuery = `MATCH (movie:Movie {movieId: $params.movieId}) SET movie += $params RETURN movie {_id: ID(movie), .title , .year } AS movie`;
+
+  t.plan(2);
+  cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery, {
+    params: {
+      movieId: '12dd334d5',
+      year: 2010
+    },
+    first: -1,
+    offset: 0
+  });
+});
+
+test.cb('Delete node mutation', t => {
+  const graphQLQuery = `mutation deleteMutation{
+      DeleteMovie(movieId: "12dd334d5") {
+        _id
+        movieId
+      }
+    }`,
+    expectedCypherQuery = `MATCH (movie:Movie {movieId: $movieId})
+WITH movie AS movie_toDelete, movie {_id: ID(movie), .movieId } AS movie
+DETACH DELETE movie_toDelete
+RETURN movie`;
+
+  t.plan(2);
+  cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery, {
+    movieId: '12dd334d5',
+    first: -1,
+    offset: 0
+  });
+});
+
 test.cb('Add relationship mutation', t => {
   const graphQLQuery = `mutation someMutation {
   AddMovieGenre(moviemovieId:"123", genrename: "Action") {
@@ -657,6 +698,28 @@ test.cb('Add relationship mutation with GraphQL variables', t => {
       offset: 0
     }
   );
+});
+
+test.cb('Remove relationship mutation', t => {
+  const graphQLQuery = `mutation removeRelationship {
+      RemoveMovieGenre(moviemovieId: "123", genrename: "Action") {
+        _id
+        title
+      }
+  }`,
+    expectedCypherQuery = `MATCH (movie:Movie {movieId: $moviemovieId})
+MATCH (genre:Genre {name: $genrename})
+OPTIONAL MATCH (movie)-[moviegenre:IN_GENRE]->(genre)
+DELETE moviegenre
+RETURN movie {_id: ID(movie), .title } AS movie;`;
+
+  t.plan(2);
+  cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery, {
+    moviemovieId: '123',
+    genrename: 'Action',
+    first: -1,
+    offset: 0
+  });
 });
 
 test('Handle GraphQL variables in nested selection - first/offset', t => {

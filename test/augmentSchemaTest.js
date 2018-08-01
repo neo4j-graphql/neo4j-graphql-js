@@ -62,14 +62,29 @@ type Movie {
 
 type Mutation {
   CreateMovie(movieId: ID, title: String, year: Int, plot: String, poster: String, imdbRating: Float, degree: Int, avgStars: Float, scaleRating: Float, scaleRatingFloat: Float): Movie
+  UpdateMovie(movieId: ID, title: String, year: Int, plot: String, poster: String, imdbRating: Float, degree: Int, avgStars: Float, scaleRating: Float, scaleRatingFloat: Float): Movie
+  DeleteMovie(movieId: ID!): Movie
   AddMovieGenre(moviemovieId: ID!, genrename: String!): Movie
+  RemoveMovieGenre(moviemovieId: ID!, genrename: String!): Movie
   AddMovieState(moviemovieId: ID!, statename: String!): Movie
+  RemoveMovieState(moviemovieId: ID!, statename: String!): Movie
   CreateGenre(name: String): Genre
+  UpdateGenre(name: String): Genre
+  DeleteGenre(name: String): Genre
   CreateActor(id: ID, name: String): Actor
+  UpdateActor(id: ID, name: String): Actor
+  DeleteActor(id: ID!): Actor
   AddActorMovie(actorid: ID!, moviemovieId: ID!): Actor
+  RemoveActorMovie(actorid: ID!, moviemovieId: ID!): Actor
   CreateState(name: String): State
+  UpdateState(name: String): State
+  DeleteState(name: String): State
   CreateBook(genre: BookGenre): Book
+  UpdateBook(genre: BookGenre): Book
+  DeleteBook(genre: BookGenre): Book
   CreateUser(id: ID, name: String): User
+  UpdateUser(id: ID, name: String): User
+  DeleteUser(id: ID!): User
 }
 
 interface Person {
@@ -78,7 +93,7 @@ interface Person {
 }
 
 type Query {
-  Movie(_id: Int, id: ID, title: String, year: Int, plot: String, poster: String, imdbRating: Float, first: Int, offset: Int, orderBy: _MovieOrdering): [Movie]
+  Movie(_id: Int, movieId: ID, title: String, year: Int, plot: String, poster: String, imdbRating: Float, first: Int, offset: Int, orderBy: _MovieOrdering): [Movie]
   MoviesByYear(year: Int): [Movie]
   MovieById(movieId: ID!): Movie
   MovieBy_Id(_id: Int!): Movie

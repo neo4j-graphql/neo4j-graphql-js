@@ -1,7 +1,7 @@
 import { makeExecutableSchema, mergeSchemas } from 'graphql-tools';
 import { neo4jgraphql } from './index';
 import { printSchema } from 'graphql';
-import { lowFirstLetter } from './utils';
+import { lowFirstLetter, isUpdateMutation, isDeleteMutation } from './utils';
 import { GraphQLID, astFromValue, buildSchema, GraphQLList } from 'graphql';
 
 export function addMutationsToSchema(schema) {
@@ -25,6 +25,8 @@ export function addMutationsToSchema(schema) {
     (acc, t) => {
       // FIXME: inspect actual mutations, not construct mutation names here
       acc.Mutation[`Create${t}`] = neo4jgraphql;
+      acc.Mutation[`Update${t}`] = neo4jgraphql;
+      acc.Mutation[`Delete${t}`] = neo4jgraphql;
       types.forEach(t => {
         addRelationshipMutations(schema.getTypeMap()[t], true).forEach(m => {
           acc.Mutation[m] = neo4jgraphql;
@@ -255,6 +257,8 @@ function augmentMutations(types, schema, sdl) {
         acc +
         `
       ${createMutation(schema.getTypeMap()[t])}
+      ${updateMutation(schema.getTypeMap()[t])}
+      ${deleteMutation(schema.getTypeMap()[t])}
       ${addRelationshipMutations(schema.getTypeMap()[t])} 
     `
       );
@@ -266,6 +270,15 @@ function augmentMutations(types, schema, sdl) {
 
 function createMutation(type) {
   return `Create${type.name}(${paramSignature(type)}): ${type.name}`;
+}
+
+function updateMutation(type) {
+  return `Update${type.name}(${paramSignature(type)}): ${type.name}`;
+}
+
+function deleteMutation(type) {
+  const pk = primaryKey(type);
+  return `Delete${type.name}(${pk.name}:${pk.type}): ${type.name}`;
 }
 
 function addRelationshipMutations(type, namesOnly = false) {
@@ -332,7 +345,20 @@ function addRelationshipMutations(type, namesOnly = false) {
     }", to: "${toType.name}")
     `;
 
+    mutations += `
+    Remove${fromType.name}${toType.name}(${lowFirstLetter(
+      fromType.name + fromPk.name
+    )}: ${innerType(fromPk.type).name}!, ${lowFirstLetter(
+      toType.name + toPk.name
+    )}: ${innerType(toPk.type).name}!): ${
+      fromType.name
+    } @MutationMeta(relationship: "${relTypeArg.value.value}", from: "${
+      fromType.name
+    }", to: "${toType.name}")
+    `;
+
     mutationNames.push(`Add${fromType.name}${toType.name}`);
+    mutationNames.push(`Remove${fromType.name}${toType.name}`);
   });
 
   if (namesOnly) {

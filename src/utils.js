@@ -85,6 +85,12 @@ export const isCreateMutation = _isNamedMutation('create');
 
 export const isAddMutation = _isNamedMutation('add');
 
+export const isUpdateMutation = _isNamedMutation('update');
+
+export const isDeleteMutation = _isNamedMutation('delete');
+
+export const isRemoveMutation = _isNamedMutation('remove');
+
 export function isAddRelationshipMutation(resolveInfo) {
   return (
     isAddMutation(resolveInfo) &&
@@ -271,7 +277,7 @@ export function extractSelections(selections, fragments) {
     if (cur.kind === 'FragmentSpread') {
       const recursivelyExtractedSelections = extractSelections(
         fragments[cur.name.value].selectionSet.selections,
-        fragments,
+        fragments
       );
       return [...acc, ...recursivelyExtractedSelections];
     } else {
