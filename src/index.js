@@ -16,9 +16,10 @@ import {
 } from './utils';
 import { buildCypherSelection } from './selections';
 import {
-  addIdFieldToSchema,
-  addOrderByToSchema,
-  addMutationsToSchema
+  extractAstNodesFromSchema,
+  augmentTypeDefs,
+  createOperationMap,
+  makeAugmentedSchema
 } from './augmentSchema';
 import { checkRequestError } from './auth';
 
@@ -439,14 +440,10 @@ RETURN ${fromVar} {${subQuery}} AS ${fromVar};`;
   return [query, params];
 }
 
-export function augmentSchema(schema) {
-  // FIXME: better composable API for schema augmentation
-  schema = addMutationsToSchema(schema);
-  schema = addIdFieldToSchema(schema);
-
-  // FIXME: adding order by fields to the query types doesn't
-  //        quite work yet so don't include those in schema augmentation yet
-  //schema = addOrderByToSchema(schema);
-
-  return schema;
+export const augmentSchema = (schema) => {
+  const typeMap = extractAstNodesFromSchema(schema);
+  const mutationMap = createOperationMap(typeMap.Mutation);
+  const queryMap = createOperationMap(typeMap.Query);
+  const augmentedTypeMap = augmentTypeDefs(typeMap);
+  return makeAugmentedSchema(schema, augmentedTypeMap, queryMap, mutationMap);
 }
