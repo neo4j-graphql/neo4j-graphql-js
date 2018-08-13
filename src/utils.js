@@ -207,7 +207,7 @@ export function innerFilterParams(filters) {
     : '';
 }
 
-function _argumentValue(selection, name, variableValues) {
+function argumentValue(selection, name, variableValues) {
   let arg = selection.arguments.find(a => a.name.value === name);
   if (!arg) {
     return null;
@@ -252,7 +252,7 @@ export function computeSkipLimit(selection, variableValues) {
 }
 
 export const computeOrderBy = (resolveInfo, selection) => {
-  const orderByVar = _argumentValue(
+  const orderByVar = argumentValue(
     resolveInfo.operation.selectionSet.selections[0],
     'orderBy',
     resolveInfo.variableValues
