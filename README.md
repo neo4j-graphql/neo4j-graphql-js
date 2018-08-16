@@ -4,6 +4,9 @@
 
 A GraphQL to Cypher query execution layer for Neo4j and JavaScript GraphQL implementations.
 
+- [Read the docs](https://grandstack.io/docs/neo4j-graphql-js.html)
+- [Read the changelog](https://github.com/neo4j-graphql/neo4j-graphql-js/blob/master/CHANGELOG.md)
+
 _neo4j-graphql-js is in early development. There are rough edges and APIs may change. Please file issues for any bugs that you find or feature requests._
 
 ## Installation and usage
@@ -56,7 +59,7 @@ npm build
 npm test
 ```
 
-The `npm test` script will run unit tests that check GraphQL -> Cypher translation and the schema augmentation features and can be easily run locally without a test environment. Full integration tests can be found in `/test` and are [run on CircleCI](https://circleci.com/gh/neo4j-graphql/neo4j-graphql-js) as part of the CI process. 
+The `npm test` script will run unit tests that check GraphQL -> Cypher translation and the schema augmentation features and can be easily run locally without a test environment. Full integration tests can be found in `/test` and are [run on CircleCI](https://circleci.com/gh/neo4j-graphql/neo4j-graphql-js) as part of the CI process.
 
 ## Examples
 
@@ -65,4 +68,3 @@ See [/examples](https://github.com/neo4j-graphql/neo4j-graphql-js/tree/master/ex
 ## [Documentation](http://grandstack.io/docs/neo4j-graphql-js.html)
 
 Full docs can be found on [GRANDstack.io/docs](http://grandstack.io/docs/neo4j-graphql-js.html)
-
