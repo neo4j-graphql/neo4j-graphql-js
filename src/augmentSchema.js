@@ -2,40 +2,16 @@ import { makeExecutableSchema } from 'graphql-tools';
 import { neo4jgraphql } from './index';
 import { print } from 'graphql';
 
-export const makeAugmentedSchema = (schema, augmentedTypeMap, queryMap, mutationMap) => {
+export const makeAugmentedSchema = (typeMap, queryResolvers, mutationResolvers) => {
+  const augmentedTypeMap = augmentTypeMap(typeMap);
+  const augmentedResolvers = augmentResolvers(queryResolvers, mutationResolvers, augmentedTypeMap);
   return makeExecutableSchema({
     typeDefs: printTypeMap(augmentedTypeMap),
-    resolvers: augmentResolvers(schema, augmentedTypeMap, queryMap, mutationMap),
+    resolvers: augmentedResolvers,
     resolverValidationOptions: {
       requireResolversForResolveType: false
     }
   });
-}
-
-export const augmentTypeDefs = (typeMap) => {
-  let astNode = {};
-  const types = Object.keys(typeMap);
-  typeMap = initializeOperationTypes(types, typeMap);
-  const queryMap = createOperationMap(typeMap.Query);
-  const mutationMap = createOperationMap(typeMap.Mutation);
-  types.forEach(t => {
-    astNode = typeMap[t];
-    if(isTypeForAugmentation(astNode)) {
-      astNode = augmentType(astNode);
-      // typeMap = possiblyAddQuery(astNode, typeMap, queryMap);
-      typeMap = possiblyAddMutations(astNode, typeMap, mutationMap);
-      // typeMap = possiblyAddOrderingEnum(astNode, typeMap);
-      typeMap[t] = astNode;
-    }
-  });
-  return typeMap;
-}
-
-export const augmentResolvers = (schema, augmentedTypeMap, queryMap, mutationMap) => {
-  // For now, only adds resolvers for auto-generated mutations
-  let resolvers = extractResolversFromSchema(schema);
-  resolvers = augmentMutationResolvers(resolvers, augmentedTypeMap, mutationMap);
-  return resolvers;
 }
 
 export const extractAstNodesFromSchema = (schema) => {
@@ -50,16 +26,72 @@ export const extractAstNodesFromSchema = (schema) => {
   }, {});
 }
 
-export const extractResolversFromSchema = (schema) => {
-  const queryResolvers = extractResolvers(schema.getQueryType());
-  const mutationResolvers = extractResolvers(schema.getMutationType());
-  let extracted = {};
-  if(queryResolvers) extracted.Query = queryResolvers;
-  if(mutationResolvers) extracted.Mutation = mutationResolvers;
-  return extracted;
+export const extractResolvers = (operationType) => {
+  const operationTypeFields = operationType ? operationType.getFields() : {};
+  const operations = Object.keys(operationTypeFields);
+  let resolver = {};
+  return operations.length > 0
+    ? operations.reduce((acc, t) => {
+        resolver = operationTypeFields[t].resolve;
+        if(resolver !== undefined) acc[t] = resolver;
+        return acc;
+      }, {})
+    : {};
 }
 
-export const createOperationMap = (type) => {
+const augmentTypeMap = (typeMap) => {
+  const types = Object.keys(typeMap);
+  typeMap = initializeOperationTypes(types, typeMap);
+  const queryMap = createOperationMap(typeMap.Query);
+  const mutationMap = createOperationMap(typeMap.Mutation);
+  let astNode = {};
+  types.forEach(t => {
+    astNode = typeMap[t];
+    if(isTypeForAugmentation(astNode)) {
+      astNode = augmentType(astNode, typeMap);
+      typeMap = possiblyAddQuery(astNode, typeMap, queryMap);
+      typeMap = possiblyAddOrderingEnum(astNode, typeMap);
+      typeMap = possiblyAddTypeMutations(astNode, typeMap, mutationMap);
+      typeMap = possiblyAddRelationMutations(astNode, typeMap, mutationMap);
+      typeMap[t] = astNode;
+    }
+  });
+  typeMap = augmentQueryArguments(typeMap);
+  return typeMap;
+}
+
+const possiblyAddTypeMutations = (astNode, typeMap, mutationMap) => {
+  typeMap = possiblyAddTypeMutation(`Create`, astNode, typeMap, mutationMap);
+  typeMap = possiblyAddTypeMutation(`Update`, astNode, typeMap, mutationMap);
+  typeMap = possiblyAddTypeMutation(`Delete`, astNode, typeMap, mutationMap);
+  return typeMap;
+}
+
+const augmentQueryArguments = (typeMap) => {
+  const queryMap = createOperationMap(typeMap.Query);
+  let args = [];
+  let valueTypeName = "";
+  let valueType = {};
+  let field = {};
+  let queryNames = Object.keys(queryMap);
+  if(queryNames.length > 0) {
+    queryNames.forEach(t => {
+      field = queryMap[t];
+      valueTypeName = getNamedType(field).name.value;
+      valueType = typeMap[valueTypeName];
+      if(isTypeForAugmentation(valueType) && isListType(field)) {
+        args = field.arguments;
+        queryMap[t].arguments = possiblyAddArgument(args, "first", "Int");
+        queryMap[t].arguments = possiblyAddArgument(args, "offset", "Int");
+        queryMap[t].arguments = possiblyAddArgument(args, "orderBy", `_${valueTypeName}Ordering`);
+      }
+    });
+    typeMap.Query.fields = Object.values(queryMap);
+  }
+  return typeMap;
+}
+
+const createOperationMap = (type) => {
   const fields = type ? type.fields : [];
   return fields.reduce( (acc, t) => {
     acc[t.name.value] = t;
@@ -67,12 +99,38 @@ export const createOperationMap = (type) => {
   }, {});
 }
 
-export const printTypeMap = (typeMap) => {
-  const printed = print({
+const printTypeMap = (typeMap) => {
+  return print({
     "kind": "Document",
     "definitions": Object.values(typeMap)
   });
-  return printed;
+}
+
+const augmentResolvers = (queryResolvers, mutationResolvers, typeMap) => {
+  let resolvers = {};
+  const queryMap = createOperationMap(typeMap.Query);
+  queryResolvers = possiblyAddResolvers(queryMap, queryResolvers)
+  if(Object.keys(queryResolvers).length > 0) {
+    resolvers.Query = queryResolvers;
+  }
+  const mutationMap = createOperationMap(typeMap.Mutation);
+  mutationResolvers = possiblyAddResolvers(mutationMap, mutationResolvers)
+  if(Object.keys(mutationResolvers).length > 0) {
+    resolvers.Mutation = mutationResolvers;
+  }
+  return resolvers;
+}
+
+const possiblyAddResolvers = (operationTypeMap, resolvers) => {
+  let operationName = "";
+  return Object.keys(operationTypeMap).reduce( (acc, t) => {
+    // if no resolver provided for this operation type field
+    operationName = operationTypeMap[t].name.value;
+    if(acc[operationName] === undefined) {
+      acc[operationName] = neo4jgraphql;
+    }
+    return acc;
+  }, resolvers);
 }
 
 const possiblyAddQuery = (astNode, typeMap, queryMap) => {
@@ -101,14 +159,6 @@ const possiblyAddQuery = (astNode, typeMap, queryMap) => {
   return typeMap;
 }
 
-const possiblyAddMutations = (astNode, typeMap, mutationMap) => {
-  typeMap = possiblyAddTypeMutation(`Create`, astNode, typeMap, mutationMap);
-  typeMap = possiblyAddTypeMutation(`Update`, astNode, typeMap, mutationMap);
-  typeMap = possiblyAddTypeMutation(`Delete`, astNode, typeMap, mutationMap);
-  typeMap = possiblyAddRelationMutations(astNode, typeMap, mutationMap);
-  return typeMap;
-}
-
 const possiblyAddOrderingEnum = (astNode, typeMap) => {
   const name = `_${astNode.name.value}Ordering`;
   const values = createOrderingFields(astNode.fields, typeMap);
@@ -128,7 +178,6 @@ const possiblyAddOrderingEnum = (astNode, typeMap) => {
   return typeMap;
 }
 
-
 const initializeOperationTypes = (types, typeMap) => {
   if(types.length > 0) {
     typeMap = possiblyAddObjectType(typeMap, "Query");
@@ -137,103 +186,260 @@ const initializeOperationTypes = (types, typeMap) => {
   return typeMap;
 }
 
-const augmentType = (astNode) => {
+const augmentType = (astNode, typeMap) => {
   astNode.fields = addOrReplaceNodeIdField(astNode, "ID");
+  astNode.fields = possiblyAddTypeFieldArguments(astNode, typeMap);
   return astNode;
 }
+
+
+const isListType = (type, isList=false) => {
+  // Only checks that there is at least one ListType on the way
+  // to the NamedType
+  if(!isKind(type, "NamedType")) {
+    if(isKind(type, "ListType")) {
+      isList = true;
+    }
+    return isListType(type.type, isList);
+  }
+  return isList;
+}
+
+const possiblyAddTypeFieldArguments = (astNode, typeMap) => {
+  const fields = astNode.fields;
+  let relationTypeName = "";
+  let relationType = {};
+  let args = [];
+  fields.forEach(field => {
+    relationTypeName = getNamedType(field).name.value;
+    relationType = typeMap[relationTypeName];
+    if(isTypeForAugmentation(relationType)
+    && isListType(field)
+    && (getDirective(field, "relation") || getDirective(field, "cypher"))) {
+      args = field.arguments;
+      field.arguments = possiblyAddArgument(args, "first", "Int");
+      field.arguments = possiblyAddArgument(args, "offset", "Int");
+      field.arguments = possiblyAddArgument(args, "orderBy", `_${relationTypeName}Ordering`);
+    }
+  });
+  return fields;
+}
+
+const possiblyAddArgument = (args, fieldName, fieldType) => {
+  const fieldIndex = args.findIndex(e => e.name.value === fieldName);
+  if(fieldIndex === -1) {
+  args.push({
+      "kind": "InputValueDefinition",
+      "name": {
+        "kind": "Name",
+        "value": fieldName,
+      },
+      "type": {
+        "kind": "NamedType",
+        "name": {
+          "kind": "Name",
+          "value": fieldType,
+        },
+      },
+      "directives": [],
+    });
+  }
+  return args;
+};
 
 const possiblyAddTypeMutation = (namePrefix, astNode, typeMap, mutationMap) => {
   const typeName = astNode.name.value;
   const mutationName = namePrefix + typeName;
   // Only generate if the mutation named mutationName does not already exist
   if(mutationMap[mutationName] === undefined) {
-    typeMap.Mutation.fields.push({
-      "kind": "FieldDefinition",
-      "name": {
-        "kind": "Name",
-        "value": mutationName
-      },
-      "arguments": buildAllFieldArguments(namePrefix, astNode, typeMap),
-      "type": {
-        "kind": "NamedType",
+    let args = buildAllFieldArguments(namePrefix, astNode, typeMap);
+    if(args.length > 0) {
+      typeMap.Mutation.fields.push({
+        "kind": "FieldDefinition",
         "name": {
           "kind": "Name",
-          "value": typeName
-        }
-      },
-      "directives": [],
-    });
+          "value": mutationName
+        },
+        "arguments": args,
+        "type": {
+          "kind": "NamedType",
+          "name": {
+            "kind": "Name",
+            "value": typeName
+          }
+        },
+        "directives": [],
+      });
+    }
   }
   return typeMap;
+}
+
+const isNonNullType = (type, isRequired=false, parent={}) => {
+  if(!isKind(type, "NamedType")) {
+    return isNonNullType(type.type, isRequired, type);
+  }
+  if(isKind(parent, "NonNullType")) {
+    isRequired = true;
+  }
+  return isRequired;
+}
+
+const isKind = (type, kind) => {
+  return type && type.kind === kind;
 }
 
 const buildAllFieldArguments = (namePrefix, astNode, typeMap) => {
   let fields = [];
   let type = {};
   let fieldName = "";
+  let valueTypeName = "";
+  let valueType = {};
   switch(namePrefix) {
     case 'Create': {
-      fields = astNode.fields.reduce( (acc, t) => {
+      let firstIdField = undefined;
+      astNode.fields.reduce( (acc, t) => {
         type = getNamedType(t);
         fieldName = t.name.value;
-        if(isValidOptionalMutationArgument(fieldName, type, typeMap)) {
-          acc.push({
-            "kind": "InputValueDefinition",
-            "name": {
-              "kind": "Name",
-              "value": fieldName
-            },
-            "type": type,
-            "directives": [],
-          });
+        valueTypeName = type.name.value;
+        valueType = typeMap[valueTypeName];
+        // If this field is not _id, and not a list,
+        // and is not computed, and either a basic scalar
+        // or an enum
+        if(fieldName !== "_id"
+        && !isListType(t)
+        && !getDirective(t, "cypher")
+        && (isBasicScalar(valueTypeName)
+        || isKind(valueType, "EnumTypeDefinition"))) {
+          // Require if required
+          if(isNonNullType(t)) {
+            // Regardless of whether it is NonNullType,
+            // don't require the first ID field discovered
+            if(valueTypeName === "ID" && !firstIdField) {
+              // will only be true once, this field will
+              // by default recieve an auto-generated uuid,
+              // if no value is provided
+              firstIdField = t;
+              acc.push({
+                "kind": "InputValueDefinition",
+                "name": {
+                  "kind": "Name",
+                  "value": fieldName
+                },
+                "type": type,
+                "directives": [],
+              });
+            }
+            else {
+              acc.push({
+                "kind": "InputValueDefinition",
+                "name": {
+                  "kind": "Name",
+                  "value": fieldName
+                },
+                "type": {
+                  "kind": "NonNullType",
+                  type: type
+                },
+                "directives": [],
+              });
+            }
+          }
+          else {
+            acc.push({
+              "kind": "InputValueDefinition",
+              "name": {
+                "kind": "Name",
+                "value": fieldName
+              },
+              "type": type,
+              "directives": [],
+            });
+          }
         }
         return acc;
-      }, []);
+      }, fields);
       break;
     }
     case 'Update': {
-      fields = astNode.fields.reduce( (acc, t) => {
-        type = getNamedType(t);
-        fieldName = t.name.value;
-        if(isValidOptionalMutationArgument(fieldName, type, typeMap)) {
-          acc.push({
-            "kind": "InputValueDefinition",
-            "name": {
-              "kind": "Name",
-              "value": fieldName
-            },
-            "type": type,
-            "directives": [],
-          });
+      const primaryKey = getPrimaryKey(astNode);
+      let augmentedFields = [];
+      if(primaryKey) {
+        // Primary key field is first field and required
+        const primaryKeyName = primaryKey.name.value;
+        const primaryKeyType = getNamedType(primaryKey);
+        augmentedFields.push({
+          "kind": "InputValueDefinition",
+          "name": {
+            "kind": "Name",
+            "value": primaryKeyName
+          },
+          "type": {
+            "kind": "NonNullType",
+            "type": primaryKeyType
+          },
+          "directives": [],
+        });
+        astNode.fields.reduce( (acc, t) => {
+          type = getNamedType(t);
+          fieldName = t.name.value;
+          valueTypeName = type.name.value;
+          valueType = typeMap[valueTypeName];
+          // If this field is not the primary key, and not _id,
+          // and not a list, and not computed, and either a basic
+          // scalar or an enum
+          if(fieldName !== primaryKeyName
+          && fieldName !== "_id"
+          && !isListType(t)
+          && !getDirective(t, "cypher")
+          && (isBasicScalar(valueTypeName)
+          || isKind(valueType, "EnumTypeDefinition"))) {
+            acc.push({
+              "kind": "InputValueDefinition",
+              "name": {
+                "kind": "Name",
+                "value": fieldName
+              },
+              "type": type,
+              "directives": [],
+            });
+          }
+          return acc;
+        }, augmentedFields);
+        // Use if there is at least one field other than
+        // the primaryKey field used for node selection
+        if(augmentedFields.length > 1) {
+          fields = augmentedFields;
         }
-        return acc;
-      }, []);
+      }
       break;
     }
     case 'Delete': {
       const primaryKey = getPrimaryKey(astNode);
+      const primaryKeyName = primaryKey.name.value;
+      const primaryKeyType = getNamedType(primaryKey);
       fields.push({
         "kind": "InputValueDefinition",
         "name": {
           "kind": "Name",
-          "value": primaryKey.name.value
+          "value": primaryKeyName
         },
-        "type": primaryKey.type,
+        "type": {
+          "kind": "NonNullType",
+          "type": {
+            "kind": "NamedType",
+            "name": {
+              "kind": "Name",
+              "value": primaryKeyType.name.value
+            }
+          }
+        },
         "directives": []
-      })
+      });
       break;
     }
   }
   return fields;
-}
-
-const isValidOptionalMutationArgument = (fieldName, type, typeMap) => {
-  const valueTypeName = type.name.value;
-  const valueType = typeMap[valueTypeName];
-  return fieldName !== "_id"
-    && (isBasicScalar(valueTypeName)
-    || (valueType
-        && valueType.kind === "EnumTypeDefinition"));
 }
 
 const firstNonNullAndIdField = (fields) => {
@@ -284,20 +490,25 @@ const getPrimaryKey = (astNode) => {
   return pk;
 }
 
+const capitalizeName = (name) => {
+  return name.charAt(0).toUpperCase() + name.substr(1);
+}
 const possiblyAddRelationMutations = (astNode, typeMap, mutationMap) => {
   const typeName = astNode.name.value;
   let relationTypeName = "";
   let relationDirective = {};
   let relationName = "";
   let direction = "";
+  let capitalizedFieldName = "";
   astNode.fields.forEach(e => {
     relationDirective = getDirective(e, "relation");
     if(relationDirective) {
       relationName = getRelationName(relationDirective);
       direction = getRelationDirection(relationDirective);
       relationTypeName = getNamedType(e).name.value;
+      capitalizedFieldName = capitalizeName(e.name.value);
       possiblyAddRelationMutationField(
-        `Add${typeName}${relationTypeName}`,
+        `Add${typeName}${capitalizedFieldName}`,
         astNode,
         typeName,
         relationTypeName,
@@ -307,7 +518,7 @@ const possiblyAddRelationMutations = (astNode, typeMap, mutationMap) => {
         mutationMap
       );
       possiblyAddRelationMutationField(
-        `Remove${typeName}${relationTypeName}`,
+        `Remove${typeName}${capitalizedFieldName}`,
         astNode,
         typeName,
         relationTypeName,
@@ -322,7 +533,7 @@ const possiblyAddRelationMutations = (astNode, typeMap, mutationMap) => {
 }
 
 const getDirective = (field, directive) => {
-  return field.directives.find(e => e.name.value === directive);
+  return field && field.directives.find(e => e.name.value === directive);
 };
 
 const buildRelationMutationArguments = (astNode, relationTypeName, typeMap) => {
@@ -463,59 +674,6 @@ const addOrReplaceNodeIdField = (astNode, valueType) => {
   return fields;
 }
 
-const possiblyAddMutationResolver = (name, resolvers, mutationMap) => {
-  if(resolvers.Mutation === undefined) resolvers.Mutation = {};
-  // Only generate resolver for a generated mutation type
-  // So, don't generate if there is an entry in mutationMap
-  if(mutationMap[name] !== undefined) return resolvers;
-  // Even if the mutation type is generated, only generate
-  // a resolver if the user has not written one
-  if(resolvers.Mutation[name] === undefined) {
-    resolvers.Mutation[name] = neo4jgraphql;
-  }
-  return resolvers;
-}
-
-const possiblyAddRelationMutationResolvers = (astNode, typeName, resolvers, mutationMap) => {
-  let relationDirective = {};
-  let relationTypeName = "";
-  let relationName = "";
-  let direction = "";
-  astNode.fields.forEach(e => {
-    relationDirective = getDirective(e, "relation");
-    if(relationDirective) {
-      relationName = getRelationName(relationDirective);
-      direction = getRelationDirection(relationDirective);
-      if(direction === "OUT" || direction === "out") {
-        relationTypeName = getNamedType(e).name.value;
-        resolvers = possiblyAddMutationResolver(`Add${typeName}${relationTypeName}`, resolvers, mutationMap);
-        resolvers = possiblyAddMutationResolver(`Remove${typeName}${relationTypeName}`, resolvers, mutationMap);
-      }
-    }
-  });
-  return resolvers;
-}
-
-const augmentMutationResolvers = (resolvers, typeMap, mutationMap) => {
-  let astNode = {};
-  let typeName = "";
-  Object.keys(typeMap).forEach(e => {
-    astNode = typeMap[e];
-    typeName = astNode.name.value;
-    // Should be greatly simplified if we generate resolvers for any
-    // mutation for which one is not provided. For now, this matches the
-    // typeDefs augmentation logic to only generate resolvers for the same
-    // mutation types that were generated
-    if(isTypeForAugmentation(astNode)) {
-      resolvers = possiblyAddMutationResolver(`Create${typeName}`, resolvers, mutationMap);
-      resolvers = possiblyAddMutationResolver(`Update${typeName}`, resolvers, mutationMap);
-      resolvers = possiblyAddMutationResolver(`Delete${typeName}`, resolvers, mutationMap);
-      resolvers = possiblyAddRelationMutationResolvers(astNode, typeName, resolvers, mutationMap);
-    }
-  });
-  return resolvers;
-}
-
 const getRelationName = (relationDirective) => {
   let name = {};
   try {
@@ -561,15 +719,14 @@ const isBasicScalar = (name) => {
 
 const isQueryArgumentFieldType = (type, valueType) => {
   return isBasicScalar(type.name.value)
-  || (valueType
-    && valueType.kind === "EnumTypeDefinition");
+      || isKind(valueType, "EnumTypeDefinition");
 }
 
 const createQueryArguments = (astNode, typeMap) => {
   let type = {};
   let valueTypeName = "";
   astNode.fields = addOrReplaceNodeIdField(astNode, "Int");
-  const fieldArguments = astNode.fields.reduce( (acc, t) => {
+  return astNode.fields.reduce( (acc, t) => {
     type = getNamedType(t);
     valueTypeName = type.name.value;
     if(isQueryArgumentFieldType(type, typeMap[valueTypeName])) {
@@ -585,59 +742,11 @@ const createQueryArguments = (astNode, typeMap) => {
     }
     return acc;
   }, []);
-  return [
-    ...fieldArguments,
-    {
-      "kind": "InputValueDefinition",
-      "name": {
-        "kind": "Name",
-        "value": "first",
-      },
-      "type": {
-        "kind": "NamedType",
-        "name": {
-          "kind": "Name",
-          "value": "Int",
-        },
-      },
-      "directives": [],
-    },
-    {
-      "kind": "InputValueDefinition",
-      "name": {
-        "kind": "Name",
-        "value": "offset",
-      },
-      "type": {
-        "kind": "NamedType",
-        "name": {
-          "kind": "Name",
-          "value": "Int",
-        },
-      },
-      "directives": [],
-    },
-    {
-      "kind": "InputValueDefinition",
-      "name": {
-        "kind": "Name",
-        "value": "orderBy",
-      },
-      "type": {
-        "kind": "NamedType",
-        "name": {
-          "kind": "Name",
-          "value": `_${astNode.name.value}Ordering`,
-        },
-      },
-      "directives": [],
-    }
-  ]
 }
 
 const isTypeForAugmentation = (astNode) => {
   // TODO: check for @ignore and @model directives
-  return astNode.kind === "ObjectTypeDefinition"
+  return astNode && astNode.kind === "ObjectTypeDefinition"
     && astNode.name.value !== "Query"
     && astNode.name.value !== "Mutation";
 }
@@ -673,17 +782,4 @@ const createOrderingFields = (fields, typeMap) => {
     }
     return acc;
   }, []);
-}
-
-const extractResolvers = (operationType) => {
-  const operationTypeFields = operationType ? operationType.getFields() : {};
-  const operations = Object.keys(operationTypeFields);
-  let resolver = {};
-  return operations.length > 0
-    ? operations.reduce((acc, t) => {
-        resolver = operationTypeFields[t].resolve;
-        if(resolver !== undefined) acc[t] = resolver;
-        return acc;
-      }, {})
-    : undefined;
 }
