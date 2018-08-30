@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.2.0
+
+- [Create augmented schema from type definitions only (no initial schema object required)](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/99)
+
 ## v0.1.33
 
 - [Updates to augmentSchema](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/94)

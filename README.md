@@ -7,7 +7,7 @@ A GraphQL to Cypher query execution layer for Neo4j and JavaScript GraphQL imple
 - [Read the docs](https://grandstack.io/docs/neo4j-graphql-js.html)
 - [Read the changelog](https://github.com/neo4j-graphql/neo4j-graphql-js/blob/master/CHANGELOG.md)
 
-_neo4j-graphql-js is in early development. There are rough edges and APIs may change. Please file issues for any bugs that you find or feature requests._
+_neo4j-graphql-js is in active development. There are rough edges and APIs may change. Please file issues for any bugs that you find or feature requests._
 
 ## Installation and usage
 
