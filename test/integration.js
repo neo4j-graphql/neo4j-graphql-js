@@ -313,7 +313,7 @@ test('Add relationship mutation', async t => {
     .mutate({
       mutation: gql`
         mutation someMutation {
-          AddMovieGenre(moviemovieId: "123", genrename: "Action") {
+          AddMovieGenres(moviemovieId: "123", genrename: "Action") {
             title
             genres {
               name
@@ -323,7 +323,7 @@ test('Add relationship mutation', async t => {
       `
     })
     .then(data => {
-      t.is(data.data.AddMovieGenre.genres.length, 4);
+      t.is(data.data.AddMovieGenres.genres.length, 4);
       // FIXME: Check length of genres array instead of exact response until ordering is implemented
       //t.deepEqual(data.data, expected.data);
     })
@@ -338,8 +338,8 @@ test('Remove relationship mutation', async t => {
   await client
     .mutate({
       mutation: gql`
-        mutation removeMovieGenre {
-          RemoveMovieGenre(moviemovieId: "123", genrename: "Action") {
+        mutation removeMovieGenres {
+          RemoveMovieGenres(moviemovieId: "123", genrename: "Action") {
             title
             genres {
               name
@@ -349,7 +349,7 @@ test('Remove relationship mutation', async t => {
       `
     })
     .then(data => {
-      t.is(data.data.RemoveMovieGenre.genres.length, 3);
+      t.is(data.data.RemoveMovieGenres.genres.length, 3);
     })
     .catch(error => {
       t.fail(error);

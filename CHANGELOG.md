@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.1.33
+
+- [Updates to augmentSchema](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/94)
+
 ## v0.1.32
 
 - [Don't use rc version of graphql-js](https://github.com/neo4j-graphql/neo4j-graphql-js/commit/b8a0a7f6a7698ac4c83690ed8950bca892d11c93)
