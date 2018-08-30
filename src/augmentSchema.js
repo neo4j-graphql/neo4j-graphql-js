@@ -1,8 +1,8 @@
 import { makeExecutableSchema } from 'graphql-tools';
 import { neo4jgraphql } from './index';
-import { print } from 'graphql';
+import { print, parse } from 'graphql';
 
-export const makeAugmentedSchema = (typeMap, queryResolvers, mutationResolvers) => {
+export const augmentedSchema = (typeMap, queryResolvers, mutationResolvers) => {
   const augmentedTypeMap = augmentTypeMap(typeMap);
   const augmentedResolvers = augmentResolvers(queryResolvers, mutationResolvers, augmentedTypeMap);
   return makeExecutableSchema({
@@ -14,7 +14,47 @@ export const makeAugmentedSchema = (typeMap, queryResolvers, mutationResolvers) 
   });
 }
 
-export const extractAstNodesFromSchema = (schema) => {
+export const makeAugmentedExecutableSchema = ({
+  typeDefs,
+  resolvers,
+  logger,
+  allowUndefinedInResolve,
+  resolverValidationOptions,
+  directiveResolvers,
+  schemaDirectives,
+  parseOptions,
+  inheritResolversFromInterfaces
+}) => {
+  const typeMap = extractTypeMapFromTypeDefs(typeDefs);
+  const augmentedTypeMap = augmentTypeMap(typeMap);
+  const queryResolvers = resolvers && resolvers.Query ? resolvers.Query : {};
+  const mutationResolvers = resolvers && resolvers.Mutation ? resolvers.Mutation : {};
+  const augmentedResolvers = augmentResolvers(queryResolvers, mutationResolvers, augmentedTypeMap);
+  resolverValidationOptions.requireResolversForResolveType = false;
+  return makeExecutableSchema({
+    typeDefs: printTypeMap(augmentedTypeMap),
+    resolvers: augmentedResolvers,
+    logger: logger,
+    allowUndefinedInResolve: allowUndefinedInResolve,
+    resolverValidationOptions: resolverValidationOptions,
+    directiveResolvers: directiveResolvers,
+    schemaDirectives: schemaDirectives,
+    parseOptions: parseOptions,
+    inheritResolversFromInterfaces: inheritResolversFromInterfaces
+  });
+}
+
+const extractTypeMapFromTypeDefs = (typeDefs) => {
+  // TODO: accept alternative typeDefs formats (arr of strings, ast, etc.)
+  // into a single string for parse, add validatation
+  const astNodes = parse(typeDefs).definitions;
+  return astNodes.reduce( (acc, t) => {
+    acc[t.name.value] = t;
+    return acc;
+  }, {});
+}
+
+export const extractTypeMapFromSchema = (schema) => {
   const typeMap = schema.getTypeMap();
   let astNode = {};
   return Object.keys(typeMap).reduce( (acc, t) => {

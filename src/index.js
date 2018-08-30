@@ -16,9 +16,10 @@ import {
 } from './utils';
 import { buildCypherSelection } from './selections';
 import {
-  extractAstNodesFromSchema,
+  extractTypeMapFromSchema,
   extractResolvers,
-  makeAugmentedSchema
+  augmentedSchema,
+  makeAugmentedExecutableSchema
 } from './augmentSchema';
 import { checkRequestError } from './auth';
 
@@ -440,8 +441,39 @@ RETURN ${fromVar} {${subQuery}} AS ${fromVar};`;
 }
 
 export const augmentSchema = (schema) => {
-  let typeMap = extractAstNodesFromSchema(schema);
+  let typeMap = extractTypeMapFromSchema(schema);
   let queryResolvers = extractResolvers(schema.getQueryType());
   let mutationResolvers = extractResolvers(schema.getMutationType());
-  return makeAugmentedSchema(typeMap, queryResolvers, mutationResolvers);
+  return augmentedSchema(typeMap, queryResolvers, mutationResolvers);
+}
+
+export const makeAugmentedSchema = ({
+   schema,
+   typeDefs,
+   resolvers,
+   logger,
+   allowUndefinedInResolve=false,
+   resolverValidationOptions={},
+   directiveResolvers=null,
+   schemaDirectives=null,
+   parseOptions={},
+   inheritResolversFromInterfaces=false
+  }) => {
+    if(schema) {
+      return augmentSchema(schema);
+    }
+    if(!typeDefs) throw new Error(
+      'Must provide typeDefs'
+    );
+    return makeAugmentedExecutableSchema({
+      typeDefs,
+      resolvers,
+      logger,
+      allowUndefinedInResolve,
+      resolverValidationOptions,
+      directiveResolvers,
+      schemaDirectives,
+      parseOptions,
+      inheritResolversFromInterfaces
+    });
 }
