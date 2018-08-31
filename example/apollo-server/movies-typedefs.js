@@ -9,7 +9,9 @@ type Movie {
     imdbRating: Float
     genres: [Genre] @relation(name: "IN_GENRE", direction: "OUT")
     similar: [Movie] @cypher(
-        statement: "MATCH (this)-[:IN_GENRE]->(:Genre)<-[:IN_GENRE]-(o:Movie) RETURN o LIMIT {first}")
+        statement: """MATCH (this)<-[:RATED]-(:User)-[:RATED]->(s:Movie) 
+                      WITH s, COUNT(*) AS score 
+                      RETURN s ORDER BY score DESC LIMIT {first}""")
 }
 
 type Genre {
