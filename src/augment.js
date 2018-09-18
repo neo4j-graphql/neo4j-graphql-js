@@ -1,7 +1,5 @@
 import { neo4jgraphql } from './index';
-
 import { parse, print } from 'graphql';
-
 import {
   createOperationMap,
   createRelationMap,
@@ -52,7 +50,7 @@ const augmentType = (astNode, typeMap) => {
   return astNode;
 }
 
-export const augmentQueryArguments = (typeMap) => {
+const augmentQueryArguments = (typeMap) => {
   const queryMap = createOperationMap(typeMap.Query);
   let args = [];
   let valueTypeName = "";
@@ -91,6 +89,28 @@ export const augmentResolvers = (queryResolvers, mutationResolvers, typeMap) => 
   return resolvers;
 }
 
+export const possiblyAddArgument = (args, fieldName, fieldType) => {
+  const fieldIndex = args.findIndex(e => e.name.value === fieldName);
+  if(fieldIndex === -1) {
+  args.push({
+      "kind": "InputValueDefinition",
+      "name": {
+        "kind": "Name",
+        "value": fieldName,
+      },
+      "type": {
+        "kind": "NamedType",
+        "name": {
+          "kind": "Name",
+          "value": fieldType,
+        },
+      },
+      "directives": [],
+    });
+  }
+  return args;
+};
+
 const possiblyAddResolvers = (operationTypeMap, resolvers) => {
   let operationName = "";
   return Object.keys(operationTypeMap).reduce( (acc, t) => {
@@ -103,7 +123,7 @@ const possiblyAddResolvers = (operationTypeMap, resolvers) => {
   }, resolvers);
 }
 
-export const possiblyAddTypeInput = (astNode, typeMap) => {
+const possiblyAddTypeInput = (astNode, typeMap) => {
   const inputName = `_${astNode.name.value}Input`;
   if(isNodeType(astNode)) {
     if(typeMap[inputName] === undefined) {
@@ -147,7 +167,7 @@ export const possiblyAddTypeInput = (astNode, typeMap) => {
   return typeMap;
 }
 
-export const possiblyAddQuery = (astNode, typeMap, queryMap) => {
+const possiblyAddQuery = (astNode, typeMap, queryMap) => {
   if(isNodeType(astNode)) {
     const name = astNode.name.value;
     if(queryMap[name] === undefined) {
@@ -175,7 +195,7 @@ export const possiblyAddQuery = (astNode, typeMap, queryMap) => {
   return typeMap;
 }
 
-export const possiblyAddOrderingEnum = (astNode, typeMap) => {
+const possiblyAddOrderingEnum = (astNode, typeMap) => {
   if(isNodeType(astNode)) {
     const name = `_${astNode.name.value}Ordering`;
     const values = createOrderingFields(astNode.fields, typeMap);
@@ -196,7 +216,7 @@ export const possiblyAddOrderingEnum = (astNode, typeMap) => {
   return typeMap;
 }
 
-export const possiblyAddTypeMutations = (astNode, typeMap, mutationMap) => {
+const possiblyAddTypeMutations = (astNode, typeMap, mutationMap) => {
   if(isNodeType(astNode)) {
     typeMap = possiblyAddTypeMutation(`Create`, astNode, typeMap, mutationMap);
     typeMap = possiblyAddTypeMutation(`Update`, astNode, typeMap, mutationMap);
@@ -205,7 +225,7 @@ export const possiblyAddTypeMutations = (astNode, typeMap, mutationMap) => {
   return typeMap;
 }
 
-export const possiblyAddRelationMutations = (astNode, typeMap, mutationMap, relationMap) => {
+const possiblyAddRelationMutations = (astNode, typeMap, mutationMap, relationMap) => {
   const typeName = astNode.name.value;
   const fields = astNode.fields;
   const fieldCount = fields ? fields.length : 0;
@@ -269,7 +289,7 @@ export const possiblyAddRelationMutations = (astNode, typeMap, mutationMap, rela
   return typeMap;
 }
 
-export const possiblyAddTypeFieldArguments = (astNode, typeMap) => {
+const possiblyAddTypeFieldArguments = (astNode, typeMap) => {
   const fields = astNode.fields;
   let relationTypeName = "";
   let relationType = {};
@@ -289,7 +309,7 @@ export const possiblyAddTypeFieldArguments = (astNode, typeMap) => {
   return fields;
 }
 
-export const possiblyAddObjectType = (typeMap, name) => {
+const possiblyAddObjectType = (typeMap, name) => {
   if(typeMap[name] === undefined) {
     typeMap[name] = {
       kind: 'ObjectTypeDefinition',
@@ -303,33 +323,6 @@ export const possiblyAddObjectType = (typeMap, name) => {
     };
   }
   return typeMap;
-}
-
-export const addOrReplaceNodeIdField = (astNode, valueType) => {
-  const fields = astNode ? astNode.fields : [];
-  const index = fields.findIndex(e => e.name.value === '_id');
-  const definition = {
-    "kind": "FieldDefinition",
-    "name": {
-      "kind": "Name",
-      "value": "_id"
-    },
-    "arguments": [],
-    "type": {
-      "kind": "NamedType",
-      "name": {
-        "kind": "Name",
-        "value": valueType
-      }
-    },
-    "directives": []
-  };``
-  // If it has already been provided, replace it to force valueType,
-  // else add it as the last field
-  index >= 0
-    ? fields.splice(index, 1, definition)
-    : fields.push(definition)
-  return fields;
 }
 
 const createOrderingFields = (fields, typeMap) => {
@@ -600,26 +593,6 @@ const possiblyAddNonSymmetricRelationshipType = (relationAstNode, capitalizedFie
   return typeMap;
 }
 
-
-
-
-
-
-
-// type _PersonFriendsFrom @relation(name: "FRIEND_OF", from: "Person", to: "Person") {
-//   similarityIndex: Int
-//   to: Person
-//   from: Person
-// }
-// type _PersonFriendsTo @relation(name: "FRIEND_OF", from: "Person", to: "Person") {
-//   similarityIndex: Int
-//   to: Person
-//   from: Person
-// }
-
-
-
-
 const getRelatedTypeSelectionFields = (typeName, fromValue, fromField, toValue, toField) => {
   // TODO identify and handle ambiguity of relation type symmetry, Person FRIEND_OF Person, etc.
   // if(typeName === fromValue && typeName === toValue) {
@@ -640,27 +613,32 @@ const getRelatedTypeSelectionFields = (typeName, fromValue, fromField, toValue, 
       : '';
 }
 
-export const possiblyAddArgument = (args, fieldName, fieldType) => {
-  const fieldIndex = args.findIndex(e => e.name.value === fieldName);
-  if(fieldIndex === -1) {
-  args.push({
-      "kind": "InputValueDefinition",
+const addOrReplaceNodeIdField = (astNode, valueType) => {
+  const fields = astNode ? astNode.fields : [];
+  const index = fields.findIndex(e => e.name.value === '_id');
+  const definition = {
+    "kind": "FieldDefinition",
+    "name": {
+      "kind": "Name",
+      "value": "_id"
+    },
+    "arguments": [],
+    "type": {
+      "kind": "NamedType",
       "name": {
         "kind": "Name",
-        "value": fieldName,
-      },
-      "type": {
-        "kind": "NamedType",
-        "name": {
-          "kind": "Name",
-          "value": fieldType,
-        },
-      },
-      "directives": [],
-    });
-  }
-  return args;
-};
+        "value": valueType
+      }
+    },
+    "directives": []
+  };``
+  // If it has already been provided, replace it to force valueType,
+  // else add it as the last field
+  index >= 0
+    ? fields.splice(index, 1, definition)
+    : fields.push(definition)
+  return fields;
+}
 
 const possiblyAddRelationMutationField = (typeName, capitalizedFieldName, fromName, toName, mutationMap, typeMap, relationName, relatedAstNode, relationHasProps) => {
   const mutationTypes = ["Add", "Remove"];
