@@ -1,4 +1,5 @@
-import { resolve } from 'url';
+import { print, parse } from 'graphql';
+import { possiblyAddArgument } from './augment';
 
 function parseArg(arg, variableValues) {
   switch (arg.value.kind) {
@@ -200,7 +201,7 @@ export function innerFilterParams(filters) {
         .map(
           ([key, value]) =>
             `${key}:$${
-              typeof value.index === 'undefined' ? key : `${value.index}-${key}`
+              typeof value.index === 'undefined' ? key : `${value.index}_${key}`
             }`
         )
         .join(',')}}`
@@ -361,3 +362,211 @@ export function fixParamsForAddRelationshipMutation(params, resolveInfo) {
 
   return params;
 }
+
+export const isKind = (type, kind) => type && type.kind === kind;
+
+export const isListType = (type, isList=false) => {
+  if(!isKind(type, "NamedType")) {
+    if(isKind(type, "ListType")) isList = true;
+    return isListType(type.type, isList);
+  }
+  return isList;
+}
+
+export const parameterizeRelationFields = (fields) => {
+  let name = "";
+  return Object.keys(fields).reduce( (acc, t) => {
+    name = fields[t].name.value;
+    acc.push(`${name}:$data.${name}`);
+    return acc;
+  }, []).join(',');
+}
+
+export const getRelationTypeDirectiveArgs = (relationshipType) => {
+  const directive = relationshipType.directives.find(e => e.name.value === "relation");
+  return directive ? {
+    name: directive.arguments.find(e => e.name.value === "name").value.value, 
+    from: directive.arguments.find(e => e.name.value === "from").value.value, 
+    to: directive.arguments.find(e => e.name.value === "to").value.value 
+  } : undefined;
+}
+
+export const getFieldArgumentsFromAst = (field, typeName) => {
+  const args = field.arguments;
+  field.arguments = possiblyAddArgument(args, "first", "Int");
+  field.arguments = possiblyAddArgument(args, "offset", "Int");
+  field.arguments = possiblyAddArgument(args, "orderBy", `_${typeName}Ordering`);
+  return field.arguments.reduce( (acc, t) => {
+    acc.push(print(t));
+    return acc;
+  }, []).join('\n');
+}
+
+export const getRelationMutationPayloadFieldsFromAst = (relatedAstNode) => {
+  let isList = false;
+  let fieldName = "";
+  return relatedAstNode.fields.reduce( (acc, t) => {
+    fieldName = t.name.value;
+    if(fieldName !== "to" && fieldName !== "from") {
+      isList = isListType(t);
+      // Use name directly in order to prevent requiring required fields on the payload type
+      acc.push(`${fieldName}: ${ isList ? '[' : '' }${getNamedType(t).name.value}${ isList ? `]` : '' }${print(t.directives)}`);
+    }
+    return acc;
+  }, []).join('\n');
+}
+
+export const getNamedType = (type) => {
+  if(type.kind !== "NamedType") {
+    return getNamedType(type.type);
+  }
+  return type;
+}
+
+export const isBasicScalar = (name) => {
+  return name === "ID" || name === "String"
+      || name === "Float" || name === "Int" || name === "Boolean";
+}
+
+const firstNonNullAndIdField = (fields) => {
+  let valueTypeName = "";
+  return fields.find(e => {
+    valueTypeName = getNamedType(e).name.value;
+    return e.name.value !== '_id'
+      && e.type.kind === 'NonNullType'
+      && valueTypeName === 'ID';
+  });
+}
+
+const firstIdField = (fields) => {
+  let valueTypeName = "";
+  return fields.find(e => {
+    valueTypeName = getNamedType(e).name.value;
+    return e.name.value !== '_id'
+      && valueTypeName === 'ID';
+  });
+}
+
+const firstNonNullField = (fields) => {
+  let valueTypeName = "";
+  return fields.find(e => {
+    valueTypeName = getNamedType(e).name.value;
+    return valueTypeName === 'NonNullType';
+  });
+}
+
+const firstField = (fields) => {
+  return fields.find(e => {
+    return e.name.value !== '_id';
+  });
+}
+
+export const getPrimaryKey = (astNode) => {
+  const fields = astNode.fields;
+  let pk = firstNonNullAndIdField(fields);
+  if(!pk) {
+    pk = firstIdField(fields);
+  }
+  if(!pk) {
+    pk = firstNonNullField(fields);
+  }
+  if(!pk) {
+    pk = firstField(fields);
+  }
+  return pk;
+}
+
+export const getTypeDirective = (relatedAstNode, name) => {
+  return relatedAstNode.directives.find(e => e.name.value === name);
+}
+
+export const getFieldDirective = (field, directive) => {
+  return field && field.directives.find(e => e.name.value === directive);
+};
+
+export const isNonNullType = (type, isRequired=false, parent={}) => {
+  if(!isKind(type, "NamedType")) {
+    return isNonNullType(type.type, isRequired, type);
+  }
+  if(isKind(parent, "NonNullType")) {
+    isRequired = true;
+  }
+  return isRequired;
+}
+
+export const createOperationMap = (type) => {
+  const fields = type ? type.fields : [];
+  return fields.reduce( (acc, t) => {
+    acc[t.name.value] = t;
+    return acc;
+  }, {});
+}
+
+export const isNodeType = (astNode) => {
+  // TODO: check for @ignore and @model directives
+  return astNode && astNode.kind === "ObjectTypeDefinition"
+    && astNode.name.value !== "Query"
+    && astNode.name.value !== "Mutation"
+    && getTypeDirective(astNode, "relation") === undefined;
+}
+
+export const parseFieldSdl = (sdl) => {
+  return sdl 
+    ? parse(`type fieldToParse { ${sdl} }`).definitions[0].fields[0]
+    : {};
+}
+
+export const getRelationDirection = (relationDirective) => {
+  let direction = {};
+  try {
+    direction = relationDirective.arguments.filter(a => a.name.value === 'direction')[0];
+  } catch (e) {
+    // FIXME: should we ignore this error to define default behavior?
+    throw new Error('No direction argument specified on @relation directive');
+  }
+  return direction.value.value;
+}
+
+export const getRelationName = (relationDirective) => {
+  let name = {};
+  try {
+    name = relationDirective.arguments.filter(a => a.name.value === 'name')[0];
+  } catch (e) {
+    // FIXME: should we ignore this error to define default behavior?
+    throw new Error('No name argument specified on @relation directive');
+  }
+  return name.value.value;
+}
+
+export const createRelationMap = (typeMap) => {
+  let astNode = {};
+  let name = "";
+  let fields = [];
+  let fromTypeName = "";
+  let toTypeName = "";
+  let typeDirective = {};
+  return Object.keys(typeMap).reduce( (acc, t) => {
+    astNode = typeMap[t];
+    name = astNode.name.value;
+    fields = astNode.fields;
+    typeDirective = getTypeDirective(astNode, "relation");
+    if(typeDirective) {
+      // validate the other fields to make sure theyre not nodes or rel types
+      fromTypeName = typeDirective.arguments.find(e => e.name.value === "from").value.value;
+      toTypeName = typeDirective.arguments.find(e => e.name.value === "to").value.value;
+      acc[name] = {
+        from: typeMap[fromTypeName],
+        to: typeMap[toTypeName]
+      };
+    }
+    return acc;
+  }, {});
+}
+
+export const printTypeMap = (typeMap) => {
+  return print({
+    "kind": "Document",
+    "definitions": Object.values(typeMap)
+  });
+}
+
