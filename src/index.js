@@ -12,7 +12,8 @@ import {
   isDeleteMutation,
   isMutation,
   lowFirstLetter,
-  typeIdentifiers
+  typeIdentifiers,
+  parameterizeRelationFields
 } from './utils';
 import { buildCypherSelection } from './selections';
 import {
@@ -21,6 +22,7 @@ import {
   augmentedSchema,
   makeAugmentedExecutableSchema
 } from './augmentSchema';
+import { getNamedType } from 'graphql';
 import { checkRequestError } from './auth';
 
 export async function neo4jgraphql(
@@ -51,6 +53,7 @@ export async function neo4jgraphql(
 
   try {
     result = await session.run(query, cypherParams);
+    console.log("result: "+JSON.stringify(result, null, 2));    
   } finally {
     session.close();
   }
@@ -140,11 +143,12 @@ export function cypherQuery(
       .filter(predicate => !!predicate)
       .join(' AND ');
     const predicate = predicateClauses ? `WHERE ${predicateClauses} ` : '';
-
+    
     query =
       `MATCH (${variableName}:${typeName} ${argString}) ${predicate}` +
       // ${variableName} { ${selection} } as ${variableName}`;
       `RETURN ${variableName} {${subQuery}} AS ${variableName}${orderByValue} ${outerSkipLimit}`;
+
   }
 
   return [query, { ...nonNullParams, ...subParams }];
@@ -270,46 +274,57 @@ export function cypherMutation(
         'Missing required argument in MutationMeta directive (relationship, from, or to)'
       );
     }
+
     //TODO: need to handle one-to-one and one-to-many
 
-    const fromType = fromTypeArg.value.value,
-      toType = toTypeArg.value.value,
-      fromVar = lowFirstLetter(fromType),
-      toVar = lowFirstLetter(toType),
-      relationshipName = relationshipNameArg.value.value,
-      fromParam = resolveInfo.schema
+    const args = resolveInfo.schema
         .getMutationType()
         .getFields()
-        [resolveInfo.fieldName].astNode.arguments[0].name.value.substr(
-          fromVar.length
-        ),
-      toParam = resolveInfo.schema
-        .getMutationType()
-        .getFields()
-        [resolveInfo.fieldName].astNode.arguments[1].name.value.substr(
-          toVar.length
-        );
+        [resolveInfo.fieldName].astNode.arguments;
+
+    const typeMap = resolveInfo.schema.getTypeMap();
+    
+    // TODO write some getters to reduce similar code between this and isRemoveMutation 
+    const fromType = fromTypeArg.value.value;
+    const fromVar = `${lowFirstLetter(fromType)}_from`;
+    const fromInputArg = args.find(e => e.name.value === "from").type;
+    const fromInputAst = typeMap[getNamedType(fromInputArg).type.name.value].astNode;
+    const fromParam = fromInputAst.fields[0].name.value;
+    
+    const toType = toTypeArg.value.value;
+    const toVar = `${lowFirstLetter(toType)}_to`;
+    const toInputArg = args.find(e => e.name.value === "to").type;
+    const toInputAst = typeMap[getNamedType(toInputArg).type.name.value].astNode;
+    const toParam = toInputAst.fields[0].name.value;
+
+    const relationshipName = relationshipNameArg.value.value;
+    const lowercased = relationshipName.toLowerCase();
+    const dataInputArg = args.find(e => e.name.value === "data");
+    const dataInputAst = dataInputArg ? typeMap[getNamedType(dataInputArg.type).type.name.value].astNode : undefined;
+    const relationPropertyArguments = dataInputAst ? parameterizeRelationFields(dataInputAst.fields) : undefined;
 
     const [subQuery, subParams] = buildCypherSelection({
       initial: '',
       selections,
-      variableName,
+      variableName: lowercased,
+      fromVar, 
+      toVar,
       schemaType,
       resolveInfo,
       paramIndex: 1
     });
     params = { ...params, ...subParams };
+    query = `
+      MATCH (${fromVar}:${fromType} {${fromParam}: $from.${fromParam}})
+      MATCH (${toVar}:${toType} {${toParam}: $to.${toParam}})
+      CREATE (${fromVar})-[${lowercased}_relation:${relationshipName}${
+        relationPropertyArguments
+        ? ` {${relationPropertyArguments}}`
+        : ''
+      }]->(${toVar})
+      RETURN ${lowercased}_relation { ${subQuery} } AS ${schemaType};
+    `;
 
-    query = `MATCH (${fromVar}:${fromType} {${fromParam}: $${
-      resolveInfo.schema.getMutationType().getFields()[resolveInfo.fieldName]
-        .astNode.arguments[0].name.value
-    }})
-       MATCH (${toVar}:${toType} {${toParam}: $${
-      resolveInfo.schema.getMutationType().getFields()[resolveInfo.fieldName]
-        .astNode.arguments[1].name.value
-    }})
-      CREATE (${fromVar})-[:${relationshipName}]->(${toVar})
-      RETURN ${fromVar} {${subQuery}} AS ${fromVar};`;
   } else if (isUpdateMutation(resolveInfo)) {
     const idParam = resolveInfo.schema.getMutationType().getFields()[
       resolveInfo.fieldName
@@ -390,25 +405,28 @@ RETURN ${variableName}`;
         'Missing required argument in MutationMeta directive (relationship, from, or to)'
       );
     }
-    //TODO: need to handle one-to-one and one-to-many
 
-    const fromType = fromTypeArg.value.value,
-      toType = toTypeArg.value.value,
-      fromVar = lowFirstLetter(fromType),
-      toVar = lowFirstLetter(toType),
-      relationshipName = relationshipNameArg.value.value,
-      fromParam = resolveInfo.schema
+    //TODO: need to handle one-to-one and one-to-many
+    const args = resolveInfo.schema
         .getMutationType()
         .getFields()
-        [resolveInfo.fieldName].astNode.arguments[0].name.value.substr(
-          fromVar.length
-        ),
-      toParam = resolveInfo.schema
-        .getMutationType()
-        .getFields()
-        [resolveInfo.fieldName].astNode.arguments[1].name.value.substr(
-          toVar.length
-        );
+        [resolveInfo.fieldName].astNode.arguments;
+
+    const typeMap = resolveInfo.schema.getTypeMap();
+    
+    const fromType = fromTypeArg.value.value;
+    const fromVar = `${lowFirstLetter(fromType)}_from`;
+    const fromInputArg = args.find(e => e.name.value === "from").type;
+    const fromInputAst = typeMap[getNamedType(fromInputArg).type.name.value].astNode;
+    const fromParam = fromInputAst.fields[0].name.value;
+    
+    const toType = toTypeArg.value.value;
+    const toVar = `${lowFirstLetter(toType)}_to`;
+    const toInputArg = args.find(e => e.name.value === "to").type;
+    const toInputAst = typeMap[getNamedType(toInputArg).type.name.value].astNode;
+    const toParam = toInputAst.fields[0].name.value;
+
+    const relationshipName = relationshipNameArg.value.value;
 
     const [subQuery, subParams] = buildCypherSelection({
       initial: '',
@@ -416,21 +434,29 @@ RETURN ${variableName}`;
       variableName,
       schemaType,
       resolveInfo,
-      paramIndex: 1
+      paramIndex: 1,
+      rootNodes: {
+        from: `_${fromVar}`,
+        to: `_${toVar}`
+      },
+      variableName: schemaType.name === fromType ? `_${toVar}` : `_${fromVar}`
     });
     params = { ...params, ...subParams };
 
-    query = `MATCH (${fromVar}:${fromType} {${fromParam}: $${
-      resolveInfo.schema.getMutationType().getFields()[resolveInfo.fieldName]
-        .astNode.arguments[0].name.value
-    }})
-MATCH (${toVar}:${toType} {${toParam}: $${
-      resolveInfo.schema.getMutationType().getFields()[resolveInfo.fieldName]
-        .astNode.arguments[1].name.value
-    }})
-OPTIONAL MATCH (${fromVar})-[${fromVar + toVar}:${relationshipName}]->(${toVar})
-DELETE ${fromVar + toVar}
-RETURN ${fromVar} {${subQuery}} AS ${fromVar};`;
+    // WITH COUNT(*) AS scope is used so that relations deletions are finished 
+    // before we possibly query them in the return. If we wanted to actually allow
+    // the return to query over the deleted relations, we could move the return 
+    // object construction into a WITH statement above the DELETE, then return it 
+    // the delete 
+    query = `
+      MATCH (${fromVar}:${fromType} {${fromParam}: $from.${fromParam}})
+      MATCH (${toVar}:${toType} {${toParam}: $to.${toParam}})
+      OPTIONAL MATCH (${fromVar})-[${fromVar + toVar}:${relationshipName}]->(${toVar})
+      DELETE ${fromVar + toVar}
+      WITH COUNT(*) AS scope, ${fromVar} AS _${fromVar}_from, ${toVar} AS _${toVar}_to
+      RETURN {${subQuery}} AS ${schemaType};
+    `;
+
   } else {
     // throw error - don't know how to handle this type of mutation
     throw new Error(
