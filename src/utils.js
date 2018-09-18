@@ -200,7 +200,7 @@ export function innerFilterParams(filters) {
         .map(
           ([key, value]) =>
             `${key}:$${
-              typeof value.index === 'undefined' ? key : `${value.index}-${key}`
+              typeof value.index === 'undefined' ? key : `${value.index}_${key}`
             }`
         )
         .join(',')}}`
