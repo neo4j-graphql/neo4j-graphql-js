@@ -30,7 +30,7 @@ export function buildCypherSelection({
   );
   const shallowFilterParams = Object.entries(filterParams).reduce(
     (result, [key, value]) => {
-      result[`${value.index}-${key}`] = value.value;
+      result[`${value.index}_${key}`] = value.value;
       return result;
     },
     {}

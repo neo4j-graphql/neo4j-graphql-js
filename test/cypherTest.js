@@ -64,7 +64,7 @@ test('Cypher projection skip limit', t => {
   return Promise.all([
     cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery, {
       title: 'River Runs Through It, A',
-      '1-first': 3,
+      '1_first': 3,
       first: -1,
       offset: 0
     }),
@@ -209,14 +209,14 @@ test('Deeply nested object query', t => {
     }
   }
 }`,
-    expectedCypherQuery = `MATCH (movie:Movie {title:$title}) RETURN movie { .title ,actors: [(movie)<-[:ACTED_IN]-(movie_actors:Actor) | movie_actors { .name ,movies: [(movie_actors)-[:ACTED_IN]->(movie_actors_movies:Movie) | movie_actors_movies { .title ,actors: [(movie_actors_movies)<-[:ACTED_IN]-(movie_actors_movies_actors:Actor{name:$1-name}) | movie_actors_movies_actors { .name ,movies: [(movie_actors_movies_actors)-[:ACTED_IN]->(movie_actors_movies_actors_movies:Movie) | movie_actors_movies_actors_movies { .title , .year ,similar: [ movie_actors_movies_actors_movies_similar IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie_actors_movies_actors_movies, first: 3, offset: 0}, true) | movie_actors_movies_actors_movies_similar { .title , .year }][..3] }] }] }] }] } AS movie SKIP $offset`;
+    expectedCypherQuery = `MATCH (movie:Movie {title:$title}) RETURN movie { .title ,actors: [(movie)<-[:ACTED_IN]-(movie_actors:Actor) | movie_actors { .name ,movies: [(movie_actors)-[:ACTED_IN]->(movie_actors_movies:Movie) | movie_actors_movies { .title ,actors: [(movie_actors_movies)<-[:ACTED_IN]-(movie_actors_movies_actors:Actor{name:$1_name}) | movie_actors_movies_actors { .name ,movies: [(movie_actors_movies_actors)-[:ACTED_IN]->(movie_actors_movies_actors_movies:Movie) | movie_actors_movies_actors_movies { .title , .year ,similar: [ movie_actors_movies_actors_movies_similar IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie_actors_movies_actors_movies, first: 3, offset: 0}, true) | movie_actors_movies_actors_movies_similar { .title , .year }][..3] }] }] }] }] } AS movie SKIP $offset`;
 
   t.plan(3);
   return Promise.all([
     cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery, {
       title: 'River Runs Through It, A',
-      '1-name': 'Tom Hanks',
-      '2-first': 3,
+      '1_name': 'Tom Hanks',
+      '2_first': 3,
       first: -1,
       offset: 0
     }),
@@ -348,7 +348,7 @@ test('Pass @cypher directive params to sub-query', t => {
       first: -1,
       offset: 0,
       title: 'River Runs Through It, A',
-      '1-scale': 10
+      '1_scale': 10
     }),
     augmentedSchemaCypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery)
   ]);
@@ -489,7 +489,7 @@ test('Cypher subquery filters', t => {
       }
     }`,
     expectedCypherQuery =
-      'MATCH (movie:Movie {title:$title}) RETURN movie { .title ,actors: [(movie)<-[:ACTED_IN]-(movie_actors:Actor{name:$1-name}) | movie_actors { .name }] ,similar: [ movie_similar IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie, first: 3, offset: 0}, true) | movie_similar { .title }][..3] } AS movie SKIP $offset';
+      'MATCH (movie:Movie {title:$title}) RETURN movie { .title ,actors: [(movie)<-[:ACTED_IN]-(movie_actors:Actor{name:$1_name}) | movie_actors { .name }] ,similar: [ movie_similar IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie, first: 3, offset: 0}, true) | movie_similar { .title }][..3] } AS movie SKIP $offset';
 
   t.plan(3);
   return Promise.all([
@@ -497,8 +497,8 @@ test('Cypher subquery filters', t => {
       title: 'River Runs Through It, A',
       first: -1,
       offset: 0,
-      '1-name': 'Tom Hanks',
-      '3-first': 3
+      '1_name': 'Tom Hanks',
+      '3_first': 3
     }),
     augmentedSchemaCypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery)
   ]);
@@ -518,7 +518,7 @@ test('Cypher subquery filters with paging', t => {
       }
     }`,
     expectedCypherQuery =
-      'MATCH (movie:Movie {title:$title}) RETURN movie { .title ,actors: [(movie)<-[:ACTED_IN]-(movie_actors:Actor{name:$1-name}) | movie_actors { .name }][..3] ,similar: [ movie_similar IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie, first: 3, offset: 0}, true) | movie_similar { .title }][..3] } AS movie SKIP $offset';
+      'MATCH (movie:Movie {title:$title}) RETURN movie { .title ,actors: [(movie)<-[:ACTED_IN]-(movie_actors:Actor{name:$1_name}) | movie_actors { .name }][..3] ,similar: [ movie_similar IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie, first: 3, offset: 0}, true) | movie_similar { .title }][..3] } AS movie SKIP $offset';
 
   t.plan(3);
   return Promise.all([
@@ -526,9 +526,9 @@ test('Cypher subquery filters with paging', t => {
       title: 'River Runs Through It, A',
       first: -1,
       offset: 0,
-      '1-first': 3,
-      '1-name': 'Tom Hanks',
-      '3-first': 3
+      '1_first': 3,
+      '1_name': 'Tom Hanks',
+      '3_first': 3
     }),
     augmentedSchemaCypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery)
   ]);
@@ -554,7 +554,7 @@ test('Handle @cypher directive on Query Type', t => {
       substring: 'Action',
       first: -1,
       offset: 0,
-      '1-first': 3
+      '1_first': 3
     }),
     augmentedSchemaCypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery)
   ]);
@@ -744,7 +744,7 @@ test('Handle GraphQL variables in nested selection - first/offset', t => {
       { year: 2016, first: 3 },
       expectedCypherQuery,
       {
-        '1-first': 3,
+        '1_first': 3,
         year: 2016,
         first: -1,
         offset: 0
@@ -785,8 +785,8 @@ test('Handle GraphQL variables in nest selection - @cypher param (not first/offs
         year: 2016,
         first: -1,
         offset: 0,
-        '1-first': 3,
-        '2-scale': 5
+        '1_first': 3,
+        '2_scale': 5
       }
     ),
     augmentedSchemaCypherTestRunner(
@@ -1056,7 +1056,7 @@ test('orderBy test - descending, top level - augmented schema', t => {
       offset: 0,
       first: 10,
       year: 2010,
-      '1-first': 3
+      '1_first': 3
     }
   );
 });
