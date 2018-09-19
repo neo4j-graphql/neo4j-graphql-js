@@ -16,7 +16,7 @@ type Movie {
 
 type Genre {
     name: String
-    movies(first: Int = 3, offset: Int = 0): [Movie] @relation(name: "IN_GENRE", direction: "IN")
+    movies: [Movie] @relation(name: "IN_GENRE", direction: "IN")
 }
 `;
 

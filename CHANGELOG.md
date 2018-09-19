@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.2.1
+
+- [Use underscore instead of dash for nested query variables - Fixes #106](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/107)
+
 ## v0.2.0
 
 - [Create augmented schema from type definitions only (no initial schema object required)](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/99)
