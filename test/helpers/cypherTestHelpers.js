@@ -14,7 +14,7 @@ export function cypherTestRunner(
     `
 type Mutation {
     CreateGenre(name: String): Genre @cypher(statement: "CREATE (g:Genre) SET g.name = $name RETURN g")
-    CreateMovie(movieId: ID!, title: String, year: Int, plot: String, poster: String, imdbRating: Float): Movie
+    CreateMovie(movieId: ID, title: String, year: Int, plot: String, poster: String, imdbRating: Float): Movie
     UpdateMovie(movieId: ID!, title: String, year: Int, plot: String, poster: String, imdbRating: Float): Movie
     DeleteMovie(movieId: ID!): Movie
     AddMovieGenre(moviemovieId: ID!, genrename: String): Movie @MutationMeta(relationship: "IN_GENRE", from:"Movie", to:"Genre")
