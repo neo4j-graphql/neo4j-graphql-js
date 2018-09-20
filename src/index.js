@@ -239,7 +239,19 @@ export function cypherMutation(
       paramIndex: 1
     });
     params = { ...params, ...subParams };
+    
+    const args = resolveInfo.schema
+      .getMutationType()
+      .getFields()[resolveInfo.fieldName].astNode.arguments;
 
+    const firstIdArg = args.find(e => getNamedType(e).type.name.value);
+    if(firstIdArg) {
+      const argName = firstIdArg.name.value;
+      if(params.params[argName] === undefined) {
+        query += `SET ${variableName}.${argName} = apoc.create.uuid() `;
+      }
+    }
+    
     query += `RETURN ${variableName} {${subQuery}} AS ${variableName}`;
   } else if (isAddMutation(resolveInfo)) {
     let mutationMeta, relationshipNameArg, fromTypeArg, toTypeArg;
