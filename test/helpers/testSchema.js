@@ -1,8 +1,9 @@
 export const testSchema = `type Movie {
   _id: ID
   movieId: ID!
-    title: String
+  title: String
   year: Int
+  released: DateTime
   plot: String
   poster: String
   imdbRating: Float
@@ -16,11 +17,12 @@ export const testSchema = `type Movie {
   scaleRating(scale: Int = 3): Float @cypher(statement: "WITH $this AS this RETURN $scale * this.imdbRating")
   scaleRatingFloat(scale: Float = 1.5): Float @cypher(statement: "WITH $this AS this RETURN $scale * this.imdbRating")
   actorMovies: [Movie] @cypher(statement: "MATCH (this)-[:ACTED_IN*2]-(other:Movie) RETURN other")
+  watchedBy: [Watched]
 }
 
 type Genre {
   _id: ID!
-    name: String
+  name: String
   movies(first: Int = 3, offset: Int = 0): [Movie] @relation(name: "IN_GENRE", direction: "IN")
   highestRatedMovie: Movie @cypher(statement: "MATCH (m:Movie)-[:IN_GENRE]->(this) RETURN m ORDER BY m.imdbRating DESC LIMIT 1")
 }
@@ -31,24 +33,31 @@ type State {
 
 interface Person {
   id: ID!
-    name: String
+  name: String
 }
 
 type Actor implements Person {
   id: ID!
-    name: String
+  name: String
   movies: [Movie] @relation(name: "ACTED_IN", direction:"OUT")
 }
 
 type User implements Person {
   id: ID!
-    name: String
+  name: String
+  watched: [Watched]
+}
+
+type Watched {
+  from: User
+  rating: Int
+  to: Movie
 }
 
 enum BookGenre {
   Mystery,
-    Science,
-    Math
+  Science,
+  Math
 }
 
 type Book {
@@ -72,4 +81,7 @@ type Query {
   MovieBy_Id(_id: Int!): Movie
   GenresBySubstring(substring: String): [Genre] @cypher(statement: "MATCH (g:Genre) WHERE toLower(g.name) CONTAINS toLower($substring) RETURN g")
   Books: [Book]
-}`;
+}
+
+scalar DateTime
+`;
