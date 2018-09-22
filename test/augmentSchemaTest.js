@@ -43,6 +43,18 @@ type _AddMovieGenresPayload {
   to: Genre
 }
 
+type _AddMovieWatchedByPayload {
+  from: User
+  to: Movie
+  rating: Int
+}
+
+type _AddUserWatchedPayload {
+  from: User
+  to: Movie
+  rating: Int
+}
+
 input _BookInput {
   genre: BookGenre!
 }
@@ -70,6 +82,11 @@ enum _MovieOrdering {
   title_asc
 }
 
+type _MovieWatchedBy {
+  rating: Int
+  User(first: Int, offset: Int, orderBy: _UserOrdering): User
+}
+
 type _RemoveActorMoviesPayload {
   from: Actor
   to: Movie
@@ -93,6 +110,16 @@ type _RemoveMovieFilmedInPayload {
 type _RemoveMovieGenresPayload {
   from: Movie
   to: Genre
+}
+
+type _RemoveMovieWatchedByPayload {
+  from: User
+  to: Movie
+}
+
+type _RemoveUserWatchedPayload {
+  from: User
+  to: Movie
 }
 
 input _StateInput {
@@ -119,6 +146,15 @@ enum _UserOrdering {
   _id_desc
 }
 
+type _UserWatched {
+  rating: Int
+  Movie(first: Int, offset: Int, orderBy: _MovieOrdering): Movie
+}
+
+input _WatchedInput {
+  rating: Int
+}
+
 type Actor implements Person {
   id: ID!
   name: String
@@ -137,6 +173,8 @@ enum BookGenre {
   Math
 }
 
+scalar DateTime
+
 type Genre {
   _id: Int
   name: String
@@ -149,6 +187,7 @@ type Movie {
   movieId: ID!
   title: String
   year: Int
+  released: DateTime
   plot: String
   poster: String
   imdbRating: Float
@@ -162,11 +201,12 @@ type Movie {
   scaleRating(scale: Int = 3): Float
   scaleRatingFloat(scale: Float = 1.5): Float
   actorMovies(first: Int, offset: Int, orderBy: _MovieOrdering): [Movie]
+  watchedBy: [_MovieWatchedBy]
 }
 
 type Mutation {
-  CreateMovie(movieId: ID, title: String, year: Int, plot: String, poster: String, imdbRating: Float, avgStars: Float): Movie
-  UpdateMovie(movieId: ID!, title: String, year: Int, plot: String, poster: String, imdbRating: Float, avgStars: Float): Movie
+  CreateMovie(movieId: ID, title: String, year: Int, released: DateTime, plot: String, poster: String, imdbRating: Float, avgStars: Float): Movie
+  UpdateMovie(movieId: ID!, title: String, year: Int, released: DateTime, plot: String, poster: String, imdbRating: Float, avgStars: Float): Movie
   DeleteMovie(movieId: ID!): Movie
   AddMovieGenres(from: _MovieInput!, to: _GenreInput!): _AddMovieGenresPayload
   RemoveMovieGenres(from: _MovieInput!, to: _GenreInput!): _RemoveMovieGenresPayload
@@ -174,6 +214,8 @@ type Mutation {
   RemoveMovieActors(from: _ActorInput!, to: _MovieInput!): _RemoveMovieActorsPayload
   AddMovieFilmedIn(from: _MovieInput!, to: _StateInput!): _AddMovieFilmedInPayload
   RemoveMovieFilmedIn(from: _MovieInput!, to: _StateInput!): _RemoveMovieFilmedInPayload
+  AddMovieWatchedBy(from: _UserInput!, to: _MovieInput!, data: _WatchedInput!): _AddMovieWatchedByPayload
+  RemoveMovieWatchedBy(from: _UserInput!, to: _MovieInput!): _RemoveMovieWatchedByPayload
   CreateGenre(name: String): Genre
   DeleteGenre(name: String!): Genre
   AddGenreMovies(from: _MovieInput!, to: _GenreInput!): _AddGenreMoviesPayload
@@ -185,11 +227,13 @@ type Mutation {
   RemoveActorMovies(from: _ActorInput!, to: _MovieInput!): _RemoveActorMoviesPayload
   CreateState(name: String): State
   DeleteState(name: String!): State
-  CreateBook(genre: BookGenre): Book
-  DeleteBook(genre: BookGenre!): Book
   CreateUser(id: ID, name: String): User
   UpdateUser(id: ID!, name: String): User
   DeleteUser(id: ID!): User
+  AddUserWatched(from: _UserInput!, to: _MovieInput!, data: _WatchedInput!): _AddUserWatchedPayload
+  RemoveUserWatched(from: _UserInput!, to: _MovieInput!): _RemoveUserWatchedPayload
+  CreateBook(genre: BookGenre): Book
+  DeleteBook(genre: BookGenre!): Book
 }
 
 interface Person {
@@ -207,8 +251,8 @@ type Query {
   Genre(_id: Int, name: String, first: Int, offset: Int, orderBy: _GenreOrdering): [Genre]
   Actor(id: ID, name: String, _id: Int, first: Int, offset: Int, orderBy: _ActorOrdering): [Actor]
   State(name: String, _id: Int, first: Int, offset: Int, orderBy: _StateOrdering): [State]
-  Book(genre: BookGenre, _id: Int, first: Int, offset: Int, orderBy: _BookOrdering): [Book]
   User(id: ID, name: String, _id: Int, first: Int, offset: Int, orderBy: _UserOrdering): [User]
+  Book(genre: BookGenre, _id: Int, first: Int, offset: Int, orderBy: _BookOrdering): [Book]
 }
 
 type State {
@@ -219,7 +263,14 @@ type State {
 type User implements Person {
   id: ID!
   name: String
+  watched: [_UserWatched]
   _id: Int
+}
+
+type Watched {
+  from(first: Int, offset: Int, orderBy: _UserOrdering): User
+  rating: Int
+  to(first: Int, offset: Int, orderBy: _MovieOrdering): Movie
 }
 `;
 
