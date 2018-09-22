@@ -142,7 +142,8 @@ const possiblyAddTypeInput = (astNode, typeMap) => {
   else if(getTypeDirective(astNode, "relation")) {
     if(typeMap[inputName] === undefined) {
       let fieldName = "";
-      let fieldValueType = "";
+      let valueType = {};
+      let valueTypeName = "";
       let isRequired = false;
       const hasSomePropertyField = astNode.fields.find(e => e.name.value !== "from" && e.name.value !== "to");
       if(hasSomePropertyField) {
@@ -151,11 +152,14 @@ const possiblyAddTypeInput = (astNode, typeMap) => {
             fieldName = t.name.value;
             isRequired = isNonNullType(t);
             if(fieldName !== "_id" && fieldName !== "to" 
-            && fieldName !== "from" && !getFieldDirective(t, "cypher")) {
-              fieldValueType = getNamedType(t).name.value;
-              // TODO allow custom scalars or enums?
-              if(isBasicScalar(fieldValueType)) {
-                acc.push(`${t.name.value}: ${fieldValueType}${isRequired ? '!' : ''}`);
+            && fieldName !== "from" && !isListType(t) 
+            && !getFieldDirective(t, "cypher")) {
+              valueTypeName = getNamedType(t).name.value;
+              valueType = typeMap[valueTypeName];
+              if(isBasicScalar(valueTypeName)
+              || isKind(valueType, "EnumTypeDefinition")
+              || isKind(valueType, "ScalarTypeDefinition")) {
+                acc.push(`${t.name.value}: ${valueTypeName}${isRequired ? '!' : ''}`);
               }
             }
             return acc;
@@ -372,7 +376,8 @@ const buildAllFieldArguments = (namePrefix, astNode, typeMap) => {
         && !isListType(t)
         && !getFieldDirective(t, "cypher")
         && (isBasicScalar(valueTypeName)
-        || isKind(valueType, "EnumTypeDefinition"))) {
+        || isKind(valueType, "EnumTypeDefinition")
+        || isKind(valueType, "ScalarTypeDefinition"))) {
           // Require if required
           if(isNonNullType(t)) {
             // Regardless of whether it is NonNullType,
@@ -455,7 +460,8 @@ const buildAllFieldArguments = (namePrefix, astNode, typeMap) => {
           && !isListType(t)
           && !getFieldDirective(t, "cypher")
           && (isBasicScalar(valueTypeName)
-          || isKind(valueType, "EnumTypeDefinition"))) {
+          || isKind(valueType, "EnumTypeDefinition")
+          || isKind(valueType, "ScalarTypeDefinition"))) {
             acc.push({
               "kind": "InputValueDefinition",
               "name": {
@@ -709,7 +715,8 @@ const createQueryArguments = (astNode, typeMap) => {
 
 const isQueryArgumentFieldType = (type, valueType) => {
   return isBasicScalar(type.name.value)
-      || isKind(valueType, "EnumTypeDefinition");
+      || isKind(valueType, "EnumTypeDefinition")
+      || isKind(valueType, "ScalarTypeDefinition");
 }
 
 const initializeOperationTypes = (types, typeMap) => {
