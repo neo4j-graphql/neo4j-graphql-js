@@ -1,4 +1,4 @@
-import { cypherQuery, cypherMutation, augmentSchema } from '../../dist/index';
+import { cypherQuery, cypherMutation, augmentSchema, makeAugmentedSchema } from '../../dist/index';
 import { graphql } from 'graphql';
 import { makeExecutableSchema } from 'graphql-tools';
 import { testSchema } from './testSchema';
@@ -17,8 +17,6 @@ type Mutation {
     CreateMovie(movieId: ID, title: String, year: Int, plot: String, poster: String, imdbRating: Float): Movie
     UpdateMovie(movieId: ID!, title: String, year: Int, plot: String, poster: String, imdbRating: Float): Movie
     DeleteMovie(movieId: ID!): Movie
-    AddMovieGenre(moviemovieId: ID!, genrename: String): Movie @MutationMeta(relationship: "IN_GENRE", from:"Movie", to:"Genre")
-    RemoveMovieGenre(moviemovieId: ID!, genrename: String): Movie @MutationMeta(relationship: "IN_GENRE", from:"Movie", to:"Genre")
 }
 `;
 
@@ -79,18 +77,6 @@ type Mutation {
         t.is(query, expectedCypherQuery);
         t.deepEqual(queryParams, expectedCypherParams);
         t.end();
-      },
-      AddMovieGenre(object, params, ctx, resolveInfo) {
-        const [query, queryParams] = cypherMutation(params, ctx, resolveInfo);
-        t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
-        t.end();
-      },
-      RemoveMovieGenre(object, params, ctx, resolveInfo) {
-        const [query, queryParams] = cypherMutation(params, ctx, resolveInfo);
-        t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
-        t.end();
       }
     }
   };
@@ -146,18 +132,30 @@ export function augmentedSchemaCypherTestRunner(
         t.is(query, expectedCypherQuery);
         t.deepEqual(queryParams, expectedCypherParams);
       }
+    },
+    Mutation: {
+      AddMovieGenres(object, params, ctx, resolveInfo) {
+        const [query, queryParams] = cypherMutation(params, ctx, resolveInfo);
+        t.is(query, expectedCypherQuery);
+        t.deepEqual(queryParams, expectedCypherParams);
+        t.end();
+      },
+      RemoveMovieGenres(object, params, ctx, resolveInfo) {
+        const [query, queryParams] = cypherMutation(params, ctx, resolveInfo);
+        t.is(query, expectedCypherQuery);
+        t.deepEqual(queryParams, expectedCypherParams);
+        t.end();
+      }
     }
   };
 
-  const schema = makeExecutableSchema({
+  const augmentedSchema = makeAugmentedSchema({
     typeDefs: testSchema,
     resolvers,
     resolverValidationOptions: {
       requireResolversForResolveType: false
     }
   });
-
-  const augmentedSchema = augmentSchema(schema);
 
   return graphql(augmentedSchema, graphqlQuery, null, null, graphqlParams);
 }
