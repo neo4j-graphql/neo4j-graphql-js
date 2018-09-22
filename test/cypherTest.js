@@ -646,80 +646,120 @@ RETURN movie`;
   });
 });
 
-test.cb('Add relationship mutation', t => {
+test('Add relationship mutation', t => {
   const graphQLQuery = `mutation someMutation {
-  AddMovieGenre(moviemovieId:"123", genrename: "Action") {
-    _id
-    title
-    genres {
-      name
+    AddMovieGenres(
+      from: { movieId: "123" },
+      to: { name: "Action" }
+    ) {
+      from {
+        movieId
+        genres {
+          _id
+          name
+        }
+      }
+      to {
+        name
+      }
     }
-  }
-}`,
-    expectedCypherQuery = `MATCH (movie:Movie {movieId: $moviemovieId})
-       MATCH (genre:Genre {name: $genrename})
-      CREATE (movie)-[:IN_GENRE]->(genre)
-      RETURN movie {_id: ID(movie), .title ,genres: [(movie)-[:IN_GENRE]->(movie_genres:Genre) | movie_genres { .name }] } AS movie;`;
+  }`,
+    expectedCypherQuery = `
+      MATCH (movie_from:Movie {movieId: $from.movieId})
+      MATCH (genre_to:Genre {name: $to.name})
+      CREATE (movie_from)-[in_genre_relation:IN_GENRE]->(genre_to)
+      RETURN in_genre_relation { from: head([(:Genre)<-[in_genre_relation]-(in_genre_from:Movie) | in_genre_from { .movieId ,genres: [(in_genre_from)-[:IN_GENRE]->(in_genre_from_genres:Genre) | in_genre_from_genres {_id: ID(in_genre_from_genres), .name }] }]) ,to: head([(:Movie)-[in_genre_relation]->(in_genre_to:Genre) | in_genre_to { .name }])  } AS _AddMovieGenresPayload;
+    `;
 
-  t.plan(2);
-  cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery, {
-    moviemovieId: '123',
-    genrename: 'Action',
-    first: -1,
-    offset: 0
-  });
-});
-
-test.cb('Add relationship mutation with GraphQL variables', t => {
-  const graphQLQuery = `mutation someMutation($movieParam:ID!) {
-  AddMovieGenre(moviemovieId:$movieParam, genrename: "Action") {
-    _id
-    title
-    genres {
-      name
-    }
-  }
-}`,
-    expectedCypherQuery = `MATCH (movie:Movie {movieId: $moviemovieId})
-       MATCH (genre:Genre {name: $genrename})
-      CREATE (movie)-[:IN_GENRE]->(genre)
-      RETURN movie {_id: ID(movie), .title ,genres: [(movie)-[:IN_GENRE]->(movie_genres:Genre) | movie_genres { .name }] } AS movie;`;
-
-  t.plan(2);
-  cypherTestRunner(
+  t.plan(1);
+  return augmentedSchemaCypherTestRunner(
     t,
     graphQLQuery,
-    { movieParam: '123' },
-    expectedCypherQuery,
     {
-      genrename: 'Action',
-      moviemovieId: '123',
+      from: { movieId: "123" },
+      to: { name: "Action" },
       first: -1,
-      offset: 0
-    }
-  );
+      offset: 0,
+    },
+    expectedCypherQuery
+  )
 });
 
-test.cb('Remove relationship mutation', t => {
-  const graphQLQuery = `mutation removeRelationship {
-      RemoveMovieGenre(moviemovieId: "123", genrename: "Action") {
+test('Add relationship mutation with GraphQL variables', t => {
+  const graphQLQuery = `mutation someMutation($from: _MovieInput!) {
+    AddMovieGenres(
+      from: $from,
+      to: { name: "Action" }
+    ) {
+      from {
+        movieId
+        genres {
+          _id
+          name
+        }
+      }
+      to {
+        name
+      }
+    }
+  }`,
+    expectedCypherQuery = `
+      MATCH (movie_from:Movie {movieId: $from.movieId})
+      MATCH (genre_to:Genre {name: $to.name})
+      CREATE (movie_from)-[in_genre_relation:IN_GENRE]->(genre_to)
+      RETURN in_genre_relation { from: head([(:Genre)<-[in_genre_relation]-(in_genre_from:Movie) | in_genre_from { .movieId ,genres: [(in_genre_from)-[:IN_GENRE]->(in_genre_from_genres:Genre) | in_genre_from_genres {_id: ID(in_genre_from_genres), .name }] }]) ,to: head([(:Movie)-[in_genre_relation]->(in_genre_to:Genre) | in_genre_to { .name }])  } AS _AddMovieGenresPayload;
+    `;
+
+  t.plan(1);
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {
+      from: { movieId: "123" },
+      to: { name: "Action" },
+      first: -1,
+      offset: 0,
+    },
+    expectedCypherQuery
+  )
+});
+
+test('Remove relationship mutation', t => {
+  const graphQLQuery = `mutation someMutation {
+    RemoveMovieGenres(
+      from: { movieId: "123" },
+      to: { name: "Action" }
+    ) {
+      from {
         _id
         title
       }
+      to {
+        name
+      }
+    }
   }`,
-    expectedCypherQuery = `MATCH (movie:Movie {movieId: $moviemovieId})
-MATCH (genre:Genre {name: $genrename})
-OPTIONAL MATCH (movie)-[moviegenre:IN_GENRE]->(genre)
-DELETE moviegenre
-RETURN movie {_id: ID(movie), .title } AS movie;`;
+    expectedCypherQuery = `
+      MATCH (movie_from:Movie {movieId: $from.movieId})
+      MATCH (genre_to:Genre {name: $to.name})
+      OPTIONAL MATCH (movie_from)-[movie_fromgenre_to:IN_GENRE]->(genre_to)
+      DELETE movie_fromgenre_to
+      WITH COUNT(*) AS scope, movie_from AS _movie_from_from, genre_to AS _genre_to_to
+      RETURN {from: head([_movie_from_from {_id: ID(_movie_from_from), .title }]) ,to: head([_genre_to_to { .name }]) } AS _RemoveMovieGenresPayload;
+    `;
 
-  t.plan(2);
-  cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery, {
-    moviemovieId: '123',
-    genrename: 'Action',
-    first: -1,
-    offset: 0
-  });
+  t.plan(1);
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {
+      from: { movieId: "123" },
+      to: { name: "Action" },
+      first: -1,
+      offset: 0,
+    },
+    expectedCypherQuery
+  )
 });
 
 test('Handle GraphQL variables in nested selection - first/offset', t => {
