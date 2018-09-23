@@ -312,18 +312,34 @@ test('Add relationship mutation', async t => {
   await client
     .mutate({
       mutation: gql`
-        mutation someMutation {
-          AddMovieGenres(moviemovieId: "123", genrename: "Action") {
-            title
-            genres {
+        mutation addGenreRelationToMovie(
+          $from: _MovieInput!
+          $to: _GenreInput!
+        ) {
+          AddMovieGenres(from: $from, to: $to) {
+            from {
+              title
+              genres {
+                name
+              }
+            }
+            to {
               name
             }
           }
         }
-      `
+      `,
+      variables: {
+        from: {
+          movieId: '123'
+        },
+        to: {
+          name: 'Action'
+        }
+      }
     })
     .then(data => {
-      t.is(data.data.AddMovieGenres.genres.length, 4);
+      t.is(data.data.AddMovieGenres.from.genres.length, 4);
       // FIXME: Check length of genres array instead of exact response until ordering is implemented
       //t.deepEqual(data.data, expected.data);
     })
@@ -338,18 +354,34 @@ test('Remove relationship mutation', async t => {
   await client
     .mutate({
       mutation: gql`
-        mutation removeMovieGenres {
-          RemoveMovieGenres(moviemovieId: "123", genrename: "Action") {
-            title
-            genres {
+        mutation removeGenreRelationshipToMovie(
+          $from: _MovieInput!
+          $to: _GenreInput!
+        ) {
+          RemoveMovieGenres(from: $from, to: $to) {
+            from {
+              title
+              genres {
+                name
+              }
+            }
+            to {
               name
             }
           }
         }
-      `
+      `,
+      variables: {
+        from: {
+          movieId: '123'
+        },
+        to: {
+          name: 'Action'
+        }
+      }
     })
     .then(data => {
-      t.is(data.data.RemoveMovieGenres.genres.length, 3);
+      t.is(data.data.RemoveMovieGenres.from.genres.length, 3);
     })
     .catch(error => {
       t.fail(error);
