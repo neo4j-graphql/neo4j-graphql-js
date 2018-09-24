@@ -5,7 +5,7 @@ import { printSchema } from 'graphql';
 test.cb('Test augmented schema', t => {
   let schema = augmentedSchema();
 
-let expectedSchema = `input _ActorInput {
+  let expectedSchema = `input _ActorInput {
   id: ID!
 }
 
@@ -43,13 +43,13 @@ type _AddMovieGenresPayload {
   to: Genre
 }
 
-type _AddMovieWatchedByPayload {
+type _AddMovieRatingsPayload {
   from: User
   to: Movie
   rating: Int
 }
 
-type _AddUserWatchedPayload {
+type _AddUserRatedPayload {
   from: User
   to: Movie
   rating: Int
@@ -82,9 +82,13 @@ enum _MovieOrdering {
   title_asc
 }
 
-type _MovieWatchedBy {
+type _MovieRatings {
   rating: Int
   User(first: Int, offset: Int, orderBy: _UserOrdering): User
+}
+
+input _RatedInput {
+  rating: Int
 }
 
 type _RemoveActorMoviesPayload {
@@ -112,12 +116,12 @@ type _RemoveMovieGenresPayload {
   to: Genre
 }
 
-type _RemoveMovieWatchedByPayload {
+type _RemoveMovieRatingsPayload {
   from: User
   to: Movie
 }
 
-type _RemoveUserWatchedPayload {
+type _RemoveUserRatedPayload {
   from: User
   to: Movie
 }
@@ -146,13 +150,9 @@ enum _UserOrdering {
   _id_desc
 }
 
-type _UserWatched {
+type _UserRated {
   rating: Int
   Movie(first: Int, offset: Int, orderBy: _MovieOrdering): Movie
-}
-
-input _WatchedInput {
-  rating: Int
 }
 
 type Actor implements Person {
@@ -201,7 +201,7 @@ type Movie {
   scaleRating(scale: Int = 3): Float
   scaleRatingFloat(scale: Float = 1.5): Float
   actorMovies(first: Int, offset: Int, orderBy: _MovieOrdering): [Movie]
-  watchedBy: [_MovieWatchedBy]
+  ratings: [_MovieRatings]
 }
 
 type Mutation {
@@ -214,8 +214,8 @@ type Mutation {
   RemoveMovieActors(from: _ActorInput!, to: _MovieInput!): _RemoveMovieActorsPayload
   AddMovieFilmedIn(from: _MovieInput!, to: _StateInput!): _AddMovieFilmedInPayload
   RemoveMovieFilmedIn(from: _MovieInput!, to: _StateInput!): _RemoveMovieFilmedInPayload
-  AddMovieWatchedBy(from: _UserInput!, to: _MovieInput!, data: _WatchedInput!): _AddMovieWatchedByPayload
-  RemoveMovieWatchedBy(from: _UserInput!, to: _MovieInput!): _RemoveMovieWatchedByPayload
+  AddMovieRatings(from: _UserInput!, to: _MovieInput!, data: _RatedInput!): _AddMovieRatingsPayload
+  RemoveMovieRatings(from: _UserInput!, to: _MovieInput!): _RemoveMovieRatingsPayload
   CreateGenre(name: String): Genre
   DeleteGenre(name: String!): Genre
   AddGenreMovies(from: _MovieInput!, to: _GenreInput!): _AddGenreMoviesPayload
@@ -230,8 +230,8 @@ type Mutation {
   CreateUser(id: ID, name: String): User
   UpdateUser(id: ID!, name: String): User
   DeleteUser(id: ID!): User
-  AddUserWatched(from: _UserInput!, to: _MovieInput!, data: _WatchedInput!): _AddUserWatchedPayload
-  RemoveUserWatched(from: _UserInput!, to: _MovieInput!): _RemoveUserWatchedPayload
+  AddUserRated(from: _UserInput!, to: _MovieInput!, data: _RatedInput!): _AddUserRatedPayload
+  RemoveUserRated(from: _UserInput!, to: _MovieInput!): _RemoveUserRatedPayload
   CreateBook(genre: BookGenre): Book
   DeleteBook(genre: BookGenre!): Book
 }
@@ -255,6 +255,12 @@ type Query {
   Book(genre: BookGenre, _id: Int, first: Int, offset: Int, orderBy: _BookOrdering): [Book]
 }
 
+type Rated {
+  from(first: Int, offset: Int, orderBy: _UserOrdering): User
+  rating: Int
+  to(first: Int, offset: Int, orderBy: _MovieOrdering): Movie
+}
+
 type State {
   name: String
   _id: Int
@@ -263,17 +269,12 @@ type State {
 type User implements Person {
   id: ID!
   name: String
-  watched: [_UserWatched]
+  rated: [_UserRated]
   _id: Int
-}
-
-type Watched {
-  from(first: Int, offset: Int, orderBy: _UserOrdering): User
-  rating: Int
-  to(first: Int, offset: Int, orderBy: _MovieOrdering): Movie
 }
 `;
 
+  console.log(printSchema(schema));
   t.is(printSchema(schema), expectedSchema);
   t.end();
 });

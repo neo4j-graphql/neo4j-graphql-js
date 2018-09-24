@@ -8,6 +8,7 @@ type Movie {
   plot: String
   poster: String
   imdbRating: Float
+  ratings: [Rated]
   genres: [Genre] @relation(name: "IN_GENRE", direction: "OUT")
   similar(first: Int = 3, offset: Int = 0, limit: Int = 5): [Movie] @cypher(statement: "WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o LIMIT {limit}")
   mostSimilar: Movie @cypher(statement: "WITH {this} AS this RETURN this")
@@ -40,11 +41,18 @@ type Actor {
   movies: [Movie] @relation(name: "ACTED_IN", direction: "OUT")
 }
 
-type User implements Person {
-  id: ID!
-	name: String
+type User{
+  userId: ID!
+  name: String
+  rated: [Rated]
 }
 
+type Rated @relation(name:"RATED") {
+  from: User
+  to: Movie
+  timestamp: Int
+  rating: Float
+}
 enum BookGenre {
   Mystery,
   Science,
