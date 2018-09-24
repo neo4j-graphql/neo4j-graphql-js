@@ -274,7 +274,6 @@ type User implements Person {
 }
 `;
 
-  console.log(printSchema(schema));
   t.is(printSchema(schema), expectedSchema);
   t.end();
 });
