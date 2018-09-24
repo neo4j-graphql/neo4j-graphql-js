@@ -53,7 +53,7 @@ export async function neo4jgraphql(
 
   try {
     result = await session.run(query, cypherParams);
-    console.log("result: "+JSON.stringify(result, null, 2));    
+    //console.log("result: "+JSON.stringify(result, null, 2));
   } finally {
     session.close();
   }
@@ -143,12 +143,11 @@ export function cypherQuery(
       .filter(predicate => !!predicate)
       .join(' AND ');
     const predicate = predicateClauses ? `WHERE ${predicateClauses} ` : '';
-    
+
     query =
       `MATCH (${variableName}:${typeName} ${argString}) ${predicate}` +
       // ${variableName} { ${selection} } as ${variableName}`;
       `RETURN ${variableName} {${subQuery}} AS ${variableName}${orderByValue} ${outerSkipLimit}`;
-
   }
 
   return [query, { ...nonNullParams, ...subParams }];
@@ -239,19 +238,19 @@ export function cypherMutation(
       paramIndex: 1
     });
     params = { ...params, ...subParams };
-    
-    const args = resolveInfo.schema
-      .getMutationType()
-      .getFields()[resolveInfo.fieldName].astNode.arguments;
+
+    const args = resolveInfo.schema.getMutationType().getFields()[
+      resolveInfo.fieldName
+    ].astNode.arguments;
 
     const firstIdArg = args.find(e => getNamedType(e).type.name.value);
-    if(firstIdArg) {
+    if (firstIdArg) {
       const argName = firstIdArg.name.value;
-      if(params.params[argName] === undefined) {
+      if (params.params[argName] === undefined) {
         query += `SET ${variableName}.${argName} = apoc.create.uuid() `;
       }
     }
-    
+
     query += `RETURN ${variableName} {${subQuery}} AS ${variableName}`;
   } else if (isAddMutation(resolveInfo)) {
     let mutationMeta, relationshipNameArg, fromTypeArg, toTypeArg;
@@ -289,37 +288,42 @@ export function cypherMutation(
 
     //TODO: need to handle one-to-one and one-to-many
 
-    const args = resolveInfo.schema
-        .getMutationType()
-        .getFields()
-        [resolveInfo.fieldName].astNode.arguments;
+    const args = resolveInfo.schema.getMutationType().getFields()[
+      resolveInfo.fieldName
+    ].astNode.arguments;
 
     const typeMap = resolveInfo.schema.getTypeMap();
-    
-    // TODO write some getters to reduce similar code between this and isRemoveMutation 
+
+    // TODO write some getters to reduce similar code between this and isRemoveMutation
     const fromType = fromTypeArg.value.value;
     const fromVar = `${lowFirstLetter(fromType)}_from`;
-    const fromInputArg = args.find(e => e.name.value === "from").type;
-    const fromInputAst = typeMap[getNamedType(fromInputArg).type.name.value].astNode;
+    const fromInputArg = args.find(e => e.name.value === 'from').type;
+    const fromInputAst =
+      typeMap[getNamedType(fromInputArg).type.name.value].astNode;
     const fromParam = fromInputAst.fields[0].name.value;
-    
+
     const toType = toTypeArg.value.value;
     const toVar = `${lowFirstLetter(toType)}_to`;
-    const toInputArg = args.find(e => e.name.value === "to").type;
-    const toInputAst = typeMap[getNamedType(toInputArg).type.name.value].astNode;
+    const toInputArg = args.find(e => e.name.value === 'to').type;
+    const toInputAst =
+      typeMap[getNamedType(toInputArg).type.name.value].astNode;
     const toParam = toInputAst.fields[0].name.value;
 
     const relationshipName = relationshipNameArg.value.value;
     const lowercased = relationshipName.toLowerCase();
-    const dataInputArg = args.find(e => e.name.value === "data");
-    const dataInputAst = dataInputArg ? typeMap[getNamedType(dataInputArg.type).type.name.value].astNode : undefined;
-    const relationPropertyArguments = dataInputAst ? parameterizeRelationFields(dataInputAst.fields) : undefined;
+    const dataInputArg = args.find(e => e.name.value === 'data');
+    const dataInputAst = dataInputArg
+      ? typeMap[getNamedType(dataInputArg.type).type.name.value].astNode
+      : undefined;
+    const relationPropertyArguments = dataInputAst
+      ? parameterizeRelationFields(dataInputAst.fields)
+      : undefined;
 
     const [subQuery, subParams] = buildCypherSelection({
       initial: '',
       selections,
       variableName: lowercased,
-      fromVar, 
+      fromVar,
       toVar,
       schemaType,
       resolveInfo,
@@ -330,13 +334,10 @@ export function cypherMutation(
       MATCH (${fromVar}:${fromType} {${fromParam}: $from.${fromParam}})
       MATCH (${toVar}:${toType} {${toParam}: $to.${toParam}})
       CREATE (${fromVar})-[${lowercased}_relation:${relationshipName}${
-        relationPropertyArguments
-        ? ` {${relationPropertyArguments}}`
-        : ''
-      }]->(${toVar})
+      relationPropertyArguments ? ` {${relationPropertyArguments}}` : ''
+    }]->(${toVar})
       RETURN ${lowercased}_relation { ${subQuery} } AS ${schemaType};
     `;
-
   } else if (isUpdateMutation(resolveInfo)) {
     const idParam = resolveInfo.schema.getMutationType().getFields()[
       resolveInfo.fieldName
@@ -419,23 +420,24 @@ RETURN ${variableName}`;
     }
 
     //TODO: need to handle one-to-one and one-to-many
-    const args = resolveInfo.schema
-        .getMutationType()
-        .getFields()
-        [resolveInfo.fieldName].astNode.arguments;
+    const args = resolveInfo.schema.getMutationType().getFields()[
+      resolveInfo.fieldName
+    ].astNode.arguments;
 
     const typeMap = resolveInfo.schema.getTypeMap();
-    
+
     const fromType = fromTypeArg.value.value;
     const fromVar = `${lowFirstLetter(fromType)}_from`;
-    const fromInputArg = args.find(e => e.name.value === "from").type;
-    const fromInputAst = typeMap[getNamedType(fromInputArg).type.name.value].astNode;
+    const fromInputArg = args.find(e => e.name.value === 'from').type;
+    const fromInputAst =
+      typeMap[getNamedType(fromInputArg).type.name.value].astNode;
     const fromParam = fromInputAst.fields[0].name.value;
-    
+
     const toType = toTypeArg.value.value;
     const toVar = `${lowFirstLetter(toType)}_to`;
-    const toInputArg = args.find(e => e.name.value === "to").type;
-    const toInputAst = typeMap[getNamedType(toInputArg).type.name.value].astNode;
+    const toInputArg = args.find(e => e.name.value === 'to').type;
+    const toInputAst =
+      typeMap[getNamedType(toInputArg).type.name.value].astNode;
     const toParam = toInputAst.fields[0].name.value;
 
     const relationshipName = relationshipNameArg.value.value;
@@ -455,20 +457,20 @@ RETURN ${variableName}`;
     });
     params = { ...params, ...subParams };
 
-    // WITH COUNT(*) AS scope is used so that relations deletions are finished 
+    // WITH COUNT(*) AS scope is used so that relations deletions are finished
     // before we possibly query them in the return. If we wanted to actually allow
-    // the return to query over the deleted relations, we could move the return 
-    // object construction into a WITH statement above the DELETE, then return it 
-    // the delete 
+    // the return to query over the deleted relations, we could move the return
+    // object construction into a WITH statement above the DELETE, then return it
+    // the delete
     query = `
       MATCH (${fromVar}:${fromType} {${fromParam}: $from.${fromParam}})
       MATCH (${toVar}:${toType} {${toParam}: $to.${toParam}})
-      OPTIONAL MATCH (${fromVar})-[${fromVar + toVar}:${relationshipName}]->(${toVar})
+      OPTIONAL MATCH (${fromVar})-[${fromVar +
+      toVar}:${relationshipName}]->(${toVar})
       DELETE ${fromVar + toVar}
       WITH COUNT(*) AS scope, ${fromVar} AS _${fromVar}_from, ${toVar} AS _${toVar}_to
       RETURN {${subQuery}} AS ${schemaType};
     `;
-
   } else {
     // throw error - don't know how to handle this type of mutation
     throw new Error(
@@ -478,40 +480,38 @@ RETURN ${variableName}`;
   return [query, params];
 }
 
-export const augmentSchema = (schema) => {
+export const augmentSchema = schema => {
   let typeMap = extractTypeMapFromSchema(schema);
   let queryResolvers = extractResolvers(schema.getQueryType());
   let mutationResolvers = extractResolvers(schema.getMutationType());
   return augmentedSchema(typeMap, queryResolvers, mutationResolvers);
-}
+};
 
 export const makeAugmentedSchema = ({
-   schema,
-   typeDefs,
-   resolvers,
-   logger,
-   allowUndefinedInResolve=false,
-   resolverValidationOptions={},
-   directiveResolvers=null,
-   schemaDirectives=null,
-   parseOptions={},
-   inheritResolversFromInterfaces=false
-  }) => {
-    if(schema) {
-      return augmentSchema(schema);
-    }
-    if(!typeDefs) throw new Error(
-      'Must provide typeDefs'
-    );
-    return makeAugmentedExecutableSchema({
-      typeDefs,
-      resolvers,
-      logger,
-      allowUndefinedInResolve,
-      resolverValidationOptions,
-      directiveResolvers,
-      schemaDirectives,
-      parseOptions,
-      inheritResolversFromInterfaces
-    });
-}
+  schema,
+  typeDefs,
+  resolvers,
+  logger,
+  allowUndefinedInResolve = false,
+  resolverValidationOptions = {},
+  directiveResolvers = null,
+  schemaDirectives = null,
+  parseOptions = {},
+  inheritResolversFromInterfaces = false
+}) => {
+  if (schema) {
+    return augmentSchema(schema);
+  }
+  if (!typeDefs) throw new Error('Must provide typeDefs');
+  return makeAugmentedExecutableSchema({
+    typeDefs,
+    resolvers,
+    logger,
+    allowUndefinedInResolve,
+    resolverValidationOptions,
+    directiveResolvers,
+    schemaDirectives,
+    parseOptions,
+    inheritResolversFromInterfaces
+  });
+};

@@ -4,20 +4,35 @@ import { v1 as neo4j } from 'neo4j-driver';
 
 const typeDefs = `
 type Movie {
-    title: String
-    year: Int
-    imdbRating: Float
-    genres: [Genre] @relation(name: "IN_GENRE", direction: "OUT")
-    similar: [Movie] @cypher(
-        statement: """MATCH (this)<-[:RATED]-(:User)-[:RATED]->(s:Movie) 
-                      WITH s, COUNT(*) AS score 
-                      RETURN s ORDER BY score DESC LIMIT {first}""")
+  title: String
+  year: Int
+  imdbRating: Float
+  ratings: [Rated]
+  genres: [Genre] @relation(name: "IN_GENRE", direction: "OUT")
+  similar: [Movie] @cypher(
+      statement: """MATCH (this)<-[:RATED]-(:User)-[:RATED]->(s:Movie) 
+                    WITH s, COUNT(*) AS score 
+                    RETURN s ORDER BY score DESC LIMIT {first}""")
 }
 
 type Genre {
-    name: String
-    movies: [Movie] @relation(name: "IN_GENRE", direction: "IN")
+  name: String
+  movies: [Movie] @relation(name: "IN_GENRE", direction: "IN")
 }
+
+type User {
+  userId: String
+  name: String
+  rated: [Rated]
+}
+
+type Rated @relation(name: "RATED") {
+  from: User
+  to: Movie
+  rating: Float
+  timestamp: Int
+}
+
 `;
 
 const schema = makeAugmentedSchema({ typeDefs });

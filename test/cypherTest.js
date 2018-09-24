@@ -676,13 +676,13 @@ test('Add relationship mutation', t => {
     t,
     graphQLQuery,
     {
-      from: { movieId: "123" },
-      to: { name: "Action" },
+      from: { movieId: '123' },
+      to: { name: 'Action' },
       first: -1,
-      offset: 0,
+      offset: 0
     },
     expectedCypherQuery
-  )
+  );
 });
 
 test('Add relationship mutation with GraphQL variables', t => {
@@ -715,13 +715,13 @@ test('Add relationship mutation with GraphQL variables', t => {
     t,
     graphQLQuery,
     {
-      from: { movieId: "123" },
-      to: { name: "Action" },
+      from: { movieId: '123' },
+      to: { name: 'Action' },
       first: -1,
-      offset: 0,
+      offset: 0
     },
     expectedCypherQuery
-  )
+  );
 });
 
 test('Remove relationship mutation', t => {
@@ -753,13 +753,13 @@ test('Remove relationship mutation', t => {
     t,
     graphQLQuery,
     {
-      from: { movieId: "123" },
-      to: { name: "Action" },
+      from: { movieId: '123' },
+      to: { name: 'Action' },
       first: -1,
-      offset: 0,
+      offset: 0
     },
     expectedCypherQuery
-  )
+  );
 });
 
 test('Handle GraphQL variables in nested selection - first/offset', t => {
@@ -1098,5 +1098,30 @@ test('orderBy test - descending, top level - augmented schema', t => {
       year: 2010,
       '1_first': 3
     }
+  );
+});
+
+test('query for relationship properties', t => {
+  const graphQLQuery = `{
+    Movie(title: "River Runs Through It, A") {
+       title
+      ratings {
+        rating
+        User {
+          name
+        }
+      }
+    }
+  }`,
+    expectedCypherQuery = `MATCH (movie:Movie {title:$title}) RETURN movie { .title ,ratings: [(movie)<-[movie_ratings_relation:RATED]-(:User) | movie_ratings_relation { .rating ,User: head([(:Movie)<-[movie_ratings_relation]-(movie_ratings_User:User) | movie_ratings_User { .name }]) }] } AS movie SKIP $offset`;
+
+  t.plan(1);
+
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {},
+    expectedCypherQuery,
+    {}
   );
 });

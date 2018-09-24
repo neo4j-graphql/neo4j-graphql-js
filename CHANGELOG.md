@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.0.0
+
+- [Support for relation types with managed directional fields from and to, along with an optional @relation type directive](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/108)
+- [Auto-generate value for ID field if not specified in create mutation](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/111)
+- [Include custom scalars in the arguments of generated mutations](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/111)
+
 ## v0.2.1
 
 - [Use underscore instead of dash for nested query variables - Fixes #106](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/107)

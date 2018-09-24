@@ -17,7 +17,7 @@ export const testSchema = `type Movie {
   scaleRating(scale: Int = 3): Float @cypher(statement: "WITH $this AS this RETURN $scale * this.imdbRating")
   scaleRatingFloat(scale: Float = 1.5): Float @cypher(statement: "WITH $this AS this RETURN $scale * this.imdbRating")
   actorMovies: [Movie] @cypher(statement: "MATCH (this)-[:ACTED_IN*2]-(other:Movie) RETURN other")
-  watchedBy: [Watched]
+  ratings: [Rated]
 }
 
 type Genre {
@@ -45,10 +45,10 @@ type Actor implements Person {
 type User implements Person {
   id: ID!
   name: String
-  watched: [Watched]
+  rated: [Rated]
 }
 
-type Watched {
+type Rated {
   from: User
   rating: Int
   to: Movie
