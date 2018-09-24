@@ -511,3 +511,59 @@ test('Top level orderBy', async t => {
       t.fail(error);
     });
 });
+
+test('query relationship property data', async t => {
+  t.plan(1);
+
+  let expected = {
+    data: {
+      Movie: [
+        {
+          title: 'It',
+          __typename: 'Movie',
+          ratings: [
+            {
+              __typename: '_MovieRatings',
+              rating: 4.5,
+              User: {
+                __typename: 'User',
+                name: 'Dylan Rich'
+              }
+            },
+            {
+              __typename: '_MovieRatings',
+              rating: 2,
+              User: {
+                __typename: 'User',
+                name: 'Ashley Smith'
+              }
+            }
+          ]
+        }
+      ]
+    }
+  };
+
+  await client
+    .query({
+      query: gql`
+        {
+          Movie(title: "It") {
+            title
+            ratings {
+              rating
+              User {
+                name
+              }
+            }
+          }
+        }
+      `
+    })
+    .then(data => {
+      t.deepEqual(data.data, expected.data);
+    })
+    .catch(error => {
+      t.fail(error);
+    });
+});
