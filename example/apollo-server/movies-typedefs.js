@@ -8,22 +8,32 @@ type Movie {
   year: Int
   imdbRating: Float
   ratings: [Rated]
-  genres: [Genre] @relation(name: "IN_GENRE", direction: "OUT")
+  genres: [Attribute] @relation(name: "IN_GENRE", direction: "OUT")
   similar: [Movie] @cypher(
       statement: """MATCH (this)<-[:RATED]-(:User)-[:RATED]->(s:Movie) 
                     WITH s, COUNT(*) AS score 
                     RETURN s ORDER BY score DESC LIMIT {first}""")
 }
 
-type Genre {
+type Genre implements Attribute {
   name: String
+  count: Int
   movies: [Movie] @relation(name: "IN_GENRE", direction: "IN")
 }
 
-type User {
+interface Attribute {
+  name: String
+}
+
+type User implements Person {
   userId: String
   name: String
   rated: [Rated]
+}
+
+interface Person {
+  userId: String
+  name: String
 }
 
 type Rated @relation(name: "RATED") {

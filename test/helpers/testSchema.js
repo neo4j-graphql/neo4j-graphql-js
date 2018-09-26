@@ -32,18 +32,18 @@ type State {
 }
 
 interface Person {
-  id: ID!
+  userId: ID!
   name: String
 }
 
 type Actor implements Person {
-  id: ID!
+  userId: ID!
   name: String
   movies: [Movie] @relation(name: "ACTED_IN", direction:"OUT")
 }
 
 type User implements Person {
-  id: ID!
+  userId: ID!
   name: String
   rated: [Rated]
 }

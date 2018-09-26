@@ -567,3 +567,43 @@ test('query relationship property data', async t => {
       t.fail(error);
     });
 });
+
+test('query using inine fragment', async t => {
+  t.plan(1);
+
+  let expected = {
+    __typename: '_MovieRatings',
+    rating: 3,
+    User: {
+      __typename: 'User',
+      name: 'Brittney Stewart',
+      userId: '665'
+    }
+  };
+
+  await client
+    .query({
+      query: gql`
+        {
+          Movie(title: "River Runs Through It, A") {
+            title
+            ratings {
+              rating
+              User {
+                ... on User {
+                  name
+                  userId
+                }
+              }
+            }
+          }
+        }
+      `
+    })
+    .then(data => {
+      t.deepEqual(data.data.Movie[0].ratings[0], expected);
+    })
+    .catch(error => {
+      t.fail(error);
+    });
+});

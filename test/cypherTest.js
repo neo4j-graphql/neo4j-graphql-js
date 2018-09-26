@@ -1125,3 +1125,33 @@ test('query for relationship properties', t => {
     {}
   );
 });
+
+test('query using inline fragment', t => {
+  const graphQLQuery = `
+  {
+    Movie(title: "River Runs Through It, A") {
+      title
+      ratings {
+        rating
+        User {
+          ... on User {
+            name
+            userId
+          }
+        }
+      }
+    }
+  }
+  `,
+    expectedCypherQuery = `MATCH (movie:Movie {title:$title}) RETURN movie { .title ,ratings: [(movie)<-[movie_ratings_relation:RATED]-(:User) | movie_ratings_relation { .rating ,User: head([(:Movie)<-[movie_ratings_relation]-(movie_ratings_User:User) | movie_ratings_User { .name , .userId }]) }] } AS movie SKIP $offset`;
+
+  t.plan(1);
+
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {},
+    expectedCypherQuery,
+    {}
+  );
+});
