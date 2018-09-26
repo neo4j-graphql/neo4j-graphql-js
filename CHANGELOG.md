@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.0.1
+
+-[Initial support for InlineFragments - See #103](https://github.com/neo4j-graphql/neo4j-graphql-js/issues/103)
+
 ## v1.0.0
 
 - [Support for relation types with managed directional fields from and to, along with an optional @relation type directive](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/108)
