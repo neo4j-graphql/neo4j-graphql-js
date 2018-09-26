@@ -57,7 +57,30 @@ export function buildCypherSelection({
     return [subSelection, { ...shallowFilterParams, ...subFilterParams }];
   };
 
-  const fieldName = headSelection.name.value;
+  let fieldName;
+  let isInlineFragment = false;
+  let interfaceLabel;
+
+  if (headSelection.kind === 'InlineFragment') {
+    // get selections for the fragment and recurse on those
+    const fragmentSelections = headSelection.selectionSet.selections;
+
+    let fragmentTailParams = {
+      selections: fragmentSelections,
+      variableName,
+      schemaType,
+      resolveInfo
+    };
+    return recurse({
+      initial: tailSelections.length
+        ? initial
+        : initial.substring(0, initial.lastIndexOf(',')),
+      ...fragmentTailParams
+    });
+  } else {
+    fieldName = headSelection.name.value;
+  }
+
   const commaIfTail = tailSelections.length > 0 ? ',' : '';
 
   // Schema meta fields(__schema, __typename, etc)
@@ -72,6 +95,31 @@ export function buildCypherSelection({
 
   const fieldType = schemaType.getFields()[fieldName].type;
   const innerSchemaType = innerType(fieldType); // for target "type" aka label
+
+  if (
+    innerSchemaType &&
+    innerSchemaType.astNode &&
+    innerSchemaType.astNode.kind === 'InterfaceTypeDefinition'
+  ) {
+    isInlineFragment = true;
+    interfaceType = schemaType;
+    const interfaceName = innerSchemaType.name;
+
+    const fragments = headSelection.selectionSet.selections.filter(
+      item => item.kind === 'InlineFragment'
+    );
+
+    // FIXME: this will only handle the first inline fragment
+    const fragment = fragments[0];
+
+    interfaceLabel = fragment.typeCondition.name.value;
+    const implementationName = fragment.typeCondition.name.value;
+
+    const schemaType = resolveInfo.schema._implementations[interfaceName].find(
+      intfc => intfc.name === implementationName
+    );
+  }
+
   const { statement: customCypher } = cypherDirective(schemaType, fieldName);
 
   const typeMap = resolveInfo.schema.getTypeMap();
@@ -88,7 +136,7 @@ export function buildCypherSelection({
   // Main control flow
   if (isGraphqlScalarType(innerSchemaType)) {
     if (customCypher) {
-      if(getRelationTypeDirectiveArgs(schemaTypeAstNode)) {
+      if (getRelationTypeDirectiveArgs(schemaTypeAstNode)) {
         variableName = `${variableName}_relation`;
       }
       return recurse({
@@ -129,8 +177,8 @@ export function buildCypherSelection({
   let selection;
 
   // Object type field with cypher directive
-  if(customCypher) {
-    if(getRelationTypeDirectiveArgs(schemaTypeAstNode)) {
+  if (customCypher) {
+    if (getRelationTypeDirectiveArgs(schemaTypeAstNode)) {
       variableName = `${variableName}_relation`;
     }
     // similar: [ x IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie}, true) |x {.title}][1..2])
@@ -148,52 +196,64 @@ export function buildCypherSelection({
       }${skipLimit} ${commaIfTail}`,
       ...tailParams
     });
-  }
-  else {
+  } else {
     // graphql object type, no custom cypher
     const queryParams = innerFilterParams(filterParams);
-    const relationDirectiveData = getRelationTypeDirectiveArgs(schemaTypeAstNode);
-    if(relationDirectiveData) {
+    const relationDirectiveData = getRelationTypeDirectiveArgs(
+      schemaTypeAstNode
+    );
+    if (relationDirectiveData) {
       const fromTypeName = relationDirectiveData.from;
       const toTypeName = relationDirectiveData.to;
       const isFromField = fieldName === fromTypeName || fieldName === 'from';
       const isToField = fieldName === toTypeName || fieldName === 'to';
-      if(isFromField || isToField) {
-        if(rootNodes && (fieldName === 'from' || fieldName === 'to')) {
-          // Branch currenlty needed to be explicit about handling the .to and .from 
+      if (isFromField || isToField) {
+        if (rootNodes && (fieldName === 'from' || fieldName === 'to')) {
+          // Branch currenlty needed to be explicit about handling the .to and .from
           // keys involved with the relation removal mutation, using rootNodes
           selection = recurse({
             initial: `${initial}${fieldName}: ${
               !isArrayType(fieldType) ? 'head(' : ''
-            }[${isFromField ? `${rootNodes.from}_from` : `${rootNodes.to}_to`} {${subSelection[0]}}]${
+            }[${
+              isFromField ? `${rootNodes.from}_from` : `${rootNodes.to}_to`
+            } {${subSelection[0]}}]${
               !isArrayType(fieldType) ? ')' : ''
             }${skipLimit} ${commaIfTail}`,
             ...tailParams,
             rootNodes,
             variableName: isFromField ? rootNodes.to : rootNodes.from
           });
-        }
-        else {
+        } else {
           selection = recurse({
             initial: `${initial}${fieldName}: ${
               !isArrayType(fieldType) ? 'head(' : ''
-            }[(:${fieldName === fromTypeName || fieldName === 'from' ? toTypeName : fromTypeName})${
+            }[(:${
+              fieldName === fromTypeName || fieldName === 'from'
+                ? toTypeName
+                : fromTypeName
+            })${
               fieldName === fromTypeName || fieldName === 'from' ? '<' : ''
             }-[${variableName}_relation]-${
               fieldName === toTypeName || fieldName === 'to' ? '>' : ''
             }(${nestedVariable}:${
-              innerSchemaType.name
-            }${queryParams}) | ${nestedVariable} {${subSelection[0]}}]${
+              isInlineFragment ? interfaceLabel : innerSchemaType.name
+            }${queryParams}) | ${nestedVariable} {${
+              isInlineFragment
+                ? 'FRAGMENT_TYPE: "' + interfaceLabel + '",' + subSelection[0]
+                : subSelection[0]
+            }}]${
               !isArrayType(fieldType) ? ')' : ''
             }${skipLimit} ${commaIfTail}`,
             ...tailParams
           });
         }
       }
-    }
-    else {
-      let { name: relType, direction: relDirection } = relationDirective(schemaType, fieldName);
-      if(relType && relDirection) {
+    } else {
+      let { name: relType, direction: relDirection } = relationDirective(
+        schemaType,
+        fieldName
+      );
+      if (relType && relDirection) {
         selection = recurse({
           initial: `${initial}${fieldName}: ${
             !isArrayType(fieldType) ? 'head(' : ''
@@ -202,23 +262,26 @@ export function buildCypherSelection({
           }-[:${relType}]-${
             relDirection === 'out' || relDirection === 'OUT' ? '>' : ''
           }(${nestedVariable}:${
-            innerSchemaType.name
-          }${queryParams}) | ${nestedVariable} {${subSelection[0]}}]${
-            !isArrayType(fieldType) ? ')' : ''
-          }${skipLimit} ${commaIfTail}`,
+            isInlineFragment ? interfaceLabel : innerSchemaType.name
+          }${queryParams}) | ${nestedVariable} {${
+            isInlineFragment
+              ? 'FRAGMENT_TYPE: "' + interfaceLabel + '",' + subSelection[0]
+              : subSelection[0]
+          }}]${!isArrayType(fieldType) ? ')' : ''}${skipLimit} ${commaIfTail}`,
           ...tailParams
         });
-      }
-      else {
+      } else {
         const innerSchemaTypeAstNode = typeMap[innerSchemaType].astNode;
-        const relationDirectiveData = getRelationTypeDirectiveArgs(innerSchemaTypeAstNode);
-        if(relationDirectiveData) {
+        const relationDirectiveData = getRelationTypeDirectiveArgs(
+          innerSchemaTypeAstNode
+        );
+        if (relationDirectiveData) {
           const relType = relationDirectiveData.name;
           const fromTypeName = relationDirectiveData.from;
           const toTypeName = relationDirectiveData.to;
           const nestedRelationshipVariable = `${nestedVariable}_relation`;
           const schemaTypeName = schemaType.name;
-          if(fromTypeName !== toTypeName) {
+          if (fromTypeName !== toTypeName) {
             selection = recurse({
               initial: `${initial}${fieldName}: ${
                 !isArrayType(fieldType) ? 'head(' : ''
@@ -233,8 +296,7 @@ export function buildCypherSelection({
               }${skipLimit} ${commaIfTail}`,
               ...tailParams
             });
-          }
-          else {
+          } else {
             // Type symmetry limitation, Person FRIEND_OF Person, assume OUT for now
             selection = recurse({
               initial: `${initial}${fieldName}: ${

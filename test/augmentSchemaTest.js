@@ -6,12 +6,12 @@ test.cb('Test augmented schema', t => {
   let schema = augmentedSchema();
 
   let expectedSchema = `input _ActorInput {
-  id: ID!
+  userId: ID!
 }
 
 enum _ActorOrdering {
-  id_asc
-  id_desc
+  userId_asc
+  userId_desc
   name_asc
   name_desc
   _id_asc
@@ -138,12 +138,12 @@ enum _StateOrdering {
 }
 
 input _UserInput {
-  id: ID!
+  userId: ID!
 }
 
 enum _UserOrdering {
-  id_asc
-  id_desc
+  userId_asc
+  userId_desc
   name_asc
   name_desc
   _id_asc
@@ -156,7 +156,7 @@ type _UserRated {
 }
 
 type Actor implements Person {
-  id: ID!
+  userId: ID!
   name: String
   movies(first: Int, offset: Int, orderBy: _MovieOrdering): [Movie]
   _id: Int
@@ -220,16 +220,16 @@ type Mutation {
   DeleteGenre(name: String!): Genre
   AddGenreMovies(from: _MovieInput!, to: _GenreInput!): _AddGenreMoviesPayload
   RemoveGenreMovies(from: _MovieInput!, to: _GenreInput!): _RemoveGenreMoviesPayload
-  CreateActor(id: ID, name: String): Actor
-  UpdateActor(id: ID!, name: String): Actor
-  DeleteActor(id: ID!): Actor
+  CreateActor(userId: ID, name: String): Actor
+  UpdateActor(userId: ID!, name: String): Actor
+  DeleteActor(userId: ID!): Actor
   AddActorMovies(from: _ActorInput!, to: _MovieInput!): _AddActorMoviesPayload
   RemoveActorMovies(from: _ActorInput!, to: _MovieInput!): _RemoveActorMoviesPayload
   CreateState(name: String): State
   DeleteState(name: String!): State
-  CreateUser(id: ID, name: String): User
-  UpdateUser(id: ID!, name: String): User
-  DeleteUser(id: ID!): User
+  CreateUser(userId: ID, name: String): User
+  UpdateUser(userId: ID!, name: String): User
+  DeleteUser(userId: ID!): User
   AddUserRated(from: _UserInput!, to: _MovieInput!, data: _RatedInput!): _AddUserRatedPayload
   RemoveUserRated(from: _UserInput!, to: _MovieInput!): _RemoveUserRatedPayload
   CreateBook(genre: BookGenre): Book
@@ -237,7 +237,7 @@ type Mutation {
 }
 
 interface Person {
-  id: ID!
+  userId: ID!
   name: String
 }
 
@@ -249,9 +249,9 @@ type Query {
   GenresBySubstring(substring: String, first: Int, offset: Int, orderBy: _GenreOrdering): [Genre]
   Books(first: Int, offset: Int, orderBy: _BookOrdering): [Book]
   Genre(_id: Int, name: String, first: Int, offset: Int, orderBy: _GenreOrdering): [Genre]
-  Actor(id: ID, name: String, _id: Int, first: Int, offset: Int, orderBy: _ActorOrdering): [Actor]
+  Actor(userId: ID, name: String, _id: Int, first: Int, offset: Int, orderBy: _ActorOrdering): [Actor]
   State(name: String, _id: Int, first: Int, offset: Int, orderBy: _StateOrdering): [State]
-  User(id: ID, name: String, _id: Int, first: Int, offset: Int, orderBy: _UserOrdering): [User]
+  User(userId: ID, name: String, _id: Int, first: Int, offset: Int, orderBy: _UserOrdering): [User]
   Book(genre: BookGenre, _id: Int, first: Int, offset: Int, orderBy: _BookOrdering): [Book]
 }
 
@@ -267,7 +267,7 @@ type State {
 }
 
 type User implements Person {
-  id: ID!
+  userId: ID!
   name: String
   rated: [_UserRated]
   _id: Int
