@@ -8,6 +8,14 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run-script", "debug"],
       "port": 9229
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Movie-typedefs debug",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run-script", "debug-typedefs"],
+      "port": 9229
     }
   ]
 }
