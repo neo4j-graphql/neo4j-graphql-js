@@ -38,7 +38,7 @@ type Genre {
 
 Create an executable schema with auto-generated resolvers for Query and Mutation types, ordering, pagination, and support for computed fields defined using the `@cypher` GraphQL schema directive:
 
-```
+```javascript
 import { makeAugmentedSchema } from 'neo4j-graphql-js';
 
 const schema = makeAugmentedSchema({ typeDefs });
@@ -46,7 +46,7 @@ const schema = makeAugmentedSchema({ typeDefs });
 
 Create a neo4j-javascript-driver instance:
 
-```
+```javascript
 import { v1 as neo4j } from 'neo4j-driver';
 
 const driver = neo4j.driver(
@@ -57,7 +57,7 @@ const driver = neo4j.driver(
 
 Use your favorite JavaScript GraphQL server implementation to serve your GraphQL schema, injecting the Neo4j driver instance into the context so your data can be resolved in Neo4j:
 
-```
+```javascript
 import { ApolloServer } from 'apollo-server';
 
 const server = new ApolloServer({ schema, context: { driver } });
