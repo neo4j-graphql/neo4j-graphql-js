@@ -102,7 +102,8 @@ export function buildCypherSelection({
     innerSchemaType.astNode.kind === 'InterfaceTypeDefinition'
   ) {
     isInlineFragment = true;
-    interfaceType = schemaType;
+    // FIXME: remove unused variables
+    const interfaceType = schemaType;
     const interfaceName = innerSchemaType.name;
 
     const fragments = headSelection.selectionSet.selections.filter(
