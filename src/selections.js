@@ -72,7 +72,7 @@ export function buildCypherSelection({
       resolveInfo
     };
     return recurse({
-      initial: tailSelections.length
+      initial: fragmentSelections.length
         ? initial
         : initial.substring(0, initial.lastIndexOf(',')),
       ...fragmentTailParams
