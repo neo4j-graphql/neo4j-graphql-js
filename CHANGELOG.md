@@ -1,8 +1,12 @@
 # Changelog
 
+## v1.0.2
+
+- Improvements to InlineFragment handling. [#115](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/115) and [#114](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/114)
+
 ## v1.0.1
 
--[Initial support for InlineFragments - See #103](https://github.com/neo4j-graphql/neo4j-graphql-js/issues/103)
+- [Initial support for InlineFragments - See #103](https://github.com/neo4j-graphql/neo4j-graphql-js/issues/103)
 
 ## v1.0.0
 
