@@ -89,7 +89,7 @@ A package to make it easier to use GraphQL and [Neo4j](https://neo4j.com/) toget
 
 - Translate GraphQL queries to Cypher to simplify the process of writing GraphQL resolvers
 - Allow for custom logic by overriding of any resolver function
-- Work with `graphl-tools`, `graphql-js`, and `apollo-server`
+- Work with `graphql-tools`, `graphql-js`, and `apollo-server`
 - Support GraphQL servers that need to resolve data from multiple data services/databases
 - Expose the power of Cypher through GraphQL via the `@cypher` directive
 
