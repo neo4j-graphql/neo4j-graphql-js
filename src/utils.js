@@ -385,9 +385,9 @@ export const parameterizeRelationFields = (fields) => {
 export const getRelationTypeDirectiveArgs = (relationshipType) => {
   const directive = relationshipType.directives.find(e => e.name.value === "relation");
   return directive ? {
-    name: directive.arguments.find(e => e.name.value === "name").value.value, 
-    from: directive.arguments.find(e => e.name.value === "from").value.value, 
-    to: directive.arguments.find(e => e.name.value === "to").value.value 
+    name: directive.arguments.find(e => e.name.value === "name").value.value,
+    from: directive.arguments.find(e => e.name.value === "from").value.value,
+    to: directive.arguments.find(e => e.name.value === "to").value.value
   } : undefined;
 }
 
@@ -511,7 +511,7 @@ export const isNodeType = (astNode) => {
 }
 
 export const parseFieldSdl = (sdl) => {
-  return sdl 
+  return sdl
     ? parse(`type fieldToParse { ${sdl} }`).definitions[0].fields[0]
     : {};
 }
@@ -520,22 +520,22 @@ export const getRelationDirection = (relationDirective) => {
   let direction = {};
   try {
     direction = relationDirective.arguments.filter(a => a.name.value === 'direction')[0];
+    return direction.value.value;
   } catch (e) {
     // FIXME: should we ignore this error to define default behavior?
     throw new Error('No direction argument specified on @relation directive');
   }
-  return direction.value.value;
 }
 
 export const getRelationName = (relationDirective) => {
   let name = {};
   try {
     name = relationDirective.arguments.filter(a => a.name.value === 'name')[0];
+    return name.value.value;
   } catch (e) {
     // FIXME: should we ignore this error to define default behavior?
     throw new Error('No name argument specified on @relation directive');
   }
-  return name.value.value;
 }
 
 export const createRelationMap = (typeMap) => {
