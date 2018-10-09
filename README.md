@@ -1,6 +1,6 @@
 [![CI status](https://circleci.com/gh/neo4j-graphql/neo4j-graphql-js.svg?style=shield&circle-token=d01ffa752fbeb43585631c78370f7dd40528fbd3)](https://circleci.com/gh/neo4j-graphql/neo4j-graphql-js) [![npm version](https://badge.fury.io/js/neo4j-graphql-js.svg)](https://badge.fury.io/js/neo4j-graphql-js) [![Docs link](https://img.shields.io/badge/Docs-GRANDstack.io-brightgreen.svg)](http://grandstack.io/docs/neo4j-graphql-js.html)
 
-# neo4j-graphql-js
+# neo4j-graphql.js
 
 A GraphQL to Cypher query execution layer for Neo4j and JavaScript GraphQL implementations.
 
@@ -81,9 +81,9 @@ const resolvers = {
 };
 ```
 
-## What is `neo4j-graphql-js`
+## What is `neo4j-graphql.js`
 
-A package to make it easier to use GraphQL and [Neo4j](https://neo4j.com/) together. `neo4j-graphql-js` translates GraphQL queries to a single [Cypher](https://neo4j.com/developer/cypher/) query, eliminating the need to write queries in GraphQL resolvers and for batching queries. It also exposes the Cypher query language through GraphQL via the `@cypher` schema directive.
+A package to make it easier to use GraphQL and [Neo4j](https://neo4j.com/) together. `neo4j-graphql.js` translates GraphQL queries to a single [Cypher](https://neo4j.com/developer/cypher/) query, eliminating the need to write queries in GraphQL resolvers and for batching queries. It also exposes the Cypher query language through GraphQL via the `@cypher` schema directive.
 
 ### Goals
 
