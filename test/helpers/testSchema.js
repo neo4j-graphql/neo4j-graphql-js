@@ -45,7 +45,14 @@ type Actor implements Person {
 type User implements Person {
   userId: ID!
   name: String
-  rated: [Rated]
+  rated(rating: Int): [Rated]
+  friends(since: Int): [FriendOf]
+}
+
+type FriendOf {
+  from: User
+  since: Int
+  to: User
 }
 
 type Rated {
