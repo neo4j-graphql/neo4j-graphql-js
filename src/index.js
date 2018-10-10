@@ -493,7 +493,7 @@ export const augmentSchema = (schema) => {
 export const makeAugmentedSchema = ({
   schema,
   typeDefs,
-  resolvers,
+  resolvers = {},
   logger,
   allowUndefinedInResolve = false,
   resolverValidationOptions = {},
