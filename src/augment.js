@@ -84,18 +84,18 @@ const augmentQueryArguments = typeMap => {
 };
 
 export const augmentResolvers = (
-  queryResolvers,
-  mutationResolvers,
-  typeMap
+  augmentedTypeMap,
+  resolvers
 ) => {
-  let resolvers = {};
-  const queryMap = createOperationMap(typeMap.Query);
-  queryResolvers = possiblyAddResolvers(queryMap, queryResolvers);
+  let queryResolvers = resolvers && resolvers.Query ? resolvers.Query : {};
+  let mutationResolvers = resolvers && resolvers.Mutation ? resolvers.Mutation : {};
+  const generatedQueryMap = createOperationMap(augmentedTypeMap.Query);
+  queryResolvers = possiblyAddResolvers(generatedQueryMap, queryResolvers);
   if (Object.keys(queryResolvers).length > 0) {
     resolvers.Query = queryResolvers;
   }
-  const mutationMap = createOperationMap(typeMap.Mutation);
-  mutationResolvers = possiblyAddResolvers(mutationMap, mutationResolvers);
+  const generatedMutationMap = createOperationMap(augmentedTypeMap.Mutation);
+  mutationResolvers = possiblyAddResolvers(generatedMutationMap, mutationResolvers);
   if (Object.keys(mutationResolvers).length > 0) {
     resolvers.Mutation = mutationResolvers;
   }
@@ -103,8 +103,8 @@ export const augmentResolvers = (
   // must implement __resolveInfo for every Interface type
   // we use "FRAGMENT_TYPE" key to identify the Interface implementation
   // type at runtime, so grab this value
-  const interfaceTypes = Object.keys(typeMap).filter(
-    e => typeMap[e].kind === 'InterfaceTypeDefinition'
+  const interfaceTypes = Object.keys(augmentedTypeMap).filter(
+    e => augmentedTypeMap[e].kind === 'InterfaceTypeDefinition'
   );
   interfaceTypes.map(e => {
     resolvers[e] = {};
@@ -357,13 +357,19 @@ const possiblyAddRelationMutations = (
             relatedAstNode,
             true
           );
+          // TODO refactor the getRelationTypeDirectiveArgs stuff in here,
+          // TODO out of it, and make it use the above, already obtained values...
           typeMap = possiblyAddNonSymmetricRelationshipType(
             relatedAstNode,
             capitalizedFieldName,
             typeName,
-            typeMap
+            typeMap,
+            field
           );
+          // TODO probably put replaceRelationTypeValue above into possiblyAddNonSymmetricRelationshipType, after you refactor it
           fields[fieldIndex] = replaceRelationTypeValue(
+            fromName, 
+            toName,
             field,
             capitalizedFieldName,
             typeName
@@ -629,16 +635,19 @@ const possiblyAddTypeMutation = (namePrefix, astNode, typeMap, mutationMap) => {
   return typeMap;
 };
 
-const replaceRelationTypeValue = (field, capitalizedFieldName, typeName) => {
+const replaceRelationTypeValue = (fromName, toName, field, capitalizedFieldName, typeName) => {
   const isList = isListType(field);
+  // TODO persist a required inner type, and required list type
   let type = {
     kind: 'NamedType',
     name: {
       kind: 'Name',
-      value: `_${typeName}${capitalizedFieldName}`
+      value: `_${typeName}${capitalizedFieldName}${
+        fromName === toName ? 'Directions' : ''
+      }`
     }
   };
-  if (isList) {
+  if (isList && fromName !== toName) {
     type = {
       kind: 'ListType',
       type: type
@@ -652,7 +661,8 @@ const possiblyAddNonSymmetricRelationshipType = (
   relationAstNode,
   capitalizedFieldName,
   typeName,
-  typeMap
+  typeMap,
+  field
 ) => {
   const fieldTypeName = `_${typeName}${capitalizedFieldName}`;
   if (!typeMap[fieldTypeName]) {
@@ -660,8 +670,10 @@ const possiblyAddNonSymmetricRelationshipType = (
     let fieldValueName = '';
     let fromField = {};
     let toField = {};
-    let fromValue = '';
-    let toValue = '';
+    let _fromField = {};
+    let _toField = {};
+    let fromValue = undefined;
+    let toValue = undefined;
     let fields = relationAstNode.fields;
     const relationTypeDirective = getRelationTypeDirectiveArgs(relationAstNode);
     if (relationTypeDirective) {
@@ -683,51 +695,51 @@ const possiblyAddNonSymmetricRelationshipType = (
           return acc;
         }, [])
         .join('\n');
+        if(fromValue && fromValue === toValue) {
+          // If field is a list type, then make .from and .to list types
+          const fieldIsList = isListType(field);
 
-      typeMap[fieldTypeName] = parse(`
-        type ${fieldTypeName} ${print(relationAstNode.directives)} {
-          ${relationPropertyFields}
-          ${getRelatedTypeSelectionFields(
-            typeName,
-            fromValue,
-            fromField,
-            toValue,
-            toField
-          )}
+          typeMap[`${fieldTypeName}Directions`] = parse(`
+            type ${fieldTypeName}Directions ${print(relationAstNode.directives)} {
+              from${getFieldArgumentsFromAst(
+                field,
+                typeName,
+              )}: ${fieldIsList ? '[' : ''}${fieldTypeName}${fieldIsList ? ']' : ''}
+              to${getFieldArgumentsFromAst(
+                field,
+                typeName,
+              )}: ${fieldIsList ? '[' : ''}${fieldTypeName}${fieldIsList ? ']' : ''}
+            }`);
+          
+          typeMap[fieldTypeName] = parse(`
+            type ${fieldTypeName} ${print(relationAstNode.directives)} {
+              ${relationPropertyFields}
+              ${fromValue}: ${fromValue}
+            }
+          `);
+
+          // remove arguments on field
+          field.arguments = [];
         }
-      `);
-    }
+        else {
+          // Non-reflexive case, (User)-[RATED]->(Movie)
+          typeMap[fieldTypeName] = parse(`
+            type ${fieldTypeName} ${print(relationAstNode.directives)} {
+              ${relationPropertyFields}
+              ${
+                typeName === toValue
+                ? // If this is the from, the allow selecting the to
+                  `${fromValue}: ${fromValue}`
+                : // else this is the to, so allow selecting the from
+                  typeName === fromValue
+                  ? `${toValue}: ${toValue}`
+                  : ''}
+              }
+          `);
+        }
+      }
   }
   return typeMap;
-};
-
-const getRelatedTypeSelectionFields = (
-  typeName,
-  fromValue,
-  fromField,
-  toValue,
-  toField
-) => {
-  // TODO identify and handle ambiguity of relation type symmetry, Person FRIEND_OF Person, etc.
-  // if(typeName === fromValue && typeName === toValue) {
-  //   return `
-  //     from${fromField.arguments.length > 0
-  //       ? `(${getFieldArgumentsFromAst(fromField)})`
-  //       : ''}: ${fromValue}
-  //     to${toField.arguments.length > 0
-  //         ? `(${getFieldArgumentsFromAst(toField)})`
-  //         : ''}: ${toValue}`;
-  // }
-  return typeName === fromValue
-    ? // If this is the from, the allow selecting the to
-      `${toValue}(${getFieldArgumentsFromAst(toField, toValue)}): ${toValue}`
-    : // else this is the to, so allow selecting the from
-      typeName === toValue
-      ? `${fromValue}(${getFieldArgumentsFromAst(
-          fromField,
-          fromValue
-        )}): ${fromValue}`
-      : '';
 };
 
 const addOrReplaceNodeIdField = (astNode, valueType) => {
