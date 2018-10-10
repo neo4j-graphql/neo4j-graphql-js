@@ -102,6 +102,11 @@ export function augmentedSchemaCypherTestRunner(
   //t.plan(1);
   const resolvers = {
     Query: {
+      User(object, params, ctx, resolveInfo) {
+        let [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
+        t.is(query, expectedCypherQuery);
+        t.deepEqual(queryParams, expectedCypherParams);
+      },
       Movie(object, params, ctx, resolveInfo) {
         let [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
         t.is(query, expectedCypherQuery);
@@ -145,9 +150,27 @@ export function augmentedSchemaCypherTestRunner(
         t.is(query, expectedCypherQuery);
         t.deepEqual(queryParams, expectedCypherParams);
         t.end();
+      },
+      AddUserRated(object, params, ctx, resolveInfo) {
+        const [query, queryParams] = cypherMutation(params, ctx, resolveInfo);
+        t.is(query, expectedCypherQuery);
+        t.deepEqual(queryParams, expectedCypherParams);
+        t.end();
+      },
+      AddUserFriends(object, params, ctx, resolveInfo) {
+        const [query, queryParams] = cypherMutation(params, ctx, resolveInfo);
+        t.is(query, expectedCypherQuery);
+        t.deepEqual(queryParams, expectedCypherParams);
+        t.end();
+      },
+      RemoveUserFriends(object, params, ctx, resolveInfo) {
+        const [query, queryParams] = cypherMutation(params, ctx, resolveInfo);
+        t.is(query, expectedCypherQuery);
+        t.deepEqual(queryParams, expectedCypherParams);
+        t.end();
       }
     }
-  };
+  }
 
   const augmentedSchema = makeAugmentedSchema({
     typeDefs: testSchema,
@@ -159,6 +182,9 @@ export function augmentedSchemaCypherTestRunner(
 
   return graphql(augmentedSchema, graphqlQuery, null, null, graphqlParams);
 }
+
+
+
 
 export function augmentedSchema() {
   const schema = makeExecutableSchema({

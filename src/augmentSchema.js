@@ -8,9 +8,9 @@ import {
   augmentResolvers
 } from "./augment";
 
-export const augmentedSchema = (typeMap, queryResolvers, mutationResolvers) => {
+export const augmentedSchema = (typeMap, resolvers) => {
   const augmentedTypeMap = augmentTypeMap(typeMap);
-  const augmentedResolvers = augmentResolvers(queryResolvers, mutationResolvers, augmentedTypeMap);
+  const augmentedResolvers = augmentResolvers(augmentedTypeMap, resolvers);
   // TODO extract and persist logger and schemaDirectives, at least
   return makeExecutableSchema({
     typeDefs: printTypeMap(augmentedTypeMap),
@@ -34,9 +34,7 @@ export const makeAugmentedExecutableSchema = ({
 }) => {
   const typeMap = extractTypeMapFromTypeDefs(typeDefs);
   const augmentedTypeMap = augmentTypeMap(typeMap);
-  const queryResolvers = resolvers && resolvers.Query ? resolvers.Query : {};
-  const mutationResolvers = resolvers && resolvers.Mutation ? resolvers.Mutation : {};
-  const augmentedResolvers = augmentResolvers(queryResolvers, mutationResolvers, augmentedTypeMap);
+  const augmentedResolvers = augmentResolvers(augmentedTypeMap, resolvers);
   resolverValidationOptions.requireResolversForResolveType = false;
   return makeExecutableSchema({
     typeDefs: printTypeMap(augmentedTypeMap),
@@ -73,15 +71,46 @@ export const extractTypeMapFromSchema = (schema) => {
   }, {});
 }
 
-export const extractResolvers = (operationType) => {
-  const operationTypeFields = operationType ? operationType.getFields() : {};
-  const operations = Object.keys(operationTypeFields);
-  let resolver = {};
-  return operations.length > 0
-    ? operations.reduce((acc, t) => {
-        resolver = operationTypeFields[t].resolve;
-        if(resolver !== undefined) acc[t] = resolver;
+export const extractResolversFromSchema = (schema) => {
+  const _typeMap = schema && schema._typeMap ? schema._typeMap : {};
+  const types = Object.keys(_typeMap);
+  let type = {};
+  let schemaTypeResolvers = {};
+  return types.reduce( (acc, t) => {
+    // prevent extraction from schema introspection system keys
+    if(t !== "__Schema"
+    && t !== "__Type" 
+    && t !== "__TypeKind"
+    && t !== "__Field" 
+    && t !== "__InputValue"
+    && t !== "__EnumValue"
+    && t !== "__Directive") {
+      type = _typeMap[t];
+      // resolvers are stored on the field level at a .resolve key
+      schemaTypeResolvers = extractFieldResolversFromSchemaType(type);
+      // do not add unless there exists at least one field resolver for type
+      if(schemaTypeResolvers) {
+        acc[t] = schemaTypeResolvers;
+      }
+    }
+    return acc;
+  }, {})
+}
+
+const extractFieldResolversFromSchemaType = (type) => {
+  const fields = type._fields;
+  const fieldKeys = fields ? Object.keys(fields) : [];
+  const fieldResolvers = fieldKeys.length > 0 
+    ? fieldKeys.reduce( (acc, t) => {
+        // do not add entry for this field unless it has resolver
+        if(fields[t].resolve !== undefined) {
+          acc[t] = fields[t].resolve;
+        }
         return acc;
-      }, {})
-    : {};
+      }, {}) 
+    : undefined;
+  // do not return value unless there exists at least 1 field resolver
+  return fieldResolvers && Object.keys(fieldResolvers).length > 0 
+    ? fieldResolvers
+    : undefined;
 }

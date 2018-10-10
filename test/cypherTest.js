@@ -668,7 +668,7 @@ test('Add relationship mutation', t => {
       MATCH (movie_from:Movie {movieId: $from.movieId})
       MATCH (genre_to:Genre {name: $to.name})
       CREATE (movie_from)-[in_genre_relation:IN_GENRE]->(genre_to)
-      RETURN in_genre_relation { from: head([(:Genre)<-[in_genre_relation]-(in_genre_from:Movie) | in_genre_from { .movieId ,genres: [(in_genre_from)-[:IN_GENRE]->(in_genre_from_genres:Genre) | in_genre_from_genres {_id: ID(in_genre_from_genres), .name }] }]) ,to: head([(:Movie)-[in_genre_relation]->(in_genre_to:Genre) | in_genre_to { .name }])  } AS _AddMovieGenresPayload;
+      RETURN in_genre_relation { from: movie_from { .movieId ,genres: [(movie_from)-[:IN_GENRE]->(movie_from_genres:Genre) | movie_from_genres {_id: ID(movie_from_genres), .name }] } ,to: genre_to { .name }  } AS _AddMovieGenresPayload;
     `;
 
   t.plan(1);
@@ -707,7 +707,7 @@ test('Add relationship mutation with GraphQL variables', t => {
       MATCH (movie_from:Movie {movieId: $from.movieId})
       MATCH (genre_to:Genre {name: $to.name})
       CREATE (movie_from)-[in_genre_relation:IN_GENRE]->(genre_to)
-      RETURN in_genre_relation { from: head([(:Genre)<-[in_genre_relation]-(in_genre_from:Movie) | in_genre_from { .movieId ,genres: [(in_genre_from)-[:IN_GENRE]->(in_genre_from_genres:Genre) | in_genre_from_genres {_id: ID(in_genre_from_genres), .name }] }]) ,to: head([(:Movie)-[in_genre_relation]->(in_genre_to:Genre) | in_genre_to { .name }])  } AS _AddMovieGenresPayload;
+      RETURN in_genre_relation { from: movie_from { .movieId ,genres: [(movie_from)-[:IN_GENRE]->(movie_from_genres:Genre) | movie_from_genres {_id: ID(movie_from_genres), .name }] } ,to: genre_to { .name }  } AS _AddMovieGenresPayload;
     `;
 
   t.plan(1);
@@ -717,6 +717,166 @@ test('Add relationship mutation with GraphQL variables', t => {
     {
       from: { movieId: '123' },
       to: { name: 'Action' },
+      first: -1,
+      offset: 0
+    },
+    expectedCypherQuery
+  );
+});
+
+test('Add relationship mutation with relationship property', t => {
+  const graphQLQuery = `mutation someMutation {
+    AddUserRated(
+      from: {
+        userId: "123"
+      },
+      to: {
+        movieId: "456"
+      },
+      data: {
+        rating: 5
+      }
+    ) {
+      from {
+        _id
+        userId
+        name
+        rated {
+          rating
+          Movie {
+            _id
+            movieId
+            title
+          }
+        }
+      }
+      to {
+        _id
+        movieId
+        title 
+        ratings {
+          rating
+          User {
+            _id
+            userId
+            name
+          }
+        }
+      }
+      rating
+    }
+  }`,
+    expectedCypherQuery = `
+      MATCH (user_from:User {userId: $from.userId})
+      MATCH (movie_to:Movie {movieId: $to.movieId})
+      CREATE (user_from)-[rated_relation:RATED {rating:$data.rating}]->(movie_to)
+      RETURN rated_relation { from: user_from {_id: ID(user_from), .userId , .name ,rated: [(user_from)-[user_from_rated_relation:RATED]->(:Movie) | user_from_rated_relation { .rating ,Movie: head([(:User)-[user_from_rated_relation]->(user_from_rated_Movie:Movie) | user_from_rated_Movie {_id: ID(user_from_rated_Movie), .movieId , .title }]) }] } ,to: movie_to {_id: ID(movie_to), .movieId , .title ,ratings: [(movie_to)<-[movie_to_ratings_relation:RATED]-(:User) | movie_to_ratings_relation { .rating ,User: head([(:Movie)<-[movie_to_ratings_relation]-(movie_to_ratings_User:User) | movie_to_ratings_User {_id: ID(movie_to_ratings_User), .userId , .name }]) }] } , .rating  } AS _AddUserRatedPayload;
+    `;
+
+  t.plan(1);
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {
+      from: { userId: '123' },
+      to: { movieId: '456' },
+      data: { rating: 5 },
+      first: -1,
+      offset: 0
+    },
+    expectedCypherQuery
+  );
+});
+
+test('Add relationship mutation with relationship property (reflexive)', t => {
+  const graphQLQuery = `mutation {
+    AddUserFriends(
+      from: {
+        userId: "123"
+      },
+      to: {
+        userId: "456"
+      },
+      data: {
+        since: 7
+      }
+    ) {
+      from {
+        _id
+        userId
+        name
+        friends {
+          from {
+            since
+            User {
+              _id
+              name
+              friends {
+                from {
+                  since
+                  User {
+                    _id
+                    name
+                  }
+                }
+                to {
+                  since
+                  User {
+                    _id
+                    name
+                  }
+                }
+              }
+            }
+          }
+          to {
+            since
+            User {
+              _id
+              name
+            }
+          }
+        }
+      }
+      to {
+        _id
+        name
+        friends {
+          from {
+            since
+            User {
+              _id
+              name
+            }
+          }
+          to {
+            since
+            User {
+              _id
+              name
+            }
+          }
+        }
+      }
+      since
+    }
+  }
+  `,
+    expectedCypherQuery = `
+      MATCH (user_from:User {userId: $from.userId})
+      MATCH (user_to:User {userId: $to.userId})
+      CREATE (user_from)-[friend_of_relation:FRIEND_OF {since:$data.since}]->(user_to)
+      RETURN friend_of_relation { from: user_from {_id: ID(user_from), .userId , .name ,friends: {from: [(user_from)<-[user_from_from_relation:FRIEND_OF]-(user_from_from:User) | user_from_from_relation { .since ,User: user_from_from {_id: ID(user_from_from), .name ,friends: {from: [(user_from_from)<-[user_from_from_from_relation:FRIEND_OF]-(user_from_from_from:User) | user_from_from_from_relation { .since ,User: user_from_from_from {_id: ID(user_from_from_from), .name } }] ,to: [(user_from_from)-[user_from_from_to_relation:FRIEND_OF]->(user_from_from_to:User) | user_from_from_to_relation { .since ,User: user_from_from_to {_id: ID(user_from_from_to), .name } }] } } }] ,to: [(user_from)-[user_from_to_relation:FRIEND_OF]->(user_from_to:User) | user_from_to_relation { .since ,User: user_from_to {_id: ID(user_from_to), .name } }] } } ,to: user_to {_id: ID(user_to), .name ,friends: {from: [(user_to)<-[user_to_from_relation:FRIEND_OF]-(user_to_from:User) | user_to_from_relation { .since ,User: user_to_from {_id: ID(user_to_from), .name } }] ,to: [(user_to)-[user_to_to_relation:FRIEND_OF]->(user_to_to:User) | user_to_to_relation { .since ,User: user_to_to {_id: ID(user_to_to), .name } }] } } , .since  } AS _AddUserFriendsPayload;
+    `;
+
+  t.plan(1);
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {
+      from: { userId: '123' },
+      to: { userId: '456' },
+      data: { since: 7 },
       first: -1,
       offset: 0
     },
@@ -735,6 +895,7 @@ test('Remove relationship mutation', t => {
         title
       }
       to {
+        _id
         name
       }
     }
@@ -744,8 +905,8 @@ test('Remove relationship mutation', t => {
       MATCH (genre_to:Genre {name: $to.name})
       OPTIONAL MATCH (movie_from)-[movie_fromgenre_to:IN_GENRE]->(genre_to)
       DELETE movie_fromgenre_to
-      WITH COUNT(*) AS scope, movie_from AS _movie_from_from, genre_to AS _genre_to_to
-      RETURN {from: head([_movie_from_from {_id: ID(_movie_from_from), .title }]) ,to: head([_genre_to_to { .name }]) } AS _RemoveMovieGenresPayload;
+      WITH COUNT(*) AS scope, movie_from AS _movie_from, genre_to AS _genre_to
+      RETURN {from: _movie_from {_id: ID(_movie_from), .title } ,to: _genre_to {_id: ID(_genre_to), .name } } AS _RemoveMovieGenresPayload;
     `;
 
   t.plan(1);
@@ -755,6 +916,82 @@ test('Remove relationship mutation', t => {
     {
       from: { movieId: '123' },
       to: { name: 'Action' },
+      first: -1,
+      offset: 0
+    },
+    expectedCypherQuery
+  );
+});
+
+test('Remove relationship mutation (reflexive)', t => {
+  const graphQLQuery = `mutation {
+    RemoveUserFriends(
+      from: {
+        userId: "123"
+      },
+      to: {
+        userId: "456"
+      },
+    ) {
+      from {
+        _id
+        name
+        friends {
+          from {
+            since
+            User {
+              _id
+              name
+            }
+          }
+          to {
+            since
+            User {
+              _id
+              name
+            }
+          }
+        }
+      }
+      to {
+        _id
+        name
+        friends {
+          from {
+            since
+            User {
+              _id
+              name
+            }
+          }
+          to {
+            since
+            User {
+              _id
+              name
+            }
+          }
+        }      
+      }
+    }
+  }
+  `,
+    expectedCypherQuery = `
+      MATCH (user_from:User {userId: $from.userId})
+      MATCH (user_to:User {userId: $to.userId})
+      OPTIONAL MATCH (user_from)-[user_fromuser_to:FRIEND_OF]->(user_to)
+      DELETE user_fromuser_to
+      WITH COUNT(*) AS scope, user_from AS _user_from, user_to AS _user_to
+      RETURN {from: _user_from {_id: ID(_user_from), .name ,friends: {from: [(_user_from)<-[_user_from_from_relation:FRIEND_OF]-(_user_from_from:User) | _user_from_from_relation { .since ,User: _user_from_from {_id: ID(_user_from_from), .name } }] ,to: [(_user_from)-[_user_from_to_relation:FRIEND_OF]->(_user_from_to:User) | _user_from_to_relation { .since ,User: _user_from_to {_id: ID(_user_from_to), .name } }] } } ,to: _user_to {_id: ID(_user_to), .name ,friends: {from: [(_user_to)<-[_user_to_from_relation:FRIEND_OF]-(_user_to_from:User) | _user_to_from_relation { .since ,User: _user_to_from {_id: ID(_user_to_from), .name } }] ,to: [(_user_to)-[_user_to_to_relation:FRIEND_OF]->(_user_to_to:User) | _user_to_to_relation { .since ,User: _user_to_to {_id: ID(_user_to_to), .name } }] } } } AS _RemoveUserFriendsPayload;
+    `;
+
+  t.plan(1);
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {
+      from: { userId: '123' },
+      to: { userId: '456' },
       first: -1,
       offset: 0
     },
@@ -946,46 +1183,6 @@ query getMovie {
   ]);
 });
 
-// // test augmented schema:
-// test.cb('Add relationship mutation on augmented schema',t => {
-//   const graphQLQuery = `
-//     mutation {
-//   AddMovieGenre(movieId: "123", name: "Boring") {
-//     title
-//     genres {
-//       name
-//     }
-//   }
-// }
-//   `,
-//     expectedCypherQuery = `MATCH (movie:Movie {movieId: $movieId})
-//        MATCH (genre:Genre {name: $name})
-//       CREATE (movie)-[:IN_GENRE]->(genre)
-//       RETURN movie { .title ,genres: [(movie)-[:IN_GENRE]->(movie_genres:Genre) | movie_genres { .name }] } AS movie;`;
-//
-//   t.plan (1);
-//   // FIXME: not testing Cypher params
-//   // { movieId: '123', name: 'Boring' }
-//   augmentedSchemaCypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery);
-//
-// });
-//
-// test.cb('Create node mutation on augmented schema', t=> {
-//   const graphQLQuery = `
-//   mutation {
-//   CreateGenre(name: "Boring") {
-//     name
-//   }
-// }`,
-//     expectedCypherQuery = `CREATE (genre:Genre) SET genre = $params RETURN genre { .name } AS genre`;
-//   t.plan(2);
-//   // FIXME: not testing Cypher params
-//   // { params: { name: 'Boring' } }
-//
-//   augmentedSchemaCypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery);
-//
-// });
-
 test('nested fragments', t => {
   const graphQLQuery = `
     query movieItems {
@@ -1126,6 +1323,204 @@ test('query for relationship properties', t => {
   );
 });
 
+test('query reflexive relation nested in non-reflexive relation', t => {
+  const graphQLQuery = `query {
+    Movie {
+      movieId
+      title
+      ratings {
+        rating
+        User {
+          userId
+          name
+          friends {
+            from {
+              since
+              User {
+                name
+                friends {
+                  from {
+                    since
+                    User {
+                      name
+                    }
+                  }
+                  to {
+                    since
+                    User {
+                      name
+                    }
+                  }
+                }
+              }
+            }
+            to {
+              since
+              User {
+                name
+                friends {
+                  from {
+                    since
+                    User {
+                      name
+                    }
+                  }
+                  to {
+                    since
+                    User {
+                      name
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }`,
+    expectedCypherQuery = `MATCH (movie:Movie {}) RETURN movie { .movieId , .title ,ratings: [(movie)<-[movie_ratings_relation:RATED]-(:User) | movie_ratings_relation { .rating ,User: head([(:Movie)<-[movie_ratings_relation]-(movie_ratings_User:User) | movie_ratings_User { .userId , .name ,friends: {from: [(movie_ratings_User)<-[movie_ratings_User_from_relation:FRIEND_OF]-(movie_ratings_User_from:User) | movie_ratings_User_from_relation { .since ,User: movie_ratings_User_from { .name ,friends: {from: [(movie_ratings_User_from)<-[movie_ratings_User_from_from_relation:FRIEND_OF]-(movie_ratings_User_from_from:User) | movie_ratings_User_from_from_relation { .since ,User: movie_ratings_User_from_from { .name } }] ,to: [(movie_ratings_User_from)-[movie_ratings_User_from_to_relation:FRIEND_OF]->(movie_ratings_User_from_to:User) | movie_ratings_User_from_to_relation { .since ,User: movie_ratings_User_from_to { .name } }] } } }] ,to: [(movie_ratings_User)-[movie_ratings_User_to_relation:FRIEND_OF]->(movie_ratings_User_to:User) | movie_ratings_User_to_relation { .since ,User: movie_ratings_User_to { .name ,friends: {from: [(movie_ratings_User_to)<-[movie_ratings_User_to_from_relation:FRIEND_OF]-(movie_ratings_User_to_from:User) | movie_ratings_User_to_from_relation { .since ,User: movie_ratings_User_to_from { .name } }] ,to: [(movie_ratings_User_to)-[movie_ratings_User_to_to_relation:FRIEND_OF]->(movie_ratings_User_to_to:User) | movie_ratings_User_to_to_relation { .since ,User: movie_ratings_User_to_to { .name } }] } } }] } }]) }] } AS movie SKIP $offset`;
+
+  t.plan(1);
+
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {},
+    expectedCypherQuery,
+    {}
+  );
+});
+
+test('query non-reflexive relation nested in reflexive relation', t => {
+  const graphQLQuery = `query {
+    User {
+      _id
+      name
+      friends {
+        from {
+          since
+          User {
+            _id
+            name
+            rated {
+              rating
+              Movie {
+                _id
+                ratings {
+                  rating 
+                  User {
+                    _id
+                    friends {
+                      from {
+                        since
+                        User {
+                          _id
+                        }
+                      }
+                      to {
+                        since 
+                        User {
+                          _id
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        to {
+          since
+          User {
+            _id
+            name
+            rated {
+              rating
+              Movie {
+                _id
+              }
+            }
+          }
+        }
+      }
+    }
+  }`,
+    expectedCypherQuery = `MATCH (user:User {}) RETURN user {_id: ID(user), .name ,friends: {from: [(user)<-[user_from_relation:FRIEND_OF]-(user_from:User) | user_from_relation { .since ,User: user_from {_id: ID(user_from), .name ,rated: [(user_from)-[user_from_rated_relation:RATED]->(:Movie) | user_from_rated_relation { .rating ,Movie: head([(:User)-[user_from_rated_relation]->(user_from_rated_Movie:Movie) | user_from_rated_Movie {_id: ID(user_from_rated_Movie),ratings: [(user_from_rated_Movie)<-[user_from_rated_Movie_ratings_relation:RATED]-(:User) | user_from_rated_Movie_ratings_relation { .rating ,User: head([(:Movie)<-[user_from_rated_Movie_ratings_relation]-(user_from_rated_Movie_ratings_User:User) | user_from_rated_Movie_ratings_User {_id: ID(user_from_rated_Movie_ratings_User),friends: {from: [(user_from_rated_Movie_ratings_User)<-[user_from_rated_Movie_ratings_User_from_relation:FRIEND_OF]-(user_from_rated_Movie_ratings_User_from:User) | user_from_rated_Movie_ratings_User_from_relation { .since ,User: user_from_rated_Movie_ratings_User_from {_id: ID(user_from_rated_Movie_ratings_User_from)} }] ,to: [(user_from_rated_Movie_ratings_User)-[user_from_rated_Movie_ratings_User_to_relation:FRIEND_OF]->(user_from_rated_Movie_ratings_User_to:User) | user_from_rated_Movie_ratings_User_to_relation { .since ,User: user_from_rated_Movie_ratings_User_to {_id: ID(user_from_rated_Movie_ratings_User_to)} }] } }]) }] }]) }] } }] ,to: [(user)-[user_to_relation:FRIEND_OF]->(user_to:User) | user_to_relation { .since ,User: user_to {_id: ID(user_to), .name ,rated: [(user_to)-[user_to_rated_relation:RATED]->(:Movie) | user_to_rated_relation { .rating ,Movie: head([(:User)-[user_to_rated_relation]->(user_to_rated_Movie:Movie) | user_to_rated_Movie {_id: ID(user_to_rated_Movie)}]) }] } }] } } AS user SKIP $offset`;
+
+  t.plan(1);
+
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {},
+    expectedCypherQuery,
+    {}
+  );
+});
+
+test('query relation type with argument', t => {
+  const graphQLQuery = `query {
+    User {
+      _id
+      name
+      rated(rating: 5) {
+        rating
+        Movie {
+          title
+        }
+      }
+    }
+  }`,
+    expectedCypherQuery = `MATCH (user:User {}) RETURN user {_id: ID(user), .name ,rated: [(user)-[user_rated_relation:RATED{rating:$1_rating}]->(:Movie) | user_rated_relation { .rating ,Movie: head([(:User)-[user_rated_relation]->(user_rated_Movie:Movie) | user_rated_Movie { .title }]) }] } AS user SKIP $offset`;
+
+  t.plan(1);
+
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {},
+    expectedCypherQuery,
+    {}
+  );
+});
+
+test('query reflexive relation type with arguments', t => {
+  const graphQLQuery = `query {
+    User {
+      userId
+      name
+      friends {
+        from(since: 3) {
+          since
+          User {
+            name
+          }
+        }
+        to(since: 5) {
+          since
+          User {
+            name
+          }
+        }
+      }
+    }
+  }
+  `,
+    expectedCypherQuery = `MATCH (user:User {}) RETURN user { .userId , .name ,friends: {from: [(user)<-[user_from_relation:FRIEND_OF{since:$1_since}]-(user_from:User) | user_from_relation { .since ,User: user_from { .name } }] ,to: [(user)-[user_to_relation:FRIEND_OF{since:$3_since}]->(user_to:User) | user_to_relation { .since ,User: user_to { .name } }] } } AS user SKIP $offset`;
+
+  t.plan(1);
+
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {},
+    expectedCypherQuery,
+    {}
+  );
+});
+
 test('query using inline fragment', t => {
   const graphQLQuery = `
   {
@@ -1155,3 +1550,4 @@ test('query using inline fragment', t => {
     {}
   );
 });
+

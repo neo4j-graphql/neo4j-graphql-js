@@ -49,6 +49,12 @@ type _AddMovieRatingsPayload {
   rating: Int
 }
 
+type _AddUserFriendsPayload {
+  from: User
+  to: User
+  since: Int
+}
+
 type _AddUserRatedPayload {
   from: User
   to: Movie
@@ -62,6 +68,10 @@ input _BookInput {
 enum _BookOrdering {
   _id_asc
   _id_desc
+}
+
+input _FriendOfInput {
+  since: Int
 }
 
 input _GenreInput {
@@ -84,7 +94,7 @@ enum _MovieOrdering {
 
 type _MovieRatings {
   rating: Int
-  User(first: Int, offset: Int, orderBy: _UserOrdering): User
+  User: User
 }
 
 input _RatedInput {
@@ -121,6 +131,11 @@ type _RemoveMovieRatingsPayload {
   to: Movie
 }
 
+type _RemoveUserFriendsPayload {
+  from: User
+  to: User
+}
+
 type _RemoveUserRatedPayload {
   from: User
   to: Movie
@@ -135,6 +150,16 @@ enum _StateOrdering {
   name_desc
   _id_asc
   _id_desc
+}
+
+type _UserFriends {
+  since: Int
+  User: User
+}
+
+type _UserFriendsDirections {
+  from(since: Int): [_UserFriends]
+  to(since: Int): [_UserFriends]
 }
 
 input _UserInput {
@@ -152,7 +177,7 @@ enum _UserOrdering {
 
 type _UserRated {
   rating: Int
-  Movie(first: Int, offset: Int, orderBy: _MovieOrdering): Movie
+  Movie: Movie
 }
 
 type Actor implements Person {
@@ -174,6 +199,12 @@ enum BookGenre {
 }
 
 scalar DateTime
+
+type FriendOf {
+  from: User
+  since: Int
+  to: User
+}
 
 type Genre {
   _id: Int
@@ -232,6 +263,8 @@ type Mutation {
   DeleteUser(userId: ID!): User
   AddUserRated(from: _UserInput!, to: _MovieInput!, data: _RatedInput!): _AddUserRatedPayload
   RemoveUserRated(from: _UserInput!, to: _MovieInput!): _RemoveUserRatedPayload
+  AddUserFriends(from: _UserInput!, to: _UserInput!, data: _FriendOfInput!): _AddUserFriendsPayload
+  RemoveUserFriends(from: _UserInput!, to: _UserInput!): _RemoveUserFriendsPayload
   CreateBook(genre: BookGenre): Book
   DeleteBook(genre: BookGenre!): Book
 }
@@ -256,9 +289,9 @@ type Query {
 }
 
 type Rated {
-  from(first: Int, offset: Int, orderBy: _UserOrdering): User
+  from: User
   rating: Int
-  to(first: Int, offset: Int, orderBy: _MovieOrdering): Movie
+  to: Movie
 }
 
 type State {
@@ -269,7 +302,8 @@ type State {
 type User implements Person {
   userId: ID!
   name: String
-  rated: [_UserRated]
+  rated(rating: Int): [_UserRated]
+  friends: _UserFriendsDirections
   _id: Int
 }
 `;

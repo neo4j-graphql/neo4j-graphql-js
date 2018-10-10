@@ -6,12 +6,19 @@ import {
   innerFilterParams,
   getFilterParams,
   innerType,
-  isArrayType,
   isGraphqlScalarType,
   extractSelections,
   relationDirective,
-  getRelationTypeDirectiveArgs
+  getRelationTypeDirectiveArgs,
+  decideNestedVariableName,
 } from './utils';
+
+import {
+  customCypherField,
+  relationFieldOnNodeType,
+  relationTypeFieldOnNodeType,
+  nodeTypeFieldOnRelationType,
+} from './translate';
 
 export function buildCypherSelection({
   initial,
@@ -20,7 +27,7 @@ export function buildCypherSelection({
   schemaType,
   resolveInfo,
   paramIndex = 1,
-  rootNodes
+  rootVariableNames,
 }) {
   if (!selections.length) {
     return [initial, {}];
@@ -44,7 +51,7 @@ export function buildCypherSelection({
     selections: tailSelections,
     variableName,
     schemaType,
-    resolveInfo
+    resolveInfo,
   };
 
   const recurse = args => {
@@ -69,7 +76,7 @@ export function buildCypherSelection({
       selections: fragmentSelections,
       variableName,
       schemaType,
-      resolveInfo
+      resolveInfo,
     };
     return recurse({
       initial: fragmentSelections.length
@@ -157,9 +164,23 @@ export function buildCypherSelection({
       ...tailParams
     });
   }
-
   // We have a graphql object type
-  const nestedVariable = variableName + '_' + fieldName;
+  const innerSchemaTypeAstNode = typeMap[innerSchemaType].astNode;
+  const innerSchemaTypeRelation = getRelationTypeDirectiveArgs(innerSchemaTypeAstNode);
+  const schemaTypeRelation = getRelationTypeDirectiveArgs(schemaTypeAstNode);
+  const { name: relType, direction: relDirection } = relationDirective(
+    schemaType,
+    fieldName
+  );
+
+  const nestedVariable = decideNestedVariableName({
+    schemaTypeRelation,
+    innerSchemaTypeRelation, 
+    variableName,
+    fieldName,
+    rootVariableNames
+  });
+  
   const skipLimit = computeSkipLimit(headSelection, resolveInfo.variableValues);
 
   const subSelections = extractSelections(
@@ -172,147 +193,64 @@ export function buildCypherSelection({
     selections: subSelections,
     variableName: nestedVariable,
     schemaType: innerSchemaType,
-    resolveInfo
+    resolveInfo,
   });
 
   let selection;
-
-  // Object type field with cypher directive
+  const queryParams = innerFilterParams(filterParams);
+  const fieldInfo = {
+    initial,
+    fieldName, 
+    fieldType, 
+    variableName, 
+    nestedVariable, 
+    queryParams, 
+    subSelection, 
+    skipLimit, 
+    commaIfTail,
+    tailParams,
+  };
   if (customCypher) {
-    if (getRelationTypeDirectiveArgs(schemaTypeAstNode)) {
-      variableName = `${variableName}_relation`;
-    }
-    // similar: [ x IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie}, true) |x {.title}][1..2])
-    const fieldIsList = !!fieldType.ofType;
-    selection = recurse({
-      initial: `${initial}${fieldName}: ${
-        fieldIsList ? '' : 'head('
-      }[ ${nestedVariable} IN apoc.cypher.runFirstColumn("${customCypher}", ${cypherDirectiveArgs(
-        variableName,
-        headSelection,
-        schemaType,
-        resolveInfo
-      )}, true) | ${nestedVariable} {${subSelection[0]}}]${
-        fieldIsList ? '' : ')'
-      }${skipLimit} ${commaIfTail}`,
-      ...tailParams
-    });
-  } else {
-    // graphql object type, no custom cypher
-    const queryParams = innerFilterParams(filterParams);
-    const relationDirectiveData = getRelationTypeDirectiveArgs(
-      schemaTypeAstNode
-    );
-    if (relationDirectiveData) {
-      const fromTypeName = relationDirectiveData.from;
-      const toTypeName = relationDirectiveData.to;
-      const isFromField = fieldName === fromTypeName || fieldName === 'from';
-      const isToField = fieldName === toTypeName || fieldName === 'to';
-      if (isFromField || isToField) {
-        if (rootNodes && (fieldName === 'from' || fieldName === 'to')) {
-          // Branch currenlty needed to be explicit about handling the .to and .from
-          // keys involved with the relation removal mutation, using rootNodes
-          selection = recurse({
-            initial: `${initial}${fieldName}: ${
-              !isArrayType(fieldType) ? 'head(' : ''
-            }[${
-              isFromField ? `${rootNodes.from}_from` : `${rootNodes.to}_to`
-            } {${subSelection[0]}}]${
-              !isArrayType(fieldType) ? ')' : ''
-            }${skipLimit} ${commaIfTail}`,
-            ...tailParams,
-            rootNodes,
-            variableName: isFromField ? rootNodes.to : rootNodes.from
-          });
-        } else {
-          selection = recurse({
-            initial: `${initial}${fieldName}: ${
-              !isArrayType(fieldType) ? 'head(' : ''
-            }[(:${
-              fieldName === fromTypeName || fieldName === 'from'
-                ? toTypeName
-                : fromTypeName
-            })${
-              fieldName === fromTypeName || fieldName === 'from' ? '<' : ''
-            }-[${variableName}_relation]-${
-              fieldName === toTypeName || fieldName === 'to' ? '>' : ''
-            }(${nestedVariable}:${
-              isInlineFragment ? interfaceLabel : innerSchemaType.name
-            }${queryParams}) | ${nestedVariable} {${
-              isInlineFragment
-                ? 'FRAGMENT_TYPE: "' + interfaceLabel + '",' + subSelection[0]
-                : subSelection[0]
-            }}]${
-              !isArrayType(fieldType) ? ')' : ''
-            }${skipLimit} ${commaIfTail}`,
-            ...tailParams
-          });
-        }
-      }
-    } else {
-      let { name: relType, direction: relDirection } = relationDirective(
-        schemaType,
-        fieldName
-      );
-      if (relType && relDirection) {
-        selection = recurse({
-          initial: `${initial}${fieldName}: ${
-            !isArrayType(fieldType) ? 'head(' : ''
-          }[(${variableName})${
-            relDirection === 'in' || relDirection === 'IN' ? '<' : ''
-          }-[:${relType}]-${
-            relDirection === 'out' || relDirection === 'OUT' ? '>' : ''
-          }(${nestedVariable}:${
-            isInlineFragment ? interfaceLabel : innerSchemaType.name
-          }${queryParams}) | ${nestedVariable} {${
-            isInlineFragment
-              ? 'FRAGMENT_TYPE: "' + interfaceLabel + '",' + subSelection[0]
-              : subSelection[0]
-          }}]${!isArrayType(fieldType) ? ')' : ''}${skipLimit} ${commaIfTail}`,
-          ...tailParams
-        });
-      } else {
-        const innerSchemaTypeAstNode = typeMap[innerSchemaType].astNode;
-        const relationDirectiveData = getRelationTypeDirectiveArgs(
-          innerSchemaTypeAstNode
-        );
-        if (relationDirectiveData) {
-          const relType = relationDirectiveData.name;
-          const fromTypeName = relationDirectiveData.from;
-          const toTypeName = relationDirectiveData.to;
-          const nestedRelationshipVariable = `${nestedVariable}_relation`;
-          const schemaTypeName = schemaType.name;
-          if (fromTypeName !== toTypeName) {
-            selection = recurse({
-              initial: `${initial}${fieldName}: ${
-                !isArrayType(fieldType) ? 'head(' : ''
-              }[(${variableName})${
-                schemaTypeName === toTypeName ? '<' : ''
-              }-[${nestedRelationshipVariable}:${relType}${queryParams}]-${
-                schemaTypeName === fromTypeName ? '>' : ''
-              }(:${
-                schemaTypeName === fromTypeName ? toTypeName : fromTypeName
-              }) | ${nestedRelationshipVariable} {${subSelection[0]}}]${
-                !isArrayType(fieldType) ? ')' : ''
-              }${skipLimit} ${commaIfTail}`,
-              ...tailParams
-            });
-          } else {
-            // Type symmetry limitation, Person FRIEND_OF Person, assume OUT for now
-            selection = recurse({
-              initial: `${initial}${fieldName}: ${
-                !isArrayType(fieldType) ? 'head(' : ''
-              }[(${variableName})-[${nestedRelationshipVariable}:${relType}${queryParams}]->(:${
-                schemaTypeName === fromTypeName ? toTypeName : fromTypeName
-              }) | ${nestedRelationshipVariable} {${subSelection[0]}}]${
-                !isArrayType(fieldType) ? ')' : ''
-              }${skipLimit} ${commaIfTail}`,
-              ...tailParams
-            });
-          }
-        }
-      }
-    }
+    // Object type field with cypher directive
+    selection = recurse(customCypherField({
+      ...fieldInfo,
+      schemaType,
+      schemaTypeRelation,
+      customCypher,
+      headSelection,
+      resolveInfo,
+    }));
+  } 
+  else if(relType && relDirection) {
+    // Object type field with relation directive
+    selection = recurse(relationFieldOnNodeType({
+      ...fieldInfo,
+      relDirection, 
+      relType, 
+      isInlineFragment, 
+      interfaceLabel, 
+      innerSchemaType, 
+    }));
+  }
+  else if (schemaTypeRelation) {
+    // Object type field on relation type
+    // (from, to, renamed, relation mutation payloads...)
+    selection = recurse(nodeTypeFieldOnRelationType({
+      fieldInfo,
+      rootVariableNames,
+      schemaTypeRelation,
+      innerSchemaType,
+      isInlineFragment,
+      interfaceLabel,
+    }));
+  }
+  else if(innerSchemaTypeRelation) {
+    // Relation type field on node type (field payload types...)
+    selection = recurse(relationTypeFieldOnNodeType({
+      ...fieldInfo,
+      innerSchemaTypeRelation,
+      schemaType,
+    }));
   }
   return [selection[0], { ...selection[1], ...subSelection[1] }];
 }

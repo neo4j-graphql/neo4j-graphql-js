@@ -13,12 +13,13 @@ import {
   isMutation,
   lowFirstLetter,
   typeIdentifiers,
-  parameterizeRelationFields
+  parameterizeRelationFields,
+  getFieldValueType
 } from './utils';
 import { buildCypherSelection } from './selections';
 import {
   extractTypeMapFromSchema,
-  extractResolvers,
+  extractResolversFromSchema,
   augmentedSchema,
   makeAugmentedExecutableSchema
 } from './augmentSchema';
@@ -146,8 +147,8 @@ export function cypherQuery(
 
     query =
       `MATCH (${variableName}:${typeName} ${argString}) ${predicate}` +
-      // ${variableName} { ${selection} } as ${variableName}`;
       `RETURN ${variableName} {${subQuery}} AS ${variableName}${orderByValue} ${outerSkipLimit}`;
+
   }
 
   return [query, { ...nonNullParams, ...subParams }];
@@ -243,11 +244,11 @@ export function cypherMutation(
       resolveInfo.fieldName
     ].astNode.arguments;
 
-    const firstIdArg = args.find(e => getNamedType(e).type.name.value);
+    const firstIdArg = args.find(e => getFieldValueType(e) === "ID");
     if (firstIdArg) {
-      const argName = firstIdArg.name.value;
-      if (params.params[argName] === undefined) {
-        query += `SET ${variableName}.${argName} = apoc.create.uuid() `;
+      const firstIdArgFieldName = firstIdArg.name.value;
+      if (params.params[firstIdArgFieldName] === undefined) {
+        query += `SET ${variableName}.${firstIdArgFieldName} = apoc.create.uuid() `;
       }
     }
 
@@ -323,11 +324,14 @@ export function cypherMutation(
       initial: '',
       selections,
       variableName: lowercased,
-      fromVar,
-      toVar,
       schemaType,
       resolveInfo,
-      paramIndex: 1
+      paramIndex: 1,
+      rootVariableNames: {
+        from: `${fromVar}`,
+        to: `${toVar}`,
+      },
+      variableName: schemaType.name === fromType ? `${toVar}` : `${fromVar}`
     });
     params = { ...params, ...subParams };
     query = `
@@ -449,11 +453,11 @@ RETURN ${variableName}`;
       schemaType,
       resolveInfo,
       paramIndex: 1,
-      rootNodes: {
+      rootVariableNames: {
         from: `_${fromVar}`,
         to: `_${toVar}`
       },
-      variableName: schemaType.name === fromType ? `_${toVar}` : `_${fromVar}`
+      variableName: schemaType.name === fromType ? `_${toVar}` : `_${fromVar}`,
     });
     params = { ...params, ...subParams };
 
@@ -468,7 +472,7 @@ RETURN ${variableName}`;
       OPTIONAL MATCH (${fromVar})-[${fromVar +
       toVar}:${relationshipName}]->(${toVar})
       DELETE ${fromVar + toVar}
-      WITH COUNT(*) AS scope, ${fromVar} AS _${fromVar}_from, ${toVar} AS _${toVar}_to
+      WITH COUNT(*) AS scope, ${fromVar} AS _${fromVar}, ${toVar} AS _${toVar}
       RETURN {${subQuery}} AS ${schemaType};
     `;
   } else {
@@ -480,11 +484,10 @@ RETURN ${variableName}`;
   return [query, params];
 }
 
-export const augmentSchema = schema => {
-  let typeMap = extractTypeMapFromSchema(schema);
-  let queryResolvers = extractResolvers(schema.getQueryType());
-  let mutationResolvers = extractResolvers(schema.getMutationType());
-  return augmentedSchema(typeMap, queryResolvers, mutationResolvers);
+export const augmentSchema = (schema) => {
+  const typeMap = extractTypeMapFromSchema(schema);
+  const resolvers = extractResolversFromSchema(schema);
+  return augmentedSchema(typeMap, resolvers);
 };
 
 export const makeAugmentedSchema = ({
