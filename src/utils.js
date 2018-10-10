@@ -391,15 +391,19 @@ export const getRelationTypeDirectiveArgs = (relationshipType) => {
   } : undefined;
 }
 
-export const getFieldArgumentsFromAst = (field, typeName) => {
-  const args = field.arguments;
-  field.arguments = possiblyAddArgument(args, "first", "Int");
-  field.arguments = possiblyAddArgument(args, "offset", "Int");
-  field.arguments = possiblyAddArgument(args, "orderBy", `_${typeName}Ordering`);
-  return field.arguments.reduce( (acc, t) => {
+export const getFieldArgumentsFromAst = (field, typeName, fieldIsList) => {
+  let fieldArgs = field.arguments ? field.arguments : [];
+  let augmentedArgs = [...fieldArgs];
+  if(fieldIsList) {
+    augmentedArgs = possiblyAddArgument(augmentedArgs, "first", "Int");
+    augmentedArgs = possiblyAddArgument(augmentedArgs, "offset", "Int");
+    augmentedArgs = possiblyAddArgument(augmentedArgs, "orderBy", `_${typeName}Ordering`);
+  }
+  const args = augmentedArgs.reduce( (acc, t) => {
     acc.push(print(t));
     return acc;
   }, []).join('\n');
+  return args.length > 0 ? `(${args})` : '';
 }
 
 export const getRelationMutationPayloadFieldsFromAst = (relatedAstNode) => {
@@ -414,6 +418,13 @@ export const getRelationMutationPayloadFieldsFromAst = (relatedAstNode) => {
     }
     return acc;
   }, []).join('\n');
+}
+
+export const getFieldValueType = (type) => {
+  if(type.kind !== "NamedType") {
+    return getFieldValueType(type.type);
+  }
+  return type.name.value;
 }
 
 export const getNamedType = (type) => {
@@ -477,7 +488,9 @@ export const getPrimaryKey = (astNode) => {
 }
 
 export const getTypeDirective = (relatedAstNode, name) => {
-  return relatedAstNode.directives.find(e => e.name.value === name);
+  return relatedAstNode.directives 
+    ? relatedAstNode.directives.find(e => e.name.value === name)
+    : undefined;
 }
 
 export const getFieldDirective = (field, directive) => {
@@ -570,3 +583,45 @@ export const printTypeMap = (typeMap) => {
   });
 }
 
+export const decideNestedVariableName = ({ 
+  schemaTypeRelation, 
+  innerSchemaTypeRelation, 
+  variableName, 
+  fieldName,
+  rootVariableNames
+}) => {
+  if(rootVariableNames) {
+    // Only show up for relation mutations
+    return rootVariableNames[fieldName];
+  }
+  if(schemaTypeRelation) {
+    const fromTypeName = schemaTypeRelation.from;
+    const toTypeName = schemaTypeRelation.to;
+    if(fromTypeName === toTypeName) {
+      if(fieldName === "from" || fieldName === "to") {
+        return variableName + '_' + fieldName;
+      }
+      else {
+        // Case of a reflexive relationship type's directed field
+        // being renamed to its node type value
+        // ex: from: User -> User: User
+        return variableName;
+      }
+    }
+  }
+  else {
+    // Types without @relation directives are assumed to be node types
+    // and only node types can have fields whose values are relation types
+    if (innerSchemaTypeRelation) {
+      // innerSchemaType is a field payload type using a @relation directive
+      if (innerSchemaTypeRelation.from === innerSchemaTypeRelation.to) {
+        return variableName;
+      }
+    }
+    else {
+      // related types are different
+      return variableName + '_' + fieldName;
+    }
+  }
+  return variableName + '_' + fieldName;
+}
