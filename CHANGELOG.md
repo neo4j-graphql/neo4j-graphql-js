@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.0.3
+
+- [Support for reflexive relationship types. #125](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/125)
+- [Fix #113 Don't drop non-Query/Mutation resolvers passed into makeAugmentedExecutableSchema](https://github.com/neo4j-graphql/neo4j-graphql-js/issues/113)
+- [Fix #124 Basic schema with non nullable property gives error when calling mutation](https://github.com/neo4j-graphql/neo4j-graphql-js/issues/124)
+- [return better error message in case name or direction haven't been specified into the directive](https://github.com/neo4j-graphql/neo4j-graphql-js/commit/63f66acfd989972c0ed2fc8797579b468cd3dab8)
+
 ## v1.0.2
 
 - Improvements to InlineFragment handling. [#115](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/115) and [#114](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/114)
