@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.0.4
+
+- [Fix #126, default resolvers object](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/127)
+
 ## v1.0.3
 
 - [Support for reflexive relationship types. #125](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/125)
