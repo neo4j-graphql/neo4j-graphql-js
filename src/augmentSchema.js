@@ -1,7 +1,7 @@
 import { makeExecutableSchema } from 'graphql-tools';
-import { parse } from 'graphql';
 import {
-  printTypeMap
+  printTypeMap,
+  extractTypeMapFromTypeDefs
 } from './utils';
 import { 
   augmentTypeMap,
@@ -49,26 +49,19 @@ export const makeAugmentedExecutableSchema = ({
   });
 }
 
-const extractTypeMapFromTypeDefs = (typeDefs) => {
-  // TODO: accept alternative typeDefs formats (arr of strings, ast, etc.)
-  // into a single string for parse, add validatation
-  const astNodes = parse(typeDefs).definitions;
-  return astNodes.reduce( (acc, t) => {
-    acc[t.name.value] = t;
-    return acc;
-  }, {});
-}
-
 export const extractTypeMapFromSchema = (schema) => {
   const typeMap = schema.getTypeMap();
+  const directives = schema.getDirectives();
+  const types = { ...typeMap, ...directives };
   let astNode = {};
-  return Object.keys(typeMap).reduce( (acc, t) => {
-    astNode = typeMap[t].astNode;
+  const extracted = Object.keys(types).reduce( (acc, t) => {
+    astNode = types[t].astNode;
     if(astNode !== undefined) {
       acc[astNode.name.value] = astNode;
     }
     return acc;
   }, {});
+  return extracted;
 }
 
 export const extractResolversFromSchema = (schema) => {
