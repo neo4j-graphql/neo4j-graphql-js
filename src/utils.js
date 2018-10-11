@@ -625,3 +625,22 @@ export const decideNestedVariableName = ({
   }
   return variableName + '_' + fieldName;
 }
+
+export const extractTypeMapFromTypeDefs = (typeDefs) => {
+  // TODO: accept alternative typeDefs formats (arr of strings, ast, etc.)
+  // into a single string for parse, add validatation
+  const astNodes = parse(typeDefs).definitions;
+  return astNodes.reduce( (acc, t) => {
+    acc[t.name.value] = t;
+    return acc;
+  }, {});
+}
+
+export const addDirectiveDeclarations = (typeMap) => {
+  // overwrites any provided directive declarations for system directive names
+  typeMap['cypher'] = parse(`directive @cypher(statement: String) on FIELD_DEFINITION`);
+  typeMap['relation'] = parse(`directive @relation(name: String, direction: _RelationDirections, from: String, to: String) on FIELD_DEFINITION | OBJECT`);
+  typeMap['MutationMeta'] = parse(`directive @MutationMeta(relationship: String, from: String, to: String) on FIELD_DEFINITION`);
+  typeMap['_RelationDirections'] = parse(`enum _RelationDirections { IN OUT }`);
+  return typeMap;
+}

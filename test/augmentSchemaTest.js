@@ -5,7 +5,13 @@ import { printSchema } from 'graphql';
 test.cb('Test augmented schema', t => {
   let schema = augmentedSchema();
 
-  let expectedSchema = `input _ActorInput {
+  let expectedSchema = `directive @cypher(statement: String) on FIELD_DEFINITION
+
+directive @relation(name: String, direction: _RelationDirections, from: String, to: String) on FIELD_DEFINITION | OBJECT
+
+directive @MutationMeta(relationship: String, from: String, to: String) on FIELD_DEFINITION
+
+input _ActorInput {
   userId: ID!
 }
 
@@ -99,6 +105,11 @@ type _MovieRatings {
 
 input _RatedInput {
   rating: Int
+}
+
+enum _RelationDirections {
+  IN
+  OUT
 }
 
 type _RemoveActorMoviesPayload {

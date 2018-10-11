@@ -14,7 +14,10 @@ import {
   lowFirstLetter,
   typeIdentifiers,
   parameterizeRelationFields,
-  getFieldValueType
+  getFieldValueType,
+  extractTypeMapFromTypeDefs,
+  addDirectiveDeclarations,
+  printTypeMap
 } from './utils';
 import { buildCypherSelection } from './selections';
 import {
@@ -518,3 +521,9 @@ export const makeAugmentedSchema = ({
     inheritResolversFromInterfaces
   });
 };
+
+export const augmentTypeDefs = (typeDefs) => {
+  const typeMap = extractTypeMapFromTypeDefs(typeDefs);
+  const augmented = addDirectiveDeclarations(typeMap);
+  return printTypeMap(augmented);
+}

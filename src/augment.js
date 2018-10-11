@@ -17,7 +17,8 @@ import {
   isKind,
   isNonNullType,
   isNodeType,
-  parseFieldSdl
+  parseFieldSdl,
+  addDirectiveDeclarations
 } from './utils';
 
 export const augmentTypeMap = typeMap => {
@@ -44,6 +45,7 @@ export const augmentTypeMap = typeMap => {
     typeMap[t] = astNode;
   });
   typeMap = augmentQueryArguments(typeMap);
+  typeMap = addDirectiveDeclarations(typeMap);
   return typeMap;
 };
 
