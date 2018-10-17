@@ -487,10 +487,10 @@ RETURN ${variableName}`;
   return [query, params];
 }
 
-export const augmentSchema = (schema) => {
+export const augmentSchema = (schema, config) => {
   const typeMap = extractTypeMapFromSchema(schema);
   const resolvers = extractResolversFromSchema(schema);
-  return augmentedSchema(typeMap, resolvers);
+  return augmentedSchema(typeMap, resolvers, config);
 };
 
 export const makeAugmentedSchema = ({
@@ -503,10 +503,14 @@ export const makeAugmentedSchema = ({
   directiveResolvers = null,
   schemaDirectives = null,
   parseOptions = {},
-  inheritResolversFromInterfaces = false
+  inheritResolversFromInterfaces = false,
+  config = {
+    query: true,
+    mutation: true
+  }
 }) => {
   if (schema) {
-    return augmentSchema(schema);
+    return augmentSchema(schema, config);
   }
   if (!typeDefs) throw new Error('Must provide typeDefs');
   return makeAugmentedExecutableSchema({
@@ -518,12 +522,14 @@ export const makeAugmentedSchema = ({
     directiveResolvers,
     schemaDirectives,
     parseOptions,
-    inheritResolversFromInterfaces
+    inheritResolversFromInterfaces,
+    config
   });
 };
 
 export const augmentTypeDefs = (typeDefs) => {
   const typeMap = extractTypeMapFromTypeDefs(typeDefs);
+  // overwrites any provided declarations of system directives
   const augmented = addDirectiveDeclarations(typeMap);
   return printTypeMap(augmented);
 }
