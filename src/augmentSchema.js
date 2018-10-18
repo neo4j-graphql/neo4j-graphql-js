@@ -8,8 +8,13 @@ import {
   augmentResolvers
 } from "./augment";
 
-export const augmentedSchema = (typeMap, resolvers) => {
-  const augmentedTypeMap = augmentTypeMap(typeMap);
+
+// TODO put every extract- helper in extract.js along with moving 
+// TODO extractTypeMapFromTypeDefs from utils.js
+
+
+export const augmentedSchema = (typeMap, resolvers, config) => {
+  const augmentedTypeMap = augmentTypeMap(typeMap, config);
   const augmentedResolvers = augmentResolvers(augmentedTypeMap, resolvers);
   // TODO extract and persist logger and schemaDirectives, at least
   return makeExecutableSchema({
@@ -30,10 +35,11 @@ export const makeAugmentedExecutableSchema = ({
   directiveResolvers,
   schemaDirectives,
   parseOptions,
-  inheritResolversFromInterfaces
+  inheritResolversFromInterfaces, 
+  config
 }) => {
   const typeMap = extractTypeMapFromTypeDefs(typeDefs);
-  const augmentedTypeMap = augmentTypeMap(typeMap);
+  const augmentedTypeMap = augmentTypeMap(typeMap, config);
   const augmentedResolvers = augmentResolvers(augmentedTypeMap, resolvers);
   resolverValidationOptions.requireResolversForResolveType = false;
   return makeExecutableSchema({
@@ -54,14 +60,13 @@ export const extractTypeMapFromSchema = (schema) => {
   const directives = schema.getDirectives();
   const types = { ...typeMap, ...directives };
   let astNode = {};
-  const extracted = Object.keys(types).reduce( (acc, t) => {
+  return Object.keys(types).reduce( (acc, t) => {
     astNode = types[t].astNode;
     if(astNode !== undefined) {
       acc[astNode.name.value] = astNode;
     }
     return acc;
   }, {});
-  return extracted;
 }
 
 export const extractResolversFromSchema = (schema) => {

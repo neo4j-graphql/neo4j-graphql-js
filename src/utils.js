@@ -517,10 +517,18 @@ export const createOperationMap = (type) => {
 
 export const isNodeType = (astNode) => {
   // TODO: check for @ignore and @model directives
-  return astNode && astNode.kind === "ObjectTypeDefinition"
+  return astNode
+    // must be graphql object type
+    && astNode.kind === "ObjectTypeDefinition"
+    // is not Query or Mutation type
     && astNode.name.value !== "Query"
     && astNode.name.value !== "Mutation"
-    && getTypeDirective(astNode, "relation") === undefined;
+    // does not have relation type directive
+    && getTypeDirective(astNode, "relation") === undefined
+    // does not have from and to fields; not relation type
+    && astNode.fields
+    && astNode.fields.find(e => e.name.value === "from") === undefined 
+    && astNode.fields.find(e => e.name.value === "to") === undefined;
 }
 
 export const parseFieldSdl = (sdl) => {

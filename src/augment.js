@@ -18,46 +18,94 @@ import {
   isNonNullType,
   isNodeType,
   parseFieldSdl,
-  addDirectiveDeclarations
+  addDirectiveDeclarations,
+  lowFirstLetter
 } from './utils';
 
-export const augmentTypeMap = typeMap => {
+export const augmentTypeMap = (typeMap, config) => {
   const types = Object.keys(typeMap);
-  typeMap = initializeOperationTypes(types, typeMap);
+  // For now, the Query and Mutation type names have been 
+  // elevated from various use cases to be set here
+  const queryType = "Query";
+  const mutationType = "Mutation";
+  typeMap = initializeOperationTypes({ 
+    types, 
+    typeMap,
+    config,
+    queryType,
+    mutationType
+  });
+  // adds relation directives on relation types
+  // if not written, with default args
+  typeMap = computeRelationTypeDirectiveDefaults(typeMap);
   const queryMap = createOperationMap(typeMap.Query);
   const mutationMap = createOperationMap(typeMap.Mutation);
-  typeMap = computeRelationTypeDirectiveDefaults(typeMap);
-  const relationMap = createRelationMap(typeMap);
+  // const relationMap = createRelationMap(typeMap);
   let astNode = {};
+  let typeName = "";
   Object.keys(typeMap).forEach(t => {
     astNode = typeMap[t];
-    astNode = augmentType(astNode, typeMap);
-    typeMap = possiblyAddTypeInput(astNode, typeMap);
-    typeMap = possiblyAddQuery(astNode, typeMap, queryMap);
-    typeMap = possiblyAddOrderingEnum(astNode, typeMap);
-    typeMap = possiblyAddTypeMutations(astNode, typeMap, mutationMap);
-    typeMap = possiblyAddRelationMutations(
+    typeName = astNode.name.value;
+    astNode = augmentType(astNode, typeMap, config, queryType);    
+    // Query API Only
+    // config is used in augmentQueryArguments to prevent adding node list args 
+    if(shouldAugmentType({
+      config,
+      operationType: queryType,
+      type: typeName
+    })) {
+      typeMap = possiblyAddQuery(astNode, typeMap, queryMap);
+      typeMap = possiblyAddOrderingEnum(astNode, typeMap);
+    }
+    // Mutation API Only
+    // adds node selection input types for each type
+    if(shouldAugmentType({
+      config,
+      operationType: mutationType,
+      type: typeName
+    })) {
+      typeMap = possiblyAddTypeInput({ 
+        astNode, 
+        typeMap, 
+        mutationType, 
+        config 
+      });
+      typeMap = possiblyAddTypeMutations({
+        astNode,
+        typeMap, 
+        mutationMap,
+        config,
+        mutationType,
+        typeName
+      });
+    }
+    // Relation Type SDL support and Relation Mutation API
+    typeMap = handleRelationFields({
       astNode,
       typeMap,
       mutationMap,
-      relationMap
-    );
+      config,
+      queryType,
+      mutationType
+    });
     typeMap[t] = astNode;
   });
-  typeMap = augmentQueryArguments(typeMap);
+  typeMap = augmentQueryArguments(typeMap, config, queryType);
+  // always add directive declarations for graphql@14 support 
   typeMap = addDirectiveDeclarations(typeMap);
   return typeMap;
 };
 
-const augmentType = (astNode, typeMap) => {
+const augmentType = (astNode, typeMap, config, queryType) => {
   if (isNodeType(astNode)) {
     astNode.fields = addOrReplaceNodeIdField(astNode, 'ID');
-    astNode.fields = possiblyAddTypeFieldArguments(astNode, typeMap);
+    astNode.fields = possiblyAddTypeFieldArguments(astNode, typeMap, config, queryType);
   }
   return astNode;
 };
 
-const augmentQueryArguments = typeMap => {
+const augmentQueryArguments = (typeMap, config, queryType) => {
+  // adds first / offset / orderBy to queries returning node type lists
   const queryMap = createOperationMap(typeMap.Query);
   let args = [];
   let valueTypeName = '';
@@ -69,7 +117,14 @@ const augmentQueryArguments = typeMap => {
       field = queryMap[t];
       valueTypeName = getNamedType(field).name.value;
       valueType = typeMap[valueTypeName];
-      if (isNodeType(valueType) && isListType(field)) {
+      if (isNodeType(valueType)
+      && isListType(field)
+      && shouldAugmentType({
+        config,
+        operationType: queryType,
+        type: valueTypeName
+      })) {
+        // does not add arguments if the field value type is excluded
         args = field.arguments;
         queryMap[t].arguments = possiblyAddArgument(args, 'first', 'Int');
         queryMap[t].arguments = possiblyAddArgument(args, 'offset', 'Int');
@@ -85,23 +140,23 @@ const augmentQueryArguments = typeMap => {
   return typeMap;
 };
 
+
 export const augmentResolvers = (
   augmentedTypeMap,
   resolvers
 ) => {
   let queryResolvers = resolvers && resolvers.Query ? resolvers.Query : {};
-  let mutationResolvers = resolvers && resolvers.Mutation ? resolvers.Mutation : {};
   const generatedQueryMap = createOperationMap(augmentedTypeMap.Query);
   queryResolvers = possiblyAddResolvers(generatedQueryMap, queryResolvers);
   if (Object.keys(queryResolvers).length > 0) {
     resolvers.Query = queryResolvers;
   }
+  let mutationResolvers = resolvers && resolvers.Mutation ? resolvers.Mutation : {};
   const generatedMutationMap = createOperationMap(augmentedTypeMap.Mutation);
   mutationResolvers = possiblyAddResolvers(generatedMutationMap, mutationResolvers);
   if (Object.keys(mutationResolvers).length > 0) {
     resolvers.Mutation = mutationResolvers;
   }
-
   // must implement __resolveInfo for every Interface type
   // we use "FRAGMENT_TYPE" key to identify the Interface implementation
   // type at runtime, so grab this value
@@ -153,7 +208,12 @@ const possiblyAddResolvers = (operationTypeMap, resolvers) => {
   }, resolvers);
 };
 
-const possiblyAddTypeInput = (astNode, typeMap) => {
+const possiblyAddTypeInput = ({ 
+  astNode, 
+  typeMap, 
+  mutationType, 
+  config 
+}) => {
   const inputName = `_${astNode.name.value}Input`;
   if (isNodeType(astNode)) {
     if (typeMap[inputName] === undefined) {
@@ -172,12 +232,31 @@ const possiblyAddTypeInput = (astNode, typeMap) => {
       let valueType = {};
       let valueTypeName = '';
       let isRequired = false;
-      const hasSomePropertyField = astNode.fields.find(
+      const fields = astNode.fields;
+      // The .data arg on add relation mutations, 
+      // which is the only arg in the API that uses
+      // relation input types, is only generate if there
+      // is at least one non-directed field (property field)
+      const hasSomePropertyField = fields.find(
         e => e.name.value !== 'from' && e.name.value !== 'to'
       );
-      if (hasSomePropertyField) {
+      const fromField = fields.find(e => e.name.value === "from");
+      const fromName = getNamedType(fromField).name.value;
+      const toField = fields.find(e => e.name.value === "to");
+      const toName = getNamedType(toField).name.value;
+      // only generate an input type for the relationship if we know that both 
+      // the from and to nodes are not excluded, since thus we know that 
+      // relation mutations are generated for this relation, which would 
+      // make use of the relation input type
+      const shouldCreateRelationInput = shouldAugmentRelationField({
+        config,
+        operationType: mutationType,
+        fromName,
+        toName
+      });
+      if (hasSomePropertyField && shouldCreateRelationInput) {
         typeMap[inputName] = parse(
-          `input ${inputName} {${astNode.fields
+          `input ${inputName} {${fields
             .reduce((acc, t) => {
               fieldName = t.name.value;
               isRequired = isNonNullType(t);
@@ -259,8 +338,22 @@ const possiblyAddOrderingEnum = (astNode, typeMap) => {
   return typeMap;
 };
 
-const possiblyAddTypeMutations = (astNode, typeMap, mutationMap) => {
-  if (isNodeType(astNode)) {
+const possiblyAddTypeMutations = ({ 
+  astNode, 
+  typeMap, 
+  mutationMap, 
+  config, 
+  mutationType, 
+  typeName 
+}) => {
+  if (
+    isNodeType(astNode) &&
+    shouldAugmentType({ 
+      config,
+      operationType: mutationType,
+      type: typeName
+    })
+  ) {
     typeMap = possiblyAddTypeMutation(`Create`, astNode, typeMap, mutationMap);
     typeMap = possiblyAddTypeMutation(`Update`, astNode, typeMap, mutationMap);
     typeMap = possiblyAddTypeMutation(`Delete`, astNode, typeMap, mutationMap);
@@ -268,26 +361,21 @@ const possiblyAddTypeMutations = (astNode, typeMap, mutationMap) => {
   return typeMap;
 };
 
-const possiblyAddRelationMutations = (
+const handleRelationFields = ({
   astNode,
   typeMap,
   mutationMap,
-  relationMap
-) => {
+  config,
+  queryType,
+  mutationType,
+}) => {
   const typeName = astNode.name.value;
   const fields = astNode.fields;
   const fieldCount = fields ? fields.length : 0;
   let relationFieldDirective = {};
-  let relationName = '';
-  let direction = '';
   let fieldValueName = '';
   let relatedAstNode = {};
   let relationTypeDirective = {};
-  let nameArgument = {};
-  let fromArgument = {};
-  let toArgument = {};
-  let fromName = '';
-  let toName = '';
   let capitalizedFieldName = '';
   let field = {};
   let fieldIndex = 0;
@@ -299,91 +387,196 @@ const possiblyAddRelationMutations = (
       relatedAstNode = typeMap[fieldValueName];
       if (relatedAstNode) {
         relationTypeDirective = getTypeDirective(relatedAstNode, 'relation');
+        relationFieldDirective = getFieldDirective(field, 'relation');
+        // continue if typeName is allowed
+        // in either Query or Mutation 
         if (isNodeType(relatedAstNode)) {
-          relationFieldDirective = getFieldDirective(field, 'relation');
-          if (relationFieldDirective) {
-            relationName = getRelationName(relationFieldDirective);
-            direction = getRelationDirection(relationFieldDirective);
-            fromName = typeName;
-            toName = fieldValueName;
-            if (direction === 'IN' || direction === 'in') {
-              let temp = fromName;
-              fromName = toName;
-              toName = temp;
-            }
-            typeMap = possiblyAddRelationMutationField(
+          // the field has a node type
+          if(relationFieldDirective) {
+            // Relation Mutation API
+            // relation directive exists on field
+            typeMap = handleRelationFieldDirective({
+              relatedAstNode,
               typeName,
               capitalizedFieldName,
-              fromName,
-              toName,
+              fieldValueName,
+              relationFieldDirective,
               mutationMap,
               typeMap,
-              relationName,
-              relatedAstNode,
-              false
-            );
+              config,
+              mutationType,
+            });
           }
-        } else if (relationTypeDirective) {
-          let typeDirectiveArgs = relationTypeDirective
-            ? relationTypeDirective.arguments
-            : [];
-          nameArgument = typeDirectiveArgs.find(e => e.name.value === 'name');
-          fromArgument = typeDirectiveArgs.find(e => e.name.value === 'from');
-          toArgument = typeDirectiveArgs.find(e => e.name.value === 'to');
-          relationName = nameArgument.value.value;
-          fromName = fromArgument.value.value;
-          toName = toArgument.value.value;
-          // directive to and from are not the same and neither are equal to this
-          if (
-            fromName !== toName &&
-            toName !== typeName &&
-            fromName !== typeName
-          ) {
-            throw new Error(`The '${
-              field.name.value
-            }' field on the '${typeName}' type uses the '${
-              relatedAstNode.name.value
-            }'
-            but '${
-              relatedAstNode.name.value
-            }' comes from '${fromName}' and goes to '${toName}'`);
-          }
-          typeMap = possiblyAddRelationMutationField(
-            typeName,
-            capitalizedFieldName,
-            fromName,
-            toName,
-            mutationMap,
-            typeMap,
-            relationName,
-            relatedAstNode,
-            true
-          );
-          // TODO refactor the getRelationTypeDirectiveArgs stuff in here,
-          // TODO out of it, and make it use the above, already obtained values...
-          typeMap = possiblyAddNonSymmetricRelationshipType(
-            relatedAstNode,
-            capitalizedFieldName,
-            typeName,
-            typeMap,
-            field
-          );
-          // TODO probably put replaceRelationTypeValue above into possiblyAddNonSymmetricRelationshipType, after you refactor it
-          fields[fieldIndex] = replaceRelationTypeValue(
-            fromName, 
-            toName,
-            field,
-            capitalizedFieldName,
-            typeName
-          );
         }
+        else if (relationTypeDirective) {
+          // Query and Relation Mutation API
+          // the field value is a non-node type using a relation type directive
+          typeMap = handleRelationTypeDirective({
+            relatedAstNode,
+            typeName,
+            fields,
+            field,
+            fieldIndex,
+            capitalizedFieldName,
+            relationTypeDirective,
+            config,
+            queryType,
+            mutationType,          
+            typeMap,
+            mutationMap,
+          });
+        }      
       }
     }
   }
   return typeMap;
 };
 
-const possiblyAddTypeFieldArguments = (astNode, typeMap) => {
+const validateRelationTypeDirectedFields = (typeName, fromName, toName) => {
+  // directive to and from are not the same and neither are equal to this
+  if (
+    fromName !== toName &&
+    toName !== typeName &&
+    fromName !== typeName
+  ) {
+    throw new Error(`The '${
+      field.name.value
+    }' field on the '${typeName}' type uses the '${
+      relatedAstNode.name.value
+    }'
+    but '${
+      relatedAstNode.name.value
+    }' comes from '${fromName}' and goes to '${toName}'`);
+  }
+  return true;
+}
+
+const shouldAugmentRelationField = ({
+  config,
+  operationType,
+  fromName,
+  toName
+}) => {
+  // validate that both the fromName and toName node types
+  // have not been excluded
+  return shouldAugmentType({ 
+    config,
+    operationType,
+    type: fromName
+  }) && shouldAugmentType({ 
+    config,
+    operationType,
+    type: toName
+  });
+}
+
+const handleRelationTypeDirective = ({
+  relatedAstNode,
+  typeName,
+  fields,
+  field,
+  fieldIndex,
+  capitalizedFieldName,
+  relationTypeDirective,
+  config,
+  queryType,
+  mutationType,          
+  typeMap,
+  mutationMap,
+}) => {
+  const typeDirectiveArgs = relationTypeDirective ? relationTypeDirective.arguments : [];
+  const nameArgument = typeDirectiveArgs.find(e => e.name.value === 'name');
+  const fromArgument = typeDirectiveArgs.find(e => e.name.value === 'from');
+  const toArgument = typeDirectiveArgs.find(e => e.name.value === 'to');
+  const relationName = nameArgument.value.value;
+  const fromName = fromArgument.value.value;
+  const toName = toArgument.value.value;
+  // Relation Mutation API, adds relation mutation to Mutation
+  if(
+    shouldAugmentRelationField({
+      config,
+      operationType: mutationType,
+      fromName,
+      toName
+    }) && 
+    validateRelationTypeDirectedFields(typeName, fromName, toName)
+  ) {
+    typeMap = possiblyAddRelationMutationField(
+      typeName,
+      capitalizedFieldName,
+      fromName,
+      toName,
+      mutationMap,
+      typeMap,
+      relationName,
+      relatedAstNode,
+      true
+    );
+  }
+  // Relation type field payload transformation for selection sets
+  typeMap = possiblyAddRelationTypeFieldPayload(
+    relatedAstNode,
+    capitalizedFieldName,
+    typeName,
+    typeMap,
+    field
+  );
+  // Replaces the field's value with the generated payload type
+  fields[fieldIndex] = replaceRelationTypeValue(
+    fromName, 
+    toName,
+    field,
+    capitalizedFieldName,
+    typeName
+  );
+  return typeMap;
+}
+
+const handleRelationFieldDirective = ({
+  relatedAstNode,
+  typeName,
+  capitalizedFieldName,
+  fieldValueName,
+  relationFieldDirective,
+  mutationMap,
+  typeMap,
+  config,
+  mutationType,
+}) => {
+  let fromName = typeName;
+  let toName = fieldValueName;
+  // Mutation API, relation mutations for field directives
+  if(shouldAugmentRelationField({
+    config,
+    operationType: mutationType,
+    fromName,
+    toName  
+  })) {
+    const relationName = getRelationName(relationFieldDirective);
+    const direction = getRelationDirection(relationFieldDirective);
+    // possibly swap directions to fit assertion of fromName = typeName
+    if (direction === 'IN' || direction === 'in') {
+      let temp = fromName;
+      fromName = toName;
+      toName = temp;
+    }
+    // (Mutation API) add relation mutation to Mutation
+    typeMap = possiblyAddRelationMutationField(
+      typeName,
+      capitalizedFieldName,
+      fromName,
+      toName,
+      mutationMap,
+      typeMap,
+      relationName,
+      relatedAstNode,
+      false,
+    );
+  }
+  return typeMap;
+}
+
+const possiblyAddTypeFieldArguments = (astNode, typeMap, config, queryType) => {
   const fields = astNode.fields;
   let relationTypeName = '';
   let relationType = {};
@@ -392,10 +585,18 @@ const possiblyAddTypeFieldArguments = (astNode, typeMap) => {
     relationTypeName = getNamedType(field).name.value;
     relationType = typeMap[relationTypeName];
     if (
+      // only adds args if node payload type has not been excluded
+      shouldAugmentType({ 
+        config,
+        operationType: queryType,
+        type: relationTypeName
+      }) &&
+      // we know astNode is a node type, so this field should be a node type 
+      // as well, since the generated args are only for node type lists
       isNodeType(relationType) &&
+      // the args (first / offset / orderBy) are only generated for list fields
       isListType(field) &&
-      (getFieldDirective(field, 'relation') ||
-        getFieldDirective(field, 'cypher'))
+      (getFieldDirective(field, 'relation') || getFieldDirective(field, 'cypher'))
     ) {
       args = field.arguments;
       field.arguments = possiblyAddArgument(args, 'first', 'Int');
@@ -639,7 +840,6 @@ const possiblyAddTypeMutation = (namePrefix, astNode, typeMap, mutationMap) => {
 
 const replaceRelationTypeValue = (fromName, toName, field, capitalizedFieldName, typeName) => {
   const isList = isListType(field);
-  // TODO persist a required inner type, and required list type
   let type = {
     kind: 'NamedType',
     name: {
@@ -659,7 +859,7 @@ const replaceRelationTypeValue = (fromName, toName, field, capitalizedFieldName,
   return field;
 };
 
-const possiblyAddNonSymmetricRelationshipType = (
+const possiblyAddRelationTypeFieldPayload = (
   relationAstNode,
   capitalizedFieldName,
   typeName,
@@ -779,7 +979,7 @@ const possiblyAddRelationMutationField = (
   typeMap,
   relationName,
   relatedAstNode,
-  relationHasProps
+  relationHasProps,
 ) => {
   const mutationTypes = ['Add', 'Remove'];
   let mutationName = '';
@@ -861,15 +1061,31 @@ const isQueryArgumentFieldType = (type, valueType) => {
   );
 };
 
-const initializeOperationTypes = (types, typeMap) => {
-  if (types.length > 0) {
-    typeMap = possiblyAddObjectType(typeMap, 'Query');
-    typeMap = possiblyAddObjectType(typeMap, 'Mutation');
+const hasNonExcludedNodeType = (types, typeMap, operationType, config) => {
+  return types.find(e => isNodeType(typeMap[e]) && shouldAugmentType({
+    config,
+    operationType,
+    type: typeMap[e].name.value
+  }));
+};
+
+const initializeOperationTypes = ({
+  types,
+  typeMap, 
+  config, 
+  queryType, 
+  mutationType 
+}) => {
+  if(hasNonExcludedNodeType(types, typeMap, queryType, config)) {
+    typeMap = possiblyAddObjectType(typeMap, queryType);
+  }
+  if(hasNonExcludedNodeType(types, typeMap, mutationType, config)) {
+    typeMap = possiblyAddObjectType(typeMap, mutationType);
   }
   return typeMap;
 };
 
-const computeRelationTypeDirectiveDefaults = typeMap => {
+const computeRelationTypeDirectiveDefaults = (typeMap) => {
   let astNode = {};
   let fields = [];
   let name = '';
@@ -890,7 +1106,7 @@ const computeRelationTypeDirectiveDefaults = typeMap => {
     fields = astNode.fields;
     to = fields ? fields.find(e => e.name.value === 'to') : undefined;
     from = fields ? fields.find(e => e.name.value === 'from') : undefined;
-    if (to && !from)
+    if (to && !from)      
       throw new Error(
         `Relationship type ${name} has a 'to' field but no corresponding 'from' field`
       );
@@ -1034,3 +1250,25 @@ const transformRelationName = relatedAstNode => {
     }, [])
     .join('');
 };
+
+const shouldAugmentType = ({
+  config = {},
+  operationType = "",
+  type
+}) => {
+  operationType = lowFirstLetter(operationType);
+  const typeValue = config[operationType];
+  const configType = typeof typeValue;
+  if(configType === "boolean") {
+    return config[operationType];
+  }
+  else if(configType === "object") {
+    const excludes = typeValue.exclude;
+    if(Array.isArray(excludes)) {
+      if(type) {
+        return !excludes.includes(type);
+      }
+    }
+  }
+  return true;
+}
