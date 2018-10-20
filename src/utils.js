@@ -1,5 +1,6 @@
 import { print, parse } from 'graphql';
 import { possiblyAddArgument } from './augment';
+import { v1 as neo4j } from 'neo4j-driver';
 
 function parseArg(arg, variableValues) {
   switch (arg.value.kind) {
@@ -235,11 +236,36 @@ function argumentValue(selection, name, variableValues) {
 export function extractQueryResult({ records }, returnType) {
   const { variableName } = typeIdentifiers(returnType);
 
-  return isArrayType(returnType)
+  let result = isArrayType(returnType)
     ? records.map(record => record.get(variableName))
     : records.length
       ? records[0].get(variableName)
       : null;
+
+  result = convertIntegerFields(result);
+  return result; 
+}
+
+const convertIntegerFields = (result) => {
+  const keys = result ? Object.keys(result) : [];
+  let field = undefined;
+  let num = undefined;
+  keys.forEach(e => {
+    field = result[e];
+    if(neo4j.isInt(field)) {
+      num = neo4j.int(field);
+      if(neo4j.integer.inSafeRange(num)) {
+        result[e] = num.toString();
+      }
+      else {
+        result[e] = num.toString();
+      }
+    }
+    else if(typeof result[e] === "object") {
+      return convertIntegerFields(result[e]);
+    }
+  });
+  return result;
 }
 
 export function computeSkipLimit(selection, variableValues) {

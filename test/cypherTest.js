@@ -356,7 +356,7 @@ test('Pass @cypher directive params to sub-query', t => {
 
 test('Query for Neo4js internal _id', t => {
   const graphQLQuery = `{
-    Movie(_id: 0) {
+    Movie(_id: "0") {
       title
       year
     }
@@ -376,7 +376,7 @@ test('Query for Neo4js internal _id', t => {
 
 test('Query for Neo4js internal _id and another param before _id', t => {
   const graphQLQuery = `{
-    Movie(title: "River Runs Through It, A", _id: 0) {
+    Movie(title: "River Runs Through It, A", _id: "0") {
       title
       year
     }
@@ -397,7 +397,7 @@ test('Query for Neo4js internal _id and another param before _id', t => {
 
 test('Query for Neo4js internal _id and another param after _id', t => {
   const graphQLQuery = `{
-    Movie(_id: 0, year: 2010) {
+    Movie(_id: "0", year: 2010) {
       title
       year
     }
@@ -416,9 +416,9 @@ test('Query for Neo4js internal _id and another param after _id', t => {
   ]);
 });
 
-test('Query for Neo4js internal _id by dedicated Query MovieBy_Id(_id: Int!)', t => {
+test('Query for Neo4js internal _id by dedicated Query MovieBy_Id(_id: String!)', t => {
   const graphQLQuery = `{
-    MovieBy_Id(_id: 0) {
+    MovieBy_Id(_id: "0") {
       title
       year
     }
@@ -457,7 +457,7 @@ test(`Query for null value translates to 'IS NULL' WHERE clause`, t => {
 
 test(`Query for null value combined with internal ID and another param`, t => {
   const graphQLQuery = `{
-      Movie(poster: null, _id: 0, year: 2010) {
+      Movie(poster: null, _id: "0", year: 2010) {
         title
         year
       }

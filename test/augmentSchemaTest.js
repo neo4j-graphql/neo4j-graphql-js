@@ -195,12 +195,12 @@ type Actor implements Person {
   userId: ID!
   name: String
   movies(first: Int, offset: Int, orderBy: _MovieOrdering): [Movie]
-  _id: Int
+  _id: String
 }
 
 type Book {
   genre: BookGenre
-  _id: Int
+  _id: String
 }
 
 enum BookGenre {
@@ -218,14 +218,14 @@ type FriendOf {
 }
 
 type Genre {
-  _id: Int
+  _id: String
   name: String
   movies(first: Int = 3, offset: Int = 0, orderBy: _MovieOrdering): [Movie]
   highestRatedMovie: Movie
 }
 
 type Movie {
-  _id: ID
+  _id: String
   movieId: ID!
   title: String
   year: Int
@@ -286,17 +286,17 @@ interface Person {
 }
 
 type Query {
-  Movie(_id: Int, movieId: ID, title: String, year: Int, plot: String, poster: String, imdbRating: Float, first: Int, offset: Int, orderBy: _MovieOrdering): [Movie]
+  Movie(_id: String, movieId: ID, title: String, year: Int, plot: String, poster: String, imdbRating: Float, first: Int, offset: Int, orderBy: _MovieOrdering): [Movie]
   MoviesByYear(year: Int, first: Int, offset: Int, orderBy: _MovieOrdering): [Movie]
   MovieById(movieId: ID!): Movie
-  MovieBy_Id(_id: Int!): Movie
+  MovieBy_Id(_id: String!): Movie
   GenresBySubstring(substring: String, first: Int, offset: Int, orderBy: _GenreOrdering): [Genre]
   Books(first: Int, offset: Int, orderBy: _BookOrdering): [Book]
-  Genre(_id: Int, name: String, first: Int, offset: Int, orderBy: _GenreOrdering): [Genre]
-  Actor(userId: ID, name: String, _id: Int, first: Int, offset: Int, orderBy: _ActorOrdering): [Actor]
-  State(name: String, _id: Int, first: Int, offset: Int, orderBy: _StateOrdering): [State]
-  User(userId: ID, name: String, _id: Int, first: Int, offset: Int, orderBy: _UserOrdering): [User]
-  Book(genre: BookGenre, _id: Int, first: Int, offset: Int, orderBy: _BookOrdering): [Book]
+  Genre(_id: String, name: String, first: Int, offset: Int, orderBy: _GenreOrdering): [Genre]
+  Actor(userId: ID, name: String, _id: String, first: Int, offset: Int, orderBy: _ActorOrdering): [Actor]
+  State(name: String, _id: String, first: Int, offset: Int, orderBy: _StateOrdering): [State]
+  User(userId: ID, name: String, _id: String, first: Int, offset: Int, orderBy: _UserOrdering): [User]
+  Book(genre: BookGenre, _id: String, first: Int, offset: Int, orderBy: _BookOrdering): [Book]
 }
 
 type Rated {
@@ -307,7 +307,7 @@ type Rated {
 
 type State {
   name: String
-  _id: Int
+  _id: String
 }
 
 type User implements Person {
@@ -315,7 +315,7 @@ type User implements Person {
   name: String
   rated(rating: Int): [_UserRated]
   friends: _UserFriendsDirections
-  _id: Int
+  _id: String
 }
 `;
 
