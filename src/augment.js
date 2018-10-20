@@ -98,7 +98,7 @@ export const augmentTypeMap = (typeMap, config) => {
 
 const augmentType = (astNode, typeMap, config, queryType) => {
   if (isNodeType(astNode)) {
-    astNode.fields = addOrReplaceNodeIdField(astNode, 'ID');
+    astNode.fields = addOrReplaceNodeIdField(astNode);
     astNode.fields = possiblyAddTypeFieldArguments(astNode, typeMap, config, queryType);
   }
   return astNode;
@@ -944,7 +944,7 @@ const possiblyAddRelationTypeFieldPayload = (
   return typeMap;
 };
 
-const addOrReplaceNodeIdField = (astNode, valueType) => {
+const addOrReplaceNodeIdField = (astNode) => {
   const fields = astNode ? astNode.fields : [];
   const index = fields.findIndex(e => e.name.value === '_id');
   const definition = {
@@ -958,12 +958,11 @@ const addOrReplaceNodeIdField = (astNode, valueType) => {
       kind: 'NamedType',
       name: {
         kind: 'Name',
-        value: valueType
+        value: 'String'
       }
     },
     directives: []
   };
-  ``;
   // If it has already been provided, replace it to force valueType,
   // else add it as the last field
   index >= 0 ? fields.splice(index, 1, definition) : fields.push(definition);
@@ -1034,7 +1033,7 @@ const capitalizeName = name => {
 const createQueryArguments = (astNode, typeMap) => {
   let type = {};
   let valueTypeName = '';
-  astNode.fields = addOrReplaceNodeIdField(astNode, 'Int');
+  astNode.fields = addOrReplaceNodeIdField(astNode);
   return astNode.fields.reduce((acc, t) => {
     type = getNamedType(t);
     valueTypeName = type.name.value;
