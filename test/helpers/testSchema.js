@@ -1,5 +1,5 @@
 export const testSchema = `type Movie {
-  _id: ID
+  _id: String
   movieId: ID!
   title: String
   year: Int
@@ -21,7 +21,7 @@ export const testSchema = `type Movie {
 }
 
 type Genre {
-  _id: ID!
+  _id: String!
   name: String
   movies(first: Int = 3, offset: Int = 0): [Movie] @relation(name: "IN_GENRE", direction: "IN")
   highestRatedMovie: Movie @cypher(statement: "MATCH (m:Movie)-[:IN_GENRE]->(this) RETURN m ORDER BY m.imdbRating DESC LIMIT 1")
@@ -82,10 +82,10 @@ enum _GenreOrdering {
 }
 
 type Query {
-  Movie(_id: Int, movieId: ID, title: String, year: Int, plot: String, poster: String, imdbRating: Float, first: Int, offset: Int, orderBy: _MovieOrdering): [Movie]
+  Movie(_id: String, movieId: ID, title: String, year: Int, plot: String, poster: String, imdbRating: Float, first: Int, offset: Int, orderBy: _MovieOrdering): [Movie]
   MoviesByYear(year: Int): [Movie]
   MovieById(movieId: ID!): Movie
-  MovieBy_Id(_id: Int!): Movie
+  MovieBy_Id(_id: String!): Movie
   GenresBySubstring(substring: String): [Genre] @cypher(statement: "MATCH (g:Genre) WHERE toLower(g.name) CONTAINS toLower($substring) RETURN g")
   Books: [Book]
 }
