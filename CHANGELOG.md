@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.0.5
+
+- [Allow for configuration of schema augmentation process](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/131)
+- [Support for graphql.js v14.x](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/129)
+
 ## v1.0.4
 
 - [Fix #126, default resolvers object](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/127)
