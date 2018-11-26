@@ -10,7 +10,7 @@ test('simple Cypher query', t => {
       title
     }
   }`,
-    expectedCypherQuery = `MATCH (movie:Movie {title:$title}) RETURN movie { .title } AS movie SKIP $offset`;
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\` {title:$title}) RETURN \`movie\` { .title } AS \`movie\` SKIP $offset`;
 
   t.plan(3);
   return Promise.all([
@@ -32,7 +32,7 @@ test('Simple skip limit', t => {
 }
   `,
     expectedCypherQuery =
-      'MATCH (movie:Movie {title:$title}) RETURN movie { .title , .year } AS movie SKIP $offset LIMIT $first';
+      'MATCH (`movie`:`Movie` {title:$title}) RETURN `movie` { .title , .year } AS `movie` SKIP $offset LIMIT $first';
 
   t.plan(3);
   return Promise.all([
@@ -58,7 +58,7 @@ test('Cypher projection skip limit', t => {
     }
   }`,
     expectedCypherQuery =
-      'MATCH (movie:Movie {title:$title}) RETURN movie { .title ,actors: [(movie)<-[:ACTED_IN]-(movie_actors:Actor) | movie_actors { .name }] ,similar: [ movie_similar IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie, first: 3, offset: 0}, true) | movie_similar { .title }][..3] } AS movie SKIP $offset';
+      'MATCH (`movie`:`Movie` {title:$title}) RETURN `movie` { .title ,actors: [(`movie`)<-[:`ACTED_IN`]-(`movie_actors`:`Actor`) | movie_actors { .name }] ,similar: [ movie_similar IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie, first: 3, offset: 0}, true) | movie_similar { .title }][..3] } AS `movie` SKIP $offset';
 
   t.plan(3);
   return Promise.all([
@@ -80,7 +80,7 @@ test('Handle Query with name not aligning to type', t => {
 }
   `,
     expectedCypherQuery =
-      'MATCH (movie:Movie {year:$year}) RETURN movie { .title } AS movie SKIP $offset';
+      'MATCH (`movie`:`Movie` {year:$year}) RETURN `movie` { .title } AS `movie` SKIP $offset';
 
   t.plan(3);
   return Promise.all([
@@ -100,7 +100,7 @@ test('Query without arguments, non-null type', t => {
   }
 }`,
     expectedCypherQuery =
-      'MATCH (movie:Movie {}) RETURN movie { .movieId } AS movie SKIP $offset';
+      'MATCH (`movie`:`Movie` {}) RETURN `movie` { .movieId } AS `movie` SKIP $offset';
 
   t.plan(3);
   return Promise.all([
@@ -120,7 +120,7 @@ test('Query single object', t => {
     }
   }`,
     expectedCypherQuery =
-      'MATCH (movie:Movie {movieId:$movieId}) RETURN movie { .title } AS movie SKIP $offset';
+      'MATCH (`movie`:`Movie` {movieId:$movieId}) RETURN `movie` { .title } AS `movie` SKIP $offset';
 
   t.plan(3);
   return Promise.all([
@@ -145,7 +145,7 @@ test('Query single object relation', t => {
     }
   `,
     expectedCypherQuery =
-      'MATCH (movie:Movie {movieId:$movieId}) RETURN movie { .title ,filmedIn: head([(movie)-[:FILMED_IN]->(movie_filmedIn:State) | movie_filmedIn { .name }]) } AS movie SKIP $offset';
+      'MATCH (`movie`:`Movie` {movieId:$movieId}) RETURN `movie` { .title ,filmedIn: head([(`movie`)-[:`FILMED_IN`]->(`movie_filmedIn`:`State`) | movie_filmedIn { .name }]) } AS `movie` SKIP $offset';
 
   t.plan(3);
   return Promise.all([
@@ -172,7 +172,7 @@ test('Query single object and array of objects relations', t => {
       }
     }`,
     expectedCypherQuery =
-      'MATCH (movie:Movie {movieId:$movieId}) RETURN movie { .title ,actors: [(movie)<-[:ACTED_IN]-(movie_actors:Actor) | movie_actors { .name }] ,filmedIn: head([(movie)-[:FILMED_IN]->(movie_filmedIn:State) | movie_filmedIn { .name }]) } AS movie SKIP $offset';
+      'MATCH (`movie`:`Movie` {movieId:$movieId}) RETURN `movie` { .title ,actors: [(`movie`)<-[:`ACTED_IN`]-(`movie_actors`:`Actor`) | movie_actors { .name }] ,filmedIn: head([(`movie`)-[:`FILMED_IN`]->(`movie_filmedIn`:`State`) | movie_filmedIn { .name }]) } AS `movie` SKIP $offset';
 
   t.plan(3);
   return Promise.all([
@@ -209,7 +209,7 @@ test('Deeply nested object query', t => {
     }
   }
 }`,
-    expectedCypherQuery = `MATCH (movie:Movie {title:$title}) RETURN movie { .title ,actors: [(movie)<-[:ACTED_IN]-(movie_actors:Actor) | movie_actors { .name ,movies: [(movie_actors)-[:ACTED_IN]->(movie_actors_movies:Movie) | movie_actors_movies { .title ,actors: [(movie_actors_movies)<-[:ACTED_IN]-(movie_actors_movies_actors:Actor{name:$1_name}) | movie_actors_movies_actors { .name ,movies: [(movie_actors_movies_actors)-[:ACTED_IN]->(movie_actors_movies_actors_movies:Movie) | movie_actors_movies_actors_movies { .title , .year ,similar: [ movie_actors_movies_actors_movies_similar IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie_actors_movies_actors_movies, first: 3, offset: 0}, true) | movie_actors_movies_actors_movies_similar { .title , .year }][..3] }] }] }] }] } AS movie SKIP $offset`;
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\` {title:$title}) RETURN \`movie\` { .title ,actors: [(\`movie\`)<-[:\`ACTED_IN\`]-(\`movie_actors\`:\`Actor\`) | movie_actors { .name ,movies: [(\`movie_actors\`)-[:\`ACTED_IN\`]->(\`movie_actors_movies\`:\`Movie\`) | movie_actors_movies { .title ,actors: [(\`movie_actors_movies\`)<-[:\`ACTED_IN\`]-(\`movie_actors_movies_actors\`:\`Actor\`{name:$1_name}) | movie_actors_movies_actors { .name ,movies: [(\`movie_actors_movies_actors\`)-[:\`ACTED_IN\`]->(\`movie_actors_movies_actors_movies\`:\`Movie\`) | movie_actors_movies_actors_movies { .title , .year ,similar: [ movie_actors_movies_actors_movies_similar IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie_actors_movies_actors_movies, first: 3, offset: 0}, true) | movie_actors_movies_actors_movies_similar { .title , .year }][..3] }] }] }] }] } AS \`movie\` SKIP $offset`;
 
   t.plan(3);
   return Promise.all([
@@ -232,7 +232,7 @@ test('Handle meta field at beginning of selection set', t => {
       title
     }
   }`,
-    expectedCypherQuery = `MATCH (movie:Movie {title:$title}) RETURN movie { .title } AS movie SKIP $offset`;
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\` {title:$title}) RETURN \`movie\` { .title } AS \`movie\` SKIP $offset`;
 
   t.plan(3);
   return Promise.all([
@@ -254,7 +254,7 @@ test('Handle meta field at end of selection set', t => {
     }
   }
   `,
-    expectedCypherQuery = `MATCH (movie:Movie {title:$title}) RETURN movie { .title } AS movie SKIP $offset`;
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\` {title:$title}) RETURN \`movie\` { .title } AS \`movie\` SKIP $offset`;
 
   t.plan(3);
   return Promise.all([
@@ -277,7 +277,7 @@ test('Handle meta field in middle of selection set', t => {
     }
   }
   `,
-    expectedCypherQuery = `MATCH (movie:Movie {title:$title}) RETURN movie { .title , .year } AS movie SKIP $offset`;
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\` {title:$title}) RETURN \`movie\` { .title , .year } AS \`movie\` SKIP $offset`;
 
   t.plan(3);
   return Promise.all([
@@ -300,7 +300,7 @@ test('Handle @cypher directive without any params for sub-query', t => {
     }
 
   }`,
-    expectedCypherQuery = `MATCH (movie:Movie {title:$title}) RETURN movie {mostSimilar: head([ movie_mostSimilar IN apoc.cypher.runFirstColumn("WITH {this} AS this RETURN this", {this: movie}, true) | movie_mostSimilar { .title , .year }]) } AS movie SKIP $offset`;
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\` {title:$title}) RETURN \`movie\` {mostSimilar: head([ movie_mostSimilar IN apoc.cypher.runFirstColumn("WITH {this} AS this RETURN this", {this: movie}, true) | movie_mostSimilar { .title , .year }]) } AS \`movie\` SKIP $offset`;
 
   t.plan(3);
   return Promise.all([
@@ -320,7 +320,7 @@ test('Pass @cypher directive default params to sub-query', t => {
     }
 
   }`,
-    expectedCypherQuery = `MATCH (movie:Movie {title:$title}) RETURN movie {scaleRating: apoc.cypher.runFirstColumn("WITH $this AS this RETURN $scale * this.imdbRating", {this: movie, scale: 3}, false)} AS movie SKIP $offset`;
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\` {title:$title}) RETURN \`movie\` {scaleRating: apoc.cypher.runFirstColumn("WITH $this AS this RETURN $scale * this.imdbRating", {this: movie, scale: 3}, false)} AS \`movie\` SKIP $offset`;
 
   t.plan(3);
   return Promise.all([
@@ -340,7 +340,7 @@ test('Pass @cypher directive params to sub-query', t => {
     }
 
   }`,
-    expectedCypherQuery = `MATCH (movie:Movie {title:$title}) RETURN movie {scaleRating: apoc.cypher.runFirstColumn("WITH $this AS this RETURN $scale * this.imdbRating", {this: movie, scale: 10}, false)} AS movie SKIP $offset`;
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\` {title:$title}) RETURN \`movie\` {scaleRating: apoc.cypher.runFirstColumn("WITH $this AS this RETURN $scale * this.imdbRating", {this: movie, scale: 10}, false)} AS \`movie\` SKIP $offset`;
 
   t.plan(3);
   return Promise.all([
@@ -362,7 +362,7 @@ test('Query for Neo4js internal _id', t => {
     }
 
   }`,
-    expectedCypherQuery = `MATCH (movie:Movie {}) WHERE ID(movie)=0 RETURN movie { .title , .year } AS movie SKIP $offset`;
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\` {}) WHERE ID(\`movie\`)=0 RETURN \`movie\` { .title , .year } AS \`movie\` SKIP $offset`;
 
   t.plan(3);
   return Promise.all([
@@ -382,7 +382,7 @@ test('Query for Neo4js internal _id and another param before _id', t => {
     }
 
   }`,
-    expectedCypherQuery = `MATCH (movie:Movie {title:$title}) WHERE ID(movie)=0 RETURN movie { .title , .year } AS movie SKIP $offset`;
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\` {title:$title}) WHERE ID(\`movie\`)=0 RETURN \`movie\` { .title , .year } AS \`movie\` SKIP $offset`;
 
   t.plan(3);
   return Promise.all([
@@ -403,7 +403,7 @@ test('Query for Neo4js internal _id and another param after _id', t => {
     }
 
   }`,
-    expectedCypherQuery = `MATCH (movie:Movie {year:$year}) WHERE ID(movie)=0 RETURN movie { .title , .year } AS movie SKIP $offset`;
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\` {year:$year}) WHERE ID(\`movie\`)=0 RETURN \`movie\` { .title , .year } AS \`movie\` SKIP $offset`;
 
   t.plan(3);
   return Promise.all([
@@ -424,7 +424,7 @@ test('Query for Neo4js internal _id by dedicated Query MovieBy_Id(_id: String!)'
     }
 
   }`,
-    expectedCypherQuery = `MATCH (movie:Movie {}) WHERE ID(movie)=0 RETURN movie { .title , .year } AS movie SKIP $offset`;
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\` {}) WHERE ID(\`movie\`)=0 RETURN \`movie\` { .title , .year } AS \`movie\` SKIP $offset`;
 
   t.plan(3);
   return Promise.all([
@@ -443,7 +443,7 @@ test(`Query for null value translates to 'IS NULL' WHERE clause`, t => {
       year
     }
   }`,
-    expectedCypherQuery = `MATCH (movie:Movie {}) WHERE movie.poster IS NULL RETURN movie { .title , .year } AS movie SKIP $offset`;
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\` {}) WHERE movie.poster IS NULL RETURN \`movie\` { .title , .year } AS \`movie\` SKIP $offset`;
 
   t.plan(3);
   return Promise.all([
@@ -462,7 +462,7 @@ test(`Query for null value combined with internal ID and another param`, t => {
         year
       }
     }`,
-    expectedCypherQuery = `MATCH (movie:Movie {year:$year}) WHERE ID(movie)=0 AND movie.poster IS NULL RETURN movie { .title , .year } AS movie SKIP $offset`;
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\` {year:$year}) WHERE ID(\`movie\`)=0 AND movie.poster IS NULL RETURN \`movie\` { .title , .year } AS \`movie\` SKIP $offset`;
 
   t.plan(3);
   return Promise.all([
@@ -489,7 +489,7 @@ test('Cypher subquery filters', t => {
       }
     }`,
     expectedCypherQuery =
-      'MATCH (movie:Movie {title:$title}) RETURN movie { .title ,actors: [(movie)<-[:ACTED_IN]-(movie_actors:Actor{name:$1_name}) | movie_actors { .name }] ,similar: [ movie_similar IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie, first: 3, offset: 0}, true) | movie_similar { .title }][..3] } AS movie SKIP $offset';
+      'MATCH (`movie`:`Movie` {title:$title}) RETURN `movie` { .title ,actors: [(`movie`)<-[:`ACTED_IN`]-(`movie_actors`:`Actor`{name:$1_name}) | movie_actors { .name }] ,similar: [ movie_similar IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie, first: 3, offset: 0}, true) | movie_similar { .title }][..3] } AS `movie` SKIP $offset';
 
   t.plan(3);
   return Promise.all([
@@ -518,7 +518,7 @@ test('Cypher subquery filters with paging', t => {
       }
     }`,
     expectedCypherQuery =
-      'MATCH (movie:Movie {title:$title}) RETURN movie { .title ,actors: [(movie)<-[:ACTED_IN]-(movie_actors:Actor{name:$1_name}) | movie_actors { .name }][..3] ,similar: [ movie_similar IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie, first: 3, offset: 0}, true) | movie_similar { .title }][..3] } AS movie SKIP $offset';
+      'MATCH (`movie`:`Movie` {title:$title}) RETURN `movie` { .title ,actors: [(`movie`)<-[:`ACTED_IN`]-(`movie_actors`:`Actor`{name:$1_name}) | movie_actors { .name }][..3] ,similar: [ movie_similar IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie, first: 3, offset: 0}, true) | movie_similar { .title }][..3] } AS `movie` SKIP $offset';
 
   t.plan(3);
   return Promise.all([
@@ -545,8 +545,8 @@ test('Handle @cypher directive on Query Type', t => {
   }
 }
   `,
-    expectedCypherQuery = `WITH apoc.cypher.runFirstColumn("MATCH (g:Genre) WHERE toLower(g.name) CONTAINS toLower($substring) RETURN g", {substring:$substring}, True) AS x UNWIND x AS genre
-    RETURN genre { .name ,movies: [(genre)<-[:IN_GENRE]-(genre_movies:Movie{}) | genre_movies { .title }][..3] } AS genre SKIP $offset`;
+    expectedCypherQuery = `WITH apoc.cypher.runFirstColumn("MATCH (g:Genre) WHERE toLower(g.name) CONTAINS toLower($substring) RETURN g", {substring:$substring}, True) AS x UNWIND x AS \`genre\`
+    RETURN \`genre\` { .name ,movies: [(\`genre\`)<-[:\`IN_GENRE\`]-(\`genre_movies\`:\`Movie\`{}) | genre_movies { .title }][..3] } AS \`genre\` SKIP $offset`;
 
   t.plan(3);
   return Promise.all([
@@ -568,7 +568,7 @@ test.cb('Handle @cypher directive on Mutation type', t => {
 }`,
     expectedCypherQuery = `CALL apoc.cypher.doIt("CREATE (g:Genre) SET g.name = $name RETURN g", {name:$name}) YIELD value
     WITH apoc.map.values(value, [keys(value)[0]])[0] AS genre
-    RETURN genre { .name } AS genre SKIP $offset`;
+    RETURN \`genre\` { .name } AS \`genre\` SKIP $offset`;
 
   t.plan(2);
   cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery, {
@@ -588,7 +588,7 @@ test.cb('Create node mutation', t => {
       }
     }
   }`,
-    expectedCypherQuery = `CREATE (movie:Movie) SET movie = $params RETURN movie {_id: ID(movie), .title ,genres: [(movie)-[:IN_GENRE]->(movie_genres:Genre) | movie_genres { .name }] } AS movie`;
+    expectedCypherQuery = `CREATE (\`movie\`:\`Movie\`) SET \`movie\` = $params RETURN \`movie\` {_id: ID(\`movie\`), .title ,genres: [(\`movie\`)-[:\`IN_GENRE\`]->(\`movie_genres\`:\`Genre\`) | movie_genres { .name }] } AS \`movie\``;
 
   t.plan(2);
   cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery, {
@@ -613,7 +613,7 @@ test.cb('Update node mutation', t => {
       year
     }
   }`,
-    expectedCypherQuery = `MATCH (movie:Movie {movieId: $params.movieId}) SET movie += $params RETURN movie {_id: ID(movie), .title , .year } AS movie`;
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\` {movieId: $params.movieId}) SET movie += $params RETURN \`movie\` {_id: ID(\`movie\`), .title , .year } AS \`movie\``;
 
   t.plan(2);
   cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery, {
@@ -633,10 +633,10 @@ test.cb('Delete node mutation', t => {
         movieId
       }
     }`,
-    expectedCypherQuery = `MATCH (movie:Movie {movieId: $movieId})
-WITH movie AS movie_toDelete, movie {_id: ID(movie), .movieId } AS movie
-DETACH DELETE movie_toDelete
-RETURN movie`;
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\` {movieId: $movieId})
+WITH \`movie\` AS \`movie_toDelete\`, \`movie\` {_id: ID(\`movie\`), .movieId } AS \`movie\`
+DETACH DELETE \`movie_toDelete\`
+RETURN \`movie\``;
 
   t.plan(2);
   cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery, {
@@ -665,10 +665,10 @@ test('Add relationship mutation', t => {
     }
   }`,
     expectedCypherQuery = `
-      MATCH (movie_from:Movie {movieId: $from.movieId})
-      MATCH (genre_to:Genre {name: $to.name})
-      CREATE (movie_from)-[in_genre_relation:IN_GENRE]->(genre_to)
-      RETURN in_genre_relation { from: movie_from { .movieId ,genres: [(movie_from)-[:IN_GENRE]->(movie_from_genres:Genre) | movie_from_genres {_id: ID(movie_from_genres), .name }] } ,to: genre_to { .name }  } AS _AddMovieGenresPayload;
+      MATCH (\`movie_from\`:\`Movie\` {movieId: $from.movieId})
+      MATCH (\`genre_to\`:\`Genre\` {name: $to.name})
+      CREATE (\`movie_from\`)-[\`in_genre_relation\`:\`IN_GENRE\`]->(\`genre_to\`)
+      RETURN \`in_genre_relation\` { from: movie_from { .movieId ,genres: [(\`movie_from\`)-[:\`IN_GENRE\`]->(\`movie_from_genres\`:\`Genre\`) | movie_from_genres {_id: ID(\`movie_from_genres\`), .name }] } ,to: genre_to { .name }  } AS \`_AddMovieGenresPayload\`;
     `;
 
   t.plan(1);
@@ -681,7 +681,8 @@ test('Add relationship mutation', t => {
       first: -1,
       offset: 0
     },
-    expectedCypherQuery
+    expectedCypherQuery,
+    {}
   );
 });
 
@@ -704,10 +705,10 @@ test('Add relationship mutation with GraphQL variables', t => {
     }
   }`,
     expectedCypherQuery = `
-      MATCH (movie_from:Movie {movieId: $from.movieId})
-      MATCH (genre_to:Genre {name: $to.name})
-      CREATE (movie_from)-[in_genre_relation:IN_GENRE]->(genre_to)
-      RETURN in_genre_relation { from: movie_from { .movieId ,genres: [(movie_from)-[:IN_GENRE]->(movie_from_genres:Genre) | movie_from_genres {_id: ID(movie_from_genres), .name }] } ,to: genre_to { .name }  } AS _AddMovieGenresPayload;
+      MATCH (\`movie_from\`:\`Movie\` {movieId: $from.movieId})
+      MATCH (\`genre_to\`:\`Genre\` {name: $to.name})
+      CREATE (\`movie_from\`)-[\`in_genre_relation\`:\`IN_GENRE\`]->(\`genre_to\`)
+      RETURN \`in_genre_relation\` { from: movie_from { .movieId ,genres: [(\`movie_from\`)-[:\`IN_GENRE\`]->(\`movie_from_genres\`:\`Genre\`) | movie_from_genres {_id: ID(\`movie_from_genres\`), .name }] } ,to: genre_to { .name }  } AS \`_AddMovieGenresPayload\`;
     `;
 
   t.plan(1);
@@ -767,10 +768,10 @@ test('Add relationship mutation with relationship property', t => {
     }
   }`,
     expectedCypherQuery = `
-      MATCH (user_from:User {userId: $from.userId})
-      MATCH (movie_to:Movie {movieId: $to.movieId})
-      CREATE (user_from)-[rated_relation:RATED {rating:$data.rating}]->(movie_to)
-      RETURN rated_relation { from: user_from {_id: ID(user_from), .userId , .name ,rated: [(user_from)-[user_from_rated_relation:RATED]->(:Movie) | user_from_rated_relation { .rating ,Movie: head([(:User)-[user_from_rated_relation]->(user_from_rated_Movie:Movie) | user_from_rated_Movie {_id: ID(user_from_rated_Movie), .movieId , .title }]) }] } ,to: movie_to {_id: ID(movie_to), .movieId , .title ,ratings: [(movie_to)<-[movie_to_ratings_relation:RATED]-(:User) | movie_to_ratings_relation { .rating ,User: head([(:Movie)<-[movie_to_ratings_relation]-(movie_to_ratings_User:User) | movie_to_ratings_User {_id: ID(movie_to_ratings_User), .userId , .name }]) }] } , .rating  } AS _AddUserRatedPayload;
+      MATCH (\`user_from\`:\`User\` {userId: $from.userId})
+      MATCH (\`movie_to\`:\`Movie\` {movieId: $to.movieId})
+      CREATE (\`user_from\`)-[\`rated_relation\`:\`RATED\` {rating:$data.rating}]->(\`movie_to\`)
+      RETURN \`rated_relation\` { from: user_from {_id: ID(\`user_from\`), .userId , .name ,rated: [(\`user_from\`)-[\`user_from_rated_relation\`:\`RATED\`]->(:\`Movie\`) | user_from_rated_relation { .rating ,Movie: head([(:\`User\`)-[\`user_from_rated_relation\`]->(\`user_from_rated_Movie\`:\`Movie\`) | user_from_rated_Movie {_id: ID(\`user_from_rated_Movie\`), .movieId , .title }]) }] } ,to: movie_to {_id: ID(\`movie_to\`), .movieId , .title ,ratings: [(\`movie_to\`)<-[\`movie_to_ratings_relation\`:\`RATED\`]-(:\`User\`) | movie_to_ratings_relation { .rating ,User: head([(:\`Movie\`)<-[\`movie_to_ratings_relation\`]-(\`movie_to_ratings_User\`:\`User\`) | movie_to_ratings_User {_id: ID(\`movie_to_ratings_User\`), .userId , .name }]) }] } , .rating  } AS \`_AddUserRatedPayload\`;
     `;
 
   t.plan(1);
@@ -863,10 +864,10 @@ test('Add relationship mutation with relationship property (reflexive)', t => {
   }
   `,
     expectedCypherQuery = `
-      MATCH (user_from:User {userId: $from.userId})
-      MATCH (user_to:User {userId: $to.userId})
-      CREATE (user_from)-[friend_of_relation:FRIEND_OF {since:$data.since}]->(user_to)
-      RETURN friend_of_relation { from: user_from {_id: ID(user_from), .userId , .name ,friends: {from: [(user_from)<-[user_from_from_relation:FRIEND_OF]-(user_from_from:User) | user_from_from_relation { .since ,User: user_from_from {_id: ID(user_from_from), .name ,friends: {from: [(user_from_from)<-[user_from_from_from_relation:FRIEND_OF]-(user_from_from_from:User) | user_from_from_from_relation { .since ,User: user_from_from_from {_id: ID(user_from_from_from), .name } }] ,to: [(user_from_from)-[user_from_from_to_relation:FRIEND_OF]->(user_from_from_to:User) | user_from_from_to_relation { .since ,User: user_from_from_to {_id: ID(user_from_from_to), .name } }] } } }] ,to: [(user_from)-[user_from_to_relation:FRIEND_OF]->(user_from_to:User) | user_from_to_relation { .since ,User: user_from_to {_id: ID(user_from_to), .name } }] } } ,to: user_to {_id: ID(user_to), .name ,friends: {from: [(user_to)<-[user_to_from_relation:FRIEND_OF]-(user_to_from:User) | user_to_from_relation { .since ,User: user_to_from {_id: ID(user_to_from), .name } }] ,to: [(user_to)-[user_to_to_relation:FRIEND_OF]->(user_to_to:User) | user_to_to_relation { .since ,User: user_to_to {_id: ID(user_to_to), .name } }] } } , .since  } AS _AddUserFriendsPayload;
+      MATCH (\`user_from\`:\`User\` {userId: $from.userId})
+      MATCH (\`user_to\`:\`User\` {userId: $to.userId})
+      CREATE (\`user_from\`)-[\`friend_of_relation\`:\`FRIEND_OF\` {since:$data.since}]->(\`user_to\`)
+      RETURN \`friend_of_relation\` { from: user_from {_id: ID(\`user_from\`), .userId , .name ,friends: {from: [(\`user_from\`)<-[\`user_from_from_relation\`:\`FRIEND_OF\`]-(\`user_from_from\`:\`User\`) | user_from_from_relation { .since ,User: user_from_from {_id: ID(\`user_from_from\`), .name ,friends: {from: [(\`user_from_from\`)<-[\`user_from_from_from_relation\`:\`FRIEND_OF\`]-(\`user_from_from_from\`:\`User\`) | user_from_from_from_relation { .since ,User: user_from_from_from {_id: ID(\`user_from_from_from\`), .name } }] ,to: [(\`user_from_from\`)-[\`user_from_from_to_relation\`:\`FRIEND_OF\`]->(\`user_from_from_to\`:\`User\`) | user_from_from_to_relation { .since ,User: user_from_from_to {_id: ID(\`user_from_from_to\`), .name } }] } } }] ,to: [(\`user_from\`)-[\`user_from_to_relation\`:\`FRIEND_OF\`]->(\`user_from_to\`:\`User\`) | user_from_to_relation { .since ,User: user_from_to {_id: ID(\`user_from_to\`), .name } }] } } ,to: user_to {_id: ID(\`user_to\`), .name ,friends: {from: [(\`user_to\`)<-[\`user_to_from_relation\`:\`FRIEND_OF\`]-(\`user_to_from\`:\`User\`) | user_to_from_relation { .since ,User: user_to_from {_id: ID(\`user_to_from\`), .name } }] ,to: [(\`user_to\`)-[\`user_to_to_relation\`:\`FRIEND_OF\`]->(\`user_to_to\`:\`User\`) | user_to_to_relation { .since ,User: user_to_to {_id: ID(\`user_to_to\`), .name } }] } } , .since  } AS \`_AddUserFriendsPayload\`;
     `;
 
   t.plan(1);
@@ -901,12 +902,12 @@ test('Remove relationship mutation', t => {
     }
   }`,
     expectedCypherQuery = `
-      MATCH (movie_from:Movie {movieId: $from.movieId})
-      MATCH (genre_to:Genre {name: $to.name})
-      OPTIONAL MATCH (movie_from)-[movie_fromgenre_to:IN_GENRE]->(genre_to)
-      DELETE movie_fromgenre_to
-      WITH COUNT(*) AS scope, movie_from AS _movie_from, genre_to AS _genre_to
-      RETURN {from: _movie_from {_id: ID(_movie_from), .title } ,to: _genre_to {_id: ID(_genre_to), .name } } AS _RemoveMovieGenresPayload;
+      MATCH (\`movie_from\`:\`Movie\` {movieId: $from.movieId})
+      MATCH (\`genre_to\`:\`Genre\` {name: $to.name})
+      OPTIONAL MATCH (\`movie_from\`)-[\`movie_fromgenre_to\`:\`IN_GENRE\`]->(\`genre_to\`)
+      DELETE \`movie_fromgenre_to\`
+      WITH COUNT(*) AS scope, \`movie_from\` AS \`_movie_from\`, \`genre_to\` AS \`_genre_to\`
+      RETURN {from: _movie_from {_id: ID(\`_movie_from\`), .title } ,to: _genre_to {_id: ID(\`_genre_to\`), .name } } AS \`_RemoveMovieGenresPayload\`;
     `;
 
   t.plan(1);
@@ -977,12 +978,12 @@ test('Remove relationship mutation (reflexive)', t => {
   }
   `,
     expectedCypherQuery = `
-      MATCH (user_from:User {userId: $from.userId})
-      MATCH (user_to:User {userId: $to.userId})
-      OPTIONAL MATCH (user_from)-[user_fromuser_to:FRIEND_OF]->(user_to)
-      DELETE user_fromuser_to
-      WITH COUNT(*) AS scope, user_from AS _user_from, user_to AS _user_to
-      RETURN {from: _user_from {_id: ID(_user_from), .name ,friends: {from: [(_user_from)<-[_user_from_from_relation:FRIEND_OF]-(_user_from_from:User) | _user_from_from_relation { .since ,User: _user_from_from {_id: ID(_user_from_from), .name } }] ,to: [(_user_from)-[_user_from_to_relation:FRIEND_OF]->(_user_from_to:User) | _user_from_to_relation { .since ,User: _user_from_to {_id: ID(_user_from_to), .name } }] } } ,to: _user_to {_id: ID(_user_to), .name ,friends: {from: [(_user_to)<-[_user_to_from_relation:FRIEND_OF]-(_user_to_from:User) | _user_to_from_relation { .since ,User: _user_to_from {_id: ID(_user_to_from), .name } }] ,to: [(_user_to)-[_user_to_to_relation:FRIEND_OF]->(_user_to_to:User) | _user_to_to_relation { .since ,User: _user_to_to {_id: ID(_user_to_to), .name } }] } } } AS _RemoveUserFriendsPayload;
+      MATCH (\`user_from\`:\`User\` {userId: $from.userId})
+      MATCH (\`user_to\`:\`User\` {userId: $to.userId})
+      OPTIONAL MATCH (\`user_from\`)-[\`user_fromuser_to\`:\`FRIEND_OF\`]->(\`user_to\`)
+      DELETE \`user_fromuser_to\`
+      WITH COUNT(*) AS scope, \`user_from\` AS \`_user_from\`, \`user_to\` AS \`_user_to\`
+      RETURN {from: _user_from {_id: ID(\`_user_from\`), .name ,friends: {from: [(\`_user_from\`)<-[\`_user_from_from_relation\`:\`FRIEND_OF\`]-(\`_user_from_from\`:\`User\`) | _user_from_from_relation { .since ,User: _user_from_from {_id: ID(\`_user_from_from\`), .name } }] ,to: [(\`_user_from\`)-[\`_user_from_to_relation\`:\`FRIEND_OF\`]->(\`_user_from_to\`:\`User\`) | _user_from_to_relation { .since ,User: _user_from_to {_id: ID(\`_user_from_to\`), .name } }] } } ,to: _user_to {_id: ID(\`_user_to\`), .name ,friends: {from: [(\`_user_to\`)<-[\`_user_to_from_relation\`:\`FRIEND_OF\`]-(\`_user_to_from\`:\`User\`) | _user_to_from_relation { .since ,User: _user_to_from {_id: ID(\`_user_to_from\`), .name } }] ,to: [(\`_user_to\`)-[\`_user_to_to_relation\`:\`FRIEND_OF\`]->(\`_user_to_to\`:\`User\`) | _user_to_to_relation { .since ,User: _user_to_to {_id: ID(\`_user_to_to\`), .name } }] } } } AS \`_RemoveUserFriendsPayload\`;
     `;
 
   t.plan(1);
@@ -1010,7 +1011,7 @@ test('Handle GraphQL variables in nested selection - first/offset', t => {
     }
   }
 }`,
-    expectedCypherQuery = `MATCH (movie:Movie {year:$year}) RETURN movie { .title , .year ,similar: [ movie_similar IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie, first: 3, offset: 0}, true) | movie_similar { .title }][..3] } AS movie SKIP $offset`;
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\` {year:$year}) RETURN \`movie\` { .title , .year ,similar: [ movie_similar IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie, first: 3, offset: 0}, true) | movie_similar { .title }][..3] } AS \`movie\` SKIP $offset`;
 
   t.plan(3);
 
@@ -1049,7 +1050,7 @@ test('Handle GraphQL variables in nest selection - @cypher param (not first/offs
 
   }
 }`,
-    expectedCypherQuery = `MATCH (movie:Movie {year:$year}) RETURN movie { .title , .year ,similar: [ movie_similar IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie, first: 3, offset: 0}, true) | movie_similar { .title ,scaleRating: apoc.cypher.runFirstColumn("WITH $this AS this RETURN $scale * this.imdbRating", {this: movie_similar, scale: 5}, false)}][..3] } AS movie SKIP $offset`;
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\` {year:$year}) RETURN \`movie\` { .title , .year ,similar: [ movie_similar IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie, first: 3, offset: 0}, true) | movie_similar { .title ,scaleRating: apoc.cypher.runFirstColumn("WITH $this AS this RETURN $scale * this.imdbRating", {this: movie_similar, scale: 5}, false)}][..3] } AS \`movie\` SKIP $offset`;
 
   t.plan(3);
   return Promise.all([
@@ -1088,7 +1089,7 @@ test('Return internal node id for _id field', t => {
   }
 }
 `,
-    expectedCypherQuery = `MATCH (movie:Movie {year:$year}) RETURN movie {_id: ID(movie), .title , .year ,genres: [(movie)-[:IN_GENRE]->(movie_genres:Genre) | movie_genres {_id: ID(movie_genres), .name }] } AS movie SKIP $offset`;
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\` {year:$year}) RETURN \`movie\` {_id: ID(\`movie\`), .title , .year ,genres: [(\`movie\`)-[:\`IN_GENRE\`]->(\`movie_genres\`:\`Genre\`) | movie_genres {_id: ID(\`movie_genres\`), .name }] } AS \`movie\` SKIP $offset`;
 
   t.plan(3);
 
@@ -1109,7 +1110,7 @@ test('Treat enum as a scalar', t => {
       genre
     }
   }`,
-    expectedCypherQuery = `MATCH (book:Book {}) RETURN book { .genre } AS book SKIP $offset`;
+    expectedCypherQuery = `MATCH (\`book\`:\`Book\` {}) RETURN \`book\` { .genre } AS \`book\` SKIP $offset`;
 
   t.plan(3);
 
@@ -1137,7 +1138,7 @@ query getMovie {
     year
   }
 }`,
-    expectedCypherQuery = `MATCH (movie:Movie {title:$title}) RETURN movie { .title ,actors: [(movie)<-[:ACTED_IN]-(movie_actors:Actor) | movie_actors { .name }] , .year } AS movie SKIP $offset`;
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\` {title:$title}) RETURN \`movie\` { .title ,actors: [(\`movie\`)<-[:\`ACTED_IN\`]-(\`movie_actors\`:\`Actor\`) | movie_actors { .name }] , .year } AS \`movie\` SKIP $offset`;
 
   t.plan(3);
   return Promise.all([
@@ -1170,7 +1171,7 @@ query getMovie {
   }
 }
   `,
-    expectedCypherQuery = `MATCH (movie:Movie {title:$title}) RETURN movie { .title ,actors: [(movie)<-[:ACTED_IN]-(movie_actors:Actor) | movie_actors { .name }] , .year } AS movie SKIP $offset`;
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\` {title:$title}) RETURN \`movie\` { .title ,actors: [(\`movie\`)<-[:\`ACTED_IN\`]-(\`movie_actors\`:\`Actor\`) | movie_actors { .name }] , .year } AS \`movie\` SKIP $offset`;
 
   t.plan(3);
   return Promise.all([
@@ -1199,7 +1200,7 @@ test('nested fragments', t => {
     fragment Bar on Movie {
       year
     }`,
-    expectedCypherQuery = `MATCH (movie:Movie {year:$year}) RETURN movie { .title , .year } AS movie SKIP $offset`;
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\` {year:$year}) RETURN \`movie\` { .title , .year } AS \`movie\` SKIP $offset`;
 
   t.plan(3);
   return Promise.all([
@@ -1226,7 +1227,7 @@ test('fragments on relations', t => {
     fragment Foo on Actor {
       name
     }`,
-    expectedCypherQuery = `MATCH (movie:Movie {year:$year}) RETURN movie { .title ,actors: [(movie)<-[:ACTED_IN]-(movie_actors:Actor) | movie_actors { .name }] } AS movie SKIP $offset`;
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\` {year:$year}) RETURN \`movie\` { .title ,actors: [(\`movie\`)<-[:\`ACTED_IN\`]-(\`movie_actors\`:\`Actor\`) | movie_actors { .name }] } AS \`movie\` SKIP $offset`;
 
   t.plan(3);
   return Promise.all([
@@ -1257,7 +1258,7 @@ test('nested fragments on relations', t => {
     fragment Bar on Actor {
       name
     }`,
-    expectedCypherQuery = `MATCH (movie:Movie {year:$year}) RETURN movie { .title ,actors: [(movie)<-[:ACTED_IN]-(movie_actors:Actor) | movie_actors { .name }] } AS movie SKIP $offset`;
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\` {year:$year}) RETURN \`movie\` { .title ,actors: [(\`movie\`)<-[:\`ACTED_IN\`]-(\`movie_actors\`:\`Actor\`) | movie_actors { .name }] } AS \`movie\` SKIP $offset`;
 
   t.plan(3);
   return Promise.all([
@@ -1280,7 +1281,7 @@ test('orderBy test - descending, top level - augmented schema', t => {
     }
   }
   `,
-    expectedCypherQuery = `MATCH (movie:Movie {year:$year}) RETURN movie { .title ,actors: [(movie)<-[:ACTED_IN]-(movie_actors:Actor{}) | movie_actors { .name }][..3] } AS movie ORDER BY movie.title DESC  SKIP $offset LIMIT $first`;
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\` {year:$year}) RETURN \`movie\` { .title ,actors: [(\`movie\`)<-[:\`ACTED_IN\`]-(\`movie_actors\`:\`Actor\`{}) | movie_actors { .name }][..3] } AS \`movie\` ORDER BY movie.title DESC  SKIP $offset LIMIT $first`;
 
   t.plan(1);
 
@@ -1310,7 +1311,7 @@ test('query for relationship properties', t => {
       }
     }
   }`,
-    expectedCypherQuery = `MATCH (movie:Movie {title:$title}) RETURN movie { .title ,ratings: [(movie)<-[movie_ratings_relation:RATED]-(:User) | movie_ratings_relation { .rating ,User: head([(:Movie)<-[movie_ratings_relation]-(movie_ratings_User:User) | movie_ratings_User { .name }]) }] } AS movie SKIP $offset`;
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\` {title:$title}) RETURN \`movie\` { .title ,ratings: [(\`movie\`)<-[\`movie_ratings_relation\`:\`RATED\`]-(:\`User\`) | movie_ratings_relation { .rating ,User: head([(:\`Movie\`)<-[\`movie_ratings_relation\`]-(\`movie_ratings_User\`:\`User\`) | movie_ratings_User { .name }]) }] } AS \`movie\` SKIP $offset`;
 
   t.plan(1);
 
@@ -1379,7 +1380,7 @@ test('query reflexive relation nested in non-reflexive relation', t => {
       }
     }
   }`,
-    expectedCypherQuery = `MATCH (movie:Movie {}) RETURN movie { .movieId , .title ,ratings: [(movie)<-[movie_ratings_relation:RATED]-(:User) | movie_ratings_relation { .rating ,User: head([(:Movie)<-[movie_ratings_relation]-(movie_ratings_User:User) | movie_ratings_User { .userId , .name ,friends: {from: [(movie_ratings_User)<-[movie_ratings_User_from_relation:FRIEND_OF]-(movie_ratings_User_from:User) | movie_ratings_User_from_relation { .since ,User: movie_ratings_User_from { .name ,friends: {from: [(movie_ratings_User_from)<-[movie_ratings_User_from_from_relation:FRIEND_OF]-(movie_ratings_User_from_from:User) | movie_ratings_User_from_from_relation { .since ,User: movie_ratings_User_from_from { .name } }] ,to: [(movie_ratings_User_from)-[movie_ratings_User_from_to_relation:FRIEND_OF]->(movie_ratings_User_from_to:User) | movie_ratings_User_from_to_relation { .since ,User: movie_ratings_User_from_to { .name } }] } } }] ,to: [(movie_ratings_User)-[movie_ratings_User_to_relation:FRIEND_OF]->(movie_ratings_User_to:User) | movie_ratings_User_to_relation { .since ,User: movie_ratings_User_to { .name ,friends: {from: [(movie_ratings_User_to)<-[movie_ratings_User_to_from_relation:FRIEND_OF]-(movie_ratings_User_to_from:User) | movie_ratings_User_to_from_relation { .since ,User: movie_ratings_User_to_from { .name } }] ,to: [(movie_ratings_User_to)-[movie_ratings_User_to_to_relation:FRIEND_OF]->(movie_ratings_User_to_to:User) | movie_ratings_User_to_to_relation { .since ,User: movie_ratings_User_to_to { .name } }] } } }] } }]) }] } AS movie SKIP $offset`;
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\` {}) RETURN \`movie\` { .movieId , .title ,ratings: [(\`movie\`)<-[\`movie_ratings_relation\`:\`RATED\`]-(:\`User\`) | movie_ratings_relation { .rating ,User: head([(:\`Movie\`)<-[\`movie_ratings_relation\`]-(\`movie_ratings_User\`:\`User\`) | movie_ratings_User { .userId , .name ,friends: {from: [(\`movie_ratings_User\`)<-[\`movie_ratings_User_from_relation\`:\`FRIEND_OF\`]-(\`movie_ratings_User_from\`:\`User\`) | movie_ratings_User_from_relation { .since ,User: movie_ratings_User_from { .name ,friends: {from: [(\`movie_ratings_User_from\`)<-[\`movie_ratings_User_from_from_relation\`:\`FRIEND_OF\`]-(\`movie_ratings_User_from_from\`:\`User\`) | movie_ratings_User_from_from_relation { .since ,User: movie_ratings_User_from_from { .name } }] ,to: [(\`movie_ratings_User_from\`)-[\`movie_ratings_User_from_to_relation\`:\`FRIEND_OF\`]->(\`movie_ratings_User_from_to\`:\`User\`) | movie_ratings_User_from_to_relation { .since ,User: movie_ratings_User_from_to { .name } }] } } }] ,to: [(\`movie_ratings_User\`)-[\`movie_ratings_User_to_relation\`:\`FRIEND_OF\`]->(\`movie_ratings_User_to\`:\`User\`) | movie_ratings_User_to_relation { .since ,User: movie_ratings_User_to { .name ,friends: {from: [(\`movie_ratings_User_to\`)<-[\`movie_ratings_User_to_from_relation\`:\`FRIEND_OF\`]-(\`movie_ratings_User_to_from\`:\`User\`) | movie_ratings_User_to_from_relation { .since ,User: movie_ratings_User_to_from { .name } }] ,to: [(\`movie_ratings_User_to\`)-[\`movie_ratings_User_to_to_relation\`:\`FRIEND_OF\`]->(\`movie_ratings_User_to_to\`:\`User\`) | movie_ratings_User_to_to_relation { .since ,User: movie_ratings_User_to_to { .name } }] } } }] } }]) }] } AS \`movie\` SKIP $offset`;
 
   t.plan(1);
 
@@ -1447,7 +1448,7 @@ test('query non-reflexive relation nested in reflexive relation', t => {
       }
     }
   }`,
-    expectedCypherQuery = `MATCH (user:User {}) RETURN user {_id: ID(user), .name ,friends: {from: [(user)<-[user_from_relation:FRIEND_OF]-(user_from:User) | user_from_relation { .since ,User: user_from {_id: ID(user_from), .name ,rated: [(user_from)-[user_from_rated_relation:RATED]->(:Movie) | user_from_rated_relation { .rating ,Movie: head([(:User)-[user_from_rated_relation]->(user_from_rated_Movie:Movie) | user_from_rated_Movie {_id: ID(user_from_rated_Movie),ratings: [(user_from_rated_Movie)<-[user_from_rated_Movie_ratings_relation:RATED]-(:User) | user_from_rated_Movie_ratings_relation { .rating ,User: head([(:Movie)<-[user_from_rated_Movie_ratings_relation]-(user_from_rated_Movie_ratings_User:User) | user_from_rated_Movie_ratings_User {_id: ID(user_from_rated_Movie_ratings_User),friends: {from: [(user_from_rated_Movie_ratings_User)<-[user_from_rated_Movie_ratings_User_from_relation:FRIEND_OF]-(user_from_rated_Movie_ratings_User_from:User) | user_from_rated_Movie_ratings_User_from_relation { .since ,User: user_from_rated_Movie_ratings_User_from {_id: ID(user_from_rated_Movie_ratings_User_from)} }] ,to: [(user_from_rated_Movie_ratings_User)-[user_from_rated_Movie_ratings_User_to_relation:FRIEND_OF]->(user_from_rated_Movie_ratings_User_to:User) | user_from_rated_Movie_ratings_User_to_relation { .since ,User: user_from_rated_Movie_ratings_User_to {_id: ID(user_from_rated_Movie_ratings_User_to)} }] } }]) }] }]) }] } }] ,to: [(user)-[user_to_relation:FRIEND_OF]->(user_to:User) | user_to_relation { .since ,User: user_to {_id: ID(user_to), .name ,rated: [(user_to)-[user_to_rated_relation:RATED]->(:Movie) | user_to_rated_relation { .rating ,Movie: head([(:User)-[user_to_rated_relation]->(user_to_rated_Movie:Movie) | user_to_rated_Movie {_id: ID(user_to_rated_Movie)}]) }] } }] } } AS user SKIP $offset`;
+    expectedCypherQuery = `MATCH (\`user\`:\`User\` {}) RETURN \`user\` {_id: ID(\`user\`), .name ,friends: {from: [(\`user\`)<-[\`user_from_relation\`:\`FRIEND_OF\`]-(\`user_from\`:\`User\`) | user_from_relation { .since ,User: user_from {_id: ID(\`user_from\`), .name ,rated: [(\`user_from\`)-[\`user_from_rated_relation\`:\`RATED\`]->(:\`Movie\`) | user_from_rated_relation { .rating ,Movie: head([(:\`User\`)-[\`user_from_rated_relation\`]->(\`user_from_rated_Movie\`:\`Movie\`) | user_from_rated_Movie {_id: ID(\`user_from_rated_Movie\`),ratings: [(\`user_from_rated_Movie\`)<-[\`user_from_rated_Movie_ratings_relation\`:\`RATED\`]-(:\`User\`) | user_from_rated_Movie_ratings_relation { .rating ,User: head([(:\`Movie\`)<-[\`user_from_rated_Movie_ratings_relation\`]-(\`user_from_rated_Movie_ratings_User\`:\`User\`) | user_from_rated_Movie_ratings_User {_id: ID(\`user_from_rated_Movie_ratings_User\`),friends: {from: [(\`user_from_rated_Movie_ratings_User\`)<-[\`user_from_rated_Movie_ratings_User_from_relation\`:\`FRIEND_OF\`]-(\`user_from_rated_Movie_ratings_User_from\`:\`User\`) | user_from_rated_Movie_ratings_User_from_relation { .since ,User: user_from_rated_Movie_ratings_User_from {_id: ID(\`user_from_rated_Movie_ratings_User_from\`)} }] ,to: [(\`user_from_rated_Movie_ratings_User\`)-[\`user_from_rated_Movie_ratings_User_to_relation\`:\`FRIEND_OF\`]->(\`user_from_rated_Movie_ratings_User_to\`:\`User\`) | user_from_rated_Movie_ratings_User_to_relation { .since ,User: user_from_rated_Movie_ratings_User_to {_id: ID(\`user_from_rated_Movie_ratings_User_to\`)} }] } }]) }] }]) }] } }] ,to: [(\`user\`)-[\`user_to_relation\`:\`FRIEND_OF\`]->(\`user_to\`:\`User\`) | user_to_relation { .since ,User: user_to {_id: ID(\`user_to\`), .name ,rated: [(\`user_to\`)-[\`user_to_rated_relation\`:\`RATED\`]->(:\`Movie\`) | user_to_rated_relation { .rating ,Movie: head([(:\`User\`)-[\`user_to_rated_relation\`]->(\`user_to_rated_Movie\`:\`Movie\`) | user_to_rated_Movie {_id: ID(\`user_to_rated_Movie\`)}]) }] } }] } } AS \`user\` SKIP $offset`;
 
   t.plan(1);
 
@@ -1473,7 +1474,7 @@ test('query relation type with argument', t => {
       }
     }
   }`,
-    expectedCypherQuery = `MATCH (user:User {}) RETURN user {_id: ID(user), .name ,rated: [(user)-[user_rated_relation:RATED{rating:$1_rating}]->(:Movie) | user_rated_relation { .rating ,Movie: head([(:User)-[user_rated_relation]->(user_rated_Movie:Movie) | user_rated_Movie { .title }]) }] } AS user SKIP $offset`;
+    expectedCypherQuery = `MATCH (\`user\`:\`User\` {}) RETURN \`user\` {_id: ID(\`user\`), .name ,rated: [(\`user\`)-[\`user_rated_relation\`:\`RATED\`{rating:$1_rating}]->(:\`Movie\`) | user_rated_relation { .rating ,Movie: head([(:\`User\`)-[\`user_rated_relation\`]->(\`user_rated_Movie\`:\`Movie\`) | user_rated_Movie { .title }]) }] } AS \`user\` SKIP $offset`;
 
   t.plan(1);
 
@@ -1508,7 +1509,7 @@ test('query reflexive relation type with arguments', t => {
     }
   }
   `,
-    expectedCypherQuery = `MATCH (user:User {}) RETURN user { .userId , .name ,friends: {from: [(user)<-[user_from_relation:FRIEND_OF{since:$1_since}]-(user_from:User) | user_from_relation { .since ,User: user_from { .name } }] ,to: [(user)-[user_to_relation:FRIEND_OF{since:$3_since}]->(user_to:User) | user_to_relation { .since ,User: user_to { .name } }] } } AS user SKIP $offset`;
+    expectedCypherQuery = `MATCH (\`user\`:\`User\` {}) RETURN \`user\` { .userId , .name ,friends: {from: [(\`user\`)<-[\`user_from_relation\`:\`FRIEND_OF\`{since:$1_since}]-(\`user_from\`:\`User\`) | user_from_relation { .since ,User: user_from { .name } }] ,to: [(\`user\`)-[\`user_to_relation\`:\`FRIEND_OF\`{since:$3_since}]->(\`user_to\`:\`User\`) | user_to_relation { .since ,User: user_to { .name } }] } } AS \`user\` SKIP $offset`;
 
   t.plan(1);
 
@@ -1538,7 +1539,7 @@ test('query using inline fragment', t => {
     }
   }
   `,
-    expectedCypherQuery = `MATCH (movie:Movie {title:$title}) RETURN movie { .title ,ratings: [(movie)<-[movie_ratings_relation:RATED]-(:User) | movie_ratings_relation { .rating ,User: head([(:Movie)<-[movie_ratings_relation]-(movie_ratings_User:User) | movie_ratings_User { .name , .userId }]) }] } AS movie SKIP $offset`;
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\` {title:$title}) RETURN \`movie\` { .title ,ratings: [(\`movie\`)<-[\`movie_ratings_relation\`:\`RATED\`]-(:\`User\`) | movie_ratings_relation { .rating ,User: head([(:\`Movie\`)<-[\`movie_ratings_relation\`]-(\`movie_ratings_User\`:\`User\`) | movie_ratings_User { .name , .userId }]) }] } AS \`movie\` SKIP $offset`;
 
   t.plan(1);
 
@@ -1550,4 +1551,3 @@ test('query using inline fragment', t => {
     {}
   );
 });
-
