@@ -17,7 +17,9 @@ import {
   getFieldValueType,
   extractTypeMapFromTypeDefs,
   addDirectiveDeclarations,
-  printTypeMap
+  printTypeMap,
+  safeLabel,
+  safeVar
 } from './utils';
 import { buildCypherSelection } from './selections';
 import {
@@ -132,14 +134,16 @@ export function cypherQuery(
 
     query = `WITH apoc.cypher.runFirstColumn("${
       cypherQueryArg.value.value
-    }", ${argString}, True) AS x UNWIND x AS ${variableName}
-    RETURN ${variableName} {${subQuery}} AS ${variableName}${orderByValue} ${outerSkipLimit}`;
+    }", ${argString}, True) AS x UNWIND x AS ${safeVar(variableName)}
+    RETURN ${safeVar(variableName)} {${subQuery}} AS ${safeVar(
+      variableName
+    )}${orderByValue} ${outerSkipLimit}`;
   } else {
     // No @cypher directive on QueryType
 
     // FIXME: support IN for multiple values -> WHERE
     const idWherePredicate =
-      typeof _id !== 'undefined' ? `ID(${variableName})=${_id}` : '';
+      typeof _id !== 'undefined' ? `ID(${safeVar(variableName)})=${_id}` : '';
     const nullFieldPredicates = Object.keys(nullParams).map(
       key => `${variableName}.${key} IS NULL`
     );
@@ -149,9 +153,12 @@ export function cypherQuery(
     const predicate = predicateClauses ? `WHERE ${predicateClauses} ` : '';
 
     query =
-      `MATCH (${variableName}:${typeName} ${argString}) ${predicate}` +
-      `RETURN ${variableName} {${subQuery}} AS ${variableName}${orderByValue} ${outerSkipLimit}`;
-
+      `MATCH (${safeVar(variableName)}:${safeLabel(
+        typeName
+      )} ${argString}) ${predicate}` +
+      `RETURN ${safeVar(variableName)} {${subQuery}} AS ${safeVar(
+        variableName
+      )}${orderByValue} ${outerSkipLimit}`;
   }
 
   return [query, { ...nonNullParams, ...subParams }];
@@ -227,10 +234,12 @@ export function cypherMutation(
       cypherQueryArg.value.value
     }", ${argString}) YIELD value
     WITH apoc.map.values(value, [keys(value)[0]])[0] AS ${variableName}
-    RETURN ${variableName} {${subQuery}} AS ${variableName}${orderByValue} ${outerSkipLimit}`;
+    RETURN ${safeVar(variableName)} {${subQuery}} AS ${safeVar(
+      variableName
+    )}${orderByValue} ${outerSkipLimit}`;
   } else if (isCreateMutation(resolveInfo)) {
-    query = `CREATE (${variableName}:${typeName}) `;
-    query += `SET ${variableName} = $params `;
+    query = `CREATE (${safeVar(variableName)}:${safeLabel(typeName)}) `;
+    query += `SET ${safeVar(variableName)} = $params `;
     //query += `RETURN ${variable}`;
 
     const [subQuery, subParams] = buildCypherSelection({
@@ -247,7 +256,7 @@ export function cypherMutation(
       resolveInfo.fieldName
     ].astNode.arguments;
 
-    const firstIdArg = args.find(e => getFieldValueType(e) === "ID");
+    const firstIdArg = args.find(e => getFieldValueType(e) === 'ID');
     if (firstIdArg) {
       const firstIdArgFieldName = firstIdArg.name.value;
       if (params.params[firstIdArgFieldName] === undefined) {
@@ -255,7 +264,9 @@ export function cypherMutation(
       }
     }
 
-    query += `RETURN ${variableName} {${subQuery}} AS ${variableName}`;
+    query += `RETURN ${safeVar(variableName)} {${subQuery}} AS ${safeVar(
+      variableName
+    )}`;
   } else if (isAddMutation(resolveInfo)) {
     let mutationMeta, relationshipNameArg, fromTypeArg, toTypeArg;
 
@@ -332,25 +343,35 @@ export function cypherMutation(
       paramIndex: 1,
       rootVariableNames: {
         from: `${fromVar}`,
-        to: `${toVar}`,
+        to: `${toVar}`
       },
       variableName: schemaType.name === fromType ? `${toVar}` : `${fromVar}`
     });
     params = { ...params, ...subParams };
     query = `
-      MATCH (${fromVar}:${fromType} {${fromParam}: $from.${fromParam}})
-      MATCH (${toVar}:${toType} {${toParam}: $to.${toParam}})
-      CREATE (${fromVar})-[${lowercased}_relation:${relationshipName}${
+      MATCH (${safeVar(fromVar)}:${safeLabel(
+      fromType
+    )} {${fromParam}: $from.${fromParam}})
+      MATCH (${safeVar(toVar)}:${safeLabel(
+      toType
+    )} {${toParam}: $to.${toParam}})
+      CREATE (${safeVar(fromVar)})-[${safeVar(
+      lowercased + '_relation'
+    )}:${safeLabel(relationshipName)}${
       relationPropertyArguments ? ` {${relationPropertyArguments}}` : ''
-    }]->(${toVar})
-      RETURN ${lowercased}_relation { ${subQuery} } AS ${schemaType};
+    }]->(${safeVar(toVar)})
+      RETURN ${safeVar(lowercased + '_relation')} { ${subQuery} } AS ${safeVar(
+      schemaType
+    )};
     `;
   } else if (isUpdateMutation(resolveInfo)) {
     const idParam = resolveInfo.schema.getMutationType().getFields()[
       resolveInfo.fieldName
     ].astNode.arguments[0].name.value;
 
-    query = `MATCH (${variableName}:${typeName} {${idParam}: $params.${
+    query = `MATCH (${safeVar(variableName)}:${safeLabel(
+      typeName
+    )} {${idParam}: $params.${
       resolveInfo.schema.getMutationType().getFields()[resolveInfo.fieldName]
         .astNode.arguments[0].name.value
     }}) `;
@@ -366,7 +387,9 @@ export function cypherMutation(
     });
     params = { ...params, ...subParams };
 
-    query += `RETURN ${variableName} {${subQuery}} AS ${variableName}`;
+    query += `RETURN ${safeVar(variableName)} {${subQuery}} AS ${safeVar(
+      variableName
+    )}`;
   } else if (isDeleteMutation(resolveInfo)) {
     const idParam = resolveInfo.schema.getMutationType().getFields()[
       resolveInfo.fieldName
@@ -384,14 +407,17 @@ export function cypherMutation(
 
     // Cannot execute a map projection on a deleted node in Neo4j
     // so the projection is executed and aliased before the delete
-    query = `MATCH (${variableName}:${typeName} {${idParam}: $${
+    query = `MATCH (${safeVar(variableName)}:${safeLabel(
+      typeName
+    )} {${idParam}: $${
       resolveInfo.schema.getMutationType().getFields()[resolveInfo.fieldName]
         .astNode.arguments[0].name.value
     }})
-WITH ${variableName} AS ${variableName +
-      '_toDelete'}, ${variableName} {${subQuery}} AS ${variableName}
-DETACH DELETE ${variableName + '_toDelete'}
-RETURN ${variableName}`;
+WITH ${safeVar(variableName)} AS ${safeVar(
+      variableName + '_toDelete'
+    )}, ${safeVar(variableName)} {${subQuery}} AS ${safeVar(variableName)}
+DETACH DELETE ${safeVar(variableName + '_toDelete')}
+RETURN ${safeVar(variableName)}`;
   } else if (isRemoveMutation(resolveInfo)) {
     let mutationMeta, relationshipNameArg, fromTypeArg, toTypeArg;
 
@@ -460,7 +486,7 @@ RETURN ${variableName}`;
         from: `_${fromVar}`,
         to: `_${toVar}`
       },
-      variableName: schemaType.name === fromType ? `_${toVar}` : `_${fromVar}`,
+      variableName: schemaType.name === fromType ? `_${toVar}` : `_${fromVar}`
     });
     params = { ...params, ...subParams };
 
@@ -470,13 +496,20 @@ RETURN ${variableName}`;
     // object construction into a WITH statement above the DELETE, then return it
     // the delete
     query = `
-      MATCH (${fromVar}:${fromType} {${fromParam}: $from.${fromParam}})
-      MATCH (${toVar}:${toType} {${toParam}: $to.${toParam}})
-      OPTIONAL MATCH (${fromVar})-[${fromVar +
-      toVar}:${relationshipName}]->(${toVar})
-      DELETE ${fromVar + toVar}
-      WITH COUNT(*) AS scope, ${fromVar} AS _${fromVar}, ${toVar} AS _${toVar}
-      RETURN {${subQuery}} AS ${schemaType};
+      MATCH (${safeVar(fromVar)}:${safeLabel(
+      fromType
+    )} {${fromParam}: $from.${fromParam}})
+      MATCH (${safeVar(toVar)}:${safeLabel(
+      toType
+    )} {${toParam}: $to.${toParam}})
+      OPTIONAL MATCH (${safeVar(fromVar)})-[${safeVar(
+      fromVar + toVar
+    )}:${safeLabel(relationshipName)}]->(${safeVar(toVar)})
+      DELETE ${safeVar(fromVar + toVar)}
+      WITH COUNT(*) AS scope, ${safeVar(fromVar)} AS ${safeVar(
+      '_' + fromVar
+    )}, ${safeVar(toVar)} AS ${safeVar('_' + toVar)}
+      RETURN {${subQuery}} AS ${safeVar(schemaType)};
     `;
   } else {
     // throw error - don't know how to handle this type of mutation
@@ -527,9 +560,9 @@ export const makeAugmentedSchema = ({
   });
 };
 
-export const augmentTypeDefs = (typeDefs) => {
+export const augmentTypeDefs = typeDefs => {
   const typeMap = extractTypeMapFromTypeDefs(typeDefs);
   // overwrites any provided declarations of system directives
   const augmented = addDirectiveDeclarations(typeMap);
   return printTypeMap(augmented);
-}
+};

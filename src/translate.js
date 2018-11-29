@@ -1,7 +1,4 @@
-import {
-  isArrayType,
-  cypherDirectiveArgs
-} from './utils';
+import { isArrayType, cypherDirectiveArgs, safeLabel, safeVar } from './utils';
 
 export const customCypherField = ({
   customCypher,
@@ -35,44 +32,44 @@ export const customCypherField = ({
     )}, true) | ${nestedVariable} {${subSelection[0]}}]${
       fieldIsList ? '' : ')'
     }${skipLimit} ${commaIfTail}`,
-    ...tailParams,
+    ...tailParams
   };
-}
+};
 
 export const relationFieldOnNodeType = ({
-  initial, 
-  fieldName, 
-  fieldType, 
-  variableName, 
-  relDirection, 
+  initial,
+  fieldName,
+  fieldType,
+  variableName,
+  relDirection,
   relType,
-  nestedVariable, 
-  isInlineFragment, 
-  interfaceLabel, 
-  innerSchemaType, 
-  queryParams, 
-  subSelection, 
-  skipLimit, 
+  nestedVariable,
+  isInlineFragment,
+  interfaceLabel,
+  innerSchemaType,
+  queryParams,
+  subSelection,
+  skipLimit,
   commaIfTail,
   tailParams
 }) => {
   return {
     initial: `${initial}${fieldName}: ${
       !isArrayType(fieldType) ? 'head(' : ''
-    }[(${variableName})${
+    }[(${safeVar(variableName)})${
       relDirection === 'in' || relDirection === 'IN' ? '<' : ''
-    }-[:${relType}]-${
+    }-[:${safeLabel(relType)}]-${
       relDirection === 'out' || relDirection === 'OUT' ? '>' : ''
-    }(${nestedVariable}:${
+    }(${safeVar(nestedVariable)}:${safeLabel(
       isInlineFragment ? interfaceLabel : innerSchemaType.name
-    }${queryParams}) | ${nestedVariable} {${
+    )}${queryParams}) | ${nestedVariable} {${
       isInlineFragment
         ? 'FRAGMENT_TYPE: "' + interfaceLabel + '",' + subSelection[0]
         : subSelection[0]
     }}]${!isArrayType(fieldType) ? ')' : ''}${skipLimit} ${commaIfTail}`,
     ...tailParams
   };
-}
+};
 
 export const relationTypeFieldOnNodeType = ({
   innerSchemaTypeRelation,
@@ -81,7 +78,7 @@ export const relationTypeFieldOnNodeType = ({
   subSelection,
   skipLimit,
   commaIfTail,
-  tailParams, 
+  tailParams,
   fieldType,
   variableName,
   schemaType,
@@ -90,25 +87,31 @@ export const relationTypeFieldOnNodeType = ({
 }) => {
   if (innerSchemaTypeRelation.from === innerSchemaTypeRelation.to) {
     return {
-      initial: `${initial}${fieldName}: {${subSelection[0]}}${skipLimit} ${commaIfTail}`,
-      ...tailParams,
-    }  
+      initial: `${initial}${fieldName}: {${
+        subSelection[0]
+      }}${skipLimit} ${commaIfTail}`,
+      ...tailParams
+    };
   }
   return {
     initial: `${initial}${fieldName}: ${
       !isArrayType(fieldType) ? 'head(' : ''
-    }[(${variableName})${
+    }[(${safeVar(variableName)})${
       schemaType.name === innerSchemaTypeRelation.to ? '<' : ''
-    }-[${nestedVariable}_relation:${innerSchemaTypeRelation.name}${queryParams}]-${
+    }-[${safeVar(nestedVariable + '_relation')}:${safeLabel(
+      innerSchemaTypeRelation.name
+    )}${queryParams}]-${
       schemaType.name === innerSchemaTypeRelation.from ? '>' : ''
-    }(:${
-      schemaType.name === innerSchemaTypeRelation.from ? innerSchemaTypeRelation.to : innerSchemaTypeRelation.from
-    }) | ${nestedVariable}_relation {${subSelection[0]}}]${
+    }(:${safeLabel(
+      schemaType.name === innerSchemaTypeRelation.from
+        ? innerSchemaTypeRelation.to
+        : innerSchemaTypeRelation.from
+    )}) | ${nestedVariable}_relation {${subSelection[0]}}]${
       !isArrayType(fieldType) ? ')' : ''
     }${skipLimit} ${commaIfTail}`,
     ...tailParams
-  }
-}
+  };
+};
 
 export const nodeTypeFieldOnRelationType = ({
   fieldInfo,
@@ -116,7 +119,7 @@ export const nodeTypeFieldOnRelationType = ({
   schemaTypeRelation,
   innerSchemaType,
   isInlineFragment,
-  interfaceLabel,
+  interfaceLabel
 }) => {
   if (rootVariableNames) {
     // Special case used by relation mutation payloads
@@ -125,18 +128,17 @@ export const nodeTypeFieldOnRelationType = ({
       ...fieldInfo,
       rootVariableNames
     });
-  }
-  else {
+  } else {
     // Normal case of schemaType with a relationship directive
     return directedFieldOnReflexiveRelationType({
       ...fieldInfo,
       schemaTypeRelation,
       innerSchemaType,
       isInlineFragment,
-      interfaceLabel,
+      interfaceLabel
     });
   }
-}
+};
 
 const relationTypeMutationPayloadField = ({
   initial,
@@ -149,12 +151,15 @@ const relationTypeMutationPayloadField = ({
   rootVariableNames
 }) => {
   return {
-    initial: `${initial}${fieldName}: ${variableName} {${subSelection[0]}}${skipLimit} ${commaIfTail}`,
+    initial: `${initial}${fieldName}: ${variableName} {${
+      subSelection[0]
+    }}${skipLimit} ${commaIfTail}`,
     ...tailParams,
     rootVariableNames,
-    variableName: fieldName === 'from' ? rootVariableNames.to : rootVariableNames.from
-  }
-}
+    variableName:
+      fieldName === 'from' ? rootVariableNames.to : rootVariableNames.from
+  };
+};
 
 const directedFieldOnReflexiveRelationType = ({
   initial,
@@ -177,36 +182,35 @@ const directedFieldOnReflexiveRelationType = ({
   const toTypeName = schemaTypeRelation.to;
   const isFromField = fieldName === fromTypeName || fieldName === 'from';
   const isToField = fieldName === toTypeName || fieldName === 'to';
-  const relationshipVariableName = `${variableName}_${isFromField ? 'from' : 'to'}_relation`;
-  // Since the translations are significantly different, 
+  const relationshipVariableName = `${variableName}_${
+    isFromField ? 'from' : 'to'
+  }_relation`;
+  // Since the translations are significantly different,
   // we first check whether the relationship is reflexive
-  if(fromTypeName === toTypeName) {
-    if(fieldName === "from" || fieldName === "to") {
+  if (fromTypeName === toTypeName) {
+    if (fieldName === 'from' || fieldName === 'to') {
       return {
         initial: `${initial}${fieldName}: ${
           !isArrayType(fieldType) ? 'head(' : ''
-        }[(${variableName})${
-          isFromField ? '<' : ''
-        }-[${relationshipVariableName}:${relType}${queryParams}]-${
+        }[(${safeVar(variableName)})${isFromField ? '<' : ''}-[${safeVar(
+          relationshipVariableName
+        )}:${safeLabel(relType)}${queryParams}]-${
           isToField ? '>' : ''
-        }(${nestedVariable}:${
-          isInlineFragment 
-          ? interfaceLabel 
-          : fromTypeName
-        }) | ${relationshipVariableName} {${
+        }(${safeVar(nestedVariable)}:${safeLabel(
+          isInlineFragment ? interfaceLabel : fromTypeName
+        )}) | ${relationshipVariableName} {${
           isInlineFragment
             ? 'FRAGMENT_TYPE: "' + interfaceLabel + '",' + subSelection[0]
             : subSelection[0]
-        }}]${
-          !isArrayType(fieldType) ? ')' : ''
-        }${skipLimit} ${commaIfTail}`,
+        }}]${!isArrayType(fieldType) ? ')' : ''}${skipLimit} ${commaIfTail}`,
         ...tailParams
       };
-    }
-    else {
+    } else {
       // Case of a renamed directed field
       return {
-        initial: `${initial}${fieldName}: ${variableName} {${subSelection[0]}}${skipLimit} ${commaIfTail}`,
+        initial: `${initial}${fieldName}: ${variableName} {${
+          subSelection[0]
+        }}${skipLimit} ${commaIfTail}`,
         ...tailParams
       };
     }
@@ -215,21 +219,17 @@ const directedFieldOnReflexiveRelationType = ({
   return {
     initial: `${initial}${fieldName}: ${
       !isArrayType(fieldType) ? 'head(' : ''
-    }[(:${
-      isFromField ? toTypeName : fromTypeName
-    })${
+    }[(:${safeLabel(isFromField ? toTypeName : fromTypeName)})${
       isFromField ? '<' : ''
-    }-[${variableName}_relation]-${
+    }-[${safeVar(variableName + '_relation')}]-${
       isToField ? '>' : ''
-    }(${nestedVariable}:${
+    }(${safeVar(nestedVariable)}:${safeLabel(
       isInlineFragment ? interfaceLabel : innerSchemaType.name
-    }${queryParams}) | ${nestedVariable} {${
+    )}${queryParams}) | ${nestedVariable} {${
       isInlineFragment
         ? 'FRAGMENT_TYPE: "' + interfaceLabel + '",' + subSelection[0]
         : subSelection[0]
-    }}]${
-      !isArrayType(fieldType) ? ')' : ''
-    }${skipLimit} ${commaIfTail}`,
+    }}]${!isArrayType(fieldType) ? ')' : ''}${skipLimit} ${commaIfTail}`,
     ...tailParams
-  }
-}
+  };
+};
