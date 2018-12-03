@@ -8,15 +8,9 @@ import {
   augmentResolvers
 } from "./augment";
 
-
-// TODO put every extract- helper in extract.js along with moving 
-// TODO extractTypeMapFromTypeDefs from utils.js
-
-
 export const augmentedSchema = (typeMap, resolvers, config) => {
   const augmentedTypeMap = augmentTypeMap(typeMap, config);
   const augmentedResolvers = augmentResolvers(augmentedTypeMap, resolvers);
-  // TODO extract and persist logger and schemaDirectives, at least
   return makeExecutableSchema({
     typeDefs: printTypeMap(augmentedTypeMap),
     resolvers: augmentedResolvers,
