@@ -12,14 +12,20 @@ import {
   getRelationTypeDirectiveArgs,
   decideNestedVariableName,
   safeLabel,
-  safeVar
+  safeVar,
+  isTemporalType,
+  isTemporalField,
+  getTemporalArguments,
+  temporalPredicateClauses
 } from './utils';
 
 import {
   customCypherField,
   relationFieldOnNodeType,
   relationTypeFieldOnNodeType,
-  nodeTypeFieldOnRelationType
+  nodeTypeFieldOnRelationType,
+  temporalType,
+  temporalField
 } from './translate';
 
 export function buildCypherSelection({
@@ -29,7 +35,10 @@ export function buildCypherSelection({
   schemaType,
   resolveInfo,
   paramIndex = 1,
-  rootVariableNames
+  rootVariableNames,
+  parentSchemaType,
+  parentFieldName,
+  parentVariableName
 }) {
   if (!selections.length) {
     return [initial, {}];
@@ -144,7 +153,6 @@ export function buildCypherSelection({
       ...tailParams
     });
   }
-
   // Main control flow
   if (isGraphqlScalarType(innerSchemaType)) {
     if (customCypher) {
@@ -161,7 +169,17 @@ export function buildCypherSelection({
         ...tailParams
       });
     }
-
+    else if(isTemporalField(schemaType, fieldName)) {
+      return recurse(temporalField({
+        initial,
+        fieldName, 
+        commaIfTail,
+        parentSchemaType,
+        parentFieldName,
+        parentVariableName,
+        tailParams
+      }));
+    }
     // graphql scalar type, no custom cypher statement
     return recurse({
       initial: `${initial} .${fieldName} ${commaIfTail}`,
@@ -170,9 +188,7 @@ export function buildCypherSelection({
   }
   // We have a graphql object type
   const innerSchemaTypeAstNode = typeMap[innerSchemaType].astNode;
-  const innerSchemaTypeRelation = getRelationTypeDirectiveArgs(
-    innerSchemaTypeAstNode
-  );
+  const innerSchemaTypeRelation = getRelationTypeDirectiveArgs(innerSchemaTypeAstNode);
   const schemaTypeRelation = getRelationTypeDirectiveArgs(schemaTypeAstNode);
   const { name: relType, direction: relDirection } = relationDirective(
     schemaType,
@@ -199,11 +215,16 @@ export function buildCypherSelection({
     selections: subSelections,
     variableName: nestedVariable,
     schemaType: innerSchemaType,
+    parentSchemaType: schemaType,
+    parentFieldName: fieldName,
+    parentVariableName: variableName,
     resolveInfo
   });
 
   let selection;
-  const queryParams = innerFilterParams(filterParams);
+  const fieldArgs = schemaType.getFields()[fieldName].args.map(e => e.astNode);
+  const temporalArgs = getTemporalArguments(fieldArgs);
+  const queryParams = innerFilterParams(filterParams, temporalArgs);
   const fieldInfo = {
     initial,
     fieldName,
@@ -228,8 +249,13 @@ export function buildCypherSelection({
         resolveInfo
       })
     );
+  } else if(isTemporalType(fieldType.name)) {
+    selection = recurse(temporalType({
+      ...fieldInfo
+    }));
   } else if (relType && relDirection) {
     // Object type field with relation directive
+    const temporalClauses = temporalPredicateClauses(filterParams, nestedVariable, temporalArgs);
     selection = recurse(
       relationFieldOnNodeType({
         ...fieldInfo,
@@ -237,7 +263,8 @@ export function buildCypherSelection({
         relType,
         isInlineFragment,
         interfaceLabel,
-        innerSchemaType
+        innerSchemaType,
+        temporalClauses
       })
     );
   } else if (schemaTypeRelation) {
@@ -254,12 +281,14 @@ export function buildCypherSelection({
       })
     );
   } else if (innerSchemaTypeRelation) {
+    const temporalClauses = temporalPredicateClauses(filterParams, nestedVariable, temporalArgs);
     // Relation type field on node type (field payload types...)
     selection = recurse(
       relationTypeFieldOnNodeType({
         ...fieldInfo,
         innerSchemaTypeRelation,
-        schemaType
+        schemaType,
+        temporalClauses
       })
     );
   }
