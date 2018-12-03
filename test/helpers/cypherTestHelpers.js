@@ -1,4 +1,4 @@
-import { cypherQuery, cypherMutation, augmentSchema, makeAugmentedSchema } from '../../dist/index';
+import { cypherQuery, cypherMutation, augmentSchema, makeAugmentedSchema, augmentTypeDefs } from '../../dist/index';
 import { graphql } from 'graphql';
 import { makeExecutableSchema } from 'graphql-tools';
 import { testSchema } from './testSchema';
@@ -82,7 +82,7 @@ type Mutation {
   };
 
   const schema = makeExecutableSchema({
-    typeDefs: testMovieSchema,
+    typeDefs: augmentTypeDefs(testMovieSchema),
     resolvers,
     resolverValidationOptions: {
       requireResolversForResolveType: false
@@ -136,9 +136,38 @@ export function augmentedSchemaCypherTestRunner(
         let [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
         t.is(query, expectedCypherQuery);
         t.deepEqual(queryParams, expectedCypherParams);
+      },
+      TemporalNode(object, params, ctx, resolveInfo) {
+        let [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
+        t.is(query, expectedCypherQuery);
+        t.deepEqual(queryParams, expectedCypherParams);
       }
     },
     Mutation: {
+      CreateTemporalNode(object, params, ctx, resolveInfo) {
+        const [query, queryParams] = cypherMutation(params, ctx, resolveInfo);
+        t.is(query, expectedCypherQuery);
+        t.deepEqual(queryParams, expectedCypherParams);
+        t.end();
+      },
+      UpdateTemporalNode(object, params, ctx, resolveInfo) {
+        const [query, queryParams] = cypherMutation(params, ctx, resolveInfo);
+        t.is(query, expectedCypherQuery);
+        t.deepEqual(queryParams, expectedCypherParams);
+        t.end();
+      },
+      DeleteTemporalNode(object, params, ctx, resolveInfo) {
+        const [query, queryParams] = cypherMutation(params, ctx, resolveInfo);
+        t.is(query, expectedCypherQuery);
+        t.deepEqual(queryParams, expectedCypherParams);
+        t.end();
+      },
+      AddTemporalNodeTemporalNodes(object, params, ctx, resolveInfo) {
+        const [query, queryParams] = cypherMutation(params, ctx, resolveInfo);
+        t.is(query, expectedCypherQuery);
+        t.deepEqual(queryParams, expectedCypherParams);
+        t.end();
+      },
       AddMovieGenres(object, params, ctx, resolveInfo) {
         const [query, queryParams] = cypherMutation(params, ctx, resolveInfo);
         t.is(query, expectedCypherQuery);
