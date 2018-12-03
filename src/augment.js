@@ -2,7 +2,6 @@ import { neo4jgraphql } from './index';
 import { parse, print } from 'graphql';
 import {
   createOperationMap,
-  createRelationMap,
   getNamedType,
   getPrimaryKey,
   getFieldDirective,
@@ -19,7 +18,8 @@ import {
   isNodeType,
   parseFieldSdl,
   addDirectiveDeclarations,
-  lowFirstLetter
+  lowFirstLetter,
+  isTemporalType
 } from './utils';
 
 export const augmentTypeMap = (typeMap, config) => {
@@ -38,60 +38,63 @@ export const augmentTypeMap = (typeMap, config) => {
   // adds relation directives on relation types
   // if not written, with default args
   typeMap = computeRelationTypeDirectiveDefaults(typeMap);
+  typeMap = addTemporalTypes(typeMap, config);
+
   const queryMap = createOperationMap(typeMap.Query);
   const mutationMap = createOperationMap(typeMap.Mutation);
-  // const relationMap = createRelationMap(typeMap);
   let astNode = {};
   let typeName = "";
   Object.keys(typeMap).forEach(t => {
     astNode = typeMap[t];
     typeName = astNode.name.value;
-    astNode = augmentType(astNode, typeMap, config, queryType);    
-    // Query API Only
-    // config is used in augmentQueryArguments to prevent adding node list args 
-    if(shouldAugmentType({
-      config,
-      operationType: queryType,
-      type: typeName
-    })) {
-      typeMap = possiblyAddQuery(astNode, typeMap, queryMap);
-      typeMap = possiblyAddOrderingEnum(astNode, typeMap);
-    }
-    // Mutation API Only
-    // adds node selection input types for each type
-    if(shouldAugmentType({
-      config,
-      operationType: mutationType,
-      type: typeName
-    })) {
-      typeMap = possiblyAddTypeInput({ 
-        astNode, 
-        typeMap, 
-        mutationType, 
-        config 
-      });
-      typeMap = possiblyAddTypeMutations({
+    if(!isTemporalType(typeName)) {
+      astNode = augmentType(astNode, typeMap, config, queryType);    
+      // Query API Only
+      // config is used in augmentQueryArguments to prevent adding node list args 
+      if(shouldAugmentType({
+        config,
+        operationType: queryType,
+        type: typeName
+      })) {
+        typeMap = possiblyAddQuery(astNode, typeMap, queryMap);
+        typeMap = possiblyAddOrderingEnum(astNode, typeMap);
+      }
+      // Mutation API Only
+      // adds node selection input types for each type
+      if(shouldAugmentType({
+        config,
+        operationType: mutationType,
+        type: typeName
+      })) {
+        typeMap = possiblyAddTypeInput({ 
+          astNode, 
+          typeMap, 
+          mutationType, 
+          config 
+        });
+        typeMap = possiblyAddTypeMutations({
+          astNode,
+          typeMap, 
+          mutationMap,
+          config,
+          mutationType,
+          typeName
+        });
+      }
+      // Relation Type SDL support and Relation Mutation API
+      typeMap = handleRelationFields({
         astNode,
-        typeMap, 
+        typeMap,
         mutationMap,
         config,
-        mutationType,
-        typeName
+        queryType,
+        mutationType
       });
+      typeMap[t] = astNode;
     }
-    // Relation Type SDL support and Relation Mutation API
-    typeMap = handleRelationFields({
-      astNode,
-      typeMap,
-      mutationMap,
-      config,
-      queryType,
-      mutationType
-    });
-    typeMap[t] = astNode;
   });
   typeMap = augmentQueryArguments(typeMap, config, queryType);
-  // always add directive declarations for graphql@14 support 
+  // add directive declarations for graphql@14 support 
   typeMap = addDirectiveDeclarations(typeMap);
   return typeMap;
 };
@@ -219,14 +222,16 @@ const possiblyAddTypeInput = ({
     if (typeMap[inputName] === undefined) {
       const pk = getPrimaryKey(astNode);
       if (pk) {
-        typeMap[inputName] = parse(`
+        const nodeInputType = `
           input ${inputName} { ${pk.name.value}: ${
           // Always exactly require the pk of a node type
-          getNamedType(pk).name.value
-        }! }`).definitions[0];
+          decideFieldType(getNamedType(pk).name.value)
+        }! }`;
+        typeMap[inputName] = parse(nodeInputType);
       }
     }
   } else if (getTypeDirective(astNode, 'relation')) {
+    // Only used for the .data argument in generated relation creation mutations
     if (typeMap[inputName] === undefined) {
       let fieldName = '';
       let valueType = {};
@@ -255,34 +260,33 @@ const possiblyAddTypeInput = ({
         toName
       });
       if (hasSomePropertyField && shouldCreateRelationInput) {
-        typeMap[inputName] = parse(
-          `input ${inputName} {${fields
-            .reduce((acc, t) => {
-              fieldName = t.name.value;
-              isRequired = isNonNullType(t);
-              if (
-                fieldName !== '_id' &&
-                fieldName !== 'to' &&
-                fieldName !== 'from' &&
-                !isListType(t) &&
-                !getFieldDirective(t, 'cypher')
-              ) {
-                valueTypeName = getNamedType(t).name.value;
-                valueType = typeMap[valueTypeName];
-                if (
-                  isBasicScalar(valueTypeName) ||
-                  isKind(valueType, 'EnumTypeDefinition') ||
-                  isKind(valueType, 'ScalarTypeDefinition')
-                ) {
-                  acc.push(
-                    `${t.name.value}: ${valueTypeName}${isRequired ? '!' : ''}`
-                  );
-                }
-              }
-              return acc;
-            }, [])
-            .join('\n')}}`
-        ).definitions[0];
+        typeMap[inputName] = parse(`input ${inputName} {${fields.reduce((acc, t) => {
+          fieldName = t.name.value;
+          isRequired = isNonNullType(t);
+          if (
+            fieldName !== '_id' &&
+            fieldName !== 'to' &&
+            fieldName !== 'from' &&
+            !isListType(t) &&
+            !getFieldDirective(t, 'cypher')
+          ) {
+            valueTypeName = getNamedType(t).name.value;
+            valueType = typeMap[valueTypeName];
+            if(isTemporalType(valueTypeName)) {
+              acc.push(`${t.name.value}: ${valueTypeName}Input`);
+            }
+            else if (
+              isBasicScalar(valueTypeName) ||
+              isKind(valueType, 'EnumTypeDefinition') ||
+              isKind(valueType, 'ScalarTypeDefinition')
+            ) {
+              acc.push(`${t.name.value}: ${valueTypeName}${isRequired ? '!' : ''}`);
+            }
+          }
+          return acc;
+        }, [])
+        .join('\n')
+      }}`);
       }
     }
   }
@@ -627,6 +631,13 @@ const possiblyAddObjectType = (typeMap, name) => {
   return typeMap;
 };
 
+const decideFieldType = (name) => {
+  if(isTemporalType(name)) {
+    name = `${name}Input`;
+  }
+  return name;
+}
+
 const createOrderingFields = (fields, typeMap) => {
   let type = {};
   return fields.reduce((acc, t) => {
@@ -671,17 +682,19 @@ const buildAllFieldArguments = (namePrefix, astNode, typeMap) => {
         // and is not computed, and either a basic scalar
         // or an enum
         if (
-          fieldName !== '_id' &&
+          isTemporalType(valueTypeName) ||
+          (fieldName !== '_id' &&
           !isListType(t) &&
           !getFieldDirective(t, 'cypher') &&
           (isBasicScalar(valueTypeName) ||
-            isKind(valueType, 'EnumTypeDefinition') ||
-            isKind(valueType, 'ScalarTypeDefinition'))
+          isKind(valueType, 'EnumTypeDefinition') ||
+          isKind(valueType, 'ScalarTypeDefinition')))
         ) {
+          // TOOD list type arguments?
           // Require if required
           if (isNonNullType(t)) {
-            // Regardless of whether it is NonNullType,
-            // don't require the first ID field discovered
+            // Don't require the first ID field discovered
+            // TODO check existential consistency of valueTypeName, given results with 
             if (valueTypeName === 'ID' && !firstIdField) {
               // will only be true once, this field will
               // by default recieve an auto-generated uuid,
@@ -705,7 +718,13 @@ const buildAllFieldArguments = (namePrefix, astNode, typeMap) => {
                 },
                 type: {
                   kind: 'NonNullType',
-                  type: type
+                  type: {
+                    kind: "NamedType", 
+                    name: {
+                      kind: "Name", 
+                      value: decideFieldType(valueTypeName)
+                    }
+                  }
                 },
                 directives: []
               });
@@ -717,7 +736,13 @@ const buildAllFieldArguments = (namePrefix, astNode, typeMap) => {
                 kind: 'Name',
                 value: fieldName
               },
-              type: type,
+              type: {
+                kind: "NamedType", 
+                name: {
+                  kind: "Name", 
+                  value: decideFieldType(valueTypeName)
+                }
+              },
               directives: []
             });
           }
@@ -741,7 +766,13 @@ const buildAllFieldArguments = (namePrefix, astNode, typeMap) => {
           },
           type: {
             kind: 'NonNullType',
-            type: primaryKeyType
+            type: {
+              kind: "NamedType", 
+              name: {
+                kind: "Name", 
+                value: decideFieldType(primaryKeyType.name.value)
+              }
+            }
           },
           directives: []
         });
@@ -760,7 +791,8 @@ const buildAllFieldArguments = (namePrefix, astNode, typeMap) => {
             !getFieldDirective(t, 'cypher') &&
             (isBasicScalar(valueTypeName) ||
               isKind(valueType, 'EnumTypeDefinition') ||
-              isKind(valueType, 'ScalarTypeDefinition'))
+              isKind(valueType, 'ScalarTypeDefinition')) ||
+              isTemporalType(valueTypeName)
           ) {
             acc.push({
               kind: 'InputValueDefinition',
@@ -768,7 +800,13 @@ const buildAllFieldArguments = (namePrefix, astNode, typeMap) => {
                 kind: 'Name',
                 value: fieldName
               },
-              type: type,
+              type: {
+                kind: "NamedType", 
+                name: {
+                  kind: "Name", 
+                  value: decideFieldType(valueTypeName)
+                }
+              },
               directives: []
             });
           }
@@ -798,7 +836,7 @@ const buildAllFieldArguments = (namePrefix, astNode, typeMap) => {
             kind: 'NamedType',
             name: {
               kind: 'Name',
-              value: primaryKeyType.name.value
+              value: decideFieldType(primaryKeyType.name.value)
             }
           }
         },
@@ -1030,6 +1068,7 @@ const capitalizeName = name => {
   return name.charAt(0).toUpperCase() + name.substr(1);
 };
 
+
 const createQueryArguments = (astNode, typeMap) => {
   let type = {};
   let valueTypeName = '';
@@ -1037,7 +1076,7 @@ const createQueryArguments = (astNode, typeMap) => {
   return astNode.fields.reduce((acc, t) => {
     type = getNamedType(t);
     valueTypeName = type.name.value;
-    if (isQueryArgumentFieldType(type, typeMap[valueTypeName])) {
+    if(isQueryArgumentFieldType(type, typeMap[valueTypeName])) {
       acc.push({
         kind: 'InputValueDefinition',
         name: {
@@ -1045,6 +1084,23 @@ const createQueryArguments = (astNode, typeMap) => {
           value: t.name.value
         },
         type: type,
+        directives: []
+      });
+    }
+    else if(isTemporalType(valueTypeName)) {
+      acc.push({
+        kind: 'InputValueDefinition',
+        name: {
+          kind: 'Name',
+          value: t.name.value
+        },
+        type: {
+          kind: "NamedType", 
+          name: {
+            kind: "Name", 
+            value: `${valueTypeName}Input`
+          }
+        },
         directives: []
       });
     }
@@ -1270,4 +1326,242 @@ const shouldAugmentType = ({
     }
   }
   return true;
+}
+
+const temporalTypes = (typeMap, types) => {
+  if(types.time === true) {
+    typeMap['_Neo4jTime'] = parse(`
+      type _Neo4jTime {
+        hour: Int
+        minute: Int
+        second: Int
+        millisecond: Int
+        microsecond: Int
+        nanosecond: Int
+        timezone: String
+        formatted: String
+      }
+    `).definitions[0];
+    typeMap['_Neo4jTimeInput'] = parse(`
+      input _Neo4jTimeInput {
+        hour: Int
+        minute: Int
+        second: Int
+        nanosecond: Int
+        millisecond: Int
+        microsecond: Int
+        timezone: String
+        formatted: String
+      }
+    `).definitions[0];
+  }
+  if(types.date === true) {
+    typeMap['_Neo4jDate'] = parse(`
+      type _Neo4jDate {
+        year: Int
+        month: Int
+        day: Int
+        formatted: String
+      }
+    `).definitions[0];
+    typeMap['_Neo4jDateInput'] = parse(`
+      input _Neo4jDateInput {
+        year: Int
+        month: Int
+        day: Int
+        formatted: String
+      }
+    `).definitions[0];
+  }
+  if(types.datetime === true) {
+    typeMap['_Neo4jDateTime'] = parse(`
+      type _Neo4jDateTime {
+        year: Int
+        month: Int
+        day: Int
+        hour: Int
+        minute: Int
+        second: Int
+        millisecond: Int
+        microsecond: Int
+        nanosecond: Int
+        timezone: String
+        formatted: String
+      }
+    `).definitions[0];
+    typeMap['_Neo4jDateTimeInput'] = parse(`
+      input _Neo4jDateTimeInput {
+        year: Int
+        month: Int
+        day: Int
+        hour: Int
+        minute: Int
+        second: Int
+        millisecond: Int
+        microsecond: Int
+        nanosecond: Int
+        timezone: String 
+        formatted: String
+      }
+    `).definitions[0];
+  }
+  if(types.localtime === true) {
+    typeMap['_Neo4jLocalTime'] = parse(`
+      type _Neo4jLocalTime {
+        hour: Int
+        minute: Int
+        second: Int
+        millisecond: Int
+        microsecond: Int
+        nanosecond: Int
+        formatted: String
+      }
+    `).definitions[0];
+    typeMap['_Neo4jLocalTimeInput'] = parse(`
+      input _Neo4jLocalTimeInput {
+        hour: Int
+        minute: Int
+        second: Int
+        millisecond: Int
+        microsecond: Int
+        nanosecond: Int
+        formatted: String
+      }
+    `).definitions[0];
+  }
+  if(types.localdatetime === true) {
+    typeMap['_Neo4jLocalDateTime'] = parse(`
+      type _Neo4jLocalDateTime {
+        year: Int
+        month: Int
+        day: Int
+        hour: Int
+        minute: Int
+        second: Int
+        millisecond: Int
+        microsecond: Int
+        nanosecond: Int
+        formatted: String
+      }
+    `).definitions[0];  
+    typeMap['_Neo4jLocalDateTimeInput'] = parse(`
+      input _Neo4jLocalDateTimeInput {
+        year: Int
+        month: Int
+        day: Int
+        hour: Int
+        minute: Int
+        second: Int
+        millisecond: Int
+        microsecond: Int
+        nanosecond: Int
+        formatted: String
+      }
+    `).definitions[0];
+  }
+  return typeMap;
+}
+
+const transformTemporalFieldArgs = (field, config) => {
+  field.arguments.forEach(arg => {
+    arg.type = transformTemporalTypeName(arg.type, config, true);
+  });
+  return field;
+}
+
+const transformTemporalFields = (typeMap, config) => {
+  let astNode = {};
+  // let typeName = "";
+  Object.keys(typeMap).forEach(t => {
+    astNode = typeMap[t];
+    if(isNodeType(astNode)) {
+      // typeName = astNode.name.value;
+      if(!isTemporalType(t)) {
+        astNode.fields.forEach(field => {
+          // released: DateTime -> released: _Neo4jDateTime
+          field.type = transformTemporalTypeName(field.type, config);
+          field = transformTemporalFieldArgs(field, config);
+        });
+      }
+    }
+  });
+  return typeMap;
+}
+
+const transformTemporalTypeName = (type, config, isArgument) => {
+  if(type.kind !== "NamedType") {
+    type.type = transformTemporalTypeName(type.type, config);
+    return type;
+  }
+  if(type.kind === 'NamedType') {
+    switch(type.name.value) {
+      case 'Time': {
+        if(config.time === true) {
+          type.name.value = `_Neo4jTime${isArgument ? `Input`: ''}`
+        }
+        break;
+      }
+      case 'Date': {
+        if(config.date === true) {
+          type.name.value = `_Neo4jDate${isArgument ? `Input`: ''}`
+        }
+        break;
+      }
+      case 'DateTime': {
+        if(config.datetime === true) {
+          type.name.value = `_Neo4jDateTime${isArgument ? `Input`: ''}`
+        }
+        break;
+      }
+      case 'LocalTime': {
+        if(config.localtime === true) {
+          type.name.value = `_Neo4jLocalTime${isArgument ? `Input`: ''}`
+        }
+        break;
+      }
+      case 'LocalDateTime': {
+        if(config.localdatetime === true) {
+          type.name.value = `_Neo4jLocalDateTime${isArgument ? `Input`: ''}`
+        }
+        break;
+      }
+      default: break;
+    }
+  }
+  return type;
+};
+
+const decideTemporalConfig = (config) => {
+  let defaultConfig = {
+    time: true,
+    date: true,
+    datetime: true,
+    localtime: true,
+    localdatetime: true
+  };
+  const providedConfig = config ? config.temporal : defaultConfig;
+  if(typeof providedConfig === "boolean") {
+    if(providedConfig === false) {
+      defaultConfig.time = false;
+      defaultConfig.date = false;
+      defaultConfig.datetime = false;
+      defaultConfig.localtime = false;
+      defaultConfig.localdatetime = false;
+    }
+  }
+  else if(typeof providedConfig === "object") {
+    Object.keys(defaultConfig).forEach(e => {
+      if(providedConfig[e] === undefined) {
+        providedConfig[e] = defaultConfig[e];
+      }
+    })
+    defaultConfig = providedConfig;
+  }
+  return defaultConfig;
+}
+
+export const addTemporalTypes = (typeMap, config) => {
+  config = decideTemporalConfig(config);
+  typeMap = temporalTypes(typeMap, config);
+  return transformTemporalFields(typeMap, config);
 }

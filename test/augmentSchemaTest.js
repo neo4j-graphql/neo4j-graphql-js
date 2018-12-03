@@ -55,6 +55,11 @@ type _AddMovieRatingsPayload {
   rating: Int
 }
 
+type _AddTemporalNodeTemporalNodesPayload {
+  from: TemporalNode
+  to: TemporalNode
+}
+
 type _AddUserFriendsPayload {
   from: User
   to: User
@@ -103,6 +108,116 @@ type _MovieRatings {
   User: User
 }
 
+type _Neo4jDate {
+  year: Int
+  month: Int
+  day: Int
+  formatted: String
+}
+
+input _Neo4jDateInput {
+  year: Int
+  month: Int
+  day: Int
+  formatted: String
+}
+
+type _Neo4jDateTime {
+  year: Int
+  month: Int
+  day: Int
+  hour: Int
+  minute: Int
+  second: Int
+  millisecond: Int
+  microsecond: Int
+  nanosecond: Int
+  timezone: String
+  formatted: String
+}
+
+input _Neo4jDateTimeInput {
+  year: Int
+  month: Int
+  day: Int
+  hour: Int
+  minute: Int
+  second: Int
+  millisecond: Int
+  microsecond: Int
+  nanosecond: Int
+  timezone: String
+  formatted: String
+}
+
+type _Neo4jLocalDateTime {
+  year: Int
+  month: Int
+  day: Int
+  hour: Int
+  minute: Int
+  second: Int
+  millisecond: Int
+  microsecond: Int
+  nanosecond: Int
+  formatted: String
+}
+
+input _Neo4jLocalDateTimeInput {
+  year: Int
+  month: Int
+  day: Int
+  hour: Int
+  minute: Int
+  second: Int
+  millisecond: Int
+  microsecond: Int
+  nanosecond: Int
+  formatted: String
+}
+
+type _Neo4jLocalTime {
+  hour: Int
+  minute: Int
+  second: Int
+  millisecond: Int
+  microsecond: Int
+  nanosecond: Int
+  formatted: String
+}
+
+input _Neo4jLocalTimeInput {
+  hour: Int
+  minute: Int
+  second: Int
+  millisecond: Int
+  microsecond: Int
+  nanosecond: Int
+  formatted: String
+}
+
+type _Neo4jTime {
+  hour: Int
+  minute: Int
+  second: Int
+  millisecond: Int
+  microsecond: Int
+  nanosecond: Int
+  timezone: String
+  formatted: String
+}
+
+input _Neo4jTimeInput {
+  hour: Int
+  minute: Int
+  second: Int
+  nanosecond: Int
+  millisecond: Int
+  microsecond: Int
+  timezone: String
+  formatted: String
+}
+
 input _RatedInput {
   rating: Int
 }
@@ -142,6 +257,11 @@ type _RemoveMovieRatingsPayload {
   to: Movie
 }
 
+type _RemoveTemporalNodeTemporalNodesPayload {
+  from: TemporalNode
+  to: TemporalNode
+}
+
 type _RemoveUserFriendsPayload {
   from: User
   to: User
@@ -157,6 +277,17 @@ input _StateInput {
 }
 
 enum _StateOrdering {
+  name_asc
+  name_desc
+  _id_asc
+  _id_desc
+}
+
+input _TemporalNodeInput {
+  datetime: _Neo4jDateTimeInput!
+}
+
+enum _TemporalNodeOrdering {
   name_asc
   name_desc
   _id_asc
@@ -209,6 +340,8 @@ enum BookGenre {
   Math
 }
 
+scalar Date
+
 scalar DateTime
 
 type FriendOf {
@@ -224,12 +357,16 @@ type Genre {
   highestRatedMovie: Movie
 }
 
+scalar LocalDateTime
+
+scalar LocalTime
+
 type Movie {
   _id: String
   movieId: ID!
   title: String
   year: Int
-  released: DateTime
+  released: _Neo4jDateTime
   plot: String
   poster: String
   imdbRating: Float
@@ -247,8 +384,8 @@ type Movie {
 }
 
 type Mutation {
-  CreateMovie(movieId: ID, title: String, year: Int, released: DateTime, plot: String, poster: String, imdbRating: Float, avgStars: Float): Movie
-  UpdateMovie(movieId: ID!, title: String, year: Int, released: DateTime, plot: String, poster: String, imdbRating: Float, avgStars: Float): Movie
+  CreateMovie(movieId: ID, title: String, year: Int, released: _Neo4jDateTimeInput, plot: String, poster: String, imdbRating: Float, avgStars: Float): Movie
+  UpdateMovie(movieId: ID!, title: String, year: Int, released: _Neo4jDateTimeInput, plot: String, poster: String, imdbRating: Float, avgStars: Float): Movie
   DeleteMovie(movieId: ID!): Movie
   AddMovieGenres(from: _MovieInput!, to: _GenreInput!): _AddMovieGenresPayload
   RemoveMovieGenres(from: _MovieInput!, to: _GenreInput!): _RemoveMovieGenresPayload
@@ -278,6 +415,11 @@ type Mutation {
   RemoveUserFriends(from: _UserInput!, to: _UserInput!): _RemoveUserFriendsPayload
   CreateBook(genre: BookGenre): Book
   DeleteBook(genre: BookGenre!): Book
+  CreateTemporalNode(datetime: _Neo4jDateTimeInput, name: String, time: _Neo4jTimeInput, date: _Neo4jDateInput, localtime: _Neo4jLocalTimeInput, localdatetime: _Neo4jLocalDateTimeInput): TemporalNode
+  UpdateTemporalNode(datetime: _Neo4jDateTimeInput, name: String, time: _Neo4jTimeInput, date: _Neo4jDateInput, localtime: _Neo4jLocalTimeInput, localdatetime: _Neo4jLocalDateTimeInput): TemporalNode
+  DeleteTemporalNode(datetime: _Neo4jDateTimeInput!): TemporalNode
+  AddTemporalNodeTemporalNodes(from: _TemporalNodeInput!, to: _TemporalNodeInput!): _AddTemporalNodeTemporalNodesPayload
+  RemoveTemporalNodeTemporalNodes(from: _TemporalNodeInput!, to: _TemporalNodeInput!): _RemoveTemporalNodeTemporalNodesPayload
 }
 
 interface Person {
@@ -297,6 +439,7 @@ type Query {
   State(name: String, _id: String, first: Int, offset: Int, orderBy: _StateOrdering): [State]
   User(userId: ID, name: String, _id: String, first: Int, offset: Int, orderBy: _UserOrdering): [User]
   Book(genre: BookGenre, _id: String, first: Int, offset: Int, orderBy: _BookOrdering): [Book]
+  TemporalNode(datetime: _Neo4jDateTimeInput, name: String, time: _Neo4jTimeInput, date: _Neo4jDateInput, localtime: _Neo4jLocalTimeInput, localdatetime: _Neo4jLocalDateTimeInput, _id: String, first: Int, offset: Int, orderBy: _TemporalNodeOrdering): [TemporalNode]
 }
 
 type Rated {
@@ -309,6 +452,19 @@ type State {
   name: String
   _id: String
 }
+
+type TemporalNode {
+  datetime: _Neo4jDateTime
+  name: String
+  time: _Neo4jTime
+  date: _Neo4jDate
+  localtime: _Neo4jLocalTime
+  localdatetime: _Neo4jLocalDateTime
+  temporalNodes(time: _Neo4jTimeInput, date: _Neo4jDateInput, datetime: _Neo4jDateTimeInput, localtime: _Neo4jLocalTimeInput, localdatetime: _Neo4jLocalDateTimeInput, first: Int, offset: Int, orderBy: _TemporalNodeOrdering): [TemporalNode]
+  _id: String
+}
+
+scalar Time
 
 type User implements Person {
   userId: ID!

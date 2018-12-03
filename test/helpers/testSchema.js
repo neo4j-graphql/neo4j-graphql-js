@@ -90,5 +90,25 @@ type Query {
   Books: [Book]
 }
 
+type TemporalNode {
+  datetime: DateTime
+  name: String
+  time: Time
+  date: Date
+  localtime: LocalTime
+  localdatetime: LocalDateTime
+  temporalNodes(
+    time: Time,
+    date: Date,
+    datetime: DateTime,
+    localtime: LocalTime,
+    localdatetime: LocalDateTime
+  ): [TemporalNode] @relation(name: "TEMPORAL", direction: OUT)
+}
+
+scalar Time
+scalar Date
 scalar DateTime
+scalar LocalTime
+scalar LocalDateTime
 `;

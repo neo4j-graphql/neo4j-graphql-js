@@ -1,35 +1,25 @@
-import filter from 'lodash/filter';
 import {
-  computeOrderBy,
   extractQueryResult,
-  extractSelections,
-  getFilterParams,
-  innerFilterParams,
-  isAddMutation,
-  isCreateMutation,
-  isUpdateMutation,
-  isRemoveMutation,
-  isDeleteMutation,
   isMutation,
-  lowFirstLetter,
   typeIdentifiers,
-  parameterizeRelationFields,
-  getFieldValueType,
   extractTypeMapFromTypeDefs,
   addDirectiveDeclarations,
   printTypeMap,
-  safeLabel,
-  safeVar
+  getQuerySelections,
+  getMutationSelections
 } from './utils';
-import { buildCypherSelection } from './selections';
 import {
   extractTypeMapFromSchema,
   extractResolversFromSchema,
   augmentedSchema,
-  makeAugmentedExecutableSchema
+  makeAugmentedExecutableSchema,
 } from './augmentSchema';
-import { getNamedType } from 'graphql';
+import { addTemporalTypes } from './augment';
 import { checkRequestError } from './auth';
+import {
+  translateMutation,
+  translateQuery
+} from './translate';
 
 export async function neo4jgraphql(
   object,
@@ -66,9 +56,6 @@ export async function neo4jgraphql(
   return extractQueryResult(result, resolveInfo.returnType);
 }
 
-const getOuterSkipLimit = first =>
-  `SKIP $offset${first > -1 ? ' LIMIT $first' : ''}`;
-
 export function cypherQuery(
   { first = -1, offset = 0, _id, orderBy, ...otherParams },
   context,
@@ -76,92 +63,19 @@ export function cypherQuery(
 ) {
   const { typeName, variableName } = typeIdentifiers(resolveInfo.returnType);
   const schemaType = resolveInfo.schema.getType(typeName);
-
-  const filteredFieldNodes = filter(
-    resolveInfo.fieldNodes,
-    n => n.name.value === resolveInfo.fieldName
-  );
-
-  // FIXME: how to handle multiple fieldNode matches
-  const selections = extractSelections(
-    filteredFieldNodes[0].selectionSet.selections,
-    resolveInfo.fragments
-  );
-
-  const [nullParams, nonNullParams] = Object.entries({
-    ...{ offset, first },
-    ...otherParams
-  }).reduce(
-    ([nulls, nonNulls], [key, value]) => {
-      if (value === null) {
-        nulls[key] = value;
-      } else {
-        nonNulls[key] = value;
-      }
-      return [nulls, nonNulls];
-    },
-    [{}, {}]
-  );
-  const argString = innerFilterParams(getFilterParams(nonNullParams));
-
-  const outerSkipLimit = getOuterSkipLimit(first);
-  const orderByValue = computeOrderBy(resolveInfo, selections);
-
-  let query;
-
-  //TODO: wrap in try catch
-  const queryTypeCypherDirective = resolveInfo.schema
-    .getQueryType()
-    .getFields()
-    [resolveInfo.fieldName].astNode.directives.find(x => {
-      return x.name.value === 'cypher';
-    });
-
-  const [subQuery, subParams] = buildCypherSelection({
-    initial: '',
+  const selections = getQuerySelections(resolveInfo);
+  return translateQuery({
+    resolveInfo,
+    schemaType,
     selections,
     variableName,
-    schemaType,
-    resolveInfo,
-    paramIndex: 1
+    typeName,
+    first,
+    offset,
+    _id,
+    orderBy,
+    otherParams
   });
-
-  if (queryTypeCypherDirective) {
-    // QueryType with a @cypher directive
-    const cypherQueryArg = queryTypeCypherDirective.arguments.find(x => {
-      return x.name.value === 'statement';
-    });
-
-    query = `WITH apoc.cypher.runFirstColumn("${
-      cypherQueryArg.value.value
-    }", ${argString}, True) AS x UNWIND x AS ${safeVar(variableName)}
-    RETURN ${safeVar(variableName)} {${subQuery}} AS ${safeVar(
-      variableName
-    )}${orderByValue} ${outerSkipLimit}`;
-  } else {
-    // No @cypher directive on QueryType
-
-    // FIXME: support IN for multiple values -> WHERE
-    const idWherePredicate =
-      typeof _id !== 'undefined' ? `ID(${safeVar(variableName)})=${_id}` : '';
-    const nullFieldPredicates = Object.keys(nullParams).map(
-      key => `${variableName}.${key} IS NULL`
-    );
-    const predicateClauses = [idWherePredicate, ...nullFieldPredicates]
-      .filter(predicate => !!predicate)
-      .join(' AND ');
-    const predicate = predicateClauses ? `WHERE ${predicateClauses} ` : '';
-
-    query =
-      `MATCH (${safeVar(variableName)}:${safeLabel(
-        typeName
-      )} ${argString}) ${predicate}` +
-      `RETURN ${safeVar(variableName)} {${subQuery}} AS ${safeVar(
-        variableName
-      )}${orderByValue} ${outerSkipLimit}`;
-  }
-
-  return [query, { ...nonNullParams, ...subParams }];
 }
 
 export function cypherMutation(
@@ -169,355 +83,19 @@ export function cypherMutation(
   context,
   resolveInfo
 ) {
-  // FIXME: lots of duplication here with cypherQuery, extract into util module
-
   const { typeName, variableName } = typeIdentifiers(resolveInfo.returnType);
   const schemaType = resolveInfo.schema.getType(typeName);
-
-  const filteredFieldNodes = filter(
-    resolveInfo.fieldNodes,
-    n => n.name.value === resolveInfo.fieldName
-  );
-
-  // FIXME: how to handle multiple fieldNode matches
-  let selections = extractSelections(
-    filteredFieldNodes[0].selectionSet.selections,
-    resolveInfo.fragments
-  );
-
-  if (selections.length === 0) {
-    // FIXME: why aren't the selections found in the filteredFieldNode?
-    selections = extractSelections(
-      resolveInfo.operation.selectionSet.selections,
-      resolveInfo.fragments
-    );
-  }
-
-  const outerSkipLimit = getOuterSkipLimit(first);
-  const orderByValue = computeOrderBy(resolveInfo, selections);
-
-  let query;
-  const mutationTypeCypherDirective = resolveInfo.schema
-    .getMutationType()
-    .getFields()
-    [resolveInfo.fieldName].astNode.directives.find(x => {
-      return x.name.value === 'cypher';
-    });
-
-  let params =
-    (isCreateMutation(resolveInfo) || isUpdateMutation(resolveInfo)) &&
-    !mutationTypeCypherDirective
-      ? { params: otherParams, ...{ first, offset } }
-      : { ...otherParams, ...{ first, offset } };
-
-  if (mutationTypeCypherDirective) {
-    // FIXME: support IN for multiple values -> WHERE
-    const argString = innerFilterParams(
-      getFilterParams(params.params || params)
-    );
-
-    const cypherQueryArg = mutationTypeCypherDirective.arguments.find(x => {
-      return x.name.value === 'statement';
-    });
-
-    const [subQuery, subParams] = buildCypherSelection({
-      initial: '',
-      selections,
-      variableName,
-      schemaType,
-      resolveInfo,
-      paramIndex: 1
-    });
-    params = { ...params, ...subParams };
-
-    query = `CALL apoc.cypher.doIt("${
-      cypherQueryArg.value.value
-    }", ${argString}) YIELD value
-    WITH apoc.map.values(value, [keys(value)[0]])[0] AS ${variableName}
-    RETURN ${safeVar(variableName)} {${subQuery}} AS ${safeVar(
-      variableName
-    )}${orderByValue} ${outerSkipLimit}`;
-  } else if (isCreateMutation(resolveInfo)) {
-    query = `CREATE (${safeVar(variableName)}:${safeLabel(typeName)}) `;
-    query += `SET ${safeVar(variableName)} = $params `;
-    //query += `RETURN ${variable}`;
-
-    const [subQuery, subParams] = buildCypherSelection({
-      initial: ``,
-      selections,
-      variableName,
-      schemaType,
-      resolveInfo,
-      paramIndex: 1
-    });
-    params = { ...params, ...subParams };
-
-    const args = resolveInfo.schema.getMutationType().getFields()[
-      resolveInfo.fieldName
-    ].astNode.arguments;
-
-    const firstIdArg = args.find(e => getFieldValueType(e) === 'ID');
-    if (firstIdArg) {
-      const firstIdArgFieldName = firstIdArg.name.value;
-      if (params.params[firstIdArgFieldName] === undefined) {
-        query += `SET ${variableName}.${firstIdArgFieldName} = apoc.create.uuid() `;
-      }
-    }
-
-    query += `RETURN ${safeVar(variableName)} {${subQuery}} AS ${safeVar(
-      variableName
-    )}`;
-  } else if (isAddMutation(resolveInfo)) {
-    let mutationMeta, relationshipNameArg, fromTypeArg, toTypeArg;
-
-    try {
-      mutationMeta = resolveInfo.schema
-        .getMutationType()
-        .getFields()
-        [resolveInfo.fieldName].astNode.directives.find(x => {
-          return x.name.value === 'MutationMeta';
-        });
-    } catch (e) {
-      throw new Error(
-        'Missing required MutationMeta directive on add relationship directive'
-      );
-    }
-
-    try {
-      relationshipNameArg = mutationMeta.arguments.find(x => {
-        return x.name.value === 'relationship';
-      });
-
-      fromTypeArg = mutationMeta.arguments.find(x => {
-        return x.name.value === 'from';
-      });
-
-      toTypeArg = mutationMeta.arguments.find(x => {
-        return x.name.value === 'to';
-      });
-    } catch (e) {
-      throw new Error(
-        'Missing required argument in MutationMeta directive (relationship, from, or to)'
-      );
-    }
-
-    //TODO: need to handle one-to-one and one-to-many
-
-    const args = resolveInfo.schema.getMutationType().getFields()[
-      resolveInfo.fieldName
-    ].astNode.arguments;
-
-    const typeMap = resolveInfo.schema.getTypeMap();
-
-    // TODO write some getters to reduce similar code between this and isRemoveMutation
-    const fromType = fromTypeArg.value.value;
-    const fromVar = `${lowFirstLetter(fromType)}_from`;
-    const fromInputArg = args.find(e => e.name.value === 'from').type;
-    const fromInputAst =
-      typeMap[getNamedType(fromInputArg).type.name.value].astNode;
-    const fromParam = fromInputAst.fields[0].name.value;
-
-    const toType = toTypeArg.value.value;
-    const toVar = `${lowFirstLetter(toType)}_to`;
-    const toInputArg = args.find(e => e.name.value === 'to').type;
-    const toInputAst =
-      typeMap[getNamedType(toInputArg).type.name.value].astNode;
-    const toParam = toInputAst.fields[0].name.value;
-
-    const relationshipName = relationshipNameArg.value.value;
-    const lowercased = relationshipName.toLowerCase();
-    const dataInputArg = args.find(e => e.name.value === 'data');
-    const dataInputAst = dataInputArg
-      ? typeMap[getNamedType(dataInputArg.type).type.name.value].astNode
-      : undefined;
-    const relationPropertyArguments = dataInputAst
-      ? parameterizeRelationFields(dataInputAst.fields)
-      : undefined;
-
-    const [subQuery, subParams] = buildCypherSelection({
-      initial: '',
-      selections,
-      variableName: lowercased,
-      schemaType,
-      resolveInfo,
-      paramIndex: 1,
-      rootVariableNames: {
-        from: `${fromVar}`,
-        to: `${toVar}`
-      },
-      variableName: schemaType.name === fromType ? `${toVar}` : `${fromVar}`
-    });
-    params = { ...params, ...subParams };
-    query = `
-      MATCH (${safeVar(fromVar)}:${safeLabel(
-      fromType
-    )} {${fromParam}: $from.${fromParam}})
-      MATCH (${safeVar(toVar)}:${safeLabel(
-      toType
-    )} {${toParam}: $to.${toParam}})
-      CREATE (${safeVar(fromVar)})-[${safeVar(
-      lowercased + '_relation'
-    )}:${safeLabel(relationshipName)}${
-      relationPropertyArguments ? ` {${relationPropertyArguments}}` : ''
-    }]->(${safeVar(toVar)})
-      RETURN ${safeVar(lowercased + '_relation')} { ${subQuery} } AS ${safeVar(
-      schemaType
-    )};
-    `;
-  } else if (isUpdateMutation(resolveInfo)) {
-    const idParam = resolveInfo.schema.getMutationType().getFields()[
-      resolveInfo.fieldName
-    ].astNode.arguments[0].name.value;
-
-    query = `MATCH (${safeVar(variableName)}:${safeLabel(
-      typeName
-    )} {${idParam}: $params.${
-      resolveInfo.schema.getMutationType().getFields()[resolveInfo.fieldName]
-        .astNode.arguments[0].name.value
-    }}) `;
-    query += `SET ${variableName} += $params `;
-
-    const [subQuery, subParams] = buildCypherSelection({
-      initial: ``,
-      selections,
-      variableName,
-      schemaType,
-      resolveInfo,
-      paramIndex: 1
-    });
-    params = { ...params, ...subParams };
-
-    query += `RETURN ${safeVar(variableName)} {${subQuery}} AS ${safeVar(
-      variableName
-    )}`;
-  } else if (isDeleteMutation(resolveInfo)) {
-    const idParam = resolveInfo.schema.getMutationType().getFields()[
-      resolveInfo.fieldName
-    ].astNode.arguments[0].name.value;
-
-    const [subQuery, subParams] = buildCypherSelection({
-      initial: ``,
-      selections,
-      variableName,
-      schemaType,
-      resolveInfo,
-      paramIndex: 1
-    });
-    params = { ...params, ...subParams };
-
-    // Cannot execute a map projection on a deleted node in Neo4j
-    // so the projection is executed and aliased before the delete
-    query = `MATCH (${safeVar(variableName)}:${safeLabel(
-      typeName
-    )} {${idParam}: $${
-      resolveInfo.schema.getMutationType().getFields()[resolveInfo.fieldName]
-        .astNode.arguments[0].name.value
-    }})
-WITH ${safeVar(variableName)} AS ${safeVar(
-      variableName + '_toDelete'
-    )}, ${safeVar(variableName)} {${subQuery}} AS ${safeVar(variableName)}
-DETACH DELETE ${safeVar(variableName + '_toDelete')}
-RETURN ${safeVar(variableName)}`;
-  } else if (isRemoveMutation(resolveInfo)) {
-    let mutationMeta, relationshipNameArg, fromTypeArg, toTypeArg;
-
-    try {
-      mutationMeta = resolveInfo.schema
-        .getMutationType()
-        .getFields()
-        [resolveInfo.fieldName].astNode.directives.find(x => {
-          return x.name.value === 'MutationMeta';
-        });
-    } catch (e) {
-      throw new Error(
-        'Missing required MutationMeta directive on add relationship directive'
-      );
-    }
-
-    try {
-      relationshipNameArg = mutationMeta.arguments.find(x => {
-        return x.name.value === 'relationship';
-      });
-
-      fromTypeArg = mutationMeta.arguments.find(x => {
-        return x.name.value === 'from';
-      });
-
-      toTypeArg = mutationMeta.arguments.find(x => {
-        return x.name.value === 'to';
-      });
-    } catch (e) {
-      throw new Error(
-        'Missing required argument in MutationMeta directive (relationship, from, or to)'
-      );
-    }
-
-    //TODO: need to handle one-to-one and one-to-many
-    const args = resolveInfo.schema.getMutationType().getFields()[
-      resolveInfo.fieldName
-    ].astNode.arguments;
-
-    const typeMap = resolveInfo.schema.getTypeMap();
-
-    const fromType = fromTypeArg.value.value;
-    const fromVar = `${lowFirstLetter(fromType)}_from`;
-    const fromInputArg = args.find(e => e.name.value === 'from').type;
-    const fromInputAst =
-      typeMap[getNamedType(fromInputArg).type.name.value].astNode;
-    const fromParam = fromInputAst.fields[0].name.value;
-
-    const toType = toTypeArg.value.value;
-    const toVar = `${lowFirstLetter(toType)}_to`;
-    const toInputArg = args.find(e => e.name.value === 'to').type;
-    const toInputAst =
-      typeMap[getNamedType(toInputArg).type.name.value].astNode;
-    const toParam = toInputAst.fields[0].name.value;
-
-    const relationshipName = relationshipNameArg.value.value;
-
-    const [subQuery, subParams] = buildCypherSelection({
-      initial: '',
-      selections,
-      variableName,
-      schemaType,
-      resolveInfo,
-      paramIndex: 1,
-      rootVariableNames: {
-        from: `_${fromVar}`,
-        to: `_${toVar}`
-      },
-      variableName: schemaType.name === fromType ? `_${toVar}` : `_${fromVar}`
-    });
-    params = { ...params, ...subParams };
-
-    // WITH COUNT(*) AS scope is used so that relations deletions are finished
-    // before we possibly query them in the return. If we wanted to actually allow
-    // the return to query over the deleted relations, we could move the return
-    // object construction into a WITH statement above the DELETE, then return it
-    // the delete
-    query = `
-      MATCH (${safeVar(fromVar)}:${safeLabel(
-      fromType
-    )} {${fromParam}: $from.${fromParam}})
-      MATCH (${safeVar(toVar)}:${safeLabel(
-      toType
-    )} {${toParam}: $to.${toParam}})
-      OPTIONAL MATCH (${safeVar(fromVar)})-[${safeVar(
-      fromVar + toVar
-    )}:${safeLabel(relationshipName)}]->(${safeVar(toVar)})
-      DELETE ${safeVar(fromVar + toVar)}
-      WITH COUNT(*) AS scope, ${safeVar(fromVar)} AS ${safeVar(
-      '_' + fromVar
-    )}, ${safeVar(toVar)} AS ${safeVar('_' + toVar)}
-      RETURN {${subQuery}} AS ${safeVar(schemaType)};
-    `;
-  } else {
-    // throw error - don't know how to handle this type of mutation
-    throw new Error(
-      'Do not know how to handle this type of mutation. Mutation does not follow naming convention.'
-    );
-  }
-  return [query, params];
+  const selections = getMutationSelections(resolveInfo);
+  return translateMutation({
+    resolveInfo,
+    schemaType,
+    selections, 
+    variableName,
+    typeName,
+    first,
+    offset,
+    otherParams
+  });
 }
 
 export const augmentSchema = (schema, config) => {
@@ -539,7 +117,8 @@ export const makeAugmentedSchema = ({
   inheritResolversFromInterfaces = false,
   config = {
     query: true,
-    mutation: true
+    mutation: true,
+    temporal: true
   }
 }) => {
   if (schema) {
@@ -560,9 +139,11 @@ export const makeAugmentedSchema = ({
   });
 };
 
-export const augmentTypeDefs = typeDefs => {
-  const typeMap = extractTypeMapFromTypeDefs(typeDefs);
+export const augmentTypeDefs = (typeDefs, config) => {
+  let typeMap = extractTypeMapFromTypeDefs(typeDefs);
   // overwrites any provided declarations of system directives
-  const augmented = addDirectiveDeclarations(typeMap);
-  return printTypeMap(augmented);
-};
+  typeMap = addDirectiveDeclarations(typeMap);
+  // adds managed types; tepmoral, spatial, etc.
+  typeMap = addTemporalTypes(typeMap, config);
+  return printTypeMap(typeMap);
+}
