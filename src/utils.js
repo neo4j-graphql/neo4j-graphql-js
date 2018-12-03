@@ -2,6 +2,7 @@ import { print, parse } from 'graphql';
 import { possiblyAddArgument } from './augment';
 import { v1 as neo4j } from 'neo4j-driver';
 import _ from 'lodash';
+import filter from 'lodash/filter';
 
 function parseArg(arg, variableValues) {
   switch (arg.value.kind) {
@@ -20,17 +21,11 @@ function parseArg(arg, variableValues) {
 }
 
 export function parseArgs(args, variableValues) {
-  // get args from selection.arguments object
-  // or from resolveInfo.variableValues if arg is a variable
-  // note that variable values override default values
-
   if (!args || args.length === 0) {
     return {};
   }
-
   return args.reduce((acc, arg) => {
     acc[arg.name.value] = parseArg(arg, variableValues);
-
     return acc;
   }, {});
 }
@@ -196,13 +191,18 @@ export function getFilterParams(filters, index) {
   }, {});
 }
 
-export function innerFilterParams(filters) {
+export function innerFilterParams(filters, temporalArgs, paramKey) {
+  const temporalArgNames = temporalArgs ? temporalArgs.reduce( (acc, t) => { 
+    acc.push(t.name.value); 
+    return acc; 
+  }, []) : [];
   return Object.keys(filters).length > 0
     ? `{${Object.entries(filters)
-        .filter(([key]) => !['first', 'offset', 'orderBy'].includes(key))
+        // exclude temporal arguments
+        .filter(([key]) => !['first', 'offset', 'orderBy', ...temporalArgNames].includes(key))
         .map(
           ([key, value]) =>
-            `${key}:$${
+            `${key}:${paramKey ? `$${paramKey}.` : '$'}${
               typeof value.index === 'undefined' ? key : `${value.index}_${key}`
             }`
         )
@@ -296,6 +296,112 @@ export const computeOrderBy = (resolveInfo, selection) => {
     } `;
   }
 };
+
+export const possiblySetFirstId = ({ 
+  args, 
+  statements, 
+  params 
+}) => {
+  const arg = args.find(e => getFieldValueType(e) === "ID");
+  // arg is the first ID field if it exists, and we set the value 
+  // if no value is provided for the field name (arg.name.value) in params
+  if(arg && arg.name.value && params[arg.name.value] === undefined) {
+    statements.push(`${arg.name.value}: apoc.create.uuid()`);
+  }
+  return statements;
+}
+
+export const getQueryArguments = (resolveInfo) => {
+  return resolveInfo.schema.getQueryType().getFields()[
+    resolveInfo.fieldName
+  ].astNode.arguments;
+}
+
+export const getMutationArguments = (resolveInfo) => {
+  return resolveInfo.schema.getMutationType().getFields()[
+    resolveInfo.fieldName
+  ].astNode.arguments;
+}
+
+const decideCypherFunction = (fieldAst) => {
+  let cypherFunction = undefined;
+  const type = fieldAst ? getNamedType(fieldAst.type).name.value : '';
+  switch(type) {
+    case "_Neo4jTimeInput": cypherFunction = "time"; break;
+    case "_Neo4jDateInput": cypherFunction = "date"; break;
+    case "_Neo4jDateTimeInput": cypherFunction = "datetime"; break;
+    case "_Neo4jLocalTimeInput": cypherFunction = "localtime"; break;
+    case "_Neo4jLocalDateTimeInput": cypherFunction = "localdatetime"; break;
+    default: break;
+  }
+  return cypherFunction;
+}
+
+export const buildCypherParameters = ({ 
+  args,
+  statements=[], 
+  params,
+  paramKey
+}) => {
+  const dataParams = paramKey ? params[paramKey] : params;
+  const paramKeys = dataParams ? Object.keys(dataParams) : [];
+  if(args) {
+    statements = paramKeys.reduce( (acc, paramName) => {
+      const param = paramKey ? params[paramKey][paramName] : params[paramName];
+      // The AST definition of the argument of the same name as this param
+      const fieldAst = args.find(arg => arg.name.value === paramName);
+      if(fieldAst) {
+        const formatted = param.formatted;
+        const cypherFunction = decideCypherFunction(fieldAst);
+        if(cypherFunction) {
+          // Prefer only using formatted, if provided
+          if(formatted) {
+            if(paramKey) {
+              params[paramKey][paramName] = formatted;
+            }
+            else {
+              params[paramName] = formatted;
+            }
+            acc.push(`${paramName}: ${cypherFunction}($${
+              paramKey 
+                ? `${paramKey}.` 
+                : ''}${paramName})`
+            );
+          }
+          else {
+            // build all arguments for given cypherFunction
+            acc.push(`${paramName}: ${cypherFunction}({${
+              temporalFieldParam(paramName, param, paramKey)
+            }})`);
+          }
+        }
+        else {
+          // normal case
+          acc.push(`${paramName}:$${paramKey ? `${paramKey}.` : ''}${paramName}`);
+        }
+      }
+      return acc;
+    }, statements);
+  }
+  if(paramKey) {
+    params[paramKey] = dataParams;
+  }
+  return [params, statements];
+}
+
+const temporalFieldParam = (paramName, param, paramKey) => {
+  return param.formatted === undefined
+    ? Object.keys(param).reduce( (acc, t) => {
+      if(Number.isInteger(param[t])) {
+        acc.push(`${t}: toInteger($${paramKey ? `${paramKey}.` : '' }${paramName}.${t})`);
+      }
+      else {
+        acc.push(`${t}: $${paramKey ? `${paramKey}.` : '' }${paramName}.${t}`);
+      }
+      return acc;
+    }, []).join(',') 
+    : '';
+}
 
 export function extractSelections(selections, fragments) {
   // extract any fragment selection sets into a single array of selections
@@ -614,33 +720,6 @@ export const getRelationName = relationDirective => {
   }
 };
 
-export const createRelationMap = typeMap => {
-  let astNode = {};
-  let name = '';
-  let fields = [];
-  let fromTypeName = '';
-  let toTypeName = '';
-  let typeDirective = {};
-  return Object.keys(typeMap).reduce((acc, t) => {
-    astNode = typeMap[t];
-    name = astNode.name.value;
-    fields = astNode.fields;
-    typeDirective = getTypeDirective(astNode, 'relation');
-    if (typeDirective) {
-      // validate the other fields to make sure theyre not nodes or rel types
-      fromTypeName = typeDirective.arguments.find(e => e.name.value === 'from')
-        .value.value;
-      toTypeName = typeDirective.arguments.find(e => e.name.value === 'to')
-        .value.value;
-      acc[name] = {
-        from: typeMap[fromTypeName],
-        to: typeMap[toTypeName]
-      };
-    }
-    return acc;
-  }, {});
-};
-
 /**
  * Render safe a variable name according to cypher rules
  * @param {String} i input variable name
@@ -738,3 +817,158 @@ export const addDirectiveDeclarations = typeMap => {
   typeMap['_RelationDirections'] = parse(`enum _RelationDirections { IN OUT }`);
   return typeMap;
 };
+
+export const initializeMutationParams = ({
+  resolveInfo, 
+  mutationTypeCypherDirective, 
+  otherParams, 
+  first,
+  offset
+}) => {
+  return (isCreateMutation(resolveInfo) || isUpdateMutation(resolveInfo)) &&
+  !mutationTypeCypherDirective
+    ? { params: otherParams, ...{ first, offset } }
+    : { ...otherParams, ...{ first, offset } };
+}
+
+export const getQueryCypherDirective = (resolveInfo) => {
+  return resolveInfo.schema
+    .getQueryType()
+    .getFields()
+    [resolveInfo.fieldName].astNode.directives.find(x => {
+      return x.name.value === 'cypher';
+    });
+}
+
+export const getMutationCypherDirective = (resolveInfo) => {
+  return resolveInfo.schema
+    .getMutationType()
+    .getFields()
+    [resolveInfo.fieldName].astNode.directives.find(x => {
+      return x.name.value === 'cypher';
+    });
+}
+
+export const getOuterSkipLimit = first =>
+  `SKIP $offset${first > -1 ? ' LIMIT $first' : ''}`;
+
+export const getQuerySelections = (resolveInfo) => {
+  const filteredFieldNodes = filter(
+    resolveInfo.fieldNodes,
+    n => n.name.value === resolveInfo.fieldName
+  );
+  // FIXME: how to handle multiple fieldNode matches
+  return extractSelections(
+    filteredFieldNodes[0].selectionSet.selections,
+    resolveInfo.fragments
+  );
+}
+
+export const getMutationSelections = (resolveInfo) => {
+  let selections = getQuerySelections(resolveInfo);
+  if (selections.length === 0) {
+    // FIXME: why aren't the selections found in the filteredFieldNode?
+    selections = extractSelections(
+      resolveInfo.operation.selectionSet.selections,
+      resolveInfo.fragments
+    );
+  }
+  return selections;
+}
+
+export const filterNullParams = ({    
+  offset,
+  first,
+  otherParams
+}) => {
+  return Object.entries({
+    ...{ offset, first },
+    ...otherParams
+  }).reduce(
+    ([nulls, nonNulls], [key, value]) => {
+      if (value === null) {
+        nulls[key] = value;
+      } else {
+        nonNulls[key] = value;
+      }
+      return [nulls, nonNulls];
+    },
+    [{}, {}]
+  );
+}
+
+export const isTemporalType = (name) => {
+  return name === "_Neo4jTime" ||
+    name === "_Neo4jDate" ||
+    name === "_Neo4jDateTime" ||
+    name === "_Neo4jLocalTime" ||
+    name === "_Neo4jLocalDateTime";
+}
+
+const isTemporalInputType = (name) => {
+  return name === "_Neo4jTimeInput" ||
+    name === "_Neo4jDateInput" ||
+    name === "_Neo4jDateTimeInput" ||
+    name === "_Neo4jLocalTimeInput" ||
+    name === "_Neo4jLocalDateTimeInput";
+}
+
+export const isTemporalField = (schemaType, name) => {
+  const type = schemaType ? schemaType.name : '';
+  return isTemporalType(type) && 
+    name === "year" || 
+    name === "month" ||
+    name === "day" ||
+    name === "hour" ||
+    name === "minute" ||
+    name === "second" ||
+    name === "microsecond" ||
+    name === "millisecond" ||
+    name === "nanosecond" ||
+    name === "timezone" || 
+    name === "formatted";
+}
+
+export const getTemporalArguments = (args) => {
+  return args ? args.reduce( (acc, t) => {
+    const fieldType = getNamedType(t.type).name.value;
+    if(isTemporalInputType(fieldType)) acc.push(t);
+    return acc;
+  }, []) : [];
+}
+
+export function temporalPredicateClauses(filters, variableName, temporalArgs, parentParam) {
+  return temporalArgs.reduce( (acc, t) => {
+    // For every temporal argument
+    const argName = t.name.value;
+    let temporalParam = filters[argName]; 
+    if(temporalParam) {
+      // If a parameter value has been provided for it check whether 
+      // the provided param value is in an indexed object for a nested argument
+      const paramIndex = temporalParam.index;
+      const paramValue = temporalParam.value;
+      // If it is, set and use its .value
+      if(paramValue) temporalParam = paramValue;
+      if(temporalParam["formatted"]) {
+        // Only the dedicated 'formatted' arg is used if it is provided
+        const cypherFunction = decideCypherFunction(t);
+        acc.push(`${variableName}.${argName} = ${cypherFunction}($${
+            // use index if provided, for nested arguments
+            typeof paramIndex === 'undefined' 
+            ? `${parentParam ? `${parentParam}.` : ''}${argName}.formatted` 
+            : `${parentParam ? `${parentParam}.` : ''}${paramIndex}_${argName}.formatted`
+          })`);
+      }
+      else {
+        Object.keys(temporalParam).forEach(e => {
+          acc.push(`${variableName}.${argName}.${e} = $${
+            typeof paramIndex === 'undefined' 
+              ? `${parentParam ? `${parentParam}.` : ''}${argName}` 
+              : `${parentParam ? `${parentParam}.` : ''}${paramIndex}_${argName}`
+            }.${e}`);
+        });
+      }
+    }
+    return acc;
+  }, []);
+}
