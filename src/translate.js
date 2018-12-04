@@ -177,8 +177,9 @@ const relationTypeMutationPayloadField = ({
   tailParams,
   rootVariableNames
 }) => {
+  const safeVariableName = safeVar(variableName);
   return {
-    initial: `${initial}${fieldName}: ${variableName} {${
+    initial: `${initial}${fieldName}: ${safeVariableName} {${
       subSelection[0]
     }}${skipLimit} ${commaIfTail}`,
     ...tailParams,
@@ -802,7 +803,10 @@ const relationshipCreate = ({
   let query = `
       MATCH (${fromVariable}:${fromLabel} ${
         fromTemporalClauses && fromTemporalClauses.length > 0
+        // uses either a WHERE clause for managed type primary keys (temporal, etc.)
           ? `) WHERE ${fromTemporalClauses.join(' AND ')} `
+          // or a an internal matching clause for normal, scalar property primary keys
+          // NOTE this will need to change if we at some point allow for multi field node selection
           : `{${fromParam}: $from.${fromParam}})` 
       }
       MATCH (${toVariable}:${toLabel} ${
@@ -838,15 +842,14 @@ const relationshipDelete = ({
       'Missing required MutationMeta directive on add relationship directive'
     );
   }
+
   try {
     relationshipNameArg = mutationMeta.arguments.find(x => {
       return x.name.value === 'relationship';
     });
-
     fromTypeArg = mutationMeta.arguments.find(x => {
       return x.name.value === 'from';
     });
-
     toTypeArg = mutationMeta.arguments.find(x => {
       return x.name.value === 'to';
     });
@@ -855,29 +858,51 @@ const relationshipDelete = ({
       'Missing required argument in MutationMeta directive (relationship, from, or to)'
     );
   }
-  //TODO: need to handle one-to-one and one-to-many
-  const args = resolveInfo.schema.getMutationType().getFields()[
-    resolveInfo.fieldName
-  ].astNode.arguments;
 
+  //TODO: need to handle one-to-one and one-to-many
+  const args = getMutationArguments(resolveInfo);
   const typeMap = resolveInfo.schema.getTypeMap();
 
   const fromType = fromTypeArg.value.value;
   const fromVar = `${lowFirstLetter(fromType)}_from`;
   const fromInputArg = args.find(e => e.name.value === 'from').type;
-  const fromInputAst =
-    typeMap[getNamedType(fromInputArg).type.name.value].astNode;
-  const fromParam = fromInputAst.fields[0].name.value;
+  const fromInputAst = typeMap[getNamedType(fromInputArg).type.name.value].astNode;
+  const fromFields = fromInputAst.fields;
+  const fromParam = fromFields[0].name.value;
+  const fromTemporalArgs = getTemporalArguments(fromFields);
 
   const toType = toTypeArg.value.value;
   const toVar = `${lowFirstLetter(toType)}_to`;
   const toInputArg = args.find(e => e.name.value === 'to').type;
-  const toInputAst =
-    typeMap[getNamedType(toInputArg).type.name.value].astNode;
-  const toParam = toInputAst.fields[0].name.value;
+  const toInputAst = typeMap[getNamedType(toInputArg).type.name.value].astNode;
+  const toFields = toInputAst.fields;
+  const toParam = toFields[0].name.value;
+  const toTemporalArgs = getTemporalArguments(toFields);
 
   const relationshipName = relationshipNameArg.value.value;
 
+  const schemaTypeName = safeVar(schemaType);
+  const fromVariable = safeVar(fromVar);
+  const fromLabel = safeLabel(fromType);
+  const toVariable = safeVar(toVar);
+  const toLabel = safeLabel(toType);
+  const relationshipVariable = safeVar(fromVar + toVar);
+  const relationshipLabel = safeLabel(relationshipName);
+  const fromRootVariable = safeVar('_' + fromVar);
+  const toRootVariable = safeVar('_' + toVar);
+  const fromTemporalClauses = temporalPredicateClauses(
+    params.from, 
+    fromVariable, 
+    fromTemporalArgs, 
+    "from"
+  );
+  const toTemporalClauses = temporalPredicateClauses(
+    params.to, 
+    toVariable, 
+    toTemporalArgs, 
+    "to"
+  );
+  // TODO remove use of _ prefixes in root variableNames and variableName
   const [subQuery, subParams] = buildCypherSelection({
     initial: '',
     selections,
@@ -892,19 +917,20 @@ const relationshipDelete = ({
     variableName: schemaType.name === fromType ? `_${toVar}` : `_${fromVar}`
   });
   params = { ...params, ...subParams };
-
-  const schemaTypeName = safeVar(schemaType);
-  const fromVariable = safeVar(fromVar);
-  const fromLabel = safeLabel(fromType);
-  const toVariable = safeVar(toVar);
-  const toLabel = safeLabel(toType);
-  const relationshipVariable = safeVar(fromVar + toVar);
-  const relationshipLabel = safeLabel(relationshipName);
-  const fromRootVariable = safeVar('_' + fromVar);
-  const toRootVariable = safeVar('_' + toVar);
-  const query = `
-      MATCH (${fromVariable}:${fromLabel} {${fromParam}: $from.${fromParam}})
-      MATCH (${toVariable}:${toLabel} {${toParam}: $to.${toParam}})
+  // TODO create builder functions for selection clauses below for both relation mutations
+  let query = `
+      MATCH (${fromVariable}:${fromLabel} ${
+        fromTemporalClauses && fromTemporalClauses.length > 0
+        // uses either a WHERE clause for managed type primary keys (temporal, etc.)
+          ? `) WHERE ${fromTemporalClauses.join(' AND ')} `
+          // or a an internal matching clause for normal, scalar property primary keys
+          : `{${fromParam}: $from.${fromParam}})` 
+      }
+      MATCH (${toVariable}:${toLabel} ${
+        toTemporalClauses && toTemporalClauses.length > 0
+          ? `) WHERE ${toTemporalClauses.join(' AND ')} `
+          : `{${toParam}: $to.${toParam}})` 
+      }
       OPTIONAL MATCH (${fromVariable})-[${relationshipVariable}:${relationshipLabel}]->(${toVariable})
       DELETE ${relationshipVariable}
       WITH COUNT(*) AS scope, ${fromVariable} AS ${fromRootVariable}, ${toVariable} AS ${toRootVariable}
