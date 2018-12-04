@@ -1,14 +1,14 @@
-import { augmentSchema } from '../../src/index';
+import { augmentTypeDefs, augmentSchema } from '../../src/index';
 import { ApolloServer, gql, makeExecutableSchema } from 'apollo-server';
 import { v1 as neo4j } from 'neo4j-driver';
 import { typeDefs, resolvers } from './movies-schema';
 
 const schema = makeExecutableSchema({
-  typeDefs,
-  resolvers,
+  typeDefs: augmentTypeDefs(typeDefs),
   resolverValidationOptions: {
     requireResolversForResolveType: false
-  }
+  },
+  resolvers
 });
 
 // Add auto-generated mutations

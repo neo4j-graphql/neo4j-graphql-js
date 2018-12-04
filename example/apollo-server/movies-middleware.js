@@ -1,4 +1,4 @@
-import { augmentSchema } from '../../src/index';
+import { makeAugmentedSchema } from '../../src/index';
 import { ApolloServer } from 'apollo-server-express';
 import express from 'express';
 import bodyParser from 'body-parser';
@@ -6,7 +6,7 @@ import { makeExecutableSchema } from 'apollo-server';
 import { v1 as neo4j } from 'neo4j-driver';
 import { typeDefs, resolvers } from './movies-schema';
 
-const schema = makeExecutableSchema({
+const schema = makeAugmentedSchema({
   typeDefs,
   resolvers,
   resolverValidationOptions: {
@@ -15,7 +15,7 @@ const schema = makeExecutableSchema({
 });
 
 // Add auto-generated mutations
-const augmentedSchema = augmentSchema(schema);
+//const augmentedSchema = augmentSchema(schema);
 
 const driver = neo4j.driver(
   process.env.NEO4J_URI || 'bolt://localhost:7687',
@@ -36,7 +36,7 @@ const checkErrorHeaderMiddleware = async (req, res, next) => {
 app.use('*', checkErrorHeaderMiddleware);
 
 const server = new ApolloServer({
-  schema: augmentedSchema,
+  schema,
   // inject the request object into the context to support middleware
   // inject the Neo4j driver instance to handle database call
   context: ({ req }) => {
