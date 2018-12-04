@@ -168,6 +168,12 @@ export function augmentedSchemaCypherTestRunner(
         t.deepEqual(queryParams, expectedCypherParams);
         t.end();
       },
+      RemoveTemporalNodeTemporalNodes(object, params, ctx, resolveInfo) {
+        const [query, queryParams] = cypherMutation(params, ctx, resolveInfo);
+        t.is(query, expectedCypherQuery);
+        t.deepEqual(queryParams, expectedCypherParams);
+        t.end();
+      },
       AddMovieGenres(object, params, ctx, resolveInfo) {
         const [query, queryParams] = cypherMutation(params, ctx, resolveInfo);
         t.is(query, expectedCypherQuery);
@@ -217,7 +223,7 @@ export function augmentedSchemaCypherTestRunner(
 
 export function augmentedSchema() {
   const schema = makeExecutableSchema({
-    typeDefs: testSchema,
+    typeDefs: augmentTypeDefs(testSchema),
     //resolvers,
     resolverValidationOptions: {
       requireResolversForResolveType: false
