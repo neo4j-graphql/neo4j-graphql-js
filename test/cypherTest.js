@@ -672,7 +672,7 @@ test('Add relationship mutation', t => {
       MATCH (\`movie_from\`:\`Movie\` {movieId: $from.movieId})
       MATCH (\`genre_to\`:\`Genre\` {name: $to.name})
       CREATE (\`movie_from\`)-[\`in_genre_relation\`:\`IN_GENRE\`]->(\`genre_to\`)
-      RETURN \`in_genre_relation\` { from: movie_from { .movieId ,genres: [(\`movie_from\`)-[:\`IN_GENRE\`]->(\`movie_from_genres\`:\`Genre\`) | movie_from_genres {_id: ID(\`movie_from_genres\`), .name }] } ,to: genre_to { .name }  } AS \`_AddMovieGenresPayload\`;
+      RETURN \`in_genre_relation\` { from: \`movie_from\` { .movieId ,genres: [(\`movie_from\`)-[:\`IN_GENRE\`]->(\`movie_from_genres\`:\`Genre\`) | movie_from_genres {_id: ID(\`movie_from_genres\`), .name }] } ,to: \`genre_to\` { .name }  } AS \`_AddMovieGenresPayload\`;
     `;
 
   t.plan(1);
@@ -712,7 +712,7 @@ test('Add relationship mutation with GraphQL variables', t => {
       MATCH (\`movie_from\`:\`Movie\` {movieId: $from.movieId})
       MATCH (\`genre_to\`:\`Genre\` {name: $to.name})
       CREATE (\`movie_from\`)-[\`in_genre_relation\`:\`IN_GENRE\`]->(\`genre_to\`)
-      RETURN \`in_genre_relation\` { from: movie_from { .movieId ,genres: [(\`movie_from\`)-[:\`IN_GENRE\`]->(\`movie_from_genres\`:\`Genre\`) | movie_from_genres {_id: ID(\`movie_from_genres\`), .name }] } ,to: genre_to { .name }  } AS \`_AddMovieGenresPayload\`;
+      RETURN \`in_genre_relation\` { from: \`movie_from\` { .movieId ,genres: [(\`movie_from\`)-[:\`IN_GENRE\`]->(\`movie_from_genres\`:\`Genre\`) | movie_from_genres {_id: ID(\`movie_from_genres\`), .name }] } ,to: \`genre_to\` { .name }  } AS \`_AddMovieGenresPayload\`;
     `;
 
   t.plan(1);
@@ -775,7 +775,7 @@ test('Add relationship mutation with relationship property', t => {
       MATCH (\`user_from\`:\`User\` {userId: $from.userId})
       MATCH (\`movie_to\`:\`Movie\` {movieId: $to.movieId})
       CREATE (\`user_from\`)-[\`rated_relation\`:\`RATED\` {rating:$data.rating}]->(\`movie_to\`)
-      RETURN \`rated_relation\` { from: user_from {_id: ID(\`user_from\`), .userId , .name ,rated: [(\`user_from\`)-[\`user_from_rated_relation\`:\`RATED\`]->(:\`Movie\`) | user_from_rated_relation { .rating ,Movie: head([(:\`User\`)-[\`user_from_rated_relation\`]->(\`user_from_rated_Movie\`:\`Movie\`) | user_from_rated_Movie {_id: ID(\`user_from_rated_Movie\`), .movieId , .title }]) }] } ,to: movie_to {_id: ID(\`movie_to\`), .movieId , .title ,ratings: [(\`movie_to\`)<-[\`movie_to_ratings_relation\`:\`RATED\`]-(:\`User\`) | movie_to_ratings_relation { .rating ,User: head([(:\`Movie\`)<-[\`movie_to_ratings_relation\`]-(\`movie_to_ratings_User\`:\`User\`) | movie_to_ratings_User {_id: ID(\`movie_to_ratings_User\`), .userId , .name }]) }] } , .rating  } AS \`_AddUserRatedPayload\`;
+      RETURN \`rated_relation\` { from: \`user_from\` {_id: ID(\`user_from\`), .userId , .name ,rated: [(\`user_from\`)-[\`user_from_rated_relation\`:\`RATED\`]->(:\`Movie\`) | user_from_rated_relation { .rating ,Movie: head([(:\`User\`)-[\`user_from_rated_relation\`]->(\`user_from_rated_Movie\`:\`Movie\`) | user_from_rated_Movie {_id: ID(\`user_from_rated_Movie\`), .movieId , .title }]) }] } ,to: \`movie_to\` {_id: ID(\`movie_to\`), .movieId , .title ,ratings: [(\`movie_to\`)<-[\`movie_to_ratings_relation\`:\`RATED\`]-(:\`User\`) | movie_to_ratings_relation { .rating ,User: head([(:\`Movie\`)<-[\`movie_to_ratings_relation\`]-(\`movie_to_ratings_User\`:\`User\`) | movie_to_ratings_User {_id: ID(\`movie_to_ratings_User\`), .userId , .name }]) }] } , .rating  } AS \`_AddUserRatedPayload\`;
     `;
 
   t.plan(1);
@@ -871,7 +871,7 @@ test('Add relationship mutation with relationship property (reflexive)', t => {
       MATCH (\`user_from\`:\`User\` {userId: $from.userId})
       MATCH (\`user_to\`:\`User\` {userId: $to.userId})
       CREATE (\`user_from\`)-[\`friend_of_relation\`:\`FRIEND_OF\` {since:$data.since}]->(\`user_to\`)
-      RETURN \`friend_of_relation\` { from: user_from {_id: ID(\`user_from\`), .userId , .name ,friends: {from: [(\`user_from\`)<-[\`user_from_from_relation\`:\`FRIEND_OF\`]-(\`user_from_from\`:\`User\`) | user_from_from_relation { .since ,User: user_from_from {_id: ID(\`user_from_from\`), .name ,friends: {from: [(\`user_from_from\`)<-[\`user_from_from_from_relation\`:\`FRIEND_OF\`]-(\`user_from_from_from\`:\`User\`) | user_from_from_from_relation { .since ,User: user_from_from_from {_id: ID(\`user_from_from_from\`), .name } }] ,to: [(\`user_from_from\`)-[\`user_from_from_to_relation\`:\`FRIEND_OF\`]->(\`user_from_from_to\`:\`User\`) | user_from_from_to_relation { .since ,User: user_from_from_to {_id: ID(\`user_from_from_to\`), .name } }] } } }] ,to: [(\`user_from\`)-[\`user_from_to_relation\`:\`FRIEND_OF\`]->(\`user_from_to\`:\`User\`) | user_from_to_relation { .since ,User: user_from_to {_id: ID(\`user_from_to\`), .name } }] } } ,to: user_to {_id: ID(\`user_to\`), .name ,friends: {from: [(\`user_to\`)<-[\`user_to_from_relation\`:\`FRIEND_OF\`]-(\`user_to_from\`:\`User\`) | user_to_from_relation { .since ,User: user_to_from {_id: ID(\`user_to_from\`), .name } }] ,to: [(\`user_to\`)-[\`user_to_to_relation\`:\`FRIEND_OF\`]->(\`user_to_to\`:\`User\`) | user_to_to_relation { .since ,User: user_to_to {_id: ID(\`user_to_to\`), .name } }] } } , .since  } AS \`_AddUserFriendsPayload\`;
+      RETURN \`friend_of_relation\` { from: \`user_from\` {_id: ID(\`user_from\`), .userId , .name ,friends: {from: [(\`user_from\`)<-[\`user_from_from_relation\`:\`FRIEND_OF\`]-(\`user_from_from\`:\`User\`) | user_from_from_relation { .since ,User: user_from_from {_id: ID(\`user_from_from\`), .name ,friends: {from: [(\`user_from_from\`)<-[\`user_from_from_from_relation\`:\`FRIEND_OF\`]-(\`user_from_from_from\`:\`User\`) | user_from_from_from_relation { .since ,User: user_from_from_from {_id: ID(\`user_from_from_from\`), .name } }] ,to: [(\`user_from_from\`)-[\`user_from_from_to_relation\`:\`FRIEND_OF\`]->(\`user_from_from_to\`:\`User\`) | user_from_from_to_relation { .since ,User: user_from_from_to {_id: ID(\`user_from_from_to\`), .name } }] } } }] ,to: [(\`user_from\`)-[\`user_from_to_relation\`:\`FRIEND_OF\`]->(\`user_from_to\`:\`User\`) | user_from_to_relation { .since ,User: user_from_to {_id: ID(\`user_from_to\`), .name } }] } } ,to: \`user_to\` {_id: ID(\`user_to\`), .name ,friends: {from: [(\`user_to\`)<-[\`user_to_from_relation\`:\`FRIEND_OF\`]-(\`user_to_from\`:\`User\`) | user_to_from_relation { .since ,User: user_to_from {_id: ID(\`user_to_from\`), .name } }] ,to: [(\`user_to\`)-[\`user_to_to_relation\`:\`FRIEND_OF\`]->(\`user_to_to\`:\`User\`) | user_to_to_relation { .since ,User: user_to_to {_id: ID(\`user_to_to\`), .name } }] } } , .since  } AS \`_AddUserFriendsPayload\`;
     `;
 
   t.plan(1);
@@ -911,7 +911,7 @@ test('Remove relationship mutation', t => {
       OPTIONAL MATCH (\`movie_from\`)-[\`movie_fromgenre_to\`:\`IN_GENRE\`]->(\`genre_to\`)
       DELETE \`movie_fromgenre_to\`
       WITH COUNT(*) AS scope, \`movie_from\` AS \`_movie_from\`, \`genre_to\` AS \`_genre_to\`
-      RETURN {from: _movie_from {_id: ID(\`_movie_from\`), .title } ,to: _genre_to {_id: ID(\`_genre_to\`), .name } } AS \`_RemoveMovieGenresPayload\`;
+      RETURN {from: \`_movie_from\` {_id: ID(\`_movie_from\`), .title } ,to: \`_genre_to\` {_id: ID(\`_genre_to\`), .name } } AS \`_RemoveMovieGenresPayload\`;
     `;
 
   t.plan(1);
@@ -987,7 +987,7 @@ test('Remove relationship mutation (reflexive)', t => {
       OPTIONAL MATCH (\`user_from\`)-[\`user_fromuser_to\`:\`FRIEND_OF\`]->(\`user_to\`)
       DELETE \`user_fromuser_to\`
       WITH COUNT(*) AS scope, \`user_from\` AS \`_user_from\`, \`user_to\` AS \`_user_to\`
-      RETURN {from: _user_from {_id: ID(\`_user_from\`), .name ,friends: {from: [(\`_user_from\`)<-[\`_user_from_from_relation\`:\`FRIEND_OF\`]-(\`_user_from_from\`:\`User\`) | _user_from_from_relation { .since ,User: _user_from_from {_id: ID(\`_user_from_from\`), .name } }] ,to: [(\`_user_from\`)-[\`_user_from_to_relation\`:\`FRIEND_OF\`]->(\`_user_from_to\`:\`User\`) | _user_from_to_relation { .since ,User: _user_from_to {_id: ID(\`_user_from_to\`), .name } }] } } ,to: _user_to {_id: ID(\`_user_to\`), .name ,friends: {from: [(\`_user_to\`)<-[\`_user_to_from_relation\`:\`FRIEND_OF\`]-(\`_user_to_from\`:\`User\`) | _user_to_from_relation { .since ,User: _user_to_from {_id: ID(\`_user_to_from\`), .name } }] ,to: [(\`_user_to\`)-[\`_user_to_to_relation\`:\`FRIEND_OF\`]->(\`_user_to_to\`:\`User\`) | _user_to_to_relation { .since ,User: _user_to_to {_id: ID(\`_user_to_to\`), .name } }] } } } AS \`_RemoveUserFriendsPayload\`;
+      RETURN {from: \`_user_from\` {_id: ID(\`_user_from\`), .name ,friends: {from: [(\`_user_from\`)<-[\`_user_from_from_relation\`:\`FRIEND_OF\`]-(\`_user_from_from\`:\`User\`) | _user_from_from_relation { .since ,User: _user_from_from {_id: ID(\`_user_from_from\`), .name } }] ,to: [(\`_user_from\`)-[\`_user_from_to_relation\`:\`FRIEND_OF\`]->(\`_user_from_to\`:\`User\`) | _user_from_to_relation { .since ,User: _user_from_to {_id: ID(\`_user_from_to\`), .name } }] } } ,to: \`_user_to\` {_id: ID(\`_user_to\`), .name ,friends: {from: [(\`_user_to\`)<-[\`_user_to_from_relation\`:\`FRIEND_OF\`]-(\`_user_to_from\`:\`User\`) | _user_to_from_relation { .since ,User: _user_to_from {_id: ID(\`_user_to_from\`), .name } }] ,to: [(\`_user_to\`)-[\`_user_to_to_relation\`:\`FRIEND_OF\`]->(\`_user_to_to\`:\`User\`) | _user_to_to_relation { .since ,User: _user_to_to {_id: ID(\`_user_to_to\`), .name } }] } } } AS \`_RemoveUserFriendsPayload\`;
     `;
 
   t.plan(1);
@@ -1675,7 +1675,7 @@ test('Create node with temporal properties', t => {
   );
 });
 
-test('Query node with temporal properties', t => {
+test('Query node with temporal properties using temporal arguments', t => {
   const graphQLQuery = `query {
     TemporalNode(
       time: {
@@ -1792,165 +1792,7 @@ test('Query node with temporal properties', t => {
   );
 });
 
-test('Add relationship mutation using temporal property node selection', t => {
-  const graphQLQuery = `mutation {
-    AddTemporalNodeTemporalNodes(
-      from: {
-        datetime: {
-          year: 2018,
-          month: 11,
-          day: 23,
-          hour: 10,
-          minute: 30,
-          second: 1,
-          millisecond: 2,
-          microsecond: 2003,
-          nanosecond: 2003004,
-          timezone: "America/Los_Angeles"
-        }
-      },
-      to: {
-        datetime: {
-          year: 2020,
-          month: 11,
-          day: 23,
-          hour: 10,
-          minute: 30,
-          second: 1,
-          millisecond: 2,
-          microsecond: 2003,
-          nanosecond: 2003004,
-          timezone: "America/Los_Angeles"
-        }
-      }
-    ) {
-      from {
-        _id
-        time {
-          hour
-          minute
-          second
-          millisecond
-          microsecond
-          nanosecond
-          timezone
-          formatted
-        }
-        date {
-          year
-          month
-          day
-          formatted
-        }
-        datetime {
-          year
-          month
-          day
-          hour
-          minute
-          second
-          millisecond
-          microsecond
-          nanosecond
-          timezone
-          formatted
-        }
-        localtime {
-          hour
-          minute
-          second
-          millisecond
-          microsecond
-          nanosecond
-          formatted
-        }
-        localdatetime {
-          year
-          month
-          day
-          hour
-          minute
-          second
-          millisecond
-          microsecond
-          nanosecond
-          formatted
-        }
-      }
-      to {
-        _id
-        time {
-          hour
-          minute
-          second
-          millisecond
-          microsecond
-          nanosecond
-          timezone
-          formatted
-        }
-        date {
-          year
-          month
-          day
-          formatted
-        }
-        datetime {
-          year
-          month
-          day
-          hour
-          minute
-          second
-          millisecond
-          microsecond
-          nanosecond
-          timezone
-          formatted
-        }
-        localtime {
-          hour
-          minute
-          second
-          millisecond
-          microsecond
-          nanosecond
-          formatted
-        }
-        localdatetime {
-          year
-          month
-          day
-          hour
-          minute
-          second
-          millisecond
-          microsecond
-          nanosecond
-          formatted
-        }
-      }
-    }
-  }`,
-    expectedCypherQuery = `
-      MATCH (\`temporalNode_from\`:\`TemporalNode\` ) WHERE \`temporalNode_from\`.datetime.year = $from.datetime.year AND \`temporalNode_from\`.datetime.month = $from.datetime.month AND \`temporalNode_from\`.datetime.day = $from.datetime.day AND \`temporalNode_from\`.datetime.hour = $from.datetime.hour AND \`temporalNode_from\`.datetime.minute = $from.datetime.minute AND \`temporalNode_from\`.datetime.second = $from.datetime.second AND \`temporalNode_from\`.datetime.millisecond = $from.datetime.millisecond AND \`temporalNode_from\`.datetime.microsecond = $from.datetime.microsecond AND \`temporalNode_from\`.datetime.nanosecond = $from.datetime.nanosecond AND \`temporalNode_from\`.datetime.timezone = $from.datetime.timezone 
-      MATCH (\`temporalNode_to\`:\`TemporalNode\` ) WHERE \`temporalNode_to\`.datetime.year = $to.datetime.year AND \`temporalNode_to\`.datetime.month = $to.datetime.month AND \`temporalNode_to\`.datetime.day = $to.datetime.day AND \`temporalNode_to\`.datetime.hour = $to.datetime.hour AND \`temporalNode_to\`.datetime.minute = $to.datetime.minute AND \`temporalNode_to\`.datetime.second = $to.datetime.second AND \`temporalNode_to\`.datetime.millisecond = $to.datetime.millisecond AND \`temporalNode_to\`.datetime.microsecond = $to.datetime.microsecond AND \`temporalNode_to\`.datetime.nanosecond = $to.datetime.nanosecond AND \`temporalNode_to\`.datetime.timezone = $to.datetime.timezone 
-      CREATE (\`temporalNode_from\`)-[\`temporal_relation\`:\`TEMPORAL\`]->(\`temporalNode_to\`)
-      RETURN \`temporal_relation\` { from: temporalNode_from {_id: ID(\`temporalNode_from\`),time: { hour: \`temporalNode_from\`.time.hour , minute: \`temporalNode_from\`.time.minute , second: \`temporalNode_from\`.time.second , millisecond: \`temporalNode_from\`.time.millisecond , microsecond: \`temporalNode_from\`.time.microsecond , nanosecond: \`temporalNode_from\`.time.nanosecond , timezone: \`temporalNode_from\`.time.timezone , formatted: toString(\`temporalNode_from\`.time) },date: { year: \`temporalNode_from\`.date.year , month: \`temporalNode_from\`.date.month , day: \`temporalNode_from\`.date.day , formatted: toString(\`temporalNode_from\`.date) },datetime: { year: \`temporalNode_from\`.datetime.year , month: \`temporalNode_from\`.datetime.month , day: \`temporalNode_from\`.datetime.day , hour: \`temporalNode_from\`.datetime.hour , minute: \`temporalNode_from\`.datetime.minute , second: \`temporalNode_from\`.datetime.second , millisecond: \`temporalNode_from\`.datetime.millisecond , microsecond: \`temporalNode_from\`.datetime.microsecond , nanosecond: \`temporalNode_from\`.datetime.nanosecond , timezone: \`temporalNode_from\`.datetime.timezone , formatted: toString(\`temporalNode_from\`.datetime) },localtime: { hour: \`temporalNode_from\`.localtime.hour , minute: \`temporalNode_from\`.localtime.minute , second: \`temporalNode_from\`.localtime.second , millisecond: \`temporalNode_from\`.localtime.millisecond , microsecond: \`temporalNode_from\`.localtime.microsecond , nanosecond: \`temporalNode_from\`.localtime.nanosecond , formatted: toString(\`temporalNode_from\`.localtime) },localdatetime: { year: \`temporalNode_from\`.localdatetime.year , month: \`temporalNode_from\`.localdatetime.month , day: \`temporalNode_from\`.localdatetime.day , hour: \`temporalNode_from\`.localdatetime.hour , minute: \`temporalNode_from\`.localdatetime.minute , second: \`temporalNode_from\`.localdatetime.second , millisecond: \`temporalNode_from\`.localdatetime.millisecond , microsecond: \`temporalNode_from\`.localdatetime.microsecond , nanosecond: \`temporalNode_from\`.localdatetime.nanosecond , formatted: toString(\`temporalNode_from\`.localdatetime) }} ,to: temporalNode_to {_id: ID(\`temporalNode_to\`),time: { hour: \`temporalNode_to\`.time.hour , minute: \`temporalNode_to\`.time.minute , second: \`temporalNode_to\`.time.second , millisecond: \`temporalNode_to\`.time.millisecond , microsecond: \`temporalNode_to\`.time.microsecond , nanosecond: \`temporalNode_to\`.time.nanosecond , timezone: \`temporalNode_to\`.time.timezone , formatted: toString(\`temporalNode_to\`.time) },date: { year: \`temporalNode_to\`.date.year , month: \`temporalNode_to\`.date.month , day: \`temporalNode_to\`.date.day , formatted: toString(\`temporalNode_to\`.date) },datetime: { year: \`temporalNode_to\`.datetime.year , month: \`temporalNode_to\`.datetime.month , day: \`temporalNode_to\`.datetime.day , hour: \`temporalNode_to\`.datetime.hour , minute: \`temporalNode_to\`.datetime.minute , second: \`temporalNode_to\`.datetime.second , millisecond: \`temporalNode_to\`.datetime.millisecond , microsecond: \`temporalNode_to\`.datetime.microsecond , nanosecond: \`temporalNode_to\`.datetime.nanosecond , timezone: \`temporalNode_to\`.datetime.timezone , formatted: toString(\`temporalNode_to\`.datetime) },localtime: { hour: \`temporalNode_to\`.localtime.hour , minute: \`temporalNode_to\`.localtime.minute , second: \`temporalNode_to\`.localtime.second , millisecond: \`temporalNode_to\`.localtime.millisecond , microsecond: \`temporalNode_to\`.localtime.microsecond , nanosecond: \`temporalNode_to\`.localtime.nanosecond , formatted: toString(\`temporalNode_to\`.localtime) },localdatetime: { year: \`temporalNode_to\`.localdatetime.year , month: \`temporalNode_to\`.localdatetime.month , day: \`temporalNode_to\`.localdatetime.day , hour: \`temporalNode_to\`.localdatetime.hour , minute: \`temporalNode_to\`.localdatetime.minute , second: \`temporalNode_to\`.localdatetime.second , millisecond: \`temporalNode_to\`.localdatetime.millisecond , microsecond: \`temporalNode_to\`.localdatetime.microsecond , nanosecond: \`temporalNode_to\`.localdatetime.nanosecond , formatted: toString(\`temporalNode_to\`.localdatetime) }}  } AS \`_AddTemporalNodeTemporalNodesPayload\`;
-    `;
-
-  t.plan(1);
-
-  return augmentedSchemaCypherTestRunner(
-    t,
-    graphQLQuery,
-    {},
-    expectedCypherQuery,
-    {}
-  );
-});
-
-test('Nested Query with temporal properties', t => {
+test('Nested Query with temporal property arguments', t => {
   const graphQLQuery = `query {
     TemporalNode(
       datetime: {
@@ -2198,7 +2040,7 @@ test('Update temporal and non-temporal properties on node using temporal propert
   );
 });
 
-test('Delete temporal node using temporal property node selection', t => {
+test('Delete node using temporal property node selection', t => {
   const graphQLQuery = `mutation {
     DeleteTemporalNode(
       datetime: {
@@ -2272,6 +2114,324 @@ test('Delete temporal node using temporal property node selection', t => {
 WITH \`temporalNode\` AS \`temporalNode_toDelete\`, \`temporalNode\` {_id: ID(\`temporalNode\`), .name ,time: { hour: \`temporalNode\`.time.hour , minute: \`temporalNode\`.time.minute , second: \`temporalNode\`.time.second , millisecond: \`temporalNode\`.time.millisecond , microsecond: \`temporalNode\`.time.microsecond , nanosecond: \`temporalNode\`.time.nanosecond , timezone: \`temporalNode\`.time.timezone , formatted: toString(\`temporalNode\`.time) },date: { year: \`temporalNode\`.date.year , month: \`temporalNode\`.date.month , day: \`temporalNode\`.date.day , formatted: toString(\`temporalNode\`.date) },datetime: { year: \`temporalNode\`.datetime.year , month: \`temporalNode\`.datetime.month , day: \`temporalNode\`.datetime.day , hour: \`temporalNode\`.datetime.hour , minute: \`temporalNode\`.datetime.minute , second: \`temporalNode\`.datetime.second , millisecond: \`temporalNode\`.datetime.millisecond , microsecond: \`temporalNode\`.datetime.microsecond , nanosecond: \`temporalNode\`.datetime.nanosecond , timezone: \`temporalNode\`.datetime.timezone , formatted: toString(\`temporalNode\`.datetime) },localtime: { hour: \`temporalNode\`.localtime.hour , minute: \`temporalNode\`.localtime.minute , second: \`temporalNode\`.localtime.second , millisecond: \`temporalNode\`.localtime.millisecond , microsecond: \`temporalNode\`.localtime.microsecond , nanosecond: \`temporalNode\`.localtime.nanosecond , formatted: toString(\`temporalNode\`.localtime) },localdatetime: { year: \`temporalNode\`.localdatetime.year , month: \`temporalNode\`.localdatetime.month , day: \`temporalNode\`.localdatetime.day , hour: \`temporalNode\`.localdatetime.hour , minute: \`temporalNode\`.localdatetime.minute , second: \`temporalNode\`.localdatetime.second , millisecond: \`temporalNode\`.localdatetime.millisecond , microsecond: \`temporalNode\`.localdatetime.microsecond , nanosecond: \`temporalNode\`.localdatetime.nanosecond , formatted: toString(\`temporalNode\`.localdatetime) }} AS \`temporalNode\`
 DETACH DELETE \`temporalNode_toDelete\`
 RETURN \`temporalNode\``;
+
+  t.plan(1);
+
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {},
+    expectedCypherQuery,
+    {}
+  );
+});
+
+test('Add relationship mutation using temporal property node selection', t => {
+  const graphQLQuery = `mutation {
+    AddTemporalNodeTemporalNodes(
+      from: {
+        datetime: {
+          year: 2018,
+          month: 11,
+          day: 23,
+          hour: 10,
+          minute: 30,
+          second: 1,
+          millisecond: 2,
+          microsecond: 2003,
+          nanosecond: 2003004,
+          timezone: "America/Los_Angeles"
+        }
+      },
+      to: {
+        datetime: {
+          year: 2020,
+          month: 11,
+          day: 23,
+          hour: 10,
+          minute: 30,
+          second: 1,
+          millisecond: 2,
+          microsecond: 2003,
+          nanosecond: 2003004,
+          timezone: "America/Los_Angeles"
+        }
+      }
+    ) {
+      from {
+        _id
+        time {
+          hour
+          minute
+          second
+          millisecond
+          microsecond
+          nanosecond
+          timezone
+          formatted
+        }
+        date {
+          year
+          month
+          day
+          formatted
+        }
+        datetime {
+          year
+          month
+          day
+          hour
+          minute
+          second
+          millisecond
+          microsecond
+          nanosecond
+          timezone
+          formatted
+        }
+        localtime {
+          hour
+          minute
+          second
+          millisecond
+          microsecond
+          nanosecond
+          formatted
+        }
+        localdatetime {
+          year
+          month
+          day
+          hour
+          minute
+          second
+          millisecond
+          microsecond
+          nanosecond
+          formatted
+        }
+      }
+      to {
+        _id
+        time {
+          hour
+          minute
+          second
+          millisecond
+          microsecond
+          nanosecond
+          timezone
+          formatted
+        }
+        date {
+          year
+          month
+          day
+          formatted
+        }
+        datetime {
+          year
+          month
+          day
+          hour
+          minute
+          second
+          millisecond
+          microsecond
+          nanosecond
+          timezone
+          formatted
+        }
+        localtime {
+          hour
+          minute
+          second
+          millisecond
+          microsecond
+          nanosecond
+          formatted
+        }
+        localdatetime {
+          year
+          month
+          day
+          hour
+          minute
+          second
+          millisecond
+          microsecond
+          nanosecond
+          formatted
+        }
+      }
+    }
+  }`,
+    expectedCypherQuery = `
+      MATCH (\`temporalNode_from\`:\`TemporalNode\` ) WHERE \`temporalNode_from\`.datetime.year = $from.datetime.year AND \`temporalNode_from\`.datetime.month = $from.datetime.month AND \`temporalNode_from\`.datetime.day = $from.datetime.day AND \`temporalNode_from\`.datetime.hour = $from.datetime.hour AND \`temporalNode_from\`.datetime.minute = $from.datetime.minute AND \`temporalNode_from\`.datetime.second = $from.datetime.second AND \`temporalNode_from\`.datetime.millisecond = $from.datetime.millisecond AND \`temporalNode_from\`.datetime.microsecond = $from.datetime.microsecond AND \`temporalNode_from\`.datetime.nanosecond = $from.datetime.nanosecond AND \`temporalNode_from\`.datetime.timezone = $from.datetime.timezone 
+      MATCH (\`temporalNode_to\`:\`TemporalNode\` ) WHERE \`temporalNode_to\`.datetime.year = $to.datetime.year AND \`temporalNode_to\`.datetime.month = $to.datetime.month AND \`temporalNode_to\`.datetime.day = $to.datetime.day AND \`temporalNode_to\`.datetime.hour = $to.datetime.hour AND \`temporalNode_to\`.datetime.minute = $to.datetime.minute AND \`temporalNode_to\`.datetime.second = $to.datetime.second AND \`temporalNode_to\`.datetime.millisecond = $to.datetime.millisecond AND \`temporalNode_to\`.datetime.microsecond = $to.datetime.microsecond AND \`temporalNode_to\`.datetime.nanosecond = $to.datetime.nanosecond AND \`temporalNode_to\`.datetime.timezone = $to.datetime.timezone 
+      CREATE (\`temporalNode_from\`)-[\`temporal_relation\`:\`TEMPORAL\`]->(\`temporalNode_to\`)
+      RETURN \`temporal_relation\` { from: \`temporalNode_from\` {_id: ID(\`temporalNode_from\`),time: { hour: \`temporalNode_from\`.time.hour , minute: \`temporalNode_from\`.time.minute , second: \`temporalNode_from\`.time.second , millisecond: \`temporalNode_from\`.time.millisecond , microsecond: \`temporalNode_from\`.time.microsecond , nanosecond: \`temporalNode_from\`.time.nanosecond , timezone: \`temporalNode_from\`.time.timezone , formatted: toString(\`temporalNode_from\`.time) },date: { year: \`temporalNode_from\`.date.year , month: \`temporalNode_from\`.date.month , day: \`temporalNode_from\`.date.day , formatted: toString(\`temporalNode_from\`.date) },datetime: { year: \`temporalNode_from\`.datetime.year , month: \`temporalNode_from\`.datetime.month , day: \`temporalNode_from\`.datetime.day , hour: \`temporalNode_from\`.datetime.hour , minute: \`temporalNode_from\`.datetime.minute , second: \`temporalNode_from\`.datetime.second , millisecond: \`temporalNode_from\`.datetime.millisecond , microsecond: \`temporalNode_from\`.datetime.microsecond , nanosecond: \`temporalNode_from\`.datetime.nanosecond , timezone: \`temporalNode_from\`.datetime.timezone , formatted: toString(\`temporalNode_from\`.datetime) },localtime: { hour: \`temporalNode_from\`.localtime.hour , minute: \`temporalNode_from\`.localtime.minute , second: \`temporalNode_from\`.localtime.second , millisecond: \`temporalNode_from\`.localtime.millisecond , microsecond: \`temporalNode_from\`.localtime.microsecond , nanosecond: \`temporalNode_from\`.localtime.nanosecond , formatted: toString(\`temporalNode_from\`.localtime) },localdatetime: { year: \`temporalNode_from\`.localdatetime.year , month: \`temporalNode_from\`.localdatetime.month , day: \`temporalNode_from\`.localdatetime.day , hour: \`temporalNode_from\`.localdatetime.hour , minute: \`temporalNode_from\`.localdatetime.minute , second: \`temporalNode_from\`.localdatetime.second , millisecond: \`temporalNode_from\`.localdatetime.millisecond , microsecond: \`temporalNode_from\`.localdatetime.microsecond , nanosecond: \`temporalNode_from\`.localdatetime.nanosecond , formatted: toString(\`temporalNode_from\`.localdatetime) }} ,to: \`temporalNode_to\` {_id: ID(\`temporalNode_to\`),time: { hour: \`temporalNode_to\`.time.hour , minute: \`temporalNode_to\`.time.minute , second: \`temporalNode_to\`.time.second , millisecond: \`temporalNode_to\`.time.millisecond , microsecond: \`temporalNode_to\`.time.microsecond , nanosecond: \`temporalNode_to\`.time.nanosecond , timezone: \`temporalNode_to\`.time.timezone , formatted: toString(\`temporalNode_to\`.time) },date: { year: \`temporalNode_to\`.date.year , month: \`temporalNode_to\`.date.month , day: \`temporalNode_to\`.date.day , formatted: toString(\`temporalNode_to\`.date) },datetime: { year: \`temporalNode_to\`.datetime.year , month: \`temporalNode_to\`.datetime.month , day: \`temporalNode_to\`.datetime.day , hour: \`temporalNode_to\`.datetime.hour , minute: \`temporalNode_to\`.datetime.minute , second: \`temporalNode_to\`.datetime.second , millisecond: \`temporalNode_to\`.datetime.millisecond , microsecond: \`temporalNode_to\`.datetime.microsecond , nanosecond: \`temporalNode_to\`.datetime.nanosecond , timezone: \`temporalNode_to\`.datetime.timezone , formatted: toString(\`temporalNode_to\`.datetime) },localtime: { hour: \`temporalNode_to\`.localtime.hour , minute: \`temporalNode_to\`.localtime.minute , second: \`temporalNode_to\`.localtime.second , millisecond: \`temporalNode_to\`.localtime.millisecond , microsecond: \`temporalNode_to\`.localtime.microsecond , nanosecond: \`temporalNode_to\`.localtime.nanosecond , formatted: toString(\`temporalNode_to\`.localtime) },localdatetime: { year: \`temporalNode_to\`.localdatetime.year , month: \`temporalNode_to\`.localdatetime.month , day: \`temporalNode_to\`.localdatetime.day , hour: \`temporalNode_to\`.localdatetime.hour , minute: \`temporalNode_to\`.localdatetime.minute , second: \`temporalNode_to\`.localdatetime.second , millisecond: \`temporalNode_to\`.localdatetime.millisecond , microsecond: \`temporalNode_to\`.localdatetime.microsecond , nanosecond: \`temporalNode_to\`.localdatetime.nanosecond , formatted: toString(\`temporalNode_to\`.localdatetime) }}  } AS \`_AddTemporalNodeTemporalNodesPayload\`;
+    `;
+
+  t.plan(1);
+
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {},
+    expectedCypherQuery,
+    {}
+  );
+});
+
+test('Remove relationship mutation using temporal property node selection', t => {
+  const graphQLQuery = `mutation {
+    RemoveTemporalNodeTemporalNodes(
+      from: {
+        datetime: {
+          year: 2018,
+          month: 11,
+          day: 23,
+          hour: 10,
+          minute: 30,
+          second: 1,
+          millisecond: 2,
+          microsecond: 2003,
+          nanosecond: 2003004,
+          timezone: "America/Los_Angeles"
+        }
+      },
+      to: {
+        datetime: {
+          year: 2020,
+          month: 11,
+          day: 23,
+          hour: 10,
+          minute: 30,
+          second: 1,
+          millisecond: 2,
+          microsecond: 2003,
+          nanosecond: 2003004,
+          timezone: "America/Los_Angeles"
+        }
+      }
+    ) {
+      from {
+        _id
+        time {
+          hour
+          minute
+          second
+          millisecond
+          microsecond
+          nanosecond
+          timezone
+          formatted
+        }
+        date {
+          year
+          month
+          day
+          formatted
+        }
+        datetime {
+          year
+          month
+          day
+          hour
+          minute
+          second
+          millisecond
+          microsecond
+          nanosecond
+          timezone
+          formatted
+        }
+        localtime {
+          hour
+          minute
+          second
+          millisecond
+          microsecond
+          nanosecond
+          formatted
+        }
+        localdatetime {
+          year
+          month
+          day
+          hour
+          minute
+          second
+          millisecond
+          microsecond
+          nanosecond
+          formatted
+        }
+      }
+      to {
+        _id
+        time {
+          hour
+          minute
+          second
+          millisecond
+          microsecond
+          nanosecond
+          timezone
+          formatted
+        }
+        date {
+          year
+          month
+          day
+          formatted
+        }
+        datetime {
+          year
+          month
+          day
+          hour
+          minute
+          second
+          millisecond
+          microsecond
+          nanosecond
+          timezone
+          formatted
+        }
+        localtime {
+          hour
+          minute
+          second
+          millisecond
+          microsecond
+          nanosecond
+          formatted
+        }
+        localdatetime {
+          year
+          month
+          day
+          hour
+          minute
+          second
+          millisecond
+          microsecond
+          nanosecond
+          formatted
+        }
+      }
+    }
+  }`,
+    expectedCypherQuery = `
+      MATCH (\`temporalNode_from\`:\`TemporalNode\` ) WHERE \`temporalNode_from\`.datetime.year = $from.datetime.year AND \`temporalNode_from\`.datetime.month = $from.datetime.month AND \`temporalNode_from\`.datetime.day = $from.datetime.day AND \`temporalNode_from\`.datetime.hour = $from.datetime.hour AND \`temporalNode_from\`.datetime.minute = $from.datetime.minute AND \`temporalNode_from\`.datetime.second = $from.datetime.second AND \`temporalNode_from\`.datetime.millisecond = $from.datetime.millisecond AND \`temporalNode_from\`.datetime.microsecond = $from.datetime.microsecond AND \`temporalNode_from\`.datetime.nanosecond = $from.datetime.nanosecond AND \`temporalNode_from\`.datetime.timezone = $from.datetime.timezone 
+      MATCH (\`temporalNode_to\`:\`TemporalNode\` ) WHERE \`temporalNode_to\`.datetime.year = $to.datetime.year AND \`temporalNode_to\`.datetime.month = $to.datetime.month AND \`temporalNode_to\`.datetime.day = $to.datetime.day AND \`temporalNode_to\`.datetime.hour = $to.datetime.hour AND \`temporalNode_to\`.datetime.minute = $to.datetime.minute AND \`temporalNode_to\`.datetime.second = $to.datetime.second AND \`temporalNode_to\`.datetime.millisecond = $to.datetime.millisecond AND \`temporalNode_to\`.datetime.microsecond = $to.datetime.microsecond AND \`temporalNode_to\`.datetime.nanosecond = $to.datetime.nanosecond AND \`temporalNode_to\`.datetime.timezone = $to.datetime.timezone 
+      OPTIONAL MATCH (\`temporalNode_from\`)-[\`temporalNode_fromtemporalNode_to\`:\`TEMPORAL\`]->(\`temporalNode_to\`)
+      DELETE \`temporalNode_fromtemporalNode_to\`
+      WITH COUNT(*) AS scope, \`temporalNode_from\` AS \`_temporalNode_from\`, \`temporalNode_to\` AS \`_temporalNode_to\`
+      RETURN {from: \`_temporalNode_from\` {_id: ID(\`_temporalNode_from\`),time: { hour: \`_temporalNode_from\`.time.hour , minute: \`_temporalNode_from\`.time.minute , second: \`_temporalNode_from\`.time.second , millisecond: \`_temporalNode_from\`.time.millisecond , microsecond: \`_temporalNode_from\`.time.microsecond , nanosecond: \`_temporalNode_from\`.time.nanosecond , timezone: \`_temporalNode_from\`.time.timezone , formatted: toString(\`_temporalNode_from\`.time) },date: { year: \`_temporalNode_from\`.date.year , month: \`_temporalNode_from\`.date.month , day: \`_temporalNode_from\`.date.day , formatted: toString(\`_temporalNode_from\`.date) },datetime: { year: \`_temporalNode_from\`.datetime.year , month: \`_temporalNode_from\`.datetime.month , day: \`_temporalNode_from\`.datetime.day , hour: \`_temporalNode_from\`.datetime.hour , minute: \`_temporalNode_from\`.datetime.minute , second: \`_temporalNode_from\`.datetime.second , millisecond: \`_temporalNode_from\`.datetime.millisecond , microsecond: \`_temporalNode_from\`.datetime.microsecond , nanosecond: \`_temporalNode_from\`.datetime.nanosecond , timezone: \`_temporalNode_from\`.datetime.timezone , formatted: toString(\`_temporalNode_from\`.datetime) },localtime: { hour: \`_temporalNode_from\`.localtime.hour , minute: \`_temporalNode_from\`.localtime.minute , second: \`_temporalNode_from\`.localtime.second , millisecond: \`_temporalNode_from\`.localtime.millisecond , microsecond: \`_temporalNode_from\`.localtime.microsecond , nanosecond: \`_temporalNode_from\`.localtime.nanosecond , formatted: toString(\`_temporalNode_from\`.localtime) },localdatetime: { year: \`_temporalNode_from\`.localdatetime.year , month: \`_temporalNode_from\`.localdatetime.month , day: \`_temporalNode_from\`.localdatetime.day , hour: \`_temporalNode_from\`.localdatetime.hour , minute: \`_temporalNode_from\`.localdatetime.minute , second: \`_temporalNode_from\`.localdatetime.second , millisecond: \`_temporalNode_from\`.localdatetime.millisecond , microsecond: \`_temporalNode_from\`.localdatetime.microsecond , nanosecond: \`_temporalNode_from\`.localdatetime.nanosecond , formatted: toString(\`_temporalNode_from\`.localdatetime) }} ,to: \`_temporalNode_to\` {_id: ID(\`_temporalNode_to\`),time: { hour: \`_temporalNode_to\`.time.hour , minute: \`_temporalNode_to\`.time.minute , second: \`_temporalNode_to\`.time.second , millisecond: \`_temporalNode_to\`.time.millisecond , microsecond: \`_temporalNode_to\`.time.microsecond , nanosecond: \`_temporalNode_to\`.time.nanosecond , timezone: \`_temporalNode_to\`.time.timezone , formatted: toString(\`_temporalNode_to\`.time) },date: { year: \`_temporalNode_to\`.date.year , month: \`_temporalNode_to\`.date.month , day: \`_temporalNode_to\`.date.day , formatted: toString(\`_temporalNode_to\`.date) },datetime: { year: \`_temporalNode_to\`.datetime.year , month: \`_temporalNode_to\`.datetime.month , day: \`_temporalNode_to\`.datetime.day , hour: \`_temporalNode_to\`.datetime.hour , minute: \`_temporalNode_to\`.datetime.minute , second: \`_temporalNode_to\`.datetime.second , millisecond: \`_temporalNode_to\`.datetime.millisecond , microsecond: \`_temporalNode_to\`.datetime.microsecond , nanosecond: \`_temporalNode_to\`.datetime.nanosecond , timezone: \`_temporalNode_to\`.datetime.timezone , formatted: toString(\`_temporalNode_to\`.datetime) },localtime: { hour: \`_temporalNode_to\`.localtime.hour , minute: \`_temporalNode_to\`.localtime.minute , second: \`_temporalNode_to\`.localtime.second , millisecond: \`_temporalNode_to\`.localtime.millisecond , microsecond: \`_temporalNode_to\`.localtime.microsecond , nanosecond: \`_temporalNode_to\`.localtime.nanosecond , formatted: toString(\`_temporalNode_to\`.localtime) },localdatetime: { year: \`_temporalNode_to\`.localdatetime.year , month: \`_temporalNode_to\`.localdatetime.month , day: \`_temporalNode_to\`.localdatetime.day , hour: \`_temporalNode_to\`.localdatetime.hour , minute: \`_temporalNode_to\`.localdatetime.minute , second: \`_temporalNode_to\`.localdatetime.second , millisecond: \`_temporalNode_to\`.localdatetime.millisecond , microsecond: \`_temporalNode_to\`.localdatetime.microsecond , nanosecond: \`_temporalNode_to\`.localdatetime.nanosecond , formatted: toString(\`_temporalNode_to\`.localdatetime) }} } AS \`_RemoveTemporalNodeTemporalNodesPayload\`;
+    `;
 
   t.plan(1);
 
