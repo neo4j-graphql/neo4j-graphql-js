@@ -12,7 +12,7 @@ if [ ! -d "neo4j/data/databases/graph.db" ]; then
     sudo apt-get install unzip
     unzip recommendations.db.zip
     mv recommendations.db neo4j/data/databases/graph.db
-    echo "dbms.allow_upgrade=true" >> neo4j/conf/neo4j.conf
+    echo "\ndbms.allow_upgrade=true" >> neo4j/conf/neo4j.conf
 else
     echo "Database is already installed, skipping"
 fi
