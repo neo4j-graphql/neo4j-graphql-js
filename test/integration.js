@@ -607,3 +607,311 @@ test('query using inine fragment', async t => {
       t.fail(error);
     });
 });
+
+/*
+ * Temporal type tests
+ */
+
+// Temporal node property
+test.serial('Temporal - Create node with temporal property', async t => {
+  t.plan(1);
+
+  let expected = {
+    data: {
+      CreateMovie: {
+        __typename: 'Movie',
+        title: 'Bob Loblaw',
+        dateTime: {
+          __typename: '_Neo4jDateTime',
+          year: 2010,
+          month: 1,
+          day: 2
+        }
+      }
+    }
+  };
+
+  await client
+    .mutate({
+      mutation: gql`
+        mutation {
+          CreateMovie(
+            title: "Bob Loblaw"
+            imdbRating: 2.0
+            year: 2010
+            dateTime: { year: 2010, month: 1, day: 2 }
+          ) {
+            title
+            dateTime {
+              year
+              month
+              day
+            }
+          }
+        }
+      `
+    })
+    .then(data => {
+      t.deepEqual(data, expected);
+    })
+    .catch(error => {
+      t.fail(error);
+    });
+});
+
+test.serial(
+  'Temporal - Create node with multiple temporal fields and input formats',
+  async t => {
+    t.plan(1);
+
+    let expected = {
+      data: {
+        CreateMovie: {
+          __typename: 'Movie',
+          title: 'Bob Loblaw 2',
+          dateTime: {
+            __typename: '_Neo4jDateTime',
+            year: 2010,
+            month: 1,
+            day: 2,
+            formatted: '2010-01-02T00:00:00Z'
+          },
+          localDateTime: {
+            __typename: '_Neo4jLocalDateTime',
+            formatted: '2010-01-02T00:00:00'
+          },
+          date: {
+            __typename: '_Neo4jDate',
+            formatted: '2010-01-02'
+          }
+        }
+      }
+    };
+
+    await client
+      .mutate({
+        mutation: gql`
+          mutation {
+            CreateMovie(
+              title: "Bob Loblaw 2"
+              imdbRating: 2.0
+              year: 2010
+              localDateTime: { formatted: "2010-01-02T00:00:00" }
+              dateTime: { year: 2010, month: 1, day: 2 }
+              date: { formatted: "2010-01-02" }
+            ) {
+              title
+              dateTime {
+                year
+                month
+                day
+                formatted
+              }
+              localDateTime {
+                formatted
+              }
+              date {
+                formatted
+              }
+            }
+          }
+        `
+      })
+      .then(data => {
+        t.deepEqual(data, expected);
+      })
+      .catch(error => {
+        t.fail(error);
+      });
+  }
+);
+
+test.serial(
+  'Temporal - Create node with multiple temporal fields and input formats - with GraphQL variables',
+  async t => {
+    t.plan(1);
+
+    let expected = {
+      data: {
+        CreateMovie: {
+          __typename: 'Movie',
+          title: 'Bob Loblaw 3',
+          dateTime: {
+            __typename: '_Neo4jDateTime',
+            year: 2010,
+            month: 1,
+            day: 2,
+            formatted: '2010-01-02T00:00:00Z'
+          },
+          localDateTime: {
+            __typename: '_Neo4jLocalDateTime',
+            formatted: '2010-01-02T00:00:00'
+          },
+          date: {
+            __typename: '_Neo4jDate',
+            formatted: '2010-01-02'
+          }
+        }
+      }
+    };
+
+    await client
+      .mutate({
+        mutation: gql`
+          mutation createWithTemporalFields(
+            $title: String
+            $localDateTimeInput: _Neo4jLocalDateTimeInput
+            $dateInput: _Neo4jDateInput
+          ) {
+            CreateMovie(
+              title: $title
+              imdbRating: 2.0
+              year: 2010
+              localDateTime: $localDateTimeInput
+              dateTime: { year: 2010, month: 1, day: 2 }
+              date: $dateInput
+            ) {
+              title
+              dateTime {
+                year
+                month
+                day
+                formatted
+              }
+              localDateTime {
+                formatted
+              }
+              date {
+                formatted
+              }
+            }
+          }
+        `,
+        variables: {
+          title: 'Bob Loblaw 3',
+          localDateTimeInput: { formatted: '2010-01-02T00:00:00' },
+          dateInput: { formatted: '2010-01-02' }
+        }
+      })
+      .then(data => {
+        t.deepEqual(data, expected);
+      })
+      .catch(error => {
+        t.fail(error);
+      });
+  }
+);
+
+test.serial('Temporal - Query node with temporal field', async t => {
+  let expected = {
+    data: {
+      Movie: [
+        {
+          __typename: 'Movie',
+          title: 'Bob Loblaw 3',
+          date: {
+            __typename: '_Neo4jDate',
+            formatted: '2010-01-02'
+          },
+          localDateTime: {
+            __typename: '_Neo4jLocalDateTime',
+            day: 2,
+            month: 1,
+            year: 2010,
+            hour: 0,
+            minute: 0,
+            second: 0,
+            formatted: '2010-01-02T00:00:00'
+          },
+          dateTime: {
+            __typename: '_Neo4jDateTime',
+            timezone: 'Z',
+            day: 2,
+            month: 1,
+            year: 2010,
+            hour: 0,
+            minute: 0,
+            second: 0,
+            millisecond: 0,
+            nanosecond: 0
+          }
+        }
+      ]
+    }
+  };
+
+  await client
+    .query({
+      query: gql`
+        {
+          Movie(title: "Bob Loblaw 3") {
+            title
+            date {
+              formatted
+            }
+            localDateTime {
+              day
+              month
+              year
+              hour
+              minute
+              second
+              formatted
+            }
+            dateTime {
+              timezone
+              day
+              month
+              year
+              hour
+              minute
+              second
+              millisecond
+              nanosecond
+            }
+          }
+        }
+      `
+    })
+    .then(data => {
+      t.deepEqual(data.data, expected.data);
+    })
+    .catch(error => {
+      t.fail(error);
+    });
+});
+
+test.serial('Temporal - create node with only a temporal property', async t => {
+  t.plan(1);
+
+  let expected = {
+    data: {
+      CreateOnlyDate: {
+        __typename: 'OnlyDate',
+        date: {
+          __typename: '_Neo4jDate',
+          formatted: '2020-11-10'
+        }
+      }
+    }
+  };
+
+  await client
+    .mutate({
+      mutation: gql`
+        mutation {
+          CreateOnlyDate(date: { day: 10, month: 11, year: 2020 }) {
+            date {
+              formatted
+            }
+          }
+        }
+      `
+    })
+    .then(data => {
+      t.deepEqual(data, expected);
+    })
+    .catch(error => {
+      t.fail(error);
+    });
+});
