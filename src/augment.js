@@ -39,7 +39,6 @@ export const augmentTypeMap = (typeMap, config) => {
   // if not written, with default args
   typeMap = computeRelationTypeDirectiveDefaults(typeMap);
   typeMap = addTemporalTypes(typeMap, config);
-
   const queryMap = createOperationMap(typeMap.Query);
   const mutationMap = createOperationMap(typeMap.Mutation);
   let astNode = {};
@@ -694,7 +693,6 @@ const buildAllFieldArguments = (namePrefix, astNode, typeMap) => {
           // Require if required
           if (isNonNullType(t)) {
             // Don't require the first ID field discovered
-            // TODO check existential consistency of valueTypeName, given results with 
             if (valueTypeName === 'ID' && !firstIdField) {
               // will only be true once, this field will
               // by default recieve an auto-generated uuid,
@@ -1067,7 +1065,6 @@ const possiblyAddRelationMutationField = (
 const capitalizeName = name => {
   return name.charAt(0).toUpperCase() + name.substr(1);
 };
-
 
 const createQueryArguments = (astNode, typeMap) => {
   let type = {};
@@ -1471,11 +1468,19 @@ const transformTemporalFieldArgs = (field, config) => {
 
 const transformTemporalFields = (typeMap, config) => {
   let astNode = {};
-  // let typeName = "";
   Object.keys(typeMap).forEach(t => {
     astNode = typeMap[t];
-    if(isNodeType(astNode)) {
-      // typeName = astNode.name.value;
+    if(
+      astNode &&
+      // must be graphql object type
+      astNode.kind === 'ObjectTypeDefinition' &&
+      // does not have relation type directive
+      getTypeDirective(astNode, 'relation') === undefined &&
+      // does not have from and to fields; not relation type
+      astNode.fields &&
+      astNode.fields.find(e => e.name.value === 'from') === undefined &&
+      astNode.fields.find(e => e.name.value === 'to') === undefined
+    ) {
       if(!isTemporalType(t)) {
         astNode.fields.forEach(field => {
           // released: DateTime -> released: _Neo4jDateTime
