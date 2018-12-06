@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.0.0
+
+- [Add initial support for temporal types](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/151)
+- [Upgrade to v14 of graphql-js](https://github.com/neo4j-graphql/neo4j-graphql-js/commit/862553a852e9f0eecef1d1264d9ab0ed49544dba)
+- [Query escaping and safety](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/146)
+
 ## v1.0.5
 
 - [Allow for configuration of schema augmentation process](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/131)
