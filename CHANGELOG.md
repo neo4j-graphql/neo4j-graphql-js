@@ -1,5 +1,10 @@
 # Changelog
 
+## v2.0.1
+
+- [Fix for temporal field query arguments](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/155)
+- [Fix error in extractTypeMapFromTypeDefs](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/154)
+
 ## v2.0.0
 
 - [Add initial support for temporal types](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/151)
