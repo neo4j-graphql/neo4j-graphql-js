@@ -5,6 +5,9 @@ type Movie {
   movieId: ID!
   title: String
   year: Int
+  dateTime: DateTime
+  localDateTime: LocalDateTime
+  date: Date
   plot: String
   poster: String
   imdbRating: Float
@@ -59,14 +62,8 @@ enum BookGenre {
   Math
 }
 
-enum _MovieOrdering {
-  title_desc,
-  title_asc
-}
-
-enum _GenreOrdering {
-  name_desc,
-  name_asc
+type OnlyDate {
+  date: Date
 }
 
 type Book {

@@ -6,6 +6,7 @@ const typeDefs = `
 type Movie {
   title: String
   year: Int
+  dateTime: DateTime
   imdbRating: Float
   ratings: [Rated]
   genres: [Attribute] @relation(name: "IN_GENRE", direction: "OUT")
@@ -42,7 +43,6 @@ type Rated @relation(name: "RATED") {
   rating: Float
   timestamp: Int
 }
-
 `;
 
 const schema = makeAugmentedSchema({ typeDefs });
