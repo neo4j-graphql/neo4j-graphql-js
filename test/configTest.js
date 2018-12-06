@@ -1,6 +1,10 @@
 import test from 'ava';
 import { printSchema } from 'graphql';
-import { augmentSchema, makeAugmentedSchema, augmentTypeDefs } from '../dist/index';
+import {
+  augmentSchema,
+  makeAugmentedSchema,
+  augmentTypeDefs
+} from '../dist/index';
 import { typeDefs } from './helpers/configTestHelpers';
 import { makeExecutableSchema } from 'graphql-tools';
 
@@ -142,7 +146,7 @@ test.cb(
 
     const queryType = `
 type Query {
-  Tweet(id: ID, text: String, _id: String, first: Int, offset: Int, orderBy: _TweetOrdering): [Tweet]
+  Tweet(id: ID, timestamp: _Neo4jDateTimeInput, text: String, _id: String, first: Int, offset: Int, orderBy: _TweetOrdering): [Tweet]
 }
 `;
 
@@ -164,10 +168,22 @@ test.cb('Config - augmentSchema - specify types to exclude for query', t => {
 
   const queryType = `
 type Query {
-  Tweet(id: ID, text: String, _id: String, first: Int, offset: Int, orderBy: _TweetOrdering): [Tweet]
+  Tweet(id: ID, timestamp: _Neo4jDateTimeInput, text: String, _id: String, first: Int, offset: Int, orderBy: _TweetOrdering): [Tweet]
 }
 `;
 
   t.is(printSchema(augmentedSchema).includes(queryType), true);
+  t.end();
+});
+
+test.cb('Config - temporal - disable temporal schema augmentation', t => {
+  const schema = makeAugmentedSchema({
+    typeDefs,
+    config: {
+      temporal: false
+    }
+  });
+
+  t.is(printSchema(schema).includes('_Neo4jDateTimeInput'), false);
   t.end();
 });
