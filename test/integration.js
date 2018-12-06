@@ -915,3 +915,77 @@ test.serial('Temporal - create node with only a temporal property', async t => {
       t.fail(error);
     });
 });
+
+test.serial('Temporal - temporal query argument, components', async t => {
+  t.plan(1);
+
+  let expected = {
+    data: {
+      OnlyDate: [
+        {
+          __typename: 'OnlyDate',
+          date: {
+            __typename: '_Neo4jDate',
+            formatted: '2020-11-10'
+          }
+        }
+      ]
+    }
+  };
+
+  await client
+    .query({
+      query: gql`
+        {
+          OnlyDate(date: { day: 10, month: 11, year: 2020 }) {
+            date {
+              formatted
+            }
+          }
+        }
+      `
+    })
+    .then(data => {
+      t.deepEqual(data.data, expected.data);
+    })
+    .catch(error => {
+      t.fail(error);
+    });
+});
+
+test.serial('Temporal - temporal query argument, formatted', async t => {
+  t.plan(1);
+
+  let expected = {
+    data: {
+      OnlyDate: [
+        {
+          __typename: 'OnlyDate',
+          date: {
+            __typename: '_Neo4jDate',
+            formatted: '2020-11-10'
+          }
+        }
+      ]
+    }
+  };
+
+  await client
+    .query({
+      query: gql`
+        {
+          OnlyDate(date: { formatted: "2020-11-10" }) {
+            date {
+              formatted
+            }
+          }
+        }
+      `
+    })
+    .then(data => {
+      t.deepEqual(data.data, expected.data);
+    })
+    .catch(error => {
+      t.fail(error);
+    });
+});
