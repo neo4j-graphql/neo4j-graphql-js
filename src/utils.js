@@ -807,14 +807,14 @@ export const addDirectiveDeclarations = typeMap => {
   // overwrites any provided directive declarations for system directive names
   typeMap['cypher'] = parse(
     `directive @cypher(statement: String) on FIELD_DEFINITION`
-  );
+  ).definitions[0];
   typeMap['relation'] = parse(
     `directive @relation(name: String, direction: _RelationDirections, from: String, to: String) on FIELD_DEFINITION | OBJECT`
-  );
+  ).definitions[0];
   typeMap['MutationMeta'] = parse(
     `directive @MutationMeta(relationship: String, from: String, to: String) on FIELD_DEFINITION`
-  );
-  typeMap['_RelationDirections'] = parse(`enum _RelationDirections { IN OUT }`);
+  ).definitions[0];
+  typeMap['_RelationDirections'] = parse(`enum _RelationDirections { IN OUT }`).definitions[0];
   return typeMap;
 };
 
