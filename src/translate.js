@@ -289,17 +289,13 @@ export const temporalType = ({
   fieldName,
   subSelection,
   commaIfTail,
-  tailParams,
-  traversalHistory
+  tailParams
 }) => {
   return {
     initial: `${initial}${fieldName}: {${subSelection[0]}}${commaIfTail}`,
-    ...tailParams,
-    traversalHistory
+    ...tailParams
   }  
 }
-
-
 
 // Query API root operation branch
 export const translateQuery = ({
@@ -319,10 +315,10 @@ export const translateQuery = ({
   const queryArgs = getQueryArguments(resolveInfo);
   const temporalArgs = getTemporalArguments(queryArgs);
   const queryParams = innerFilterParams(filterParams, temporalArgs);
-  const temporalClauses = temporalPredicateClauses(filterParams, variableName, temporalArgs);
+  const safeVariableName = safeVar(variableName);
+  const temporalClauses = temporalPredicateClauses(filterParams, safeVariableName, temporalArgs);
   const outerSkipLimit = getOuterSkipLimit(first);
   const orderByValue = computeOrderBy(resolveInfo, selections);
-
   const queryTypeCypherDirective = getQueryCypherDirective(resolveInfo);
   if (queryTypeCypherDirective) {
     return customQuery({
@@ -485,8 +481,6 @@ export const translateMutation = ({
       typeName
     });
   } else if (isAddMutation(resolveInfo)) {
-    // TODO what is the value of variableName in these cases? 
-    // perhaps I haven't been using it when it could be useful
     return relationshipCreate({
       ...mutationInfo      
     });
@@ -902,7 +896,7 @@ const relationshipDelete = ({
     toTemporalArgs, 
     "to"
   );
-  // TODO remove use of _ prefixes in root variableNames and variableName
+  // TODO cleaner semantics: remove use of _ prefixes in root variableNames and variableName
   const [subQuery, subParams] = buildCypherSelection({
     initial: '',
     selections,

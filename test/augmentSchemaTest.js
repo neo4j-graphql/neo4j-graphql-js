@@ -428,7 +428,7 @@ interface Person {
 }
 
 type Query {
-  Movie(_id: String, movieId: ID, title: String, year: Int, plot: String, poster: String, imdbRating: Float, first: Int, offset: Int, orderBy: _MovieOrdering): [Movie]
+  Movie(_id: String, movieId: ID, title: String, year: Int, released: _Neo4jDateTimeInput, plot: String, poster: String, imdbRating: Float, first: Int, offset: Int, orderBy: _MovieOrdering): [Movie]
   MoviesByYear(year: Int, first: Int, offset: Int, orderBy: _MovieOrdering): [Movie]
   MovieById(movieId: ID!): Movie
   MovieBy_Id(_id: String!): Movie
