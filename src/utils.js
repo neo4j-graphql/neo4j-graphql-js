@@ -798,7 +798,7 @@ export const extractTypeMapFromTypeDefs = typeDefs => {
   // into a single string for parse, add validatation
   const astNodes = parse(typeDefs).definitions;
   return astNodes.reduce((acc, t) => {
-    acc[t.name.value] = t;
+    if (t.name) acc[t.name.value] = t;
     return acc;
   }, {});
 };
