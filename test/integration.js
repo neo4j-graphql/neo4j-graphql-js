@@ -279,7 +279,7 @@ test('Update node mutation', async t => {
     });
 });
 
-test('Add relationship mutation', async t => {
+test.serial('Add relationship mutation', async t => {
   t.plan(1);
 
   let expected = {
@@ -348,7 +348,7 @@ test('Add relationship mutation', async t => {
     });
 });
 
-test('Remove relationship mutation', async t => {
+test.serial('Remove relationship mutation', async t => {
   t.plan(1);
 
   await client
