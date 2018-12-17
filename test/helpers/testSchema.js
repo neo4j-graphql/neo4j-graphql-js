@@ -17,7 +17,18 @@ export const testSchema = `type Movie {
   scaleRating(scale: Int = 3): Float @cypher(statement: "WITH $this AS this RETURN $scale * this.imdbRating")
   scaleRatingFloat(scale: Float = 1.5): Float @cypher(statement: "WITH $this AS this RETURN $scale * this.imdbRating")
   actorMovies: [Movie] @cypher(statement: "MATCH (this)-[:ACTED_IN*2]-(other:Movie) RETURN other")
-  ratings: [Rated]
+  ratings(
+    rating: Int
+    time: Time
+    date: Date
+    datetime: DateTime
+    localtime: LocalTime
+    localdatetime: LocalDateTime
+  ): [Rated]
+  years: [Int]
+  titles: [String]
+  imdbRatings: [Float]
+  releases: [DateTime]
 }
 
 type Genre {
@@ -45,19 +56,46 @@ type Actor implements Person {
 type User implements Person {
   userId: ID!
   name: String
-  rated(rating: Int): [Rated]
-  friends(since: Int): [FriendOf]
+  rated(
+    rating: Int
+    time: Time
+    date: Date
+    datetime: DateTime
+    localtime: LocalTime
+    localdatetime: LocalDateTime
+  ): [Rated]
+  friends(
+    since: Int,
+    time: Time,
+    date: Date,
+    datetime: DateTime,
+    localtime: LocalTime,
+    localdatetime: LocalDateTime
+  ): [FriendOf]
 }
 
 type FriendOf {
   from: User
   since: Int
+  time: Time
+  date: Date
+  datetime: DateTime
+  datetimes: [DateTime]
+  localtime: LocalTime
+  localdatetime: LocalDateTime
   to: User
 }
 
 type Rated {
   from: User
   rating: Int
+  ratings: [Int]
+  time: Time
+  date: Date
+  datetime: DateTime
+  localtime: LocalTime
+  localdatetime: LocalDateTime
+  datetimes: [DateTime]
   to: Movie
 }
 
@@ -97,6 +135,7 @@ type TemporalNode {
   date: Date
   localtime: LocalTime
   localdatetime: LocalDateTime
+  localdatetimes: [LocalDateTime]
   temporalNodes(
     time: Time,
     date: Date,
