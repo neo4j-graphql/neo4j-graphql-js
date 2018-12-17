@@ -22,7 +22,11 @@ import {
   getQueryArguments,
   getTemporalArguments,
   initializeMutationParams,
-  getMutationCypherDirective
+  getMutationCypherDirective,
+  isNodeType,
+  getRelationTypeDirectiveArgs,
+  isRelationTypeDirectedField,
+  isRootSelection
 } from './utils';
 import { getNamedType } from 'graphql';
 import { buildCypherSelection } from './selections';
@@ -78,7 +82,8 @@ export const relationFieldOnNodeType = ({
   subSelection,
   skipLimit,
   commaIfTail,
-  tailParams
+  tailParams,
+  temporalClauses
 }) => {
   return {
     initial: `${initial}${fieldName}: ${
@@ -89,7 +94,11 @@ export const relationFieldOnNodeType = ({
       relDirection === 'out' || relDirection === 'OUT' ? '>' : ''
     }(${safeVar(nestedVariable)}:${safeLabel(
       isInlineFragment ? interfaceLabel : innerSchemaType.name
-    )}${queryParams}) | ${nestedVariable} {${
+    )}${queryParams})${
+      temporalClauses.length > 0
+      ? `WHERE ${temporalClauses.join(' AND ')}`
+      : ''
+    } | ${nestedVariable} {${
       isInlineFragment
         ? 'FRAGMENT_TYPE: "' + interfaceLabel + '",' + subSelection[0]
         : subSelection[0]
@@ -110,7 +119,9 @@ export const relationTypeFieldOnNodeType = ({
   variableName,
   schemaType,
   nestedVariable,
-  queryParams
+  queryParams,
+  filterParams,
+  temporalArgs
 }) => {
   if (innerSchemaTypeRelation.from === innerSchemaTypeRelation.to) {
     return {
@@ -120,12 +131,14 @@ export const relationTypeFieldOnNodeType = ({
       ...tailParams
     };
   }
+  const relationshipVariableName = `${nestedVariable}_relation`;
+  const temporalClauses = temporalPredicateClauses(filterParams, relationshipVariableName, temporalArgs);
   return {
     initial: `${initial}${fieldName}: ${
       !isArrayType(fieldType) ? 'head(' : ''
     }[(${safeVar(variableName)})${
       schemaType.name === innerSchemaTypeRelation.to ? '<' : ''
-    }-[${safeVar(nestedVariable + '_relation')}:${safeLabel(
+    }-[${safeVar(relationshipVariableName)}:${safeLabel(
       innerSchemaTypeRelation.name
     )}${queryParams}]-${
       schemaType.name === innerSchemaTypeRelation.from ? '>' : ''
@@ -133,38 +146,52 @@ export const relationTypeFieldOnNodeType = ({
       schemaType.name === innerSchemaTypeRelation.from
         ? innerSchemaTypeRelation.to
         : innerSchemaTypeRelation.from
-    )}) | ${nestedVariable}_relation {${subSelection[0]}}]${
-      !isArrayType(fieldType) ? ')' : ''
-    }${skipLimit} ${commaIfTail}`,
-    ...tailParams
-  };
+    )}) ${temporalClauses.length > 0
+      ? `WHERE ${temporalClauses.join(' AND ')} `
+      : ''
+    }| ${relationshipVariableName} {${subSelection[0]}}]${
+        !isArrayType(fieldType) ? ')' : ''
+      }${skipLimit} ${commaIfTail}`,
+      ...tailParams
+    };
 };
 
 export const nodeTypeFieldOnRelationType = ({
   fieldInfo,
-  rootVariableNames,
   schemaTypeRelation,
   innerSchemaType,
   isInlineFragment,
-  interfaceLabel
+  interfaceLabel,
+  paramIndex,
+  schemaType,
+  filterParams,
+  temporalArgs,
+  parentSelectionInfo
 }) => {
-  if (rootVariableNames) {
-    // Special case used by relation mutation payloads
-    // rootVariableNames is persisted for sibling directed fields
+  if (
+    isRootSelection({ 
+      selectionInfo: parentSelectionInfo,
+      rootType: "relationship"
+    }) && 
+    isRelationTypeDirectedField(fieldInfo.fieldName)
+  ) {
     return relationTypeMutationPayloadField({
       ...fieldInfo,
-      rootVariableNames
-    });
-  } else {
-    // Normal case of schemaType with a relationship directive
-    return directedFieldOnReflexiveRelationType({
-      ...fieldInfo,
-      schemaTypeRelation,
-      innerSchemaType,
-      isInlineFragment,
-      interfaceLabel
+      parentSelectionInfo
     });
   }
+  // Normal case of schemaType with a relationship directive
+  return directedNodeTypeFieldOnRelationType({
+    ...fieldInfo,
+    schemaTypeRelation,
+    innerSchemaType,
+    isInlineFragment,
+    interfaceLabel,
+    paramIndex,
+    schemaType,
+    filterParams,
+    temporalArgs
+  });
 };
 
 const relationTypeMutationPayloadField = ({
@@ -175,7 +202,7 @@ const relationTypeMutationPayloadField = ({
   skipLimit,
   commaIfTail,
   tailParams,
-  rootVariableNames
+  parentSelectionInfo
 }) => {
   const safeVariableName = safeVar(variableName);
   return {
@@ -183,13 +210,12 @@ const relationTypeMutationPayloadField = ({
       subSelection[0]
     }}${skipLimit} ${commaIfTail}`,
     ...tailParams,
-    rootVariableNames,
     variableName:
-      fieldName === 'from' ? rootVariableNames.to : rootVariableNames.from
+      fieldName === 'from' ? parentSelectionInfo.to : parentSelectionInfo.from
   };
 };
 
-const directedFieldOnReflexiveRelationType = ({
+const directedNodeTypeFieldOnRelationType = ({
   initial,
   fieldName,
   fieldType,
@@ -203,20 +229,24 @@ const directedFieldOnReflexiveRelationType = ({
   schemaTypeRelation,
   innerSchemaType,
   isInlineFragment,
-  interfaceLabel
+  interfaceLabel,
+  filterParams,
+  temporalArgs,
 }) => {
   const relType = schemaTypeRelation.name;
   const fromTypeName = schemaTypeRelation.from;
   const toTypeName = schemaTypeRelation.to;
   const isFromField = fieldName === fromTypeName || fieldName === 'from';
   const isToField = fieldName === toTypeName || fieldName === 'to';
-  const relationshipVariableName = `${variableName}_${
-    isFromField ? 'from' : 'to'
-  }_relation`;
   // Since the translations are significantly different,
   // we first check whether the relationship is reflexive
   if (fromTypeName === toTypeName) {
-    if (fieldName === 'from' || fieldName === 'to') {
+    const relationshipVariableName = `${variableName}_${
+      isFromField ? 'from' : 'to'
+    }_relation`;
+    if (isRelationTypeDirectedField(fieldName)) {
+      const temporalFieldRelationshipVariableName = `${nestedVariable}_relation`;
+      const temporalClauses = temporalPredicateClauses(filterParams, temporalFieldRelationshipVariableName, temporalArgs);
       return {
         initial: `${initial}${fieldName}: ${
           !isArrayType(fieldType) ? 'head(' : ''
@@ -226,15 +256,20 @@ const directedFieldOnReflexiveRelationType = ({
           isToField ? '>' : ''
         }(${safeVar(nestedVariable)}:${safeLabel(
           isInlineFragment ? interfaceLabel : fromTypeName
-        )}) | ${relationshipVariableName} {${
+        )}) ${temporalClauses.length > 0
+          ? `WHERE ${temporalClauses.join(' AND ')} `
+          : ''
+        }| ${relationshipVariableName} {${
           isInlineFragment
             ? 'FRAGMENT_TYPE: "' + interfaceLabel + '",' + subSelection[0]
             : subSelection[0]
         }}]${!isArrayType(fieldType) ? ')' : ''}${skipLimit} ${commaIfTail}`,
         ...tailParams
       };
-    } else {
+    } 
+    else {
       // Case of a renamed directed field
+      // e.g., 'from: Movie' -> 'Movie: Movie'
       return {
         initial: `${initial}${fieldName}: ${variableName} {${
           subSelection[0]
@@ -243,43 +278,89 @@ const directedFieldOnReflexiveRelationType = ({
       };
     }
   }
-  // Related node types are different
-  return {
-    initial: `${initial}${fieldName}: ${
-      !isArrayType(fieldType) ? 'head(' : ''
-    }[(:${safeLabel(isFromField ? toTypeName : fromTypeName)})${
-      isFromField ? '<' : ''
-    }-[${safeVar(variableName + '_relation')}]-${
-      isToField ? '>' : ''
-    }(${safeVar(nestedVariable)}:${safeLabel(
-      isInlineFragment ? interfaceLabel : innerSchemaType.name
-    )}${queryParams}) | ${nestedVariable} {${
-      isInlineFragment
-        ? 'FRAGMENT_TYPE: "' + interfaceLabel + '",' + subSelection[0]
-        : subSelection[0]
-    }}]${!isArrayType(fieldType) ? ')' : ''}${skipLimit} ${commaIfTail}`,
-    ...tailParams
-  };
+  else {
+    variableName = variableName + '_relation';
+    return {
+      initial: `${initial}${fieldName}: ${
+        !isArrayType(fieldType) ? 'head(' : ''
+      }[(:${safeLabel(isFromField ? toTypeName : fromTypeName)})${
+        isFromField ? '<' : ''
+      }-[${safeVar(variableName)}]-${
+        isToField ? '>' : ''
+      }(${safeVar(nestedVariable)}:${safeLabel(
+        isInlineFragment ? interfaceLabel : innerSchemaType.name
+      )}${queryParams}) | ${nestedVariable} {${
+        isInlineFragment
+          ? 'FRAGMENT_TYPE: "' + interfaceLabel + '",' + subSelection[0]
+          : subSelection[0]
+      }}]${!isArrayType(fieldType) ? ')' : ''}${skipLimit} ${commaIfTail}`,
+      ...tailParams
+    };
+  }
 };
+
+const isRelationTypePayload = (schemaType) => {
+  const astNode = schemaType ? schemaType.astNode : undefined;
+  const directive = astNode ? getRelationTypeDirectiveArgs(astNode) : undefined;
+  return astNode && astNode.fields && directive 
+    ? astNode.fields.find(e => {
+      return e.name.value === directive.from || e.name.value === directive.to;
+    }) 
+    : undefined;
+}
 
 export const temporalField = ({
   initial,
   fieldName, 
   commaIfTail,
-  parentSchemaType, 
-  parentFieldName,
-  parentVariableName,
-  tailParams
+  tailParams,
+  parentSelectionInfo,
+  secondParentSelectionInfo
 }) => {
+  const parentFieldName = parentSelectionInfo.fieldName;
+  const parentFieldType = parentSelectionInfo.fieldType;
+  const parentSchemaType = parentSelectionInfo.schemaType;
+  const parentVariableName = parentSelectionInfo.variableName;
+  const secondParentVariableName = secondParentSelectionInfo.variableName;
+  const secondParentFieldType = secondParentSelectionInfo.fieldType;
+  // Initially assume that the parent type of the temporal type 
+  // containing this temporal field was a node
+  let variableName = parentVariableName;
+  let fieldIsArray = isArrayType(parentFieldType);
+  if(!isNodeType(parentSchemaType.astNode)) {
+    // initial assumption wrong, build appropriate relationship variable
+    if(isRootSelection({
+      selectionInfo: secondParentSelectionInfo,
+      rootType: "relationship"
+    })) {
+      // If the second parent selection scope above is the root
+      // then we need to use the root variableName
+      variableName = `${secondParentVariableName}_relation`;
+    }
+    else if(isRelationTypePayload(parentSchemaType)) {
+      const parentSchemaTypeRelation = getRelationTypeDirectiveArgs(parentSchemaType.astNode);
+      if(parentSchemaTypeRelation.from === parentSchemaTypeRelation.to) {
+        variableName = `${variableName}_relation`;
+      }
+      else {
+        variableName = `${variableName}_relation`;
+      }
+    }
+  }
   return {
     initial: `${initial} ${fieldName}: ${
-      fieldName === "formatted" 
-        ? `toString(${safeVar(parentVariableName)}.${parentFieldName}) ${commaIfTail}` 
-        : `${safeVar(parentVariableName)}.${parentFieldName}.${fieldName} ${commaIfTail}`
-    }`,
-    parentSchemaType, 
-    parentFieldName,
-    parentVariableName,
+      fieldIsArray 
+        ? `${
+          fieldName === "formatted" 
+            ? `toString(TEMPORAL_INSTANCE)` 
+            : `TEMPORAL_INSTANCE.${fieldName}`
+        } ${commaIfTail}`
+        : `${
+          fieldName === "formatted" 
+            ? `toString(${safeVar(variableName)}.${parentFieldName}) ${commaIfTail}` 
+            : `${safeVar(variableName)}.${parentFieldName}.${fieldName} ${commaIfTail}`
+        }`
+      }`,
     ...tailParams
   };
 }
@@ -289,12 +370,52 @@ export const temporalType = ({
   fieldName,
   subSelection,
   commaIfTail,
-  tailParams
+  tailParams,
+  variableName,
+  nestedVariable,
+  fieldType,
+  schemaType,
+  schemaTypeRelation,
+  parentSelectionInfo
 }) => {
+  const parentVariableName = parentSelectionInfo.variableName;
+  let fieldIsArray = isArrayType(fieldType);
+  if(!isNodeType(schemaType.astNode)) {
+    if(
+      isRelationTypePayload(schemaType) && 
+      schemaTypeRelation.from === schemaTypeRelation.to
+    ) {
+      variableName = `${nestedVariable}_relation`;
+    }
+    else {
+      if(fieldIsArray) {
+        if(isRootSelection({ 
+          selectionInfo: parentSelectionInfo,
+          rootType: "relationship"
+        })) {
+          if(schemaTypeRelation.from === schemaTypeRelation.to) {
+            variableName = `${parentVariableName}_relation`;
+          }
+          else {
+            variableName = `${parentVariableName}_relation`
+          }
+        }
+        else {
+          variableName = `${variableName}_relation`;
+        }
+      }
+      else {
+        variableName = `${nestedVariable}_relation`;
+      }
+    }
+  }
   return {
-    initial: `${initial}${fieldName}: {${subSelection[0]}}${commaIfTail}`,
+    initial: `${initial}${fieldName}: ${
+      fieldIsArray
+        ? `reduce(a = [], TEMPORAL_INSTANCE IN ${variableName}.${fieldName} | a + {${subSelection[0]}})${commaIfTail}`
+        : `{${subSelection[0]}}${commaIfTail}`}`,
     ...tailParams
-  }  
+  }
 }
 
 // Query API root operation branch
@@ -600,6 +721,7 @@ const splitSelectionParameters = (params, primaryKeyArgName, paramKey) => {
   if(offset !== undefined) updateParams['offset'] = offset;
   return [primaryKeyParam, updateParams];
 }
+
 const nodeUpdate = ({
   resolveInfo,
   variableName,
@@ -680,7 +802,6 @@ const nodeDelete = ({
     resolveInfo,
     paramIndex: 1
   });
-  // preparedParams[primaryKeyArgName] = primaryKeyParam[primaryKeyArgName];
   params = { ...preparedParams, ...subParams };
   const deletionVariableName = safeVar(`${variableName}_toDelete`);
   // Cannot execute a map projection on a deleted node in Neo4j
@@ -787,9 +908,11 @@ const relationshipCreate = ({
     schemaType,
     resolveInfo,
     paramIndex: 1,
-    rootVariableNames: {
-      from: `${fromVar}`,
-      to: `${toVar}`,
+    parentSelectionInfo: {
+      rootType: "relationship",
+      from: fromVar,
+      to: toVar,
+      variableName: lowercased
     },
     variableName: schemaType.name === fromType ? `${toVar}` : `${fromVar}`
   });
@@ -904,14 +1027,14 @@ const relationshipDelete = ({
     schemaType,
     resolveInfo,
     paramIndex: 1,
-    rootVariableNames: {
+    parentSelectionInfo: {
+      rootType: "relationship",
       from: `_${fromVar}`,
       to: `_${toVar}`
     },
     variableName: schemaType.name === fromType ? `_${toVar}` : `_${fromVar}`
   });
   params = { ...params, ...subParams };
-  // TODO create builder functions for selection clauses below for both relation mutations
   let query = `
       MATCH (${fromVariable}:${fromLabel} ${
         fromTemporalClauses && fromTemporalClauses.length > 0
