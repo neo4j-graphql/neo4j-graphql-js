@@ -6,17 +6,21 @@ import filter from 'lodash/filter';
 
 function parseArg(arg, variableValues) {
   switch (arg.value.kind) {
-    case 'IntValue':
+    case 'IntValue': {
       return parseInt(arg.value.value);
-      break;
-    case 'FloatValue':
+    }
+    case 'FloatValue': {
       return parseFloat(arg.value.value);
-      break;
-    case 'Variable':
+    }
+    case 'Variable': {
       return variableValues[arg.name.value];
-      break;
-    default:
+    }
+    case 'ObjectValue': {
+      return parseArgs(arg.value.fields, {});
+    }
+    default: {
       return arg.value.value;
+    }
   }
 }
 
@@ -32,7 +36,6 @@ export function parseArgs(args, variableValues) {
 
 function getDefaultArguments(fieldName, schemaType) {
   // get default arguments for this field from schema
-
   try {
     return schemaType._fields[fieldName].args.reduce((acc, arg) => {
       acc[arg.name] = arg.defaultValue;
@@ -323,7 +326,7 @@ export const getMutationArguments = (resolveInfo) => {
   ].astNode.arguments;
 }
 
-const decideCypherFunction = (fieldAst) => {
+const getTemporalCypherConstructor = (fieldAst) => {
   let cypherFunction = undefined;
   const type = fieldAst ? getNamedType(fieldAst.type).name.value : '';
   switch(type) {
@@ -348,32 +351,80 @@ export const buildCypherParameters = ({
   if(args) {
     statements = paramKeys.reduce( (acc, paramName) => {
       const param = paramKey ? params[paramKey][paramName] : params[paramName];
-      // The AST definition of the argument of the same name as this param
+      // Get the AST definition for the argument matching this param name
       const fieldAst = args.find(arg => arg.name.value === paramName);
       if(fieldAst) {
-        const formatted = param.formatted;
-        const cypherFunction = decideCypherFunction(fieldAst);
-        if(cypherFunction) {
-          // Prefer only using formatted, if provided
-          if(formatted) {
-            if(paramKey) {
-              params[paramKey][paramName] = formatted;
+        const fieldType = getNamedType(fieldAst.type);
+        if(isTemporalInputType(fieldType.name.value)) {
+          const formatted = param.formatted;
+          const temporalFunction = getTemporalCypherConstructor(fieldAst);
+          if(temporalFunction) {
+            // Prefer only using formatted, if provided
+            if(formatted) {
+              if(paramKey) params[paramKey][paramName] = formatted;
+              else params[paramName] = formatted;
+              acc.push(`${paramName}: ${temporalFunction}($${
+                paramKey 
+                  ? `${paramKey}.` 
+                  : ''}${paramName})`
+              );
             }
             else {
-              params[paramName] = formatted;
+              // TODO refactor
+              if(Array.isArray(param)) {
+                const count = param.length;
+                let i = 0;
+                let temporalParam = {};
+                for(; i < count; ++i) {
+                  if(paramKey) {
+                    temporalParam = param[i];
+                    if(temporalParam.formatted) {
+                      params[paramKey][paramName][i] = temporalParam.formatted;
+                    }
+                    else {
+                      Object.keys(temporalParam).forEach(e => {
+                        if(Number.isInteger(temporalParam[e])) {
+                          params[paramKey][paramName][i][e] = neo4j.int(temporalParam[e]);
+                        }
+                      });
+                    }
+                  }
+                  else {
+                    Object.keys(temporalParam).forEach(e => {
+                      if(Number.isInteger(temporalParam[e])) {
+                        params[paramName][i][e] = neo4j.int(temporalParam[e]);
+                      }
+                    });
+                  }
+                }
+                acc.push(`${paramName}: [value IN $${paramKey ? `${paramKey}.` : ''}${paramName} | ${temporalFunction}(value)]`);
+              }
+              else {
+                if(paramKey) {
+                  const temporalParam = params[paramKey][paramName];
+                  if(temporalParam.formatted) {
+                    params[paramKey][paramName] = temporalParam.formatted;
+                  }
+                  else {
+                    Object.keys(temporalParam).forEach(e => {
+                      if(Number.isInteger(temporalParam[e])) {
+                        params[paramKey][paramName][e] = neo4j.int(temporalParam[e]);
+                      }
+                    });
+                  }
+                }
+                else {
+                  const temporalParam = params[paramName];
+                  Object.keys(temporalParam).forEach(e => {
+                    if(Number.isInteger(temporalParam[e])) {
+                      params[paramName][e] = neo4j.int(temporalParam[e]);
+                    }
+                  });
+                }              
+                acc.push(`${paramName}: ${temporalFunction}($${paramKey ? `${paramKey}.` : ''}${paramName})`);
+              }
             }
-            acc.push(`${paramName}: ${cypherFunction}($${
-              paramKey 
-                ? `${paramKey}.` 
-                : ''}${paramName})`
-            );
-          }
-          else {
-            // build all arguments for given cypherFunction
-            acc.push(`${paramName}: ${cypherFunction}({${
-              temporalFieldParam(paramName, param, paramKey)
-            }})`);
-          }
+          }            
         }
         else {
           // normal case
@@ -389,18 +440,8 @@ export const buildCypherParameters = ({
   return [params, statements];
 }
 
-const temporalFieldParam = (paramName, param, paramKey) => {
-  return param.formatted === undefined
-    ? Object.keys(param).reduce( (acc, t) => {
-      if(Number.isInteger(param[t])) {
-        acc.push(`${t}: toInteger($${paramKey ? `${paramKey}.` : '' }${paramName}.${t})`);
-      }
-      else {
-        acc.push(`${t}: $${paramKey ? `${paramKey}.` : '' }${paramName}.${t}`);
-      }
-      return acc;
-    }, []).join(',') 
-    : '';
+export const isRelationTypeDirectedField = (fieldName) => {
+  return fieldName === 'from' || fieldName === 'to';
 }
 
 export function extractSelections(selections, fragments) {
@@ -516,9 +557,9 @@ export const parameterizeRelationFields = fields => {
 };
 
 export const getRelationTypeDirectiveArgs = relationshipType => {
-  const directive = relationshipType.directives.find(
-    e => e.name.value === 'relation'
-  );
+  const directive = relationshipType && relationshipType.directives 
+    ? relationshipType.directives.find(e => e.name.value === 'relation') 
+    : undefined;
   return directive
     ? {
         name: directive.arguments.find(e => e.name.value === 'name').value
@@ -753,18 +794,24 @@ export const printTypeMap = typeMap => {
   });
 };
 
+// TODO refactor
 export const decideNestedVariableName = ({
   schemaTypeRelation,
   innerSchemaTypeRelation,
   variableName,
   fieldName,
-  rootVariableNames
+  parentSelectionInfo
 }) => {
-  if (rootVariableNames) {
-    // Only show up for relation mutations
-    return rootVariableNames[fieldName];
+  if (
+    isRootSelection({ 
+      selectionInfo: parentSelectionInfo,
+      rootType: "relationship"
+    }) && 
+    isRelationTypeDirectedField(fieldName)
+  ) {
+    return parentSelectionInfo[fieldName];
   }
-  if (schemaTypeRelation) {
+  else if (schemaTypeRelation) {
     const fromTypeName = schemaTypeRelation.from;
     const toTypeName = schemaTypeRelation.to;
     if (fromTypeName === toTypeName) {
@@ -798,7 +845,7 @@ export const extractTypeMapFromTypeDefs = typeDefs => {
   // into a single string for parse, add validatation
   const astNodes = parse(typeDefs).definitions;
   return astNodes.reduce((acc, t) => {
-    if (t.name) acc[t.name.value] = t;
+    acc[t.name.value] = t;
     return acc;
   }, {});
 };
@@ -951,8 +998,7 @@ export function temporalPredicateClauses(filters, variableName, temporalArgs, pa
       if(paramValue) temporalParam = paramValue;
       if(temporalParam["formatted"]) {
         // Only the dedicated 'formatted' arg is used if it is provided
-        const cypherFunction = decideCypherFunction(t);
-        acc.push(`${variableName}.${argName} = ${cypherFunction}($${
+        acc.push(`${variableName}.${argName} = ${getTemporalCypherConstructor(t)}($${
             // use index if provided, for nested arguments
             typeof paramIndex === 'undefined' 
             ? `${parentParam ? `${parentParam}.` : ''}${argName}.formatted` 
@@ -972,3 +1018,8 @@ export function temporalPredicateClauses(filters, variableName, temporalArgs, pa
     return acc;
   }, []);
 }
+
+export const isRootSelection = ({selectionInfo, rootType}) => (
+  selectionInfo && 
+  selectionInfo.rootType === rootType
+);
