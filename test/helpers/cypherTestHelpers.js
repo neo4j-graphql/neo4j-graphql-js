@@ -144,6 +144,12 @@ export function augmentedSchemaCypherTestRunner(
       }
     },
     Mutation: {
+      CreateMovie(object, params, ctx, resolveInfo) {
+        const [query, queryParams] = cypherMutation(params, ctx, resolveInfo);
+        t.is(query, expectedCypherQuery);
+        t.deepEqual(queryParams, expectedCypherParams);
+        t.end();
+      },
       CreateTemporalNode(object, params, ctx, resolveInfo) {
         const [query, queryParams] = cypherMutation(params, ctx, resolveInfo);
         t.is(query, expectedCypherQuery);
@@ -192,6 +198,12 @@ export function augmentedSchemaCypherTestRunner(
         t.deepEqual(queryParams, expectedCypherParams);
         t.end();
       },
+      RemoveUserRated(object, params, ctx, resolveInfo) {
+        const [query, queryParams] = cypherMutation(params, ctx, resolveInfo);
+        t.is(query, expectedCypherQuery);
+        t.deepEqual(queryParams, expectedCypherParams);
+        t.end();
+      },
       AddUserFriends(object, params, ctx, resolveInfo) {
         const [query, queryParams] = cypherMutation(params, ctx, resolveInfo);
         t.is(query, expectedCypherQuery);
@@ -217,9 +229,6 @@ export function augmentedSchemaCypherTestRunner(
 
   return graphql(augmentedSchema, graphqlQuery, null, null, graphqlParams);
 }
-
-
-
 
 export function augmentedSchema() {
   const schema = makeExecutableSchema({
