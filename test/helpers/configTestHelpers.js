@@ -1,6 +1,7 @@
 export const typeDefs = `
 type Tweet {
     id: ID!
+    timestamp: DateTime
     text: String
     hashtags: [Hashtag] @relation(name: "HAS_TAG", direction: "OUT")
     user: User @relation(name: "POSTED", direction: "IN")
@@ -15,6 +16,8 @@ type User {
 type Hashtag {
     name: String
 }
+
+scalar DateTime
 `;
 
 export const EXPECTED_SCHEMA_NO_QUERIES_NO_MUTATIONS = `directive @cypher(statement: String) on FIELD_DEFINITION
@@ -35,6 +38,7 @@ type Hashtag {
 
 type Tweet {
   id: ID!
+  timestamp: _Neo4jDateTime
   text: String
   hashtags: [Hashtag]
   user: User
@@ -98,6 +102,7 @@ type Query {
 
 type Tweet {
   id: ID!
+  timestamp: _Neo4jDateTime
   text: String
   hashtags(first: Int, offset: Int, orderBy: _HashtagOrdering): [Hashtag]
   user: User
@@ -220,6 +225,7 @@ type Query {
 
 type Tweet {
   id: ID!
+  timestamp: _Neo4jDateTime
   text: String
   hashtags(first: Int, offset: Int, orderBy: _HashtagOrdering): [Hashtag]
   user: User
