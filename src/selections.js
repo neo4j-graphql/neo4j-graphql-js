@@ -35,11 +35,10 @@ export function buildCypherSelection({
   schemaType,
   resolveInfo,
   paramIndex = 1,
-  rootVariableNames,
-  parentSchemaType,
-  parentFieldName,
-  parentVariableName
+  parentSelectionInfo={},
+  secondParentSelectionInfo={}
 }) {
+
   if (!selections.length) {
     return [initial, {}];
   }
@@ -62,7 +61,9 @@ export function buildCypherSelection({
     selections: tailSelections,
     variableName,
     schemaType,
-    resolveInfo
+    resolveInfo,
+    parentSelectionInfo,
+    secondParentSelectionInfo
   };
 
   const recurse = args => {
@@ -87,7 +88,9 @@ export function buildCypherSelection({
       selections: fragmentSelections,
       variableName,
       schemaType,
-      resolveInfo
+      resolveInfo,
+      parentSelectionInfo,
+      secondParentSelectionInfo
     };
     return recurse({
       initial: fragmentSelections.length
@@ -173,11 +176,11 @@ export function buildCypherSelection({
       return recurse(temporalField({
         initial,
         fieldName, 
+        variableName,
         commaIfTail,
-        parentSchemaType,
-        parentFieldName,
-        parentVariableName,
-        tailParams
+        tailParams,
+        parentSelectionInfo,
+        secondParentSelectionInfo
       }));
     }
     // graphql scalar type, no custom cypher statement
@@ -200,7 +203,7 @@ export function buildCypherSelection({
     innerSchemaTypeRelation,
     variableName,
     fieldName,
-    rootVariableNames
+    parentSelectionInfo
   });
 
   const skipLimit = computeSkipLimit(headSelection, resolveInfo.variableValues);
@@ -215,10 +218,14 @@ export function buildCypherSelection({
     selections: subSelections,
     variableName: nestedVariable,
     schemaType: innerSchemaType,
-    parentSchemaType: schemaType,
-    parentFieldName: fieldName,
-    parentVariableName: variableName,
-    resolveInfo
+    resolveInfo,
+    parentSelectionInfo: {
+      fieldName,
+      schemaType,
+      variableName,
+      fieldType
+    },
+    secondParentSelectionInfo: parentSelectionInfo
   });
 
   let selection;
@@ -249,8 +256,11 @@ export function buildCypherSelection({
         resolveInfo
       })
     );
-  } else if(isTemporalType(fieldType.name)) {
+  } else if(isTemporalType(innerSchemaType.name)) {
     selection = recurse(temporalType({
+      schemaType,
+      schemaTypeRelation,
+      parentSelectionInfo,
       ...fieldInfo
     }));
   } else if (relType && relDirection) {
@@ -273,22 +283,26 @@ export function buildCypherSelection({
     selection = recurse(
       nodeTypeFieldOnRelationType({
         fieldInfo,
-        rootVariableNames,
         schemaTypeRelation,
         innerSchemaType,
         isInlineFragment,
-        interfaceLabel
-      })
-    );
-  } else if (innerSchemaTypeRelation) {
-    const temporalClauses = temporalPredicateClauses(filterParams, nestedVariable, temporalArgs);
-    // Relation type field on node type (field payload types...)
-    selection = recurse(
-      relationTypeFieldOnNodeType({
-        ...fieldInfo,
-        innerSchemaTypeRelation,
+        interfaceLabel,
+        paramIndex,
         schemaType,
-        temporalClauses
+        filterParams,
+        temporalArgs,
+        parentSelectionInfo
+      })
+      );
+    } else if (innerSchemaTypeRelation) {
+      // Relation type field on node type (field payload types...)
+      selection = recurse(
+        relationTypeFieldOnNodeType({
+          ...fieldInfo,
+          innerSchemaTypeRelation,
+          schemaType,
+          filterParams,
+          temporalArgs
       })
     );
   }
