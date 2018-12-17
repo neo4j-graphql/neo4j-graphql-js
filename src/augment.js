@@ -259,31 +259,26 @@ const possiblyAddTypeInput = ({
         toName
       });
       if (hasSomePropertyField && shouldCreateRelationInput) {
-        typeMap[inputName] = parse(`input ${inputName} {${fields.reduce((acc, t) => {
-          fieldName = t.name.value;
-          isRequired = isNonNullType(t);
-          if (
-            fieldName !== '_id' &&
-            fieldName !== 'to' &&
-            fieldName !== 'from' &&
-            !isListType(t) &&
-            !getFieldDirective(t, 'cypher')
-          ) {
+        typeMap[inputName] = parse(`input ${inputName} {${
+          fields.reduce((acc, t) => {
+            fieldName = t.name.value;
             valueTypeName = getNamedType(t).name.value;
             valueType = typeMap[valueTypeName];
-            if(isTemporalType(valueTypeName)) {
-              acc.push(`${t.name.value}: ${valueTypeName}Input`);
-            }
-            else if (
-              isBasicScalar(valueTypeName) ||
-              isKind(valueType, 'EnumTypeDefinition') ||
-              isKind(valueType, 'ScalarTypeDefinition')
+            if(
+              fieldName !== '_id' &&
+              fieldName !== 'to' &&
+              fieldName !== 'from' &&
+              !getFieldDirective(t, 'cypher') && (
+                isBasicScalar(valueTypeName) ||
+                isKind(valueType, 'EnumTypeDefinition') ||
+                isKind(valueType, 'ScalarTypeDefinition') ||
+                isTemporalType(valueTypeName))
             ) {
-              acc.push(`${t.name.value}: ${valueTypeName}${isRequired ? '!' : ''}`);
+               // TODO simplify...
+               acc.push(print(convertFieldToInputDefinition(t)));
             }
-          }
-          return acc;
-        }, [])
+            return acc;
+          }, [])
         .join('\n')
       }}`);
       }
@@ -663,6 +658,28 @@ const createOrderingFields = (fields, typeMap) => {
   }, []);
 };
 
+const convertFieldToInputDefinition = (t) => {
+  const printed = print(t);
+  const parsed = parseFieldSdl(printed);
+  parsed.kind = "InputValueDefinition";
+  parsed.type = transformManagedFieldTypes(parsed.type);
+  return parsed;
+}
+
+const transformManagedFieldTypes = (type) => {
+  if(type.kind !== "NamedType") {
+    type.type = transformManagedFieldTypes(type.type);
+    return type;
+  }
+  if(type.kind === 'NamedType') {
+    const name = type.name.value;
+    if(isTemporalType(name)) {
+      type.name.value = `${name}Input`;
+    }
+  }
+  return type;
+};
+
 const buildAllFieldArguments = (namePrefix, astNode, typeMap) => {
   let fields = [];
   let type = {};
@@ -677,72 +694,43 @@ const buildAllFieldArguments = (namePrefix, astNode, typeMap) => {
         fieldName = t.name.value;
         valueTypeName = type.name.value;
         valueType = typeMap[valueTypeName];
-        // If this field is not _id, and not a list,
-        // and is not computed, and either a basic scalar
-        // or an enum
         if (
           isTemporalType(valueTypeName) ||
           (fieldName !== '_id' &&
-          !isListType(t) &&
           !getFieldDirective(t, 'cypher') &&
           (isBasicScalar(valueTypeName) ||
           isKind(valueType, 'EnumTypeDefinition') ||
           isKind(valueType, 'ScalarTypeDefinition')))
         ) {
-          // TOOD list type arguments?
-          // Require if required
-          if (isNonNullType(t)) {
+          const isNonNullable = isNonNullType(t);
+          if (isNonNullable) {
+            const isList = isListType(t);
             // Don't require the first ID field discovered
-            if (valueTypeName === 'ID' && !firstIdField) {
+            if (!isList && valueTypeName === 'ID' && !firstIdField) {
               // will only be true once, this field will
               // by default recieve an auto-generated uuid,
               // if no value is provided
               firstIdField = t;
-              acc.push({
-                kind: 'InputValueDefinition',
-                name: {
-                  kind: 'Name',
-                  value: fieldName
-                },
-                type: type,
-                directives: []
-              });
-            } else {
-              acc.push({
+              const idField = {
                 kind: 'InputValueDefinition',
                 name: {
                   kind: 'Name',
                   value: fieldName
                 },
                 type: {
-                  kind: 'NonNullType',
-                  type: {
-                    kind: "NamedType", 
-                    name: {
-                      kind: "Name", 
-                      value: decideFieldType(valueTypeName)
-                    }
+                  kind: "NamedType", 
+                  name: {
+                    kind: "Name", 
+                    value: decideFieldType(valueTypeName)
                   }
-                },
-                directives: []
-              });
+                }
+              };
+              acc.push(idField);
+            } else {
+              acc.push(convertFieldToInputDefinition(t));
             }
           } else {
-            acc.push({
-              kind: 'InputValueDefinition',
-              name: {
-                kind: 'Name',
-                value: fieldName
-              },
-              type: {
-                kind: "NamedType", 
-                name: {
-                  kind: "Name", 
-                  value: decideFieldType(valueTypeName)
-                }
-              },
-              directives: []
-            });
+            acc.push(convertFieldToInputDefinition(t));
           }
         }
         return acc;
@@ -756,57 +744,31 @@ const buildAllFieldArguments = (namePrefix, astNode, typeMap) => {
         // Primary key field is first field and required
         const primaryKeyName = primaryKey.name.value;
         const primaryKeyType = getNamedType(primaryKey);
-        augmentedFields.push({
-          kind: 'InputValueDefinition',
-          name: {
-            kind: 'Name',
-            value: primaryKeyName
-          },
-          type: {
-            kind: 'NonNullType',
-            type: {
-              kind: "NamedType", 
-              name: {
-                kind: "Name", 
-                value: decideFieldType(primaryKeyType.name.value)
-              }
-            }
-          },
-          directives: []
-        });
+        const parsedPrimaryKeyField = parseFieldSdl(`
+          ${primaryKeyName}: ${decideFieldType(primaryKeyType.name.value)}!
+        `);
+        parsedPrimaryKeyField.kind = "InputValueDefinition";
+        augmentedFields.push(parsedPrimaryKeyField);
+
         astNode.fields.reduce((acc, t) => {
           type = getNamedType(t);
           fieldName = t.name.value;
           valueTypeName = type.name.value;
           valueType = typeMap[valueTypeName];
-          // If this field is not the primary key, and not _id,
-          // and not a list, and not computed, and either a basic
-          // scalar or an enum
           if (
             fieldName !== primaryKeyName &&
             fieldName !== '_id' &&
-            !isListType(t) &&
             !getFieldDirective(t, 'cypher') &&
             (isBasicScalar(valueTypeName) ||
               isKind(valueType, 'EnumTypeDefinition') ||
               isKind(valueType, 'ScalarTypeDefinition')) ||
               isTemporalType(valueTypeName)
           ) {
-            acc.push({
-              kind: 'InputValueDefinition',
-              name: {
-                kind: 'Name',
-                value: fieldName
-              },
-              type: {
-                kind: "NamedType", 
-                name: {
-                  kind: "Name", 
-                  value: decideFieldType(valueTypeName)
-                }
-              },
-              directives: []
-            });
+            if(isNonNullType(t)) {
+              // Don't require update fields, that wouldn't be very flexible
+              t.type = t.type.type;
+            }
+            acc.push(convertFieldToInputDefinition(t));
           }
           return acc;
         }, augmentedFields);
@@ -838,7 +800,6 @@ const buildAllFieldArguments = (namePrefix, astNode, typeMap) => {
             }
           }
         },
-        directives: []
       });
       break;
     }
@@ -928,7 +889,7 @@ const possiblyAddRelationTypeFieldPayload = (
           } else {
             // Exclude .to and .from, but gather them from along the way
             // using previous branches above
-            acc.push(`${fieldName}: ${fieldValueName} ${print(t.directives)}`);
+            acc.push(print(t));
           }
           return acc;
         }, [])
@@ -1191,7 +1152,6 @@ const computeRelationTypeDirectiveDefaults = (typeMap) => {
           }
         }
         // replace it if it exists in order to force correct configuration
-        // TODO use sdl instead
         astNode.directives[typeDirectiveIndex] = {
           kind: 'Directive',
           name: {
@@ -1473,13 +1433,13 @@ const transformTemporalFields = (typeMap, config) => {
     if(
       astNode &&
       // must be graphql object type
-      astNode.kind === 'ObjectTypeDefinition' &&
+      astNode.kind === 'ObjectTypeDefinition'
       // does not have relation type directive
-      getTypeDirective(astNode, 'relation') === undefined &&
+      // getTypeDirective(astNode, 'relation') === undefined &&
       // does not have from and to fields; not relation type
-      astNode.fields &&
-      astNode.fields.find(e => e.name.value === 'from') === undefined &&
-      astNode.fields.find(e => e.name.value === 'to') === undefined
+      // astNode.fields &&
+      // astNode.fields.find(e => e.name.value === 'from') === undefined &&
+      // astNode.fields.find(e => e.name.value === 'to') === undefined
     ) {
       if(!isTemporalType(t)) {
         astNode.fields.forEach(field => {
