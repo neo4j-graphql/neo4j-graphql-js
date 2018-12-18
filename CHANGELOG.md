@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.1.0
+
+- [Support for temporal fields on relationships](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/161)
+- [Scalar and temporal list fields](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/161)
+- [Fix Adding ! to a DateTime Field, throws an error](https://github.com/neo4j-graphql/neo4j-graphql-js/issues/158)
+
 ## v2.0.1
 
 - [Fix for temporal field query arguments](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/155)
