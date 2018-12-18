@@ -54,6 +54,7 @@ type Rated @relation(name:"RATED") {
   from: User
   to: Movie
   timestamp: Int
+  date: Date
   rating: Float
 }
 enum BookGenre {

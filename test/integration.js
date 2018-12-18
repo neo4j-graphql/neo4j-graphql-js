@@ -989,3 +989,92 @@ test.serial('Temporal - temporal query argument, formatted', async t => {
       t.fail(error);
     });
 });
+
+test.serial('Add relationship with temporal property', async t => {
+  t.plan(1);
+
+  let expected = {
+    data: {
+      AddMovieRatings: {
+        __typename: '_AddMovieRatingsPayload',
+        date: {
+          __typename: '_Neo4jDate',
+          formatted: '2018-12-18'
+        },
+        rating: 5
+      }
+    }
+  };
+
+  await client
+    .mutate({
+      mutation: gql`
+        mutation {
+          AddMovieRatings(
+            from: { userId: 18 }
+            to: { movieId: 6683 }
+            data: { rating: 5, date: { year: 2018, month: 12, day: 18 } }
+          ) {
+            date {
+              formatted
+            }
+            rating
+          }
+        }
+      `
+    })
+    .then(data => {
+      t.deepEqual(data, expected);
+    })
+    .catch(error => {
+      t.fail(error);
+    });
+});
+
+test.serial('Query for temporal property on relationship', async t => {
+  t.plan(1);
+
+  let expected = {
+    data: {
+      Movie: [
+        {
+          __typename: 'Movie',
+          title: 'Fire',
+          ratings: [
+            {
+              __typename: '_MovieRatings',
+              date: {
+                __typename: '_Neo4jDate',
+                formatted: '2018-12-18'
+              },
+              rating: 5
+            }
+          ]
+        }
+      ]
+    }
+  };
+
+  await client
+    .query({
+      query: gql`
+        {
+          Movie(movieId: 6683) {
+            title
+            ratings {
+              date {
+                formatted
+              }
+              rating
+            }
+          }
+        }
+      `
+    })
+    .then(data => {
+      t.deepEqual(data.data, expected.data);
+    })
+    .catch(error => {
+      t.fail(error);
+    });
+});
