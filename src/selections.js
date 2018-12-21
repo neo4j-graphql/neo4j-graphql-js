@@ -4,6 +4,7 @@ import {
   cypherDirectiveArgs,
   filtersFromSelections,
   innerFilterParams,
+  paramsToString,
   getFilterParams,
   innerType,
   isGraphqlScalarType,
@@ -35,10 +36,9 @@ export function buildCypherSelection({
   schemaType,
   resolveInfo,
   paramIndex = 1,
-  parentSelectionInfo={},
-  secondParentSelectionInfo={}
+  parentSelectionInfo = {},
+  secondParentSelectionInfo = {}
 }) {
-
   if (!selections.length) {
     return [initial, {}];
   }
@@ -171,17 +171,18 @@ export function buildCypherSelection({
         )}, false)${commaIfTail}`,
         ...tailParams
       });
-    }
-    else if(isTemporalField(schemaType, fieldName)) {
-      return recurse(temporalField({
-        initial,
-        fieldName, 
-        variableName,
-        commaIfTail,
-        tailParams,
-        parentSelectionInfo,
-        secondParentSelectionInfo
-      }));
+    } else if (isTemporalField(schemaType, fieldName)) {
+      return recurse(
+        temporalField({
+          initial,
+          fieldName,
+          variableName,
+          commaIfTail,
+          tailParams,
+          parentSelectionInfo,
+          secondParentSelectionInfo
+        })
+      );
     }
     // graphql scalar type, no custom cypher statement
     return recurse({
@@ -191,7 +192,9 @@ export function buildCypherSelection({
   }
   // We have a graphql object type
   const innerSchemaTypeAstNode = typeMap[innerSchemaType].astNode;
-  const innerSchemaTypeRelation = getRelationTypeDirectiveArgs(innerSchemaTypeAstNode);
+  const innerSchemaTypeRelation = getRelationTypeDirectiveArgs(
+    innerSchemaTypeAstNode
+  );
   const schemaTypeRelation = getRelationTypeDirectiveArgs(schemaTypeAstNode);
   const { name: relType, direction: relDirection } = relationDirective(
     schemaType,
@@ -231,7 +234,9 @@ export function buildCypherSelection({
   let selection;
   const fieldArgs = schemaType.getFields()[fieldName].args.map(e => e.astNode);
   const temporalArgs = getTemporalArguments(fieldArgs);
-  const queryParams = innerFilterParams(filterParams, temporalArgs);
+  const queryParams = paramsToString(
+    innerFilterParams(filterParams, temporalArgs)
+  );
   const fieldInfo = {
     initial,
     fieldName,
@@ -239,6 +244,8 @@ export function buildCypherSelection({
     variableName,
     nestedVariable,
     queryParams,
+    filterParams,
+    temporalArgs,
     subSelection,
     skipLimit,
     commaIfTail,
@@ -256,16 +263,22 @@ export function buildCypherSelection({
         resolveInfo
       })
     );
-  } else if(isTemporalType(innerSchemaType.name)) {
-    selection = recurse(temporalType({
-      schemaType,
-      schemaTypeRelation,
-      parentSelectionInfo,
-      ...fieldInfo
-    }));
+  } else if (isTemporalType(innerSchemaType.name)) {
+    selection = recurse(
+      temporalType({
+        schemaType,
+        schemaTypeRelation,
+        parentSelectionInfo,
+        ...fieldInfo
+      })
+    );
   } else if (relType && relDirection) {
     // Object type field with relation directive
-    const temporalClauses = temporalPredicateClauses(filterParams, nestedVariable, temporalArgs);
+    const temporalClauses = temporalPredicateClauses(
+      filterParams,
+      nestedVariable,
+      temporalArgs
+    );
     selection = recurse(
       relationFieldOnNodeType({
         ...fieldInfo,
@@ -293,16 +306,16 @@ export function buildCypherSelection({
         temporalArgs,
         parentSelectionInfo
       })
-      );
-    } else if (innerSchemaTypeRelation) {
-      // Relation type field on node type (field payload types...)
-      selection = recurse(
-        relationTypeFieldOnNodeType({
-          ...fieldInfo,
-          innerSchemaTypeRelation,
-          schemaType,
-          filterParams,
-          temporalArgs
+    );
+  } else if (innerSchemaTypeRelation) {
+    // Relation type field on node type (field payload types...)
+    selection = recurse(
+      relationTypeFieldOnNodeType({
+        ...fieldInfo,
+        innerSchemaTypeRelation,
+        schemaType,
+        filterParams,
+        temporalArgs
       })
     );
   }
