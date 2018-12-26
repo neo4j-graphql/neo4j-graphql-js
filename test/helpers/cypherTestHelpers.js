@@ -1,4 +1,10 @@
-import { cypherQuery, cypherMutation, augmentSchema, makeAugmentedSchema, augmentTypeDefs } from '../../dist/index';
+import {
+  cypherQuery,
+  cypherMutation,
+  augmentSchema,
+  makeAugmentedSchema,
+  augmentTypeDefs
+} from '../../dist/index';
 import { graphql } from 'graphql';
 import { makeExecutableSchema } from 'graphql-tools';
 import { testSchema } from './testSchema';
@@ -28,6 +34,11 @@ type Mutation {
         t.deepEqual(queryParams, expectedCypherParams);
       },
       MoviesByYear(object, params, ctx, resolveInfo) {
+        const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
+        t.is(query, expectedCypherQuery);
+        t.deepEqual(queryParams, expectedCypherParams);
+      },
+      MoviesByYears(object, params, ctx, resolveInfo) {
         const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
         t.is(query, expectedCypherQuery);
         t.deepEqual(queryParams, expectedCypherParams);
@@ -217,7 +228,7 @@ export function augmentedSchemaCypherTestRunner(
         t.end();
       }
     }
-  }
+  };
 
   const augmentedSchema = makeAugmentedSchema({
     typeDefs: testSchema,

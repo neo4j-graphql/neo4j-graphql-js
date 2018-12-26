@@ -433,7 +433,7 @@ type Movie {
   similar(first: Int = 3, offset: Int = 0, orderBy: _MovieOrdering): [Movie]
   mostSimilar: Movie
   degree: Int
-  actors(first: Int = 3, offset: Int = 0, name: String, orderBy: _ActorOrdering): [Actor]
+  actors(first: Int = 3, offset: Int = 0, name: String, names: [String], orderBy: _ActorOrdering): [Actor]
   avgStars: Float
   filmedIn: State
   scaleRating(scale: Int = 3): Float
@@ -493,6 +493,7 @@ interface Person {
 type Query {
   Movie(_id: String, movieId: ID, title: String, year: Int, released: _Neo4jDateTimeInput, plot: String, poster: String, imdbRating: Float, first: Int, offset: Int, orderBy: _MovieOrdering): [Movie]
   MoviesByYear(year: Int, first: Int, offset: Int, orderBy: _MovieOrdering): [Movie]
+  MoviesByYears(year: [Int], first: Int, offset: Int, orderBy: _MovieOrdering): [Movie]
   MovieById(movieId: ID!): Movie
   MovieBy_Id(_id: String!): Movie
   GenresBySubstring(substring: String, first: Int, offset: Int, orderBy: _GenreOrdering): [Genre]

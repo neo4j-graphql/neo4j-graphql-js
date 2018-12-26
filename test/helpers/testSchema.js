@@ -11,7 +11,7 @@ export const testSchema = `type Movie {
   similar(first: Int = 3, offset: Int = 0): [Movie] @cypher(statement: "WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o")
   mostSimilar: Movie @cypher(statement: "WITH {this} AS this RETURN this")
   degree: Int @cypher(statement: "WITH {this} AS this RETURN SIZE((this)--())")
-  actors(first: Int = 3, offset: Int = 0, name: String): [Actor] @relation(name: "ACTED_IN", direction:"IN")
+  actors(first: Int = 3, offset: Int = 0, name: String, names: [String]): [Actor] @relation(name: "ACTED_IN", direction:"IN")
   avgStars: Float
   filmedIn: State @relation(name: "FILMED_IN", direction:"OUT")
   scaleRating(scale: Int = 3): Float @cypher(statement: "WITH $this AS this RETURN $scale * this.imdbRating")
@@ -122,6 +122,7 @@ enum _GenreOrdering {
 type Query {
   Movie(_id: String, movieId: ID, title: String, year: Int, released: DateTime, plot: String, poster: String, imdbRating: Float, first: Int, offset: Int, orderBy: _MovieOrdering): [Movie]
   MoviesByYear(year: Int): [Movie]
+  MoviesByYears(year: [Int]): [Movie]
   MovieById(movieId: ID!): Movie
   MovieBy_Id(_id: String!): Movie
   GenresBySubstring(substring: String): [Genre] @cypher(statement: "MATCH (g:Genre) WHERE toLower(g.name) CONTAINS toLower($substring) RETURN g")

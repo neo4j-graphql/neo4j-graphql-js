@@ -1,8 +1,8 @@
-import { 
-  isArrayType, 
-  cypherDirectiveArgs, 
-  safeLabel, 
-  safeVar, 
+import {
+  isArrayType,
+  cypherDirectiveArgs,
+  safeLabel,
+  safeVar,
   getFilterParams,
   lowFirstLetter,
   isAddMutation,
@@ -12,6 +12,7 @@ import {
   isDeleteMutation,
   computeOrderBy,
   innerFilterParams,
+  paramsToString,
   filterNullParams,
   getOuterSkipLimit,
   getQueryCypherDirective,
@@ -30,6 +31,7 @@ import {
 } from './utils';
 import { getNamedType } from 'graphql';
 import { buildCypherSelection } from './selections';
+import _ from 'lodash';
 
 export const customCypherField = ({
   customCypher,
@@ -78,13 +80,34 @@ export const relationFieldOnNodeType = ({
   isInlineFragment,
   interfaceLabel,
   innerSchemaType,
-  queryParams,
+  filterParams,
+  temporalArgs,
   subSelection,
   skipLimit,
   commaIfTail,
   tailParams,
   temporalClauses
 }) => {
+  const arrayFilterParams = _.pickBy(filterParams, param =>
+    Array.isArray(param.value)
+  );
+
+  const allParams = innerFilterParams(filterParams, temporalArgs);
+
+  const queryParams = paramsToString(
+    _.filter(allParams, param => !Array.isArray(param.value))
+  );
+
+  const safeVariableName = safeVar(nestedVariable);
+
+  const arrayPredicates = _.map(arrayFilterParams, (value, key) => {
+    const param = _.find(allParams, param => param.key === key);
+    return `${safeVariableName}.${safeVar(key)} IN $${
+      param.value.index
+    }_${key}`;
+  });
+
+  const whereClauses = [...temporalClauses, ...arrayPredicates];
   return {
     initial: `${initial}${fieldName}: ${
       !isArrayType(fieldType) ? 'head(' : ''
@@ -92,12 +115,10 @@ export const relationFieldOnNodeType = ({
       relDirection === 'in' || relDirection === 'IN' ? '<' : ''
     }-[:${safeLabel(relType)}]-${
       relDirection === 'out' || relDirection === 'OUT' ? '>' : ''
-    }(${safeVar(nestedVariable)}:${safeLabel(
+    }(${safeVariableName}:${safeLabel(
       isInlineFragment ? interfaceLabel : innerSchemaType.name
     )}${queryParams})${
-      temporalClauses.length > 0
-      ? `WHERE ${temporalClauses.join(' AND ')}`
-      : ''
+      whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : ''
     } | ${nestedVariable} {${
       isInlineFragment
         ? 'FRAGMENT_TYPE: "' + interfaceLabel + '",' + subSelection[0]
@@ -132,7 +153,11 @@ export const relationTypeFieldOnNodeType = ({
     };
   }
   const relationshipVariableName = `${nestedVariable}_relation`;
-  const temporalClauses = temporalPredicateClauses(filterParams, relationshipVariableName, temporalArgs);
+  const temporalClauses = temporalPredicateClauses(
+    filterParams,
+    relationshipVariableName,
+    temporalArgs
+  );
   return {
     initial: `${initial}${fieldName}: ${
       !isArrayType(fieldType) ? 'head(' : ''
@@ -146,14 +171,15 @@ export const relationTypeFieldOnNodeType = ({
       schemaType.name === innerSchemaTypeRelation.from
         ? innerSchemaTypeRelation.to
         : innerSchemaTypeRelation.from
-    )}) ${temporalClauses.length > 0
-      ? `WHERE ${temporalClauses.join(' AND ')} `
-      : ''
+    )}) ${
+      temporalClauses.length > 0
+        ? `WHERE ${temporalClauses.join(' AND ')} `
+        : ''
     }| ${relationshipVariableName} {${subSelection[0]}}]${
-        !isArrayType(fieldType) ? ')' : ''
-      }${skipLimit} ${commaIfTail}`,
-      ...tailParams
-    };
+      !isArrayType(fieldType) ? ')' : ''
+    }${skipLimit} ${commaIfTail}`,
+    ...tailParams
+  };
 };
 
 export const nodeTypeFieldOnRelationType = ({
@@ -169,10 +195,10 @@ export const nodeTypeFieldOnRelationType = ({
   parentSelectionInfo
 }) => {
   if (
-    isRootSelection({ 
+    isRootSelection({
       selectionInfo: parentSelectionInfo,
-      rootType: "relationship"
-    }) && 
+      rootType: 'relationship'
+    }) &&
     isRelationTypeDirectedField(fieldInfo.fieldName)
   ) {
     return relationTypeMutationPayloadField({
@@ -231,7 +257,7 @@ const directedNodeTypeFieldOnRelationType = ({
   isInlineFragment,
   interfaceLabel,
   filterParams,
-  temporalArgs,
+  temporalArgs
 }) => {
   const relType = schemaTypeRelation.name;
   const fromTypeName = schemaTypeRelation.from;
@@ -246,7 +272,11 @@ const directedNodeTypeFieldOnRelationType = ({
     }_relation`;
     if (isRelationTypeDirectedField(fieldName)) {
       const temporalFieldRelationshipVariableName = `${nestedVariable}_relation`;
-      const temporalClauses = temporalPredicateClauses(filterParams, temporalFieldRelationshipVariableName, temporalArgs);
+      const temporalClauses = temporalPredicateClauses(
+        filterParams,
+        temporalFieldRelationshipVariableName,
+        temporalArgs
+      );
       return {
         initial: `${initial}${fieldName}: ${
           !isArrayType(fieldType) ? 'head(' : ''
@@ -256,9 +286,10 @@ const directedNodeTypeFieldOnRelationType = ({
           isToField ? '>' : ''
         }(${safeVar(nestedVariable)}:${safeLabel(
           isInlineFragment ? interfaceLabel : fromTypeName
-        )}) ${temporalClauses.length > 0
-          ? `WHERE ${temporalClauses.join(' AND ')} `
-          : ''
+        )}) ${
+          temporalClauses.length > 0
+            ? `WHERE ${temporalClauses.join(' AND ')} `
+            : ''
         }| ${relationshipVariableName} {${
           isInlineFragment
             ? 'FRAGMENT_TYPE: "' + interfaceLabel + '",' + subSelection[0]
@@ -266,8 +297,7 @@ const directedNodeTypeFieldOnRelationType = ({
         }}]${!isArrayType(fieldType) ? ')' : ''}${skipLimit} ${commaIfTail}`,
         ...tailParams
       };
-    } 
-    else {
+    } else {
       // Case of a renamed directed field
       // e.g., 'from: Movie' -> 'Movie: Movie'
       return {
@@ -277,17 +307,16 @@ const directedNodeTypeFieldOnRelationType = ({
         ...tailParams
       };
     }
-  }
-  else {
+  } else {
     variableName = variableName + '_relation';
     return {
       initial: `${initial}${fieldName}: ${
         !isArrayType(fieldType) ? 'head(' : ''
       }[(:${safeLabel(isFromField ? toTypeName : fromTypeName)})${
         isFromField ? '<' : ''
-      }-[${safeVar(variableName)}]-${
-        isToField ? '>' : ''
-      }(${safeVar(nestedVariable)}:${safeLabel(
+      }-[${safeVar(variableName)}]-${isToField ? '>' : ''}(${safeVar(
+        nestedVariable
+      )}:${safeLabel(
         isInlineFragment ? interfaceLabel : innerSchemaType.name
       )}${queryParams}) | ${nestedVariable} {${
         isInlineFragment
@@ -299,19 +328,19 @@ const directedNodeTypeFieldOnRelationType = ({
   }
 };
 
-const isRelationTypePayload = (schemaType) => {
+const isRelationTypePayload = schemaType => {
   const astNode = schemaType ? schemaType.astNode : undefined;
   const directive = astNode ? getRelationTypeDirectiveArgs(astNode) : undefined;
-  return astNode && astNode.fields && directive 
+  return astNode && astNode.fields && directive
     ? astNode.fields.find(e => {
-      return e.name.value === directive.from || e.name.value === directive.to;
-    }) 
+        return e.name.value === directive.from || e.name.value === directive.to;
+      })
     : undefined;
-}
+};
 
 export const temporalField = ({
   initial,
-  fieldName, 
+  fieldName,
   commaIfTail,
   tailParams,
   parentSelectionInfo,
@@ -323,47 +352,53 @@ export const temporalField = ({
   const parentVariableName = parentSelectionInfo.variableName;
   const secondParentVariableName = secondParentSelectionInfo.variableName;
   const secondParentFieldType = secondParentSelectionInfo.fieldType;
-  // Initially assume that the parent type of the temporal type 
+  // Initially assume that the parent type of the temporal type
   // containing this temporal field was a node
   let variableName = parentVariableName;
   let fieldIsArray = isArrayType(parentFieldType);
-  if(!isNodeType(parentSchemaType.astNode)) {
+  if (!isNodeType(parentSchemaType.astNode)) {
     // initial assumption wrong, build appropriate relationship variable
-    if(isRootSelection({
-      selectionInfo: secondParentSelectionInfo,
-      rootType: "relationship"
-    })) {
+    if (
+      isRootSelection({
+        selectionInfo: secondParentSelectionInfo,
+        rootType: 'relationship'
+      })
+    ) {
       // If the second parent selection scope above is the root
       // then we need to use the root variableName
       variableName = `${secondParentVariableName}_relation`;
-    }
-    else if(isRelationTypePayload(parentSchemaType)) {
-      const parentSchemaTypeRelation = getRelationTypeDirectiveArgs(parentSchemaType.astNode);
-      if(parentSchemaTypeRelation.from === parentSchemaTypeRelation.to) {
+    } else if (isRelationTypePayload(parentSchemaType)) {
+      const parentSchemaTypeRelation = getRelationTypeDirectiveArgs(
+        parentSchemaType.astNode
+      );
+      if (parentSchemaTypeRelation.from === parentSchemaTypeRelation.to) {
         variableName = `${variableName}_relation`;
-      }
-      else {
+      } else {
         variableName = `${variableName}_relation`;
       }
     }
   }
   return {
     initial: `${initial} ${fieldName}: ${
-      fieldIsArray 
+      fieldIsArray
         ? `${
-          fieldName === "formatted" 
-            ? `toString(TEMPORAL_INSTANCE)` 
-            : `TEMPORAL_INSTANCE.${fieldName}`
-        } ${commaIfTail}`
+            fieldName === 'formatted'
+              ? `toString(TEMPORAL_INSTANCE)`
+              : `TEMPORAL_INSTANCE.${fieldName}`
+          } ${commaIfTail}`
         : `${
-          fieldName === "formatted" 
-            ? `toString(${safeVar(variableName)}.${parentFieldName}) ${commaIfTail}` 
-            : `${safeVar(variableName)}.${parentFieldName}.${fieldName} ${commaIfTail}`
-        }`
-      }`,
+            fieldName === 'formatted'
+              ? `toString(${safeVar(
+                  variableName
+                )}.${parentFieldName}) ${commaIfTail}`
+              : `${safeVar(
+                  variableName
+                )}.${parentFieldName}.${fieldName} ${commaIfTail}`
+          }`
+    }`,
     ...tailParams
   };
-}
+};
 
 export const temporalType = ({
   initial,
@@ -380,31 +415,29 @@ export const temporalType = ({
 }) => {
   const parentVariableName = parentSelectionInfo.variableName;
   let fieldIsArray = isArrayType(fieldType);
-  if(!isNodeType(schemaType.astNode)) {
-    if(
-      isRelationTypePayload(schemaType) && 
+  if (!isNodeType(schemaType.astNode)) {
+    if (
+      isRelationTypePayload(schemaType) &&
       schemaTypeRelation.from === schemaTypeRelation.to
     ) {
       variableName = `${nestedVariable}_relation`;
-    }
-    else {
-      if(fieldIsArray) {
-        if(isRootSelection({ 
-          selectionInfo: parentSelectionInfo,
-          rootType: "relationship"
-        })) {
-          if(schemaTypeRelation.from === schemaTypeRelation.to) {
+    } else {
+      if (fieldIsArray) {
+        if (
+          isRootSelection({
+            selectionInfo: parentSelectionInfo,
+            rootType: 'relationship'
+          })
+        ) {
+          if (schemaTypeRelation.from === schemaTypeRelation.to) {
+            variableName = `${parentVariableName}_relation`;
+          } else {
             variableName = `${parentVariableName}_relation`;
           }
-          else {
-            variableName = `${parentVariableName}_relation`
-          }
-        }
-        else {
+        } else {
           variableName = `${variableName}_relation`;
         }
-      }
-      else {
+      } else {
         variableName = `${nestedVariable}_relation`;
       }
     }
@@ -412,32 +445,45 @@ export const temporalType = ({
   return {
     initial: `${initial}${fieldName}: ${
       fieldIsArray
-        ? `reduce(a = [], TEMPORAL_INSTANCE IN ${variableName}.${fieldName} | a + {${subSelection[0]}})${commaIfTail}`
-        : `{${subSelection[0]}}${commaIfTail}`}`,
+        ? `reduce(a = [], TEMPORAL_INSTANCE IN ${variableName}.${fieldName} | a + {${
+            subSelection[0]
+          }})${commaIfTail}`
+        : `{${subSelection[0]}}${commaIfTail}`
+    }`,
     ...tailParams
-  }
-}
+  };
+};
 
 // Query API root operation branch
 export const translateQuery = ({
   resolveInfo,
-  selections, 
-  variableName, 
+  selections,
+  variableName,
   typeName,
-  schemaType, 
+  schemaType,
   first,
   offset,
   _id,
   orderBy,
   otherParams
 }) => {
-  const [nullParams, nonNullParams] = filterNullParams({ offset, first, otherParams });
+  const [nullParams, nonNullParams] = filterNullParams({
+    offset,
+    first,
+    otherParams
+  });
   const filterParams = getFilterParams(nonNullParams);
   const queryArgs = getQueryArguments(resolveInfo);
   const temporalArgs = getTemporalArguments(queryArgs);
-  const queryParams = innerFilterParams(filterParams, temporalArgs);
+  const queryParams = paramsToString(
+    innerFilterParams(filterParams, temporalArgs)
+  );
   const safeVariableName = safeVar(variableName);
-  const temporalClauses = temporalPredicateClauses(filterParams, safeVariableName, temporalArgs);
+  const temporalClauses = temporalPredicateClauses(
+    filterParams,
+    safeVariableName,
+    temporalArgs
+  );
   const outerSkipLimit = getOuterSkipLimit(first);
   const orderByValue = computeOrderBy(resolveInfo, selections);
   const queryTypeCypherDirective = getQueryCypherDirective(resolveInfo);
@@ -467,10 +513,12 @@ export const translateQuery = ({
       outerSkipLimit,
       nullParams,
       nonNullParams,
+      filterParams,
+      temporalArgs,
       _id
     });
   }
-}
+};
 
 // Custom read operation
 const customQuery = ({
@@ -504,13 +552,12 @@ const customQuery = ({
   }", ${argString}, True) AS x UNWIND x AS ${safeVariableName}
     RETURN ${safeVariableName} {${subQuery}} AS ${safeVariableName}${orderByValue} ${outerSkipLimit}`;
   return [query, params];
-}
+};
 
 // Generated API
 const nodeQuery = ({
   resolveInfo,
   schemaType,
-  argString,
   selections,
   variableName,
   typeName,
@@ -519,6 +566,8 @@ const nodeQuery = ({
   outerSkipLimit,
   nullParams,
   nonNullParams,
+  filterParams,
+  temporalArgs,
   _id
 }) => {
   const safeVariableName = safeVar(variableName);
@@ -532,13 +581,31 @@ const nodeQuery = ({
     paramIndex: 1
   });
   const params = { ...nonNullParams, ...subParams };
-  // FIXME: support IN for multiple values -> WHERE
+  const arrayParams = _.pickBy(filterParams, Array.isArray);
+  const args = innerFilterParams(filterParams, temporalArgs);
+
+  const argString = paramsToString(
+    _.filter(args, arg => !Array.isArray(arg.value))
+  );
+
   const idWherePredicate =
     typeof _id !== 'undefined' ? `ID(${safeVariableName})=${_id}` : '';
+
   const nullFieldPredicates = Object.keys(nullParams).map(
     key => `${variableName}.${key} IS NULL`
   );
-  const predicateClauses = [idWherePredicate, ...nullFieldPredicates, ...temporalClauses]
+
+  const arrayPredicates = _.map(
+    arrayParams,
+    (value, key) => `${safeVariableName}.${safeVar(key)} IN $${key}`
+  );
+
+  const predicateClauses = [
+    idWherePredicate,
+    ...nullFieldPredicates,
+    ...temporalClauses,
+    ...arrayPredicates
+  ]
     .filter(predicate => !!predicate)
     .join(' AND ');
   const predicate = predicateClauses ? `WHERE ${predicateClauses} ` : '';
@@ -546,13 +613,13 @@ const nodeQuery = ({
     `MATCH (${safeVariableName}:${safeLabelName} ${argString}) ${predicate}` +
     `RETURN ${safeVariableName} {${subQuery}} AS ${safeVariableName}${orderByValue} ${outerSkipLimit}`;
   return [query, params];
-}
+};
 
 // Mutation API root operation branch
 export const translateMutation = ({
   resolveInfo,
   schemaType,
-  selections, 
+  selections,
   variableName,
   typeName,
   first,
@@ -564,21 +631,21 @@ export const translateMutation = ({
   const mutationTypeCypherDirective = getMutationCypherDirective(resolveInfo);
   const params = initializeMutationParams({
     resolveInfo,
-    mutationTypeCypherDirective, 
+    mutationTypeCypherDirective,
     first,
-    otherParams, 
+    otherParams,
     offset
   });
   const mutationInfo = {
-    params, 
-    selections, 
+    params,
+    selections,
     schemaType,
     resolveInfo
   };
   if (mutationTypeCypherDirective) {
     return customMutation({
       ...mutationInfo,
-      mutationTypeCypherDirective, 
+      mutationTypeCypherDirective,
       variableName,
       orderByValue,
       outerSkipLimit
@@ -603,7 +670,7 @@ export const translateMutation = ({
     });
   } else if (isAddMutation(resolveInfo)) {
     return relationshipCreate({
-      ...mutationInfo      
+      ...mutationInfo
     });
   } else if (isRemoveMutation(resolveInfo)) {
     return relationshipDelete({
@@ -616,12 +683,12 @@ export const translateMutation = ({
       'Do not know how to handle this type of mutation. Mutation does not follow naming convention.'
     );
   }
-}
+};
 
 // Custom write operation
 const customMutation = ({
   params,
-  mutationTypeCypherDirective, 
+  mutationTypeCypherDirective,
   selections,
   variableName,
   schemaType,
@@ -631,8 +698,8 @@ const customMutation = ({
 }) => {
   const safeVariableName = safeVar(variableName);
   // FIXME: support IN for multiple values -> WHERE
-  const argString = innerFilterParams(
-    getFilterParams(params.params || params)
+  const argString = paramsToString(
+    innerFilterParams(getFilterParams(params.params || params))
   );
   const cypherQueryArg = mutationTypeCypherDirective.arguments.find(x => {
     return x.name.value === 'statement';
@@ -646,11 +713,13 @@ const customMutation = ({
     paramIndex: 1
   });
   params = { ...params, ...subParams };
-  const query = `CALL apoc.cypher.doIt("${cypherQueryArg.value.value}", ${argString}) YIELD value
+  const query = `CALL apoc.cypher.doIt("${
+    cypherQueryArg.value.value
+  }", ${argString}) YIELD value
     WITH apoc.map.values(value, [keys(value)[0]])[0] AS ${safeVariableName}
     RETURN ${safeVariableName} {${subQuery}} AS ${safeVariableName}${orderByValue} ${outerSkipLimit}`;
   return [query, params];
-}
+};
 
 // Generated API
 // Node Create - Update - Delete
@@ -666,7 +735,7 @@ const nodeCreate = ({
   const safeLabelName = safeLabel(typeName);
   let statements = [];
   const args = getMutationArguments(resolveInfo);
-  statements = possiblySetFirstId({ 
+  statements = possiblySetFirstId({
     args,
     statements,
     params: params.params
@@ -691,42 +760,44 @@ const nodeCreate = ({
     RETURN ${safeVariableName} {${subQuery}} AS ${safeVariableName}
   `;
   return [query, params];
-}
+};
 
 const splitSelectionParameters = (params, primaryKeyArgName, paramKey) => {
-  const paramKeys = paramKey ? Object.keys(params[paramKey]) : Object.keys(params); 
-  const [primaryKeyParam, updateParams] = paramKeys.reduce((acc, t) => { 
-    if(t === primaryKeyArgName) {
-      if(paramKey) {
-        acc[0][t] = params[paramKey][t];        
+  const paramKeys = paramKey
+    ? Object.keys(params[paramKey])
+    : Object.keys(params);
+  const [primaryKeyParam, updateParams] = paramKeys.reduce(
+    (acc, t) => {
+      if (t === primaryKeyArgName) {
+        if (paramKey) {
+          acc[0][t] = params[paramKey][t];
+        } else {
+          acc[0][t] = params[t];
+        }
+      } else {
+        if (paramKey) {
+          if (acc[1][paramKey] === undefined) acc[1][paramKey] = {};
+          acc[1][paramKey][t] = params[paramKey][t];
+        } else {
+          acc[1][t] = params[t];
+        }
       }
-      else {
-        acc[0][t] = params[t];
-      }
-    }
-    else {
-      if(paramKey) {
-        if(acc[1][paramKey] === undefined) acc[1][paramKey] = {};
-        acc[1][paramKey][t] = params[paramKey][t];
-      }
-      else {
-        acc[1][t] = params[t];
-      }
-    }
-    return acc; 
-  }, [{}, {}]);
+      return acc;
+    },
+    [{}, {}]
+  );
   const first = params.first;
   const offset = params.offset;
-  if(first !== undefined) updateParams['first'] = first;
-  if(offset !== undefined) updateParams['offset'] = offset;
+  if (first !== undefined) updateParams['first'] = first;
+  if (offset !== undefined) updateParams['offset'] = offset;
   return [primaryKeyParam, updateParams];
-}
+};
 
 const nodeUpdate = ({
   resolveInfo,
   variableName,
   typeName,
-  selections, 
+  selections,
   schemaType,
   params
 }) => {
@@ -736,26 +807,33 @@ const nodeUpdate = ({
   const primaryKeyArg = args[0];
   const primaryKeyArgName = primaryKeyArg.name.value;
   const temporalArgs = getTemporalArguments(args);
-  const [primaryKeyParam, updateParams] = splitSelectionParameters(params, primaryKeyArgName, "params");
-  const temporalClauses = temporalPredicateClauses(primaryKeyParam, safeVariableName, temporalArgs, "params");
+  const [primaryKeyParam, updateParams] = splitSelectionParameters(
+    params,
+    primaryKeyArgName,
+    'params'
+  );
+  const temporalClauses = temporalPredicateClauses(
+    primaryKeyParam,
+    safeVariableName,
+    temporalArgs,
+    'params'
+  );
   const predicateClauses = [...temporalClauses]
     .filter(predicate => !!predicate)
     .join(' AND ');
-  const predicate = predicateClauses 
-    ? `WHERE ${predicateClauses} ` 
-    : '';
+  const predicate = predicateClauses ? `WHERE ${predicateClauses} ` : '';
   let [preparedParams, paramUpdateStatements] = buildCypherParameters({
     args,
     params: updateParams,
-    paramKey: "params"
+    paramKey: 'params'
   });
   let query = `MATCH (${safeVariableName}:${safeLabelName}${
     predicate !== ''
       ? `) ${predicate} `
       : `{${primaryKeyArgName}: $params.${primaryKeyArgName}})`
-    }
+  }
   `;
-  if(paramUpdateStatements.length > 0) {
+  if (paramUpdateStatements.length > 0) {
     query += `SET ${safeVariableName} += {${paramUpdateStatements.join(',')}} `;
   }
   const [subQuery, subParams] = buildCypherSelection({
@@ -770,7 +848,7 @@ const nodeUpdate = ({
   params = { ...preparedParams, ...subParams };
   query += `RETURN ${safeVariableName} {${subQuery}} AS ${safeVariableName}`;
   return [query, params];
-}
+};
 
 const nodeDelete = ({
   resolveInfo,
@@ -787,13 +865,17 @@ const nodeDelete = ({
   const primaryKeyArgName = primaryKeyArg.name.value;
   const temporalArgs = getTemporalArguments(args);
   const [primaryKeyParam] = splitSelectionParameters(params, primaryKeyArgName);
-  const temporalClauses = temporalPredicateClauses(primaryKeyParam, safeVariableName, temporalArgs);
-  let [preparedParams] = buildCypherParameters({args, params});
+  const temporalClauses = temporalPredicateClauses(
+    primaryKeyParam,
+    safeVariableName,
+    temporalArgs
+  );
+  let [preparedParams] = buildCypherParameters({ args, params });
   let query = `MATCH (${safeVariableName}:${safeLabelName}${
     temporalClauses.length > 0
       ? `) WHERE ${temporalClauses.join(' AND ')}`
       : ` {${primaryKeyArgName}: $${primaryKeyArgName}})`
-    }`;
+  }`;
   const [subQuery, subParams] = buildCypherSelection({
     initial: ``,
     selections,
@@ -806,12 +888,12 @@ const nodeDelete = ({
   const deletionVariableName = safeVar(`${variableName}_toDelete`);
   // Cannot execute a map projection on a deleted node in Neo4j
   // so the projection is executed and aliased before the delete
-query += `
+  query += `
 WITH ${safeVariableName} AS ${deletionVariableName}, ${safeVariableName} {${subQuery}} AS ${safeVariableName}
 DETACH DELETE ${deletionVariableName}
 RETURN ${safeVariableName}`;
   return [query, params];
-}
+};
 
 // Relation Add / Remove
 const relationshipCreate = ({
@@ -857,7 +939,8 @@ const relationshipCreate = ({
   const fromType = fromTypeArg.value.value;
   const fromVar = `${lowFirstLetter(fromType)}_from`;
   const fromInputArg = args.find(e => e.name.value === 'from').type;
-  const fromInputAst = typeMap[getNamedType(fromInputArg).type.name.value].astNode;
+  const fromInputAst =
+    typeMap[getNamedType(fromInputArg).type.name.value].astNode;
   const fromFields = fromInputAst.fields;
   const fromParam = fromFields[0].name.value;
   const fromTemporalArgs = getTemporalArguments(fromFields);
@@ -881,7 +964,7 @@ const relationshipCreate = ({
   const [preparedParams, paramStatements] = buildCypherParameters({
     args: dataFields,
     params,
-    paramKey: "data"
+    paramKey: 'data'
   });
   const schemaTypeName = safeVar(schemaType);
   const fromVariable = safeVar(fromVar);
@@ -891,16 +974,16 @@ const relationshipCreate = ({
   const relationshipVariable = safeVar(lowercased + '_relation');
   const relationshipLabel = safeLabel(relationshipName);
   const fromTemporalClauses = temporalPredicateClauses(
-    preparedParams.from, 
-    fromVariable, 
-    fromTemporalArgs, 
-    "from"
+    preparedParams.from,
+    fromVariable,
+    fromTemporalArgs,
+    'from'
   );
   const toTemporalClauses = temporalPredicateClauses(
-    preparedParams.to, 
-    toVariable, 
-    toTemporalArgs, 
-    "to"
+    preparedParams.to,
+    toVariable,
+    toTemporalArgs,
+    'to'
   );
   const [subQuery, subParams] = buildCypherSelection({
     initial: '',
@@ -909,7 +992,7 @@ const relationshipCreate = ({
     resolveInfo,
     paramIndex: 1,
     parentSelectionInfo: {
-      rootType: "relationship",
+      rootType: 'relationship',
       from: fromVar,
       to: toVar,
       variableName: lowercased
@@ -919,25 +1002,25 @@ const relationshipCreate = ({
   params = { ...preparedParams, ...subParams };
   let query = `
       MATCH (${fromVariable}:${fromLabel} ${
-        fromTemporalClauses && fromTemporalClauses.length > 0
-        // uses either a WHERE clause for managed type primary keys (temporal, etc.)
-          ? `) WHERE ${fromTemporalClauses.join(' AND ')} `
-          // or a an internal matching clause for normal, scalar property primary keys
-          // NOTE this will need to change if we at some point allow for multi field node selection
-          : `{${fromParam}: $from.${fromParam}})` 
-      }
+    fromTemporalClauses && fromTemporalClauses.length > 0
+      ? // uses either a WHERE clause for managed type primary keys (temporal, etc.)
+        `) WHERE ${fromTemporalClauses.join(' AND ')} `
+      : // or a an internal matching clause for normal, scalar property primary keys
+        // NOTE this will need to change if we at some point allow for multi field node selection
+        `{${fromParam}: $from.${fromParam}})`
+  }
       MATCH (${toVariable}:${toLabel} ${
-        toTemporalClauses && toTemporalClauses.length > 0
-          ? `) WHERE ${toTemporalClauses.join(' AND ')} `
-          : `{${toParam}: $to.${toParam}})` 
-      }
+    toTemporalClauses && toTemporalClauses.length > 0
+      ? `) WHERE ${toTemporalClauses.join(' AND ')} `
+      : `{${toParam}: $to.${toParam}})`
+  }
       CREATE (${fromVariable})-[${relationshipVariable}:${relationshipLabel}${
-        paramStatements.length > 0 ? ` {${paramStatements.join(',')}}` : ''
-      }]->(${toVariable})
+    paramStatements.length > 0 ? ` {${paramStatements.join(',')}}` : ''
+  }]->(${toVariable})
       RETURN ${relationshipVariable} { ${subQuery} } AS ${schemaTypeName};
     `;
   return [query, params];
-}
+};
 
 const relationshipDelete = ({
   resolveInfo,
@@ -983,7 +1066,8 @@ const relationshipDelete = ({
   const fromType = fromTypeArg.value.value;
   const fromVar = `${lowFirstLetter(fromType)}_from`;
   const fromInputArg = args.find(e => e.name.value === 'from').type;
-  const fromInputAst = typeMap[getNamedType(fromInputArg).type.name.value].astNode;
+  const fromInputAst =
+    typeMap[getNamedType(fromInputArg).type.name.value].astNode;
   const fromFields = fromInputAst.fields;
   const fromParam = fromFields[0].name.value;
   const fromTemporalArgs = getTemporalArguments(fromFields);
@@ -1008,16 +1092,16 @@ const relationshipDelete = ({
   const fromRootVariable = safeVar('_' + fromVar);
   const toRootVariable = safeVar('_' + toVar);
   const fromTemporalClauses = temporalPredicateClauses(
-    params.from, 
-    fromVariable, 
-    fromTemporalArgs, 
-    "from"
+    params.from,
+    fromVariable,
+    fromTemporalArgs,
+    'from'
   );
   const toTemporalClauses = temporalPredicateClauses(
-    params.to, 
-    toVariable, 
-    toTemporalArgs, 
-    "to"
+    params.to,
+    toVariable,
+    toTemporalArgs,
+    'to'
   );
   // TODO cleaner semantics: remove use of _ prefixes in root variableNames and variableName
   const [subQuery, subParams] = buildCypherSelection({
@@ -1028,7 +1112,7 @@ const relationshipDelete = ({
     resolveInfo,
     paramIndex: 1,
     parentSelectionInfo: {
-      rootType: "relationship",
+      rootType: 'relationship',
       from: `_${fromVar}`,
       to: `_${toVar}`
     },
@@ -1037,21 +1121,21 @@ const relationshipDelete = ({
   params = { ...params, ...subParams };
   let query = `
       MATCH (${fromVariable}:${fromLabel} ${
-        fromTemporalClauses && fromTemporalClauses.length > 0
-        // uses either a WHERE clause for managed type primary keys (temporal, etc.)
-          ? `) WHERE ${fromTemporalClauses.join(' AND ')} `
-          // or a an internal matching clause for normal, scalar property primary keys
-          : `{${fromParam}: $from.${fromParam}})` 
-      }
+    fromTemporalClauses && fromTemporalClauses.length > 0
+      ? // uses either a WHERE clause for managed type primary keys (temporal, etc.)
+        `) WHERE ${fromTemporalClauses.join(' AND ')} `
+      : // or a an internal matching clause for normal, scalar property primary keys
+        `{${fromParam}: $from.${fromParam}})`
+  }
       MATCH (${toVariable}:${toLabel} ${
-        toTemporalClauses && toTemporalClauses.length > 0
-          ? `) WHERE ${toTemporalClauses.join(' AND ')} `
-          : `{${toParam}: $to.${toParam}})` 
-      }
+    toTemporalClauses && toTemporalClauses.length > 0
+      ? `) WHERE ${toTemporalClauses.join(' AND ')} `
+      : `{${toParam}: $to.${toParam}})`
+  }
       OPTIONAL MATCH (${fromVariable})-[${relationshipVariable}:${relationshipLabel}]->(${toVariable})
       DELETE ${relationshipVariable}
       WITH COUNT(*) AS scope, ${fromVariable} AS ${fromRootVariable}, ${toVariable} AS ${toRootVariable}
       RETURN {${subQuery}} AS ${schemaTypeName};
     `;
   return [query, params];
-}
+};
