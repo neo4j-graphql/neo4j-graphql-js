@@ -18,6 +18,11 @@ function parseArg(arg, variableValues) {
     case 'ObjectValue': {
       return parseArgs(arg.value.fields, {});
     }
+    case 'ListValue': {
+      return _.map(arg.value.values, value =>
+        parseArg({ value }, variableValues)
+      );
+    }
     default: {
       return arg.value.value;
     }
@@ -195,22 +200,38 @@ export function getFilterParams(filters, index) {
 }
 
 export function innerFilterParams(filters, temporalArgs, paramKey) {
-  const temporalArgNames = temporalArgs ? temporalArgs.reduce( (acc, t) => { 
-    acc.push(t.name.value); 
-    return acc; 
-  }, []) : [];
+  const temporalArgNames = temporalArgs
+    ? temporalArgs.reduce((acc, t) => {
+        acc.push(t.name.value);
+        return acc;
+      }, [])
+    : [];
+
   return Object.keys(filters).length > 0
-    ? `{${Object.entries(filters)
+    ? Object.entries(filters)
         // exclude temporal arguments
-        .filter(([key]) => !['first', 'offset', 'orderBy', ...temporalArgNames].includes(key))
-        .map(
-          ([key, value]) =>
-            `${key}:${paramKey ? `$${paramKey}.` : '$'}${
-              typeof value.index === 'undefined' ? key : `${value.index}_${key}`
-            }`
+        .filter(
+          ([key]) =>
+            !['first', 'offset', 'orderBy', ...temporalArgNames].includes(key)
         )
-        .join(',')}}`
-    : '';
+        .map(([key, value]) => {
+          return { key, paramKey, value };
+        })
+    : [];
+}
+
+export function paramsToString(params) {
+  if (params.length > 0) {
+    const strings = _.map(params, param => {
+      return `${param.key}:${param.paramKey ? `$${param.paramKey}.` : '$'}${
+        typeof param.value.index === 'undefined'
+          ? param.key
+          : `${param.value.index}_${param.key}`
+      }`;
+    });
+    return `{${strings.join(', ')}}`;
+  }
+  return '';
 }
 
 function argumentValue(selection, name, variableValues) {
@@ -243,8 +264,8 @@ export function extractQueryResult({ records }, returnType) {
   let result = isArrayType(returnType)
     ? records.map(record => record.get(variableName))
     : records.length
-      ? records[0].get(variableName)
-      : null;
+    ? records[0].get(variableName)
+    : null;
 
   result = convertIntegerFields(result);
   return result;
@@ -300,149 +321,161 @@ export const computeOrderBy = (resolveInfo, selection) => {
   }
 };
 
-export const possiblySetFirstId = ({ 
-  args, 
-  statements, 
-  params 
-}) => {
-  const arg = args.find(e => getFieldValueType(e) === "ID");
-  // arg is the first ID field if it exists, and we set the value 
+export const possiblySetFirstId = ({ args, statements, params }) => {
+  const arg = args.find(e => getFieldValueType(e) === 'ID');
+  // arg is the first ID field if it exists, and we set the value
   // if no value is provided for the field name (arg.name.value) in params
-  if(arg && arg.name.value && params[arg.name.value] === undefined) {
+  if (arg && arg.name.value && params[arg.name.value] === undefined) {
     statements.push(`${arg.name.value}: apoc.create.uuid()`);
   }
   return statements;
-}
+};
 
-export const getQueryArguments = (resolveInfo) => {
-  return resolveInfo.schema.getQueryType().getFields()[
-    resolveInfo.fieldName
-  ].astNode.arguments;
-}
+export const getQueryArguments = resolveInfo => {
+  return resolveInfo.schema.getQueryType().getFields()[resolveInfo.fieldName]
+    .astNode.arguments;
+};
 
-export const getMutationArguments = (resolveInfo) => {
-  return resolveInfo.schema.getMutationType().getFields()[
-    resolveInfo.fieldName
-  ].astNode.arguments;
-}
+export const getMutationArguments = resolveInfo => {
+  return resolveInfo.schema.getMutationType().getFields()[resolveInfo.fieldName]
+    .astNode.arguments;
+};
 
-const getTemporalCypherConstructor = (fieldAst) => {
+const getTemporalCypherConstructor = fieldAst => {
   let cypherFunction = undefined;
   const type = fieldAst ? getNamedType(fieldAst.type).name.value : '';
-  switch(type) {
-    case "_Neo4jTimeInput": cypherFunction = "time"; break;
-    case "_Neo4jDateInput": cypherFunction = "date"; break;
-    case "_Neo4jDateTimeInput": cypherFunction = "datetime"; break;
-    case "_Neo4jLocalTimeInput": cypherFunction = "localtime"; break;
-    case "_Neo4jLocalDateTimeInput": cypherFunction = "localdatetime"; break;
-    default: break;
+  switch (type) {
+    case '_Neo4jTimeInput':
+      cypherFunction = 'time';
+      break;
+    case '_Neo4jDateInput':
+      cypherFunction = 'date';
+      break;
+    case '_Neo4jDateTimeInput':
+      cypherFunction = 'datetime';
+      break;
+    case '_Neo4jLocalTimeInput':
+      cypherFunction = 'localtime';
+      break;
+    case '_Neo4jLocalDateTimeInput':
+      cypherFunction = 'localdatetime';
+      break;
+    default:
+      break;
   }
   return cypherFunction;
-}
+};
 
-export const buildCypherParameters = ({ 
+export const buildCypherParameters = ({
   args,
-  statements=[], 
+  statements = [],
   params,
   paramKey
 }) => {
   const dataParams = paramKey ? params[paramKey] : params;
   const paramKeys = dataParams ? Object.keys(dataParams) : [];
-  if(args) {
-    statements = paramKeys.reduce( (acc, paramName) => {
+  if (args) {
+    statements = paramKeys.reduce((acc, paramName) => {
       const param = paramKey ? params[paramKey][paramName] : params[paramName];
       // Get the AST definition for the argument matching this param name
       const fieldAst = args.find(arg => arg.name.value === paramName);
-      if(fieldAst) {
+      if (fieldAst) {
         const fieldType = getNamedType(fieldAst.type);
-        if(isTemporalInputType(fieldType.name.value)) {
+        if (isTemporalInputType(fieldType.name.value)) {
           const formatted = param.formatted;
           const temporalFunction = getTemporalCypherConstructor(fieldAst);
-          if(temporalFunction) {
+          if (temporalFunction) {
             // Prefer only using formatted, if provided
-            if(formatted) {
-              if(paramKey) params[paramKey][paramName] = formatted;
+            if (formatted) {
+              if (paramKey) params[paramKey][paramName] = formatted;
               else params[paramName] = formatted;
-              acc.push(`${paramName}: ${temporalFunction}($${
-                paramKey 
-                  ? `${paramKey}.` 
-                  : ''}${paramName})`
+              acc.push(
+                `${paramName}: ${temporalFunction}($${
+                  paramKey ? `${paramKey}.` : ''
+                }${paramName})`
               );
-            }
-            else {
+            } else {
               // TODO refactor
-              if(Array.isArray(param)) {
+              if (Array.isArray(param)) {
                 const count = param.length;
                 let i = 0;
                 let temporalParam = {};
-                for(; i < count; ++i) {
-                  if(paramKey) {
+                for (; i < count; ++i) {
+                  if (paramKey) {
                     temporalParam = param[i];
-                    if(temporalParam.formatted) {
+                    if (temporalParam.formatted) {
                       params[paramKey][paramName][i] = temporalParam.formatted;
-                    }
-                    else {
+                    } else {
                       Object.keys(temporalParam).forEach(e => {
-                        if(Number.isInteger(temporalParam[e])) {
-                          params[paramKey][paramName][i][e] = neo4j.int(temporalParam[e]);
+                        if (Number.isInteger(temporalParam[e])) {
+                          params[paramKey][paramName][i][e] = neo4j.int(
+                            temporalParam[e]
+                          );
                         }
                       });
                     }
-                  }
-                  else {
+                  } else {
                     Object.keys(temporalParam).forEach(e => {
-                      if(Number.isInteger(temporalParam[e])) {
+                      if (Number.isInteger(temporalParam[e])) {
                         params[paramName][i][e] = neo4j.int(temporalParam[e]);
                       }
                     });
                   }
                 }
-                acc.push(`${paramName}: [value IN $${paramKey ? `${paramKey}.` : ''}${paramName} | ${temporalFunction}(value)]`);
-              }
-              else {
-                if(paramKey) {
+                acc.push(
+                  `${paramName}: [value IN $${
+                    paramKey ? `${paramKey}.` : ''
+                  }${paramName} | ${temporalFunction}(value)]`
+                );
+              } else {
+                if (paramKey) {
                   const temporalParam = params[paramKey][paramName];
-                  if(temporalParam.formatted) {
+                  if (temporalParam.formatted) {
                     params[paramKey][paramName] = temporalParam.formatted;
-                  }
-                  else {
+                  } else {
                     Object.keys(temporalParam).forEach(e => {
-                      if(Number.isInteger(temporalParam[e])) {
-                        params[paramKey][paramName][e] = neo4j.int(temporalParam[e]);
+                      if (Number.isInteger(temporalParam[e])) {
+                        params[paramKey][paramName][e] = neo4j.int(
+                          temporalParam[e]
+                        );
                       }
                     });
                   }
-                }
-                else {
+                } else {
                   const temporalParam = params[paramName];
                   Object.keys(temporalParam).forEach(e => {
-                    if(Number.isInteger(temporalParam[e])) {
+                    if (Number.isInteger(temporalParam[e])) {
                       params[paramName][e] = neo4j.int(temporalParam[e]);
                     }
                   });
-                }              
-                acc.push(`${paramName}: ${temporalFunction}($${paramKey ? `${paramKey}.` : ''}${paramName})`);
+                }
+                acc.push(
+                  `${paramName}: ${temporalFunction}($${
+                    paramKey ? `${paramKey}.` : ''
+                  }${paramName})`
+                );
               }
             }
-          }            
-        }
-        else {
+          }
+        } else {
           // normal case
-          acc.push(`${paramName}:$${paramKey ? `${paramKey}.` : ''}${paramName}`);
+          acc.push(
+            `${paramName}:$${paramKey ? `${paramKey}.` : ''}${paramName}`
+          );
         }
       }
       return acc;
     }, statements);
   }
-  if(paramKey) {
+  if (paramKey) {
     params[paramKey] = dataParams;
   }
   return [params, statements];
-}
+};
 
-export const isRelationTypeDirectedField = (fieldName) => {
+export const isRelationTypeDirectedField = fieldName => {
   return fieldName === 'from' || fieldName === 'to';
-}
+};
 
 export function extractSelections(selections, fragments) {
   // extract any fragment selection sets into a single array of selections
@@ -557,9 +590,10 @@ export const parameterizeRelationFields = fields => {
 };
 
 export const getRelationTypeDirectiveArgs = relationshipType => {
-  const directive = relationshipType && relationshipType.directives 
-    ? relationshipType.directives.find(e => e.name.value === 'relation') 
-    : undefined;
+  const directive =
+    relationshipType && relationshipType.directives
+      ? relationshipType.directives.find(e => e.name.value === 'relation')
+      : undefined;
   return directive
     ? {
         name: directive.arguments.find(e => e.name.value === 'name').value
@@ -803,15 +837,14 @@ export const decideNestedVariableName = ({
   parentSelectionInfo
 }) => {
   if (
-    isRootSelection({ 
+    isRootSelection({
       selectionInfo: parentSelectionInfo,
-      rootType: "relationship"
-    }) && 
+      rootType: 'relationship'
+    }) &&
     isRelationTypeDirectedField(fieldName)
   ) {
     return parentSelectionInfo[fieldName];
-  }
-  else if (schemaTypeRelation) {
+  } else if (schemaTypeRelation) {
     const fromTypeName = schemaTypeRelation.from;
     const toTypeName = schemaTypeRelation.to;
     if (fromTypeName === toTypeName) {
@@ -861,45 +894,47 @@ export const addDirectiveDeclarations = typeMap => {
   typeMap['MutationMeta'] = parse(
     `directive @MutationMeta(relationship: String, from: String, to: String) on FIELD_DEFINITION`
   ).definitions[0];
-  typeMap['_RelationDirections'] = parse(`enum _RelationDirections { IN OUT }`).definitions[0];
+  typeMap['_RelationDirections'] = parse(
+    `enum _RelationDirections { IN OUT }`
+  ).definitions[0];
   return typeMap;
 };
 
 export const initializeMutationParams = ({
-  resolveInfo, 
-  mutationTypeCypherDirective, 
-  otherParams, 
+  resolveInfo,
+  mutationTypeCypherDirective,
+  otherParams,
   first,
   offset
 }) => {
   return (isCreateMutation(resolveInfo) || isUpdateMutation(resolveInfo)) &&
-  !mutationTypeCypherDirective
+    !mutationTypeCypherDirective
     ? { params: otherParams, ...{ first, offset } }
     : { ...otherParams, ...{ first, offset } };
-}
+};
 
-export const getQueryCypherDirective = (resolveInfo) => {
+export const getQueryCypherDirective = resolveInfo => {
   return resolveInfo.schema
     .getQueryType()
     .getFields()
     [resolveInfo.fieldName].astNode.directives.find(x => {
       return x.name.value === 'cypher';
     });
-}
+};
 
-export const getMutationCypherDirective = (resolveInfo) => {
+export const getMutationCypherDirective = resolveInfo => {
   return resolveInfo.schema
     .getMutationType()
     .getFields()
     [resolveInfo.fieldName].astNode.directives.find(x => {
       return x.name.value === 'cypher';
     });
-}
+};
 
 export const getOuterSkipLimit = first =>
   `SKIP $offset${first > -1 ? ' LIMIT $first' : ''}`;
 
-export const getQuerySelections = (resolveInfo) => {
+export const getQuerySelections = resolveInfo => {
   const filteredFieldNodes = filter(
     resolveInfo.fieldNodes,
     n => n.name.value === resolveInfo.fieldName
@@ -909,9 +944,9 @@ export const getQuerySelections = (resolveInfo) => {
     filteredFieldNodes[0].selectionSet.selections,
     resolveInfo.fragments
   );
-}
+};
 
-export const getMutationSelections = (resolveInfo) => {
+export const getMutationSelections = resolveInfo => {
   let selections = getQuerySelections(resolveInfo);
   if (selections.length === 0) {
     // FIXME: why aren't the selections found in the filteredFieldNode?
@@ -921,13 +956,9 @@ export const getMutationSelections = (resolveInfo) => {
     );
   }
   return selections;
-}
+};
 
-export const filterNullParams = ({    
-  offset,
-  first,
-  otherParams
-}) => {
+export const filterNullParams = ({ offset, first, otherParams }) => {
   return Object.entries({
     ...{ offset, first },
     ...otherParams
@@ -942,76 +973,95 @@ export const filterNullParams = ({
     },
     [{}, {}]
   );
-}
+};
 
-export const isTemporalType = (name) => {
-  return name === "_Neo4jTime" ||
-    name === "_Neo4jDate" ||
-    name === "_Neo4jDateTime" ||
-    name === "_Neo4jLocalTime" ||
-    name === "_Neo4jLocalDateTime";
-}
+export const isTemporalType = name => {
+  return (
+    name === '_Neo4jTime' ||
+    name === '_Neo4jDate' ||
+    name === '_Neo4jDateTime' ||
+    name === '_Neo4jLocalTime' ||
+    name === '_Neo4jLocalDateTime'
+  );
+};
 
-const isTemporalInputType = (name) => {
-  return name === "_Neo4jTimeInput" ||
-    name === "_Neo4jDateInput" ||
-    name === "_Neo4jDateTimeInput" ||
-    name === "_Neo4jLocalTimeInput" ||
-    name === "_Neo4jLocalDateTimeInput";
-}
+const isTemporalInputType = name => {
+  return (
+    name === '_Neo4jTimeInput' ||
+    name === '_Neo4jDateInput' ||
+    name === '_Neo4jDateTimeInput' ||
+    name === '_Neo4jLocalTimeInput' ||
+    name === '_Neo4jLocalDateTimeInput'
+  );
+};
 
 export const isTemporalField = (schemaType, name) => {
   const type = schemaType ? schemaType.name : '';
-  return isTemporalType(type) && 
-    name === "year" || 
-    name === "month" ||
-    name === "day" ||
-    name === "hour" ||
-    name === "minute" ||
-    name === "second" ||
-    name === "microsecond" ||
-    name === "millisecond" ||
-    name === "nanosecond" ||
-    name === "timezone" || 
-    name === "formatted";
-}
+  return (
+    (isTemporalType(type) && name === 'year') ||
+    name === 'month' ||
+    name === 'day' ||
+    name === 'hour' ||
+    name === 'minute' ||
+    name === 'second' ||
+    name === 'microsecond' ||
+    name === 'millisecond' ||
+    name === 'nanosecond' ||
+    name === 'timezone' ||
+    name === 'formatted'
+  );
+};
 
-export const getTemporalArguments = (args) => {
-  return args ? args.reduce( (acc, t) => {
-    const fieldType = getNamedType(t.type).name.value;
-    if(isTemporalInputType(fieldType)) acc.push(t);
-    return acc;
-  }, []) : [];
-}
+export const getTemporalArguments = args => {
+  return args
+    ? args.reduce((acc, t) => {
+        const fieldType = getNamedType(t.type).name.value;
+        if (isTemporalInputType(fieldType)) acc.push(t);
+        return acc;
+      }, [])
+    : [];
+};
 
-export function temporalPredicateClauses(filters, variableName, temporalArgs, parentParam) {
-  return temporalArgs.reduce( (acc, t) => {
+export function temporalPredicateClauses(
+  filters,
+  variableName,
+  temporalArgs,
+  parentParam
+) {
+  return temporalArgs.reduce((acc, t) => {
     // For every temporal argument
     const argName = t.name.value;
-    let temporalParam = filters[argName]; 
-    if(temporalParam) {
-      // If a parameter value has been provided for it check whether 
+    let temporalParam = filters[argName];
+    if (temporalParam) {
+      // If a parameter value has been provided for it check whether
       // the provided param value is in an indexed object for a nested argument
       const paramIndex = temporalParam.index;
       const paramValue = temporalParam.value;
       // If it is, set and use its .value
-      if(paramValue) temporalParam = paramValue;
-      if(temporalParam["formatted"]) {
+      if (paramValue) temporalParam = paramValue;
+      if (temporalParam['formatted']) {
         // Only the dedicated 'formatted' arg is used if it is provided
-        acc.push(`${variableName}.${argName} = ${getTemporalCypherConstructor(t)}($${
+        acc.push(
+          `${variableName}.${argName} = ${getTemporalCypherConstructor(t)}($${
             // use index if provided, for nested arguments
-            typeof paramIndex === 'undefined' 
-            ? `${parentParam ? `${parentParam}.` : ''}${argName}.formatted` 
-            : `${parentParam ? `${parentParam}.` : ''}${paramIndex}_${argName}.formatted`
-          })`);
-      }
-      else {
+            typeof paramIndex === 'undefined'
+              ? `${parentParam ? `${parentParam}.` : ''}${argName}.formatted`
+              : `${
+                  parentParam ? `${parentParam}.` : ''
+                }${paramIndex}_${argName}.formatted`
+          })`
+        );
+      } else {
         Object.keys(temporalParam).forEach(e => {
-          acc.push(`${variableName}.${argName}.${e} = $${
-            typeof paramIndex === 'undefined' 
-              ? `${parentParam ? `${parentParam}.` : ''}${argName}` 
-              : `${parentParam ? `${parentParam}.` : ''}${paramIndex}_${argName}`
-            }.${e}`);
+          acc.push(
+            `${variableName}.${argName}.${e} = $${
+              typeof paramIndex === 'undefined'
+                ? `${parentParam ? `${parentParam}.` : ''}${argName}`
+                : `${
+                    parentParam ? `${parentParam}.` : ''
+                  }${paramIndex}_${argName}`
+            }.${e}`
+          );
         });
       }
     }
@@ -1019,7 +1069,5 @@ export function temporalPredicateClauses(filters, variableName, temporalArgs, pa
   }, []);
 }
 
-export const isRootSelection = ({selectionInfo, rootType}) => (
-  selectionInfo && 
-  selectionInfo.rootType === rootType
-);
+export const isRootSelection = ({ selectionInfo, rootType }) =>
+  selectionInfo && selectionInfo.rootType === rootType;
