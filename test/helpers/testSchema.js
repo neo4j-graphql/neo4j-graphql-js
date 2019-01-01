@@ -39,7 +39,7 @@ type Genre {
 }
 
 type State {
-  name: String
+  name: String!
 }
 
 interface Person {
