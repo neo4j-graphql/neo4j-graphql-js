@@ -21,6 +21,8 @@ import {
   lowFirstLetter,
   isTemporalType
 } from './utils';
+import _ from 'lodash';
+import clonedeep from 'lodash/clonedeep';
 
 export const augmentTypeMap = (typeMap, config) => {
   const types = Object.keys(typeMap);
@@ -235,7 +237,6 @@ const possiblyAddTypeInput = ({
       let fieldName = '';
       let valueType = {};
       let valueTypeName = '';
-      let isRequired = false;
       const fields = astNode.fields;
       // The .data arg on add relation mutations, 
       // which is the only arg in the API that uses
@@ -259,11 +260,13 @@ const possiblyAddTypeInput = ({
         toName
       });
       if (hasSomePropertyField && shouldCreateRelationInput) {
+        let field = {};
         typeMap[inputName] = parse(`input ${inputName} {${
           fields.reduce((acc, t) => {
             fieldName = t.name.value;
             valueTypeName = getNamedType(t).name.value;
             valueType = typeMap[valueTypeName];
+            field = clonedeep(t);
             if(
               fieldName !== '_id' &&
               fieldName !== 'to' &&
@@ -274,8 +277,9 @@ const possiblyAddTypeInput = ({
                 isKind(valueType, 'ScalarTypeDefinition') ||
                 isTemporalType(valueTypeName))
             ) {
-               // TODO simplify...
-               acc.push(print(convertFieldToInputDefinition(t)));
+               field.kind = "InputValueDefinition";
+               field.type = transformManagedFieldTypes(field.type);             
+               acc.push(print(field));
             }
             return acc;
           }, [])
@@ -658,14 +662,6 @@ const createOrderingFields = (fields, typeMap) => {
   }, []);
 };
 
-const convertFieldToInputDefinition = (t) => {
-  const printed = print(t);
-  const parsed = parseFieldSdl(printed);
-  parsed.kind = "InputValueDefinition";
-  parsed.type = transformManagedFieldTypes(parsed.type);
-  return parsed;
-}
-
 const transformManagedFieldTypes = (type) => {
   if(type.kind !== "NamedType") {
     type.type = transformManagedFieldTypes(type.type);
@@ -689,6 +685,7 @@ const buildAllFieldArguments = (namePrefix, astNode, typeMap) => {
   switch (namePrefix) {
     case 'Create': {
       let firstIdField = undefined;
+      let field = {};
       astNode.fields.reduce((acc, t) => {
         type = getNamedType(t);
         fieldName = t.name.value;
@@ -703,6 +700,7 @@ const buildAllFieldArguments = (namePrefix, astNode, typeMap) => {
           isKind(valueType, 'ScalarTypeDefinition')))
         ) {
           const isNonNullable = isNonNullType(t);
+          field = clonedeep(t);
           if (isNonNullable) {
             const isList = isListType(t);
             // Don't require the first ID field discovered
@@ -727,10 +725,14 @@ const buildAllFieldArguments = (namePrefix, astNode, typeMap) => {
               };
               acc.push(idField);
             } else {
-              acc.push(convertFieldToInputDefinition(t));
+              field.kind = "InputValueDefinition";
+              field.type = transformManagedFieldTypes(field.type);
+              acc.push(field);
             }
           } else {
-            acc.push(convertFieldToInputDefinition(t));
+            field.kind = "InputValueDefinition";
+            field.type = transformManagedFieldTypes(field.type);
+            acc.push(field);
           }
         }
         return acc;
@@ -749,12 +751,13 @@ const buildAllFieldArguments = (namePrefix, astNode, typeMap) => {
         `);
         parsedPrimaryKeyField.kind = "InputValueDefinition";
         augmentedFields.push(parsedPrimaryKeyField);
-
+        let field = {};
         astNode.fields.reduce((acc, t) => {
           type = getNamedType(t);
           fieldName = t.name.value;
           valueTypeName = type.name.value;
           valueType = typeMap[valueTypeName];
+          field = clonedeep(t);
           if (
             fieldName !== primaryKeyName &&
             fieldName !== '_id' &&
@@ -764,11 +767,13 @@ const buildAllFieldArguments = (namePrefix, astNode, typeMap) => {
               isKind(valueType, 'ScalarTypeDefinition')) ||
               isTemporalType(valueTypeName)
           ) {
-            if(isNonNullType(t)) {
+            if(isNonNullType(field)) {
               // Don't require update fields, that wouldn't be very flexible
-              t.type = t.type.type;
+              field.type = field.type.type;
             }
-            acc.push(convertFieldToInputDefinition(t));
+            field.kind = "InputValueDefinition";
+            field.type = transformManagedFieldTypes(field.type);
+            acc.push(field);
           }
           return acc;
         }, augmentedFields);
