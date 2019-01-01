@@ -3661,7 +3661,7 @@ test('Cypher array queries', t => {
     expectedCypherQuery =
       'MATCH (`movie`:`Movie` ) WHERE `movie`.`year` IN $year RETURN `movie` { .title } AS `movie` SKIP $offset';
 
-  t.plan(2);
+  t.plan(3);
   return Promise.all([
     cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery, {
       year: [1999],
@@ -3685,11 +3685,37 @@ test('Cypher array sub queries', t => {
     expectedCypherQuery =
       'MATCH (`movie`:`Movie` ) WHERE `movie`.`year` IN $year RETURN `movie` { .title ,actors: [(`movie`)<-[:`ACTED_IN`]-(`movie_actors`:`Actor`{names:$1_names})WHERE `movie_actors`.`names` IN $1_names | movie_actors { .name }] } AS `movie` SKIP $offset';
 
-  t.plan(2);
+  t.plan(3);
   return Promise.all([
     cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery, {
       year: [1998],
       '1_names': ['Jeff Bridges', 'John Goodman'],
+      first: -1,
+      offset: 0
+    }),
+    augmentedSchemaCypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery)
+  ]);
+});
+
+test('Create node with non-null field', t => {
+  const graphQLQuery = `mutation {
+    CreateState(
+      name: "California"
+    ) {
+      name
+    }
+  }`,
+    expectedCypherQuery = `
+    CREATE (\`state\`:\`State\` {name:$params.name})
+    RETURN \`state\` { .name } AS \`state\`
+  `;
+
+  t.plan(3);
+  return Promise.all([
+    cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery, {
+      params: { 
+        name: 'California' 
+      }, 
       first: -1,
       offset: 0
     }),
