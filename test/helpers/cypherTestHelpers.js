@@ -21,6 +21,7 @@ export function cypherTestRunner(
 type Mutation {
     CreateGenre(name: String): Genre @cypher(statement: "CREATE (g:Genre) SET g.name = $name RETURN g")
     CreateMovie(movieId: ID, title: String, year: Int, plot: String, poster: String, imdbRating: Float): Movie
+    CreateState(name: String!): State
     UpdateMovie(movieId: ID!, title: String, year: Int, plot: String, poster: String, imdbRating: Float): Movie
     DeleteMovie(movieId: ID!): Movie
 }
@@ -77,6 +78,12 @@ type Mutation {
         t.deepEqual(queryParams, expectedCypherParams);
         t.end();
       },
+      CreateState(object, params, ctx, resolveInfo) {
+        const [query, queryParams] = cypherMutation(params, ctx, resolveInfo);
+        t.is(query, expectedCypherQuery);
+        t.deepEqual(queryParams, expectedCypherParams);
+        t.end();
+      },
       UpdateMovie(object, params, ctx, resolveInfo) {
         const [query, queryParams] = cypherMutation(params, ctx, resolveInfo);
         t.is(query, expectedCypherQuery);
@@ -128,6 +135,11 @@ export function augmentedSchemaCypherTestRunner(
         t.is(query, expectedCypherQuery);
         t.deepEqual(queryParams, expectedCypherParams);
       },
+      MoviesByYears(object, params, ctx, resolveInfo) {
+        let [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
+        t.is(query, expectedCypherQuery);
+        t.deepEqual(queryParams, expectedCypherParams);
+      },
       MovieById(object, params, ctx, resolveInfo) {
         let [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
         t.is(query, expectedCypherQuery);
@@ -156,6 +168,12 @@ export function augmentedSchemaCypherTestRunner(
     },
     Mutation: {
       CreateMovie(object, params, ctx, resolveInfo) {
+        const [query, queryParams] = cypherMutation(params, ctx, resolveInfo);
+        t.is(query, expectedCypherQuery);
+        t.deepEqual(queryParams, expectedCypherParams);
+        t.end();
+      },
+      CreateState(object, params, ctx, resolveInfo) {
         const [query, queryParams] = cypherMutation(params, ctx, resolveInfo);
         t.is(query, expectedCypherQuery);
         t.deepEqual(queryParams, expectedCypherParams);
