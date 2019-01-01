@@ -467,7 +467,7 @@ type Mutation {
   DeleteActor(userId: ID!): Actor
   AddActorMovies(from: _ActorInput!, to: _MovieInput!): _AddActorMoviesPayload
   RemoveActorMovies(from: _ActorInput!, to: _MovieInput!): _RemoveActorMoviesPayload
-  CreateState(name: String): State
+  CreateState(name: String!): State
   DeleteState(name: String!): State
   CreateUser(userId: ID, name: String): User
   UpdateUser(userId: ID!, name: String): User
@@ -520,7 +520,7 @@ type Rated {
 }
 
 type State {
-  name: String
+  name: String!
   _id: String
 }
 
