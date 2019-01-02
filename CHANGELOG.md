@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.1.1
+
+- [Support for array (sub)query parameters](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/163)
+- [Fix breaks interfaces with non-null fields](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/167)
+
 ## 2.1.0
 
 - [Support for temporal fields on relationships](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/161)
