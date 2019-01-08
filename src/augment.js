@@ -154,10 +154,14 @@ const augmentQueryArguments = (typeMap, config, queryType) => {
   return typeMap;
 };
 
-export const augmentResolvers = (augmentedTypeMap, resolvers) => {
+export const augmentResolvers = (augmentedTypeMap, resolvers, config) => {
   let queryResolvers = resolvers && resolvers.Query ? resolvers.Query : {};
   const generatedQueryMap = createOperationMap(augmentedTypeMap.Query);
-  queryResolvers = possiblyAddResolvers(generatedQueryMap, queryResolvers);
+  queryResolvers = possiblyAddResolvers(
+    generatedQueryMap,
+    queryResolvers,
+    config
+  );
   if (Object.keys(queryResolvers).length > 0) {
     resolvers.Query = queryResolvers;
   }
@@ -166,7 +170,8 @@ export const augmentResolvers = (augmentedTypeMap, resolvers) => {
   const generatedMutationMap = createOperationMap(augmentedTypeMap.Mutation);
   mutationResolvers = possiblyAddResolvers(
     generatedMutationMap,
-    mutationResolvers
+    mutationResolvers,
+    config
   );
   if (Object.keys(mutationResolvers).length > 0) {
     resolvers.Mutation = mutationResolvers;
@@ -210,13 +215,15 @@ export const possiblyAddArgument = (args, fieldName, fieldType) => {
   return args;
 };
 
-const possiblyAddResolvers = (operationTypeMap, resolvers) => {
+const possiblyAddResolvers = (operationTypeMap, resolvers, config) => {
   let operationName = '';
   return Object.keys(operationTypeMap).reduce((acc, t) => {
     // if no resolver provided for this operation type field
     operationName = operationTypeMap[t].name.value;
     if (acc[operationName] === undefined) {
-      acc[operationName] = neo4jgraphql;
+      acc[operationName] = function(...args) {
+        return neo4jgraphql(...args, config.debug);
+      };
     }
     return acc;
   }, resolvers);
