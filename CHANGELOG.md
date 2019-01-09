@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.2.0
+
+-[Add debug config option to disable logging](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/170)
+
 ## 2.1.1
 
 - [Support for array (sub)query parameters](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/163)
