@@ -10,7 +10,7 @@ import {
 
 export const augmentedSchema = (typeMap, resolvers, config) => {
   const augmentedTypeMap = augmentTypeMap(typeMap, config);
-  const augmentedResolvers = augmentResolvers(augmentedTypeMap, resolvers);
+  const augmentedResolvers = augmentResolvers(augmentedTypeMap, resolvers, config);
   return makeExecutableSchema({
     typeDefs: printTypeMap(augmentedTypeMap),
     resolvers: augmentedResolvers,
@@ -34,7 +34,7 @@ export const makeAugmentedExecutableSchema = ({
 }) => {
   const typeMap = extractTypeMapFromTypeDefs(typeDefs);
   const augmentedTypeMap = augmentTypeMap(typeMap, config);
-  const augmentedResolvers = augmentResolvers(augmentedTypeMap, resolvers);
+  const augmentedResolvers = augmentResolvers(augmentedTypeMap, resolvers, config);
   resolverValidationOptions.requireResolversForResolveType = false;
   return makeExecutableSchema({
     typeDefs: printTypeMap(augmentedTypeMap),

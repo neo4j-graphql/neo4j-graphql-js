@@ -98,7 +98,12 @@ export function cypherMutation(
   });
 }
 
-export const augmentSchema = (schema, config) => {
+export const augmentSchema = (schema, config = {
+  query: true,
+  mutation: true,
+  temporal: true,
+  debug: true
+}) => {
   const typeMap = extractTypeMapFromSchema(schema);
   const resolvers = extractResolversFromSchema(schema);
   return augmentedSchema(typeMap, resolvers, config);
@@ -118,7 +123,8 @@ export const makeAugmentedSchema = ({
   config = {
     query: true,
     mutation: true,
-    temporal: true
+    temporal: true,
+    debug: true
   }
 }) => {
   if (schema) {
