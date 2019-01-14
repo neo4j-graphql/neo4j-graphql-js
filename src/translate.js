@@ -549,7 +549,7 @@ const customQuery = ({
   });
   const query = `WITH apoc.cypher.runFirstColumn("${
     cypherQueryArg.value.value
-  }", ${argString}, True) AS x UNWIND x AS ${safeVariableName}
+  }", ${argString || 'null'}, True) AS x UNWIND x AS ${safeVariableName}
     RETURN ${safeVariableName} {${subQuery}} AS ${safeVariableName}${orderByValue} ${outerSkipLimit}`;
   return [query, params];
 };
