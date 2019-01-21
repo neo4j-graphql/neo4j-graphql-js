@@ -29,6 +29,7 @@ export const testSchema = `type Movie {
   titles: [String]
   imdbRatings: [Float]
   releases: [DateTime]
+  customField: String
 }
 
 type Genre {
@@ -39,6 +40,7 @@ type Genre {
 }
 
 type State {
+  customField: String @neo4j_ignore
   name: String!
 }
 
@@ -126,6 +128,7 @@ type Query {
   MovieById(movieId: ID!): Movie
   MovieBy_Id(_id: String!): Movie
   GenresBySubstring(substring: String): [Genre] @cypher(statement: "MATCH (g:Genre) WHERE toLower(g.name) CONTAINS toLower($substring) RETURN g")
+  State: [State]
   Books: [Book]
 }
 
@@ -144,6 +147,10 @@ type TemporalNode {
     localtime: LocalTime,
     localdatetime: LocalDateTime
   ): [TemporalNode] @relation(name: "TEMPORAL", direction: OUT)
+}
+
+type ignoredType {
+  ignoredField: String @neo4j_ignore
 }
 
 scalar Time
