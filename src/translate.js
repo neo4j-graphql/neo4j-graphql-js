@@ -90,8 +90,9 @@ export const relationFieldOnNodeType = ({
   tailParams,
   temporalClauses
 }) => {
-  const arrayFilterParams = _.pickBy(filterParams, param =>
-    Array.isArray(param.value)
+  const arrayFilterParams = _.pickBy(
+    filterParams,
+    (param, keyName) => Array.isArray(param.value) && !('orderBy' === keyName)
   );
 
   const allParams = innerFilterParams(filterParams, temporalArgs);
