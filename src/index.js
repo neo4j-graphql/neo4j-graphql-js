@@ -13,13 +13,10 @@ import {
   extractResolversFromSchema,
   augmentedSchema,
   makeAugmentedExecutableSchema,
-} from './augmentSchema';
-import { addTemporalTypes } from './augment';
+  addTemporalTypes
+} from './augment';
 import { checkRequestError } from './auth';
-import {
-  translateMutation,
-  translateQuery
-} from './translate';
+import { translateMutation, translateQuery } from './translate';
 
 export async function neo4jgraphql(
   object,
@@ -89,7 +86,7 @@ export function cypherMutation(
   return translateMutation({
     resolveInfo,
     schemaType,
-    selections, 
+    selections,
     variableName,
     typeName,
     first,
@@ -98,12 +95,15 @@ export function cypherMutation(
   });
 }
 
-export const augmentSchema = (schema, config = {
-  query: true,
-  mutation: true,
-  temporal: true,
-  debug: true
-}) => {
+export const augmentSchema = (
+  schema,
+  config = {
+    query: true,
+    mutation: true,
+    temporal: true,
+    debug: true
+  }
+) => {
   const typeMap = extractTypeMapFromSchema(schema);
   const resolvers = extractResolversFromSchema(schema);
   return augmentedSchema(typeMap, resolvers, config);
@@ -152,4 +152,4 @@ export const augmentTypeDefs = (typeDefs, config) => {
   // adds managed types; tepmoral, spatial, etc.
   typeMap = addTemporalTypes(typeMap, config);
   return printTypeMap(typeMap);
-}
+};
