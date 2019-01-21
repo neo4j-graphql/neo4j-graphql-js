@@ -72,7 +72,7 @@ type Book {
 }
 
 type Query {
-  Movie(movieId: ID, title: String, year: Int, plot: String, poster: String, imdbRating: Float, first: Int, offset: Int, orderBy: _MovieOrdering): [Movie]  MoviesByYear(year: Int, first: Int = 10, offset: Int = 0): [Movie]
+  Movie(movieId: ID, title: String, year: Int, plot: String, poster: String, imdbRating: Float): [Movie]  MoviesByYear(year: Int, first: Int = 10, offset: Int = 0): [Movie]
   AllMovies: [Movie]
   MovieById(movieId: ID!): Movie
   GenresBySubstring(substring: String): [Genre] @cypher(statement: "MATCH (g:Genre) WHERE toLower(g.name) CONTAINS toLower($substring) RETURN g")
