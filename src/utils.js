@@ -301,24 +301,31 @@ export function computeSkipLimit(selection, variableValues) {
   return `[${offset}..${parseInt(offset) + parseInt(first)}]`;
 }
 
+function orderByStatement(resolveInfo, orderByVar) {
+  const splitIndex = orderByVar.lastIndexOf('_');
+  const order = orderByVar.substring(splitIndex + 1);
+  const orderBy = orderByVar.substring(0, splitIndex);
+  const { variableName } = typeIdentifiers(resolveInfo.returnType);
+  return ` ${variableName}.${orderBy} ${order === 'asc' ? 'ASC' : 'DESC'} `;
+}
+
 export const computeOrderBy = (resolveInfo, selection) => {
-  const orderByVar = argumentValue(
+  const orderByArgs = argumentValue(
     resolveInfo.operation.selectionSet.selections[0],
     'orderBy',
     resolveInfo.variableValues
   );
 
-  if (orderByVar == undefined) {
+  if (orderByArgs == undefined) {
     return '';
-  } else {
-    const splitIndex = orderByVar.lastIndexOf('_');
-    const order = orderByVar.substring(splitIndex + 1);
-    const orderBy = orderByVar.substring(0, splitIndex);
-    const { variableName } = typeIdentifiers(resolveInfo.returnType);
-    return ` ORDER BY ${variableName}.${orderBy} ${
-      order === 'asc' ? 'ASC' : 'DESC'
-    } `;
   }
+
+  const orderByArray = Array.isArray(orderByArgs) ? orderByArgs : [orderByArgs];
+  const orderByStatments = orderByArray.map(orderByVar =>
+    orderByStatement(resolveInfo, orderByVar)
+  );
+
+  return ' ORDER BY' + orderByStatments.join(',');
 };
 
 export const possiblySetFirstId = ({ args, statements, params }) => {
