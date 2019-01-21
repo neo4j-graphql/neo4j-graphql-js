@@ -11,6 +11,8 @@ directive @relation(name: String, direction: _RelationDirections, from: String, 
 
 directive @MutationMeta(relationship: String, from: String, to: String) on FIELD_DEFINITION
 
+directive @neo4j_ignore on FIELD_DEFINITION
+
 input _ActorInput {
   userId: ID!
 }
@@ -416,6 +418,10 @@ type Genre {
   highestRatedMovie: Movie
 }
 
+type ignoredType {
+  ignoredField: String
+}
+
 scalar LocalDateTime
 
 scalar LocalTime
@@ -444,6 +450,7 @@ type Movie {
   titles: [String]
   imdbRatings: [Float]
   releases: [_Neo4jDateTime]
+  customField: String
 }
 
 type Mutation {
@@ -497,10 +504,10 @@ type Query {
   MovieById(movieId: ID!): Movie
   MovieBy_Id(_id: String!): Movie
   GenresBySubstring(substring: String, first: Int, offset: Int, orderBy: _GenreOrdering): [Genre]
+  State(first: Int, offset: Int, orderBy: _StateOrdering): [State]
   Books(first: Int, offset: Int, orderBy: _BookOrdering): [Book]
   Genre(_id: String, name: String, first: Int, offset: Int, orderBy: _GenreOrdering): [Genre]
   Actor(userId: ID, name: String, _id: String, first: Int, offset: Int, orderBy: _ActorOrdering): [Actor]
-  State(name: String, _id: String, first: Int, offset: Int, orderBy: _StateOrdering): [State]
   User(userId: ID, name: String, _id: String, first: Int, offset: Int, orderBy: _UserOrdering): [User]
   Book(genre: BookGenre, _id: String, first: Int, offset: Int, orderBy: _BookOrdering): [Book]
   TemporalNode(datetime: _Neo4jDateTimeInput, name: String, time: _Neo4jTimeInput, date: _Neo4jDateInput, localtime: _Neo4jLocalTimeInput, localdatetime: _Neo4jLocalDateTimeInput, localdatetimes: _Neo4jLocalDateTimeInput, _id: String, first: Int, offset: Int, orderBy: _TemporalNodeOrdering): [TemporalNode]
@@ -520,6 +527,7 @@ type Rated {
 }
 
 type State {
+  customField: String
   name: String!
   _id: String
 }
