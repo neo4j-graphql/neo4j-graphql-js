@@ -2,12 +2,14 @@ import {
   cypherQuery,
   cypherMutation,
   augmentSchema,
-  makeAugmentedSchema,
   augmentTypeDefs
 } from '../../dist/index';
+import { printTypeMap, extractTypeMapFromTypeDefs } from '../../dist/utils';
+import { augmentTypeMap } from '../../dist/augment';
 import { graphql } from 'graphql';
 import { makeExecutableSchema } from 'graphql-tools';
 import { testSchema } from './testSchema';
+
 export function cypherTestRunner(
   t,
   graphqlQuery,
@@ -63,6 +65,11 @@ type Mutation {
         const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
         t.is(query, expectedCypherQuery);
         t.deepEqual(queryParams, expectedCypherParams);
+      },
+      State(object, params, ctx, resolveInfo) {
+        const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
+        t.is(query, expectedCypherQuery);
+        t.deepEqual(queryParams, expectedCypherParams);
       }
     },
     Mutation: {
@@ -111,13 +118,30 @@ type Mutation {
   return graphql(schema, graphqlQuery, null, null, graphqlParams);
 }
 
+// Optimization to prevent schema augmentation from running for every test
+const typeMap = extractTypeMapFromTypeDefs(testSchema);
+const augmentedTypeMap = augmentTypeMap(typeMap, {
+  // These custom field resolvers exist only for generating
+  // @neo4j_ignore directives used in a few tests
+  Movie: {
+    customField(object, params, ctx, resolveInfo) {
+      return '';
+    }
+  },
+  State: {
+    customField(object, params, ctx, resolveInfo) {
+      return '';
+    }
+  }
+});
+const augmentedSchemaCypherTestRunnerTypeDefs = printTypeMap(augmentedTypeMap);
+
 export function augmentedSchemaCypherTestRunner(
   t,
   graphqlQuery,
   graphqlParams,
   expectedCypherQuery
 ) {
-  //t.plan(1);
   const resolvers = {
     Query: {
       User(object, params, ctx, resolveInfo) {
@@ -162,6 +186,11 @@ export function augmentedSchemaCypherTestRunner(
       },
       TemporalNode(object, params, ctx, resolveInfo) {
         let [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
+        t.is(query, expectedCypherQuery);
+        t.deepEqual(queryParams, expectedCypherParams);
+      },
+      State(object, params, ctx, resolveInfo) {
+        const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
         t.is(query, expectedCypherQuery);
         t.deepEqual(queryParams, expectedCypherParams);
       }
@@ -248,8 +277,8 @@ export function augmentedSchemaCypherTestRunner(
     }
   };
 
-  const augmentedSchema = makeAugmentedSchema({
-    typeDefs: testSchema,
+  const augmentedSchema = makeExecutableSchema({
+    typeDefs: augmentedSchemaCypherTestRunnerTypeDefs,
     resolvers,
     resolverValidationOptions: {
       requireResolversForResolveType: false
@@ -259,15 +288,26 @@ export function augmentedSchemaCypherTestRunner(
   return graphql(augmentedSchema, graphqlQuery, null, null, graphqlParams);
 }
 
+const augmentedSchemaTypeDefs = augmentTypeDefs(testSchema);
+
 export function augmentedSchema() {
   const schema = makeExecutableSchema({
-    typeDefs: augmentTypeDefs(testSchema),
-    //resolvers,
+    typeDefs: augmentedSchemaTypeDefs,
+    resolvers: {
+      Movie: {
+        customField(object, params, ctx, resolveInfo) {
+          return '';
+        }
+      },
+      State: {
+        customField(object, params, ctx, resolveInfo) {
+          return '';
+        }
+      }
+    },
     resolverValidationOptions: {
       requireResolversForResolveType: false
     }
   });
-
-  const augmentedSchema = augmentSchema(schema);
-  return augmentedSchema;
+  return augmentSchema(schema);
 }

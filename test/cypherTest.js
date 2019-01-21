@@ -3713,12 +3713,49 @@ test('Create node with non-null field', t => {
   t.plan(3);
   return Promise.all([
     cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery, {
-      params: { 
-        name: 'California' 
-      }, 
+      params: {
+        name: 'California'
+      },
       first: -1,
       offset: 0
     }),
+    augmentedSchemaCypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery)
+  ]);
+});
+
+test('Query node with ignored field', t => {
+  const graphQLQuery = `query {
+    State {
+      name
+      customField
+    } 
+  }`,
+    expectedCypherQuery = `MATCH (\`state\`:\`State\` ) RETURN \`state\` { .name } AS \`state\` SKIP $offset`;
+
+  t.plan(3);
+  return Promise.all([
+    cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery, {
+      first: -1,
+      offset: 0
+    }),
+    augmentedSchemaCypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery)
+  ]);
+});
+
+test('Query nested node with ignored field (inferred from resolver)', t => {
+  const graphQLQuery = `query {
+    Movie {
+      customField
+      filmedIn {
+        name
+        customField
+      }
+    }
+  }`,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\` ) RETURN \`movie\` {filmedIn: head([(\`movie\`)-[:\`FILMED_IN\`]->(\`movie_filmedIn\`:\`State\`) | movie_filmedIn { .name }]) } AS \`movie\` SKIP $offset`;
+
+  t.plan(1);
+  return Promise.all([
     augmentedSchemaCypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery)
   ]);
 });

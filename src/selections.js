@@ -17,9 +17,9 @@ import {
   isTemporalType,
   isTemporalField,
   getTemporalArguments,
-  temporalPredicateClauses
+  temporalPredicateClauses,
+  removeIgnoredFields
 } from './utils';
-
 import {
   customCypherField,
   relationFieldOnNodeType,
@@ -42,11 +42,12 @@ export function buildCypherSelection({
   if (!selections.length) {
     return [initial, {}];
   }
-
-  const filterParams = getFilterParams(
-    filtersFromSelections(selections, resolveInfo.variableValues),
-    paramIndex
+  selections = removeIgnoredFields(schemaType, selections);
+  const selectionFilters = filtersFromSelections(
+    selections,
+    resolveInfo.variableValues
   );
+  const filterParams = getFilterParams(selectionFilters, paramIndex);
   const shallowFilterParams = Object.entries(filterParams).reduce(
     (result, [key, value]) => {
       result[`${value.index}_${key}`] = value.value;
@@ -79,27 +80,27 @@ export function buildCypherSelection({
   let fieldName;
   let isInlineFragment = false;
   let interfaceLabel;
-
-  if (headSelection.kind === 'InlineFragment') {
-    // get selections for the fragment and recurse on those
-    const fragmentSelections = headSelection.selectionSet.selections;
-
-    let fragmentTailParams = {
-      selections: fragmentSelections,
-      variableName,
-      schemaType,
-      resolveInfo,
-      parentSelectionInfo,
-      secondParentSelectionInfo
-    };
-    return recurse({
-      initial: fragmentSelections.length
-        ? initial
-        : initial.substring(0, initial.lastIndexOf(',')),
-      ...fragmentTailParams
-    });
-  } else {
-    fieldName = headSelection.name.value;
+  if (headSelection) {
+    if (headSelection.kind === 'InlineFragment') {
+      // get selections for the fragment and recurse on those
+      const fragmentSelections = headSelection.selectionSet.selections;
+      let fragmentTailParams = {
+        selections: fragmentSelections,
+        variableName,
+        schemaType,
+        resolveInfo,
+        parentSelectionInfo,
+        secondParentSelectionInfo
+      };
+      return recurse({
+        initial: fragmentSelections.length
+          ? initial
+          : initial.substring(0, initial.lastIndexOf(',')),
+        ...fragmentTailParams
+      });
+    } else {
+      fieldName = headSelection.name.value;
+    }
   }
 
   const commaIfTail = tailSelections.length > 0 ? ',' : '';

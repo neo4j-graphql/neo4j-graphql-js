@@ -19,15 +19,17 @@ import {
   getMutationArguments,
   possiblySetFirstId,
   buildCypherParameters,
-  temporalPredicateClauses,
   getQueryArguments,
-  getTemporalArguments,
   initializeMutationParams,
   getMutationCypherDirective,
   isNodeType,
   getRelationTypeDirectiveArgs,
   isRelationTypeDirectedField,
-  isRootSelection
+  isRelationTypePayload,
+  isRootSelection,
+  splitSelectionParameters,
+  getTemporalArguments,
+  temporalPredicateClauses
 } from './utils';
 import { getNamedType } from 'graphql';
 import { buildCypherSelection } from './selections';
@@ -88,8 +90,9 @@ export const relationFieldOnNodeType = ({
   tailParams,
   temporalClauses
 }) => {
-  const arrayFilterParams = _.pickBy(filterParams, param =>
-    Array.isArray(param.value)
+  const arrayFilterParams = _.pickBy(
+    filterParams,
+    (param, keyName) => Array.isArray(param.value) && !('orderBy' === keyName)
   );
 
   const allParams = innerFilterParams(filterParams, temporalArgs);
@@ -328,16 +331,6 @@ const directedNodeTypeFieldOnRelationType = ({
   }
 };
 
-const isRelationTypePayload = schemaType => {
-  const astNode = schemaType ? schemaType.astNode : undefined;
-  const directive = astNode ? getRelationTypeDirectiveArgs(astNode) : undefined;
-  return astNode && astNode.fields && directive
-    ? astNode.fields.find(e => {
-        return e.name.value === directive.from || e.name.value === directive.to;
-      })
-    : undefined;
-};
-
 export const temporalField = ({
   initial,
   fieldName,
@@ -549,7 +542,7 @@ const customQuery = ({
   });
   const query = `WITH apoc.cypher.runFirstColumn("${
     cypherQueryArg.value.value
-  }", ${argString}, True) AS x UNWIND x AS ${safeVariableName}
+  }", ${argString || 'null'}, True) AS x UNWIND x AS ${safeVariableName}
     RETURN ${safeVariableName} {${subQuery}} AS ${safeVariableName}${orderByValue} ${outerSkipLimit}`;
   return [query, params];
 };
@@ -760,37 +753,6 @@ const nodeCreate = ({
     RETURN ${safeVariableName} {${subQuery}} AS ${safeVariableName}
   `;
   return [query, params];
-};
-
-const splitSelectionParameters = (params, primaryKeyArgName, paramKey) => {
-  const paramKeys = paramKey
-    ? Object.keys(params[paramKey])
-    : Object.keys(params);
-  const [primaryKeyParam, updateParams] = paramKeys.reduce(
-    (acc, t) => {
-      if (t === primaryKeyArgName) {
-        if (paramKey) {
-          acc[0][t] = params[paramKey][t];
-        } else {
-          acc[0][t] = params[t];
-        }
-      } else {
-        if (paramKey) {
-          if (acc[1][paramKey] === undefined) acc[1][paramKey] = {};
-          acc[1][paramKey][t] = params[paramKey][t];
-        } else {
-          acc[1][t] = params[t];
-        }
-      }
-      return acc;
-    },
-    [{}, {}]
-  );
-  const first = params.first;
-  const offset = params.offset;
-  if (first !== undefined) updateParams['first'] = first;
-  if (offset !== undefined) updateParams['offset'] = offset;
-  return [primaryKeyParam, updateParams];
 };
 
 const nodeUpdate = ({
