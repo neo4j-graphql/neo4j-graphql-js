@@ -3597,6 +3597,26 @@ test('Query nested list properties on relationship', t => {
   );
 });
 
+test('UUID value generated if no id value provided', t => {
+  const graphQLQuery = `mutation {
+    CreateMovie(title: "Yo Dawg") {
+      title
+    }
+  }`,
+    expectedCypherQuery = `
+    CREATE (\`movie\`:\`Movie\` {movieId: apoc.create.uuid(),title:$params.title})
+    RETURN \`movie\` { .title } AS \`movie\`
+  `;
+
+  t.plan(1);
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {},
+    expectedCypherQuery
+  );
+});
+
 test('Create node with list arguments', t => {
   const graphQLQuery = `mutation {
     CreateMovie(
