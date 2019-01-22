@@ -545,7 +545,7 @@ test('Handle @cypher directive on Query Type', t => {
   }
 }
   `,
-    expectedCypherQuery = `WITH apoc.cypher.runFirstColumn("MATCH (g:Genre) WHERE toLower(g.name) CONTAINS toLower($substring) RETURN g", {substring:$substring}, True) AS x UNWIND x AS \`genre\`
+    expectedCypherQuery = `WITH apoc.cypher.runFirstColumn("MATCH (g:Genre) WHERE toLower(g.name) CONTAINS toLower($substring) RETURN g", {offset:$offset, first:$first, substring:$substring}, True) AS x UNWIND x AS \`genre\`
     RETURN \`genre\` { .name ,movies: [(\`genre\`)<-[:\`IN_GENRE\`]-(\`genre_movies\`:\`Movie\`) | genre_movies { .title }][..3] } AS \`genre\` SKIP $offset`;
 
   t.plan(3);
@@ -566,7 +566,7 @@ test.cb('Handle @cypher directive on Mutation type', t => {
     name
   }
 }`,
-    expectedCypherQuery = `CALL apoc.cypher.doIt("CREATE (g:Genre) SET g.name = $name RETURN g", {name:$name}) YIELD value
+    expectedCypherQuery = `CALL apoc.cypher.doIt("CREATE (g:Genre) SET g.name = $name RETURN g", {name:$name, first:$first, offset:$offset}) YIELD value
     WITH apoc.map.values(value, [keys(value)[0]])[0] AS \`genre\`
     RETURN \`genre\` { .name } AS \`genre\` SKIP $offset`;
 

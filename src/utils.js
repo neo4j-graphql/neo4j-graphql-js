@@ -291,20 +291,26 @@ export function getFilterParams(filters, index) {
   }, {});
 }
 
-export function innerFilterParams(filters, temporalArgs, paramKey) {
+export function innerFilterParams(
+  filters,
+  temporalArgs,
+  paramKey,
+  cypherDirective
+) {
   const temporalArgNames = temporalArgs
     ? temporalArgs.reduce((acc, t) => {
         acc.push(t.name.value);
         return acc;
       }, [])
     : [];
+  // don't exclude first, offset, orderBy args for cypher directives
+  const excludedKeys = cypherDirective ? [] : ['first', 'offset', 'orderBy'];
 
   return Object.keys(filters).length > 0
     ? Object.entries(filters)
         // exclude temporal arguments
         .filter(
-          ([key]) =>
-            !['first', 'offset', 'orderBy', ...temporalArgNames].includes(key)
+          ([key]) => ![...excludedKeys, ...temporalArgNames].includes(key)
         )
         .map(([key, value]) => {
           return { key, paramKey, value };
