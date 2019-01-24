@@ -8,6 +8,7 @@
     "start-middleware": "nodemon ./example/apollo-server/movies-middleware.js --exec babel-node -e js",
     "start-typedefs": "nodemon ./example/apollo-server/movies-typedefs.js --exec babel-node -e js",
     "build": "babel src --presets babel-preset-env --out-dir dist",
+    "build-with-sourcemaps": "babel src --presets babel-preset-env --out-dir dist --source-maps",
     "precommit": "lint-staged",
     "prepublish": "npm run build",
     "pretest": "npm run build",
