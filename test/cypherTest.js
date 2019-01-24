@@ -1303,6 +1303,62 @@ test('orderBy test - descending, top level - augmented schema', t => {
   );
 });
 
+test('orderBy test - descending, - selection query', t => {
+  const graphQLQuery = `{
+    Movie(year: 2010, first: 10) {
+      title
+      actors(first:3, orderBy:name_desc ) {
+        name
+      }
+    }
+  }
+  `,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\` {year:$year}) RETURN \`movie\` { .title ,actors: apoc.coll.sortMaps([(\`movie\`)<-[:\`ACTED_IN\`]-(\`movie_actors\`:\`Actor\`) | movie_actors { .name }], "name")[..3] } AS \`movie\` SKIP $offset LIMIT $first`;
+
+  t.plan(1);
+
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {},
+    expectedCypherQuery,
+    {
+      offset: 0,
+      first: 10,
+      year: 2010,
+      '1_first': 3
+    }
+  );
+});
+
+test('orderBy test - ascending, - top level and selection query', t => {
+  const graphQLQuery = `{
+    Movie(year: 2010, first: 10, orderBy: title_asc) {
+      title
+      actors(first:3, orderBy:name_asc ) {
+        name
+      }
+    }
+  }
+  `,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\` {year:$year}) RETURN \`movie\` { .title ,actors: apoc.coll.sortMaps([(\`movie\`)<-[:\`ACTED_IN\`]-(\`movie_actors\`:\`Actor\`) | movie_actors { .name }], "^name")[..3] } AS \`movie\` ORDER BY movie.title ASC  SKIP $offset LIMIT $first`;
+
+  t.plan(1);
+
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {},
+    expectedCypherQuery,
+    {
+      offset: 0,
+      first: 10,
+      year: 2010,
+      '1_first': 3
+    }
+  );
+});
+
 test('query for relationship properties', t => {
   const graphQLQuery = `{
     Movie(title: "River Runs Through It, A") {

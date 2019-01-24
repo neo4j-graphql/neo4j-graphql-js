@@ -11,6 +11,7 @@ import {
   isRemoveMutation,
   isDeleteMutation,
   computeOrderBy,
+  withOrderBySelection,
   innerFilterParams,
   paramsToString,
   filterNullParams,
@@ -95,6 +96,14 @@ export const relationFieldOnNodeType = ({
     (param, keyName) => Array.isArray(param.value) && !('orderBy' === keyName)
   );
 
+  const orderByParam = filterParams['orderBy'];
+  let orderByArg;
+  if (orderByParam !== undefined) {
+    orderByArg = Array.isArray(orderByParam.value)
+      ? orderByParam.value[0]
+      : orderByParam.value;
+  }
+
   const allParams = innerFilterParams(filterParams, temporalArgs);
 
   const queryParams = paramsToString(
@@ -111,22 +120,28 @@ export const relationFieldOnNodeType = ({
   });
 
   const whereClauses = [...temporalClauses, ...arrayPredicates];
+
+  const patternComprehension = `[(${safeVar(variableName)})${
+    relDirection === 'in' || relDirection === 'IN' ? '<' : ''
+  }-[:${safeLabel(relType)}]-${
+    relDirection === 'out' || relDirection === 'OUT' ? '>' : ''
+  }(${safeVariableName}:${safeLabel(
+    isInlineFragment ? interfaceLabel : innerSchemaType.name
+  )}${queryParams})${
+    whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : ''
+  } | ${nestedVariable} {${
+    isInlineFragment
+      ? 'FRAGMENT_TYPE: "' + interfaceLabel + '",' + subSelection[0]
+      : subSelection[0]
+  }}]`;
+
+  const statement =
+    `${initial}${fieldName}: ${!isArrayType(fieldType) ? 'head(' : ''}` +
+    withOrderBySelection(patternComprehension, orderByArg) +
+    `${!isArrayType(fieldType) ? ')' : ''}${skipLimit} ${commaIfTail}`;
+
   return {
-    initial: `${initial}${fieldName}: ${
-      !isArrayType(fieldType) ? 'head(' : ''
-    }[(${safeVar(variableName)})${
-      relDirection === 'in' || relDirection === 'IN' ? '<' : ''
-    }-[:${safeLabel(relType)}]-${
-      relDirection === 'out' || relDirection === 'OUT' ? '>' : ''
-    }(${safeVariableName}:${safeLabel(
-      isInlineFragment ? interfaceLabel : innerSchemaType.name
-    )}${queryParams})${
-      whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : ''
-    } | ${nestedVariable} {${
-      isInlineFragment
-        ? 'FRAGMENT_TYPE: "' + interfaceLabel + '",' + subSelection[0]
-        : subSelection[0]
-    }}]${!isArrayType(fieldType) ? ')' : ''}${skipLimit} ${commaIfTail}`,
+    initial: statement,
     ...tailParams
   };
 };

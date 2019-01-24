@@ -336,10 +336,29 @@ export function computeSkipLimit(selection, variableValues) {
   return `[${offset}..${parseInt(offset) + parseInt(first)}]`;
 }
 
-function orderByStatement(resolveInfo, orderByVar) {
+function splitOrderByVar(orderByVar) {
   const splitIndex = orderByVar.lastIndexOf('_');
   const order = orderByVar.substring(splitIndex + 1);
   const orderBy = orderByVar.substring(0, splitIndex);
+  return { order, orderBy };
+}
+
+export function withOrderBySelection(statement, orderByVar) {
+  // selection orderBy must be handled using apoc.coll.sortMap
+  // takes a single parameter only as multle dimensions are not supported here
+  // if undefined returns the supplied statement unmodified
+
+  if (orderByVar === undefined) {
+    return statement;
+  }
+  const { order, orderBy } = splitOrderByVar(orderByVar);
+  const direction = order === 'asc' ? '^' : '';
+
+  return `apoc.coll.sortMaps(${statement}, "${direction}${orderBy}")`;
+}
+
+function orderByStatement(resolveInfo, orderByVar) {
+  const { order, orderBy } = splitOrderByVar(orderByVar);
   const { variableName } = typeIdentifiers(resolveInfo.returnType);
   return ` ${variableName}.${orderBy} ${order === 'asc' ? 'ASC' : 'DESC'} `;
 }
