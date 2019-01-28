@@ -483,8 +483,14 @@ export const translateQuery = ({
   const filterParams = getFilterParams(nonNullParams);
   const queryArgs = getQueryArguments(resolveInfo);
   const temporalArgs = getTemporalArguments(queryArgs);
+  const queryTypeCypherDirective = getQueryCypherDirective(resolveInfo);
   const queryParams = paramsToString(
-    innerFilterParams(filterParams, temporalArgs)
+    innerFilterParams(
+      filterParams,
+      temporalArgs,
+      null,
+      queryTypeCypherDirective ? true : false
+    )
   );
   const safeVariableName = safeVar(variableName);
   const temporalClauses = temporalPredicateClauses(
@@ -494,7 +500,6 @@ export const translateQuery = ({
   );
   const outerSkipLimit = getOuterSkipLimit(first);
   const orderByValue = computeOrderBy(resolveInfo, selections);
-  const queryTypeCypherDirective = getQueryCypherDirective(resolveInfo);
   if (queryTypeCypherDirective) {
     return customQuery({
       resolveInfo,
@@ -707,7 +712,12 @@ const customMutation = ({
   const safeVariableName = safeVar(variableName);
   // FIXME: support IN for multiple values -> WHERE
   const argString = paramsToString(
-    innerFilterParams(getFilterParams(params.params || params))
+    innerFilterParams(
+      getFilterParams(params.params || params),
+      null,
+      null,
+      true
+    )
   );
   const cypherQueryArg = mutationTypeCypherDirective.arguments.find(x => {
     return x.name.value === 'statement';
