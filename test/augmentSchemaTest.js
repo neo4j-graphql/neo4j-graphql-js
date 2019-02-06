@@ -99,6 +99,8 @@ input _BookInput {
 }
 
 enum _BookOrdering {
+  genre_asc
+  genre_desc
   _id_asc
   _id_desc
 }
@@ -330,8 +332,18 @@ input _TemporalNodeInput {
 }
 
 enum _TemporalNodeOrdering {
+  datetime_asc
+  datetime_desc
   name_asc
   name_desc
+  time_asc
+  time_desc
+  date_asc
+  date_desc
+  localtime_asc
+  localtime_desc
+  localdatetime_asc
+  localdatetime_desc
   _id_asc
   _id_desc
 }
@@ -380,7 +392,7 @@ type _UserRated {
 type Actor implements Person {
   userId: ID!
   name: String
-  movies(first: Int, offset: Int, orderBy: _MovieOrdering): [Movie]
+  movies(first: Int, offset: Int, orderBy: [_MovieOrdering]): [Movie]
   _id: String
 }
 
@@ -414,7 +426,7 @@ type FriendOf {
 type Genre {
   _id: String
   name: String
-  movies(first: Int = 3, offset: Int = 0, orderBy: _MovieOrdering): [Movie]
+  movies(first: Int = 3, offset: Int = 0, orderBy: [_MovieOrdering]): [Movie]
   highestRatedMovie: Movie
 }
 
@@ -435,16 +447,16 @@ type Movie {
   plot: String
   poster: String
   imdbRating: Float
-  genres(first: Int, offset: Int, orderBy: _GenreOrdering): [Genre]
-  similar(first: Int = 3, offset: Int = 0, orderBy: _MovieOrdering): [Movie]
+  genres(first: Int, offset: Int, orderBy: [_GenreOrdering]): [Genre]
+  similar(first: Int = 3, offset: Int = 0, orderBy: [_MovieOrdering]): [Movie]
   mostSimilar: Movie
   degree: Int
-  actors(first: Int = 3, offset: Int = 0, name: String, names: [String], orderBy: _ActorOrdering): [Actor]
+  actors(first: Int = 3, offset: Int = 0, name: String, names: [String], orderBy: [_ActorOrdering]): [Actor]
   avgStars: Float
   filmedIn: State
   scaleRating(scale: Int = 3): Float
   scaleRatingFloat(scale: Float = 1.5): Float
-  actorMovies(first: Int, offset: Int, orderBy: _MovieOrdering): [Movie]
+  actorMovies(first: Int, offset: Int, orderBy: [_MovieOrdering]): [Movie]
   ratings(rating: Int, time: _Neo4jTimeInput, date: _Neo4jDateInput, datetime: _Neo4jDateTimeInput, localtime: _Neo4jLocalTimeInput, localdatetime: _Neo4jLocalDateTimeInput): [_MovieRatings]
   years: [Int]
   titles: [String]
@@ -486,7 +498,7 @@ type Mutation {
   CreateBook(genre: BookGenre): Book
   DeleteBook(genre: BookGenre!): Book
   CreateTemporalNode(datetime: _Neo4jDateTimeInput, name: String, time: _Neo4jTimeInput, date: _Neo4jDateInput, localtime: _Neo4jLocalTimeInput, localdatetime: _Neo4jLocalDateTimeInput, localdatetimes: [_Neo4jLocalDateTimeInput]): TemporalNode
-  UpdateTemporalNode(datetime: _Neo4jDateTimeInput, name: String, time: _Neo4jTimeInput, date: _Neo4jDateInput, localtime: _Neo4jLocalTimeInput, localdatetime: _Neo4jLocalDateTimeInput, localdatetimes: [_Neo4jLocalDateTimeInput]): TemporalNode
+  UpdateTemporalNode(datetime: _Neo4jDateTimeInput!, name: String, time: _Neo4jTimeInput, date: _Neo4jDateInput, localtime: _Neo4jLocalTimeInput, localdatetime: _Neo4jLocalDateTimeInput, localdatetimes: [_Neo4jLocalDateTimeInput]): TemporalNode
   DeleteTemporalNode(datetime: _Neo4jDateTimeInput!): TemporalNode
   AddTemporalNodeTemporalNodes(from: _TemporalNodeInput!, to: _TemporalNodeInput!): _AddTemporalNodeTemporalNodesPayload
   RemoveTemporalNodeTemporalNodes(from: _TemporalNodeInput!, to: _TemporalNodeInput!): _RemoveTemporalNodeTemporalNodesPayload
@@ -498,19 +510,19 @@ interface Person {
 }
 
 type Query {
-  Movie(_id: String, movieId: ID, title: String, year: Int, released: _Neo4jDateTimeInput, plot: String, poster: String, imdbRating: Float, first: Int, offset: Int, orderBy: _MovieOrdering): [Movie]
-  MoviesByYear(year: Int, first: Int, offset: Int, orderBy: _MovieOrdering): [Movie]
-  MoviesByYears(year: [Int], first: Int, offset: Int, orderBy: _MovieOrdering): [Movie]
+  Movie(_id: String, movieId: ID, title: String, year: Int, released: _Neo4jDateTimeInput, plot: String, poster: String, imdbRating: Float, first: Int, offset: Int, orderBy: [_MovieOrdering]): [Movie]
+  MoviesByYear(year: Int, first: Int, offset: Int, orderBy: [_MovieOrdering]): [Movie]
+  MoviesByYears(year: [Int], first: Int, offset: Int, orderBy: [_MovieOrdering]): [Movie]
   MovieById(movieId: ID!): Movie
   MovieBy_Id(_id: String!): Movie
-  GenresBySubstring(substring: String, first: Int, offset: Int, orderBy: _GenreOrdering): [Genre]
-  State(first: Int, offset: Int, orderBy: _StateOrdering): [State]
-  Books(first: Int, offset: Int, orderBy: _BookOrdering): [Book]
-  Genre(_id: String, name: String, first: Int, offset: Int, orderBy: _GenreOrdering): [Genre]
-  Actor(userId: ID, name: String, _id: String, first: Int, offset: Int, orderBy: _ActorOrdering): [Actor]
-  User(userId: ID, name: String, _id: String, first: Int, offset: Int, orderBy: _UserOrdering): [User]
-  Book(genre: BookGenre, _id: String, first: Int, offset: Int, orderBy: _BookOrdering): [Book]
-  TemporalNode(datetime: _Neo4jDateTimeInput, name: String, time: _Neo4jTimeInput, date: _Neo4jDateInput, localtime: _Neo4jLocalTimeInput, localdatetime: _Neo4jLocalDateTimeInput, localdatetimes: _Neo4jLocalDateTimeInput, _id: String, first: Int, offset: Int, orderBy: _TemporalNodeOrdering): [TemporalNode]
+  GenresBySubstring(substring: String, first: Int, offset: Int, orderBy: [_GenreOrdering]): [Genre]
+  State(first: Int, offset: Int, orderBy: [_StateOrdering]): [State]
+  Books(first: Int, offset: Int, orderBy: [_BookOrdering]): [Book]
+  Genre(_id: String, name: String, first: Int, offset: Int, orderBy: [_GenreOrdering]): [Genre]
+  Actor(userId: ID, name: String, _id: String, first: Int, offset: Int, orderBy: [_ActorOrdering]): [Actor]
+  User(userId: ID, name: String, _id: String, first: Int, offset: Int, orderBy: [_UserOrdering]): [User]
+  Book(genre: BookGenre, _id: String, first: Int, offset: Int, orderBy: [_BookOrdering]): [Book]
+  TemporalNode(datetime: _Neo4jDateTimeInput, name: String, time: _Neo4jTimeInput, date: _Neo4jDateInput, localtime: _Neo4jLocalTimeInput, localdatetime: _Neo4jLocalDateTimeInput, localdatetimes: _Neo4jLocalDateTimeInput, _id: String, first: Int, offset: Int, orderBy: [_TemporalNodeOrdering]): [TemporalNode]
 }
 
 type Rated {
@@ -540,7 +552,7 @@ type TemporalNode {
   localtime: _Neo4jLocalTime
   localdatetime: _Neo4jLocalDateTime
   localdatetimes: [_Neo4jLocalDateTime]
-  temporalNodes(time: _Neo4jTimeInput, date: _Neo4jDateInput, datetime: _Neo4jDateTimeInput, localtime: _Neo4jLocalTimeInput, localdatetime: _Neo4jLocalDateTimeInput, first: Int, offset: Int, orderBy: _TemporalNodeOrdering): [TemporalNode]
+  temporalNodes(time: _Neo4jTimeInput, date: _Neo4jDateInput, datetime: _Neo4jDateTimeInput, localtime: _Neo4jLocalTimeInput, localdatetime: _Neo4jLocalDateTimeInput, first: Int, offset: Int, orderBy: [_TemporalNodeOrdering]): [TemporalNode]
   _id: String
 }
 
