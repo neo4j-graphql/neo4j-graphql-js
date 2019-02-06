@@ -227,7 +227,9 @@ export function buildCypherSelection({
       fieldName,
       schemaType,
       variableName,
-      fieldType
+      fieldType,
+      filterParams,
+      selections
     },
     secondParentSelectionInfo: parentSelectionInfo
   });
@@ -283,6 +285,8 @@ export function buildCypherSelection({
     selection = recurse(
       relationFieldOnNodeType({
         ...fieldInfo,
+        schemaType,
+        selections,
         relDirection,
         relType,
         isInlineFragment,

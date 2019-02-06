@@ -179,6 +179,11 @@ export function augmentedSchemaCypherTestRunner(
         t.is(query, expectedCypherQuery);
         t.deepEqual(queryParams, expectedCypherParams);
       },
+      Book(object, params, ctx, resolveInfo) {
+        let [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
+        t.is(query, expectedCypherQuery);
+        t.deepEqual(queryParams, expectedCypherParams);
+      },
       Books(object, params, ctx, resolveInfo) {
         let [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
         t.is(query, expectedCypherQuery);
