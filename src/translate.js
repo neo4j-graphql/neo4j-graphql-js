@@ -29,7 +29,8 @@ import {
   isRootSelection,
   splitSelectionParameters,
   getTemporalArguments,
-  temporalPredicateClauses
+  temporalPredicateClauses,
+  isTemporalType
 } from './utils';
 import { getNamedType } from 'graphql';
 import { buildCypherSelection } from './selections';
@@ -84,6 +85,8 @@ export const relationFieldOnNodeType = ({
   innerSchemaType,
   filterParams,
   temporalArgs,
+  selections,
+  schemaType,
   subSelection,
   skipLimit,
   commaIfTail,
@@ -94,26 +97,32 @@ export const relationFieldOnNodeType = ({
     filterParams,
     (param, keyName) => Array.isArray(param.value) && !('orderBy' === keyName)
   );
-
   const allParams = innerFilterParams(filterParams, temporalArgs);
-
   const queryParams = paramsToString(
     _.filter(allParams, param => !Array.isArray(param.value))
   );
-
   const safeVariableName = safeVar(nestedVariable);
-
   const arrayPredicates = _.map(arrayFilterParams, (value, key) => {
     const param = _.find(allParams, param => param.key === key);
     return `${safeVariableName}.${safeVar(key)} IN $${
       param.value.index
     }_${key}`;
   });
-
   const whereClauses = [...temporalClauses, ...arrayPredicates];
+  const orderByParam = filterParams['orderBy'];
+  const temporalOrdering = temporalOrderingFieldExists(
+    schemaType,
+    filterParams
+  );
   return {
     initial: `${initial}${fieldName}: ${
       !isArrayType(fieldType) ? 'head(' : ''
+    }${
+      orderByParam
+        ? temporalOrdering
+          ? `[sortedElement IN apoc.coll.sortMulti(`
+          : `apoc.coll.sortMulti(`
+        : ''
     }[(${safeVar(variableName)})${
       relDirection === 'in' || relDirection === 'IN' ? '<' : ''
     }-[:${safeLabel(relType)}]-${
@@ -126,7 +135,18 @@ export const relationFieldOnNodeType = ({
       isInlineFragment
         ? 'FRAGMENT_TYPE: "' + interfaceLabel + '",' + subSelection[0]
         : subSelection[0]
-    }}]${!isArrayType(fieldType) ? ')' : ''}${skipLimit} ${commaIfTail}`,
+    }}]${
+      orderByParam
+        ? `, [${buildSortMultiArgs(orderByParam)}])${
+            temporalOrdering
+              ? ` | sortedElement { .*,  ${temporalTypeSelections(
+                  selections,
+                  innerSchemaType
+                )}}]`
+              : ``
+          }`
+        : ''
+    }${!isArrayType(fieldType) ? ')' : ''}${skipLimit} ${commaIfTail}`,
     ...tailParams
   };
 };
@@ -344,7 +364,6 @@ export const temporalField = ({
   const parentSchemaType = parentSelectionInfo.schemaType;
   const parentVariableName = parentSelectionInfo.variableName;
   const secondParentVariableName = secondParentSelectionInfo.variableName;
-  const secondParentFieldType = secondParentSelectionInfo.fieldType;
   // Initially assume that the parent type of the temporal type
   // containing this temporal field was a node
   let variableName = parentVariableName;
@@ -407,6 +426,9 @@ export const temporalType = ({
   parentSelectionInfo
 }) => {
   const parentVariableName = parentSelectionInfo.variableName;
+  const parentFilterParams = parentSelectionInfo.filterParams;
+  const parentSchemaType = parentSelectionInfo.schemaType;
+  const safeVariableName = safeVar(variableName);
   let fieldIsArray = isArrayType(fieldType);
   if (!isNodeType(schemaType.astNode)) {
     if (
@@ -441,6 +463,8 @@ export const temporalType = ({
         ? `reduce(a = [], TEMPORAL_INSTANCE IN ${variableName}.${fieldName} | a + {${
             subSelection[0]
           }})${commaIfTail}`
+        : temporalOrderingFieldExists(parentSchemaType, parentFilterParams)
+        ? `${safeVariableName}.${fieldName}${commaIfTail}`
         : `{${subSelection[0]}}${commaIfTail}`
     }`,
     ...tailParams
@@ -607,9 +631,11 @@ const nodeQuery = ({
     .filter(predicate => !!predicate)
     .join(' AND ');
   const predicate = predicateClauses ? `WHERE ${predicateClauses} ` : '';
+
   const query =
     `MATCH (${safeVariableName}:${safeLabelName} ${argString}) ${predicate}` +
     `RETURN ${safeVariableName} {${subQuery}} AS ${safeVariableName}${orderByValue} ${outerSkipLimit}`;
+
   return [query, params];
 };
 
@@ -1110,4 +1136,76 @@ const relationshipDelete = ({
       RETURN {${subQuery}} AS ${schemaTypeName};
     `;
   return [query, params];
+};
+
+const temporalTypeSelections = (selections, innerSchemaType) => {
+  // TODO use extractSelections instead?
+  const selectedTypes =
+    selections && selections[0] && selections[0].selectionSet
+      ? selections[0].selectionSet.selections
+      : [];
+  return selectedTypes
+    .reduce((temporalTypeFields, innerSelection) => {
+      // name of temporal type field
+      const fieldName = innerSelection.name.value;
+      const fieldTypeName = getFieldTypeName(innerSchemaType, fieldName);
+      if (isTemporalType(fieldTypeName)) {
+        const innerSelectedTypes = innerSelection.selectionSet
+          ? innerSelection.selectionSet.selections
+          : [];
+        temporalTypeFields.push(
+          `${fieldName}: {${innerSelectedTypes
+            .reduce((temporalSubFields, t) => {
+              // temporal type subfields, year, minute, etc.
+              const subFieldName = t.name.value;
+              if (subFieldName === 'formatted') {
+                temporalSubFields.push(
+                  `${subFieldName}: toString(sortedElement.${fieldName})`
+                );
+              } else {
+                temporalSubFields.push(
+                  `${subFieldName}: sortedElement.${fieldName}.${subFieldName}`
+                );
+              }
+              return temporalSubFields;
+            }, [])
+            .join(',')}}`
+        );
+      }
+      return temporalTypeFields;
+    }, [])
+    .join(',');
+};
+
+const getFieldTypeName = (schemaType, fieldName) => {
+  // TODO handle for fragments?
+  const field =
+    schemaType && fieldName ? schemaType.getFields()[fieldName] : undefined;
+  return field ? field.type.name : '';
+};
+
+const temporalOrderingFieldExists = (schemaType, filterParams) => {
+  let orderByParam = filterParams ? filterParams['orderBy'] : undefined;
+  if (orderByParam) {
+    orderByParam = orderByParam.value;
+    if (!Array.isArray(orderByParam)) orderByParam = [orderByParam];
+    return orderByParam.find(e => {
+      const fieldName = e.substring(0, e.indexOf('_'));
+      const fieldTypeName = getFieldTypeName(schemaType, fieldName);
+      return isTemporalType(fieldTypeName);
+    });
+  }
+  return undefined;
+};
+
+const buildSortMultiArgs = param => {
+  let values = param ? param.value : [];
+  let fieldName = '';
+  if (!Array.isArray(values)) values = [values];
+  return values
+    .map(e => {
+      fieldName = e.substring(0, e.indexOf('_'));
+      return e.includes('_asc') ? `'^${fieldName}'` : `'${fieldName}'`;
+    })
+    .join(',');
 };
