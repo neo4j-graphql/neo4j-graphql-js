@@ -214,7 +214,7 @@ const possiblyAddOrderingArgument = (args, fieldName) => {
         value: 'orderBy'
       },
       type: {
-        kind: 'ListType', 
+        kind: 'ListType',
         type: {
           kind: 'NamedType',
           name: {
@@ -295,7 +295,10 @@ const augmentQueryArguments = (typeMap, config, rootTypes) => {
         args = field.arguments;
         queryMap[t].arguments = possiblyAddArgument(args, 'first', 'Int');
         queryMap[t].arguments = possiblyAddArgument(args, 'offset', 'Int');
-        queryMap[t].arguments = possiblyAddOrderingArgument(args, valueTypeName);
+        queryMap[t].arguments = possiblyAddOrderingArgument(
+          args,
+          valueTypeName
+        );
       }
     });
     typeMap[queryType].fields = Object.values(queryMap);
@@ -353,20 +356,18 @@ const possiblyAddTypeInput = (astNode, typeMap, resolvers, config) => {
         // relation mutations are generated for this relation, which would
         // make use of the relation input type
         if (
-          hasSomePropertyField && 
-          shouldAugmentRelationField(
-            config,
-            'mutation',
-            fromName,
-            toName
-          )
+          hasSomePropertyField &&
+          shouldAugmentRelationField(config, 'mutation', fromName, toName)
         ) {
-          const relationInputFields = buildRelationTypeInputFields(astNode, fields, typeMap, resolvers);
+          const relationInputFields = buildRelationTypeInputFields(
+            astNode,
+            fields,
+            typeMap,
+            resolvers
+          );
           typeMap[inputName] = parse(
-            `input ${inputName} {${
-              relationInputFields
-            }}`
-          );;
+            `input ${inputName} {${relationInputFields}}`
+          );
         }
       }
     }
@@ -522,9 +523,14 @@ const possiblyAddTypeMutation = (
   const mutationName = namePrefix + typeName;
   // Only generate if the mutation named mutationName does not already exist
   if (mutationMap[mutationName] === undefined) {
-    const args = buildMutationArguments(namePrefix, astNode, resolvers, typeMap);
+    const args = buildMutationArguments(
+      namePrefix,
+      astNode,
+      resolvers,
+      typeMap
+    );
     if (args.length > 0) {
-      typeMap["Mutation"].fields.push({
+      typeMap['Mutation'].fields.push({
         kind: 'FieldDefinition',
         name: {
           kind: 'Name',
@@ -566,23 +572,24 @@ const possiblyAddRelationTypeFieldPayload = (
     const relationTypeDirective = getRelationTypeDirectiveArgs(relationAstNode);
     if (relationTypeDirective) {
       // TODO refactor
-      const relationTypePayloadFields = fields.reduce((acc, t) => {
-        fieldValueName = getNamedType(t).name.value;
-        fieldName = t.name.value;
-        if (fieldName === 'from') {
-          fromValue = fieldValueName;
-          fromField = t;
-        } else if (fieldName === 'to') {
-          toValue = fieldValueName;
-          toField = t;
-        } else {
-          // Exclude .to and .from, but gather them from along the way
-          // using previous branches above
-          acc.push(print(t));
-        }
-        return acc;
-      }, [])
-      .join('\n');
+      const relationTypePayloadFields = fields
+        .reduce((acc, t) => {
+          fieldValueName = getNamedType(t).name.value;
+          fieldName = t.name.value;
+          if (fieldName === 'from') {
+            fromValue = fieldValueName;
+            fromField = t;
+          } else if (fieldName === 'to') {
+            toValue = fieldValueName;
+            toField = t;
+          } else {
+            // Exclude .to and .from, but gather them from along the way
+            // using previous branches above
+            acc.push(print(t));
+          }
+          return acc;
+        }, [])
+        .join('\n');
 
       if (fromValue && fromValue === toValue) {
         // If field is a list type, then make .from and .to list types
@@ -590,12 +597,12 @@ const possiblyAddRelationTypeFieldPayload = (
         const fieldArgs = getFieldArgumentsFromAst(field, typeName);
         typeMap[`${fieldTypeName}Directions`] = parse(`
         type ${fieldTypeName}Directions ${print(relationAstNode.directives)} {
-            from${fieldArgs}: ${
-          fieldIsList ? '[' : ''
-        }${fieldTypeName}${fieldIsList ? ']' : ''}
-            to${fieldArgs}: ${
-          fieldIsList ? '[' : ''
-        }${fieldTypeName}${fieldIsList ? ']' : ''}
+            from${fieldArgs}: ${fieldIsList ? '[' : ''}${fieldTypeName}${
+          fieldIsList ? ']' : ''
+        }
+            to${fieldArgs}: ${fieldIsList ? '[' : ''}${fieldTypeName}${
+          fieldIsList ? ']' : ''
+        }
       }`);
 
         typeMap[fieldTypeName] = parse(`
@@ -607,8 +614,7 @@ const possiblyAddRelationTypeFieldPayload = (
 
         // remove arguments on field
         field.arguments = [];
-      } 
-      else {
+      } else {
         // Non-reflexive case, (User)-[RATED]->(Movie)
         typeMap[fieldTypeName] = parse(`
       type ${fieldTypeName} ${print(relationAstNode.directives)} {
@@ -999,8 +1005,8 @@ const createOrderingFields = (astNode, typeMap, resolvers) => {
   const fields = astNode ? astNode.fields : [];
   let type = {};
   let valueType = {};
-  let valueTypeName = "";
-  let fieldName = "";
+  let valueTypeName = '';
+  let fieldName = '';
   return fields.reduce((acc, field) => {
     type = getNamedType(field);
     valueTypeName = type.name.value;
@@ -1008,11 +1014,9 @@ const createOrderingFields = (astNode, typeMap, resolvers) => {
     if (
       !isListType(field) &&
       fieldIsNotIgnored(astNode, field, resolvers) &&
-      (
-        isBasicScalar(type.name.value) ||
+      (isBasicScalar(type.name.value) ||
         isKind(valueType, 'EnumTypeDefinition') ||
-        isTemporalType(valueTypeName)
-      )
+        isTemporalType(valueTypeName))
     ) {
       fieldName = field.name.value;
       acc.push({
@@ -1362,13 +1366,15 @@ const shouldAugmentRelationField = (config, rootType, fromName, toName) =>
   shouldAugmentType(config, rootType, toName);
 
 const fieldIsNotIgnored = (astNode, field, resolvers) => {
-  return !getFieldDirective(field, 'neo4j_ignore') &&
-  !getCustomFieldResolver(astNode, field, resolvers);
-}
+  return (
+    !getFieldDirective(field, 'neo4j_ignore') &&
+    !getCustomFieldResolver(astNode, field, resolvers)
+  );
+};
 
-const isNotSystemField = (name) => {
+const isNotSystemField = name => {
   return name !== '_id' && name !== 'to' && name !== 'from';
-}
+};
 
 export const addTemporalTypes = (typeMap, config) => {
   config = decideTemporalConfig(config);
@@ -1405,7 +1411,12 @@ const buildMutationArguments = (mutationType, astNode, resolvers, typeMap) => {
     }
     case 'Update': {
       if (primaryKey) {
-        return buildUpdateMutationArguments(primaryKey, astNode, typeMap, resolvers);
+        return buildUpdateMutationArguments(
+          primaryKey,
+          astNode,
+          typeMap,
+          resolvers
+        );
       }
     }
     case 'Delete': {
@@ -1416,15 +1427,22 @@ const buildMutationArguments = (mutationType, astNode, resolvers, typeMap) => {
   }
 };
 
-const buildUpdateMutationArguments = (primaryKey, astNode, typeMap, resolvers) => {
+const buildUpdateMutationArguments = (
+  primaryKey,
+  astNode,
+  typeMap,
+  resolvers
+) => {
   const primaryKeyName = primaryKey.name.value;
   const primaryKeyType = getNamedType(primaryKey);
   // Primary key field is first arg and required for node selection
-  const parsedPrimaryKeyField = `${primaryKeyName}: ${primaryKeyType.name.value}!`;
+  const parsedPrimaryKeyField = `${primaryKeyName}: ${
+    primaryKeyType.name.value
+  }!`;
   let type = {};
   let valueTypeName = '';
   let valueType = {};
-  let fieldName = "";
+  let fieldName = '';
   let mutationArgs = [];
   mutationArgs = astNode.fields.reduce((acc, t) => {
     type = getNamedType(t);
@@ -1436,25 +1454,25 @@ const buildUpdateMutationArguments = (primaryKey, astNode, typeMap, resolvers) =
         fieldName !== primaryKeyName &&
         isNotSystemField(fieldName) &&
         !getFieldDirective(t, 'cypher') &&
-        (
-          isBasicScalar(valueTypeName) ||
+        (isBasicScalar(valueTypeName) ||
           isKind(valueType, 'EnumTypeDefinition') ||
-          isKind(valueType, 'ScalarTypeDefinition') || 
-          isTemporalType(valueTypeName)
-        )
+          isKind(valueType, 'ScalarTypeDefinition') ||
+          isTemporalType(valueTypeName))
       ) {
-        acc.push(print({
-          kind: "InputValueDefinition",
-          name: t.name,
-          // Don't require update fields, that wouldn't be very flexible
-          type: isNonNullType(t) ? t.type.type : t.type
-        }));
+        acc.push(
+          print({
+            kind: 'InputValueDefinition',
+            name: t.name,
+            // Don't require update fields, that wouldn't be very flexible
+            type: isNonNullType(t) ? t.type.type : t.type
+          })
+        );
       }
     }
     return acc;
   }, []);
   // Add pk as first arg is other update fields exist
-  if(mutationArgs.length > 0) {
+  if (mutationArgs.length > 0) {
     mutationArgs.unshift(parsedPrimaryKeyField);
     mutationArgs = transformManagedFieldTypes(mutationArgs);
     mutationArgs = parseInputFieldsSdl(mutationArgs);
@@ -1464,23 +1482,25 @@ const buildUpdateMutationArguments = (primaryKey, astNode, typeMap, resolvers) =
 
 const buildDeleteMutationArguments = primaryKey => {
   let mutationArgs = [];
-  mutationArgs.push(print({
-    kind: 'InputValueDefinition',
-    name: {
-      kind: 'Name',
-      value: primaryKey.name.value
-    },
-    type: {
-      kind: 'NonNullType',
+  mutationArgs.push(
+    print({
+      kind: 'InputValueDefinition',
+      name: {
+        kind: 'Name',
+        value: primaryKey.name.value
+      },
       type: {
-        kind: 'NamedType',
-        name: {
-          kind: 'Name',
-          value: getNamedType(primaryKey).name.value
+        kind: 'NonNullType',
+        type: {
+          kind: 'NamedType',
+          name: {
+            kind: 'Name',
+            value: getNamedType(primaryKey).name.value
+          }
         }
       }
-    }
-  }));
+    })
+  );
   mutationArgs = transformManagedFieldTypes(mutationArgs);
   return parseInputFieldsSdl(mutationArgs);
 };
@@ -1489,7 +1509,7 @@ const buildCreateMutationArguments = (astNode, typeMap, resolvers) => {
   let type = {};
   let valueTypeName = '';
   let valueType = {};
-  let fieldName = "";
+  let fieldName = '';
   let firstIdField = undefined;
   let field = {};
   let mutationArgs = astNode.fields.reduce((acc, t) => {
@@ -1499,19 +1519,17 @@ const buildCreateMutationArguments = (astNode, typeMap, resolvers) => {
     valueType = typeMap[valueTypeName];
     if (fieldIsNotIgnored(astNode, t, resolvers)) {
       if (
-          isNotSystemField(fieldName) &&
-          !getFieldDirective(t, 'cypher') &&
-          (
-            isBasicScalar(valueTypeName) ||
-            isKind(valueType, 'EnumTypeDefinition') ||
-            isKind(valueType, 'ScalarTypeDefinition') ||
-            isTemporalType(valueTypeName)
-          )
+        isNotSystemField(fieldName) &&
+        !getFieldDirective(t, 'cypher') &&
+        (isBasicScalar(valueTypeName) ||
+          isKind(valueType, 'EnumTypeDefinition') ||
+          isKind(valueType, 'ScalarTypeDefinition') ||
+          isTemporalType(valueTypeName))
       ) {
         if (
-          isNonNullType(t) && 
-          !isListType(t) && 
-          valueTypeName === 'ID' && 
+          isNonNullType(t) &&
+          !isListType(t) &&
+          valueTypeName === 'ID' &&
           !firstIdField
         ) {
           firstIdField = t;
@@ -1529,8 +1547,7 @@ const buildCreateMutationArguments = (astNode, typeMap, resolvers) => {
               }
             }
           };
-        }
-        else {
+        } else {
           field = t;
         }
         acc.push(print(field));
@@ -1546,15 +1563,15 @@ const buildCreateMutationArguments = (astNode, typeMap, resolvers) => {
 };
 
 const buildRelationTypeInputFields = (astNode, fields, typeMap, resolvers) => {
-  let fieldName = "";
-  let valueTypeName = "";
+  let fieldName = '';
+  let valueTypeName = '';
   let valueType = {};
   let relationInputFields = fields.reduce((acc, t) => {
     fieldName = t.name.value;
     valueTypeName = getNamedType(t).name.value;
     valueType = typeMap[valueTypeName];
     if (
-      fieldIsNotIgnored(astNode, t, resolvers) && 
+      fieldIsNotIgnored(astNode, t, resolvers) &&
       isNotSystemField(fieldName) &&
       !getFieldDirective(t, 'cypher') &&
       (isBasicScalar(valueTypeName) ||
@@ -1562,11 +1579,13 @@ const buildRelationTypeInputFields = (astNode, fields, typeMap, resolvers) => {
         isKind(valueType, 'ScalarTypeDefinition') ||
         isTemporalType(valueTypeName))
     ) {
-      acc.push(print({
-        kind: "InputValueDefinition",
-        name: t.name,
-        type: t.type
-      }));
+      acc.push(
+        print({
+          kind: 'InputValueDefinition',
+          name: t.name,
+          type: t.type
+        })
+      );
     }
     return acc;
   }, []);
@@ -1574,33 +1593,31 @@ const buildRelationTypeInputFields = (astNode, fields, typeMap, resolvers) => {
   return relationInputFields.join('\n');
 };
 
-const transformManagedFieldTypes = (fields) => {
+const transformManagedFieldTypes = fields => {
   return fields.reduce((acc, field) => {
-    if(
-      field !== "_Neo4jDateTimeInput" && 
-      field !== "_Neo4jDateInput" && 
-      field !== "_Neo4jTimeInput" && 
-      field !== "_Neo4jLocalTimeInput" &&
-      field !== "_Neo4jLocalDateTimeInput"
+    if (
+      field !== '_Neo4jDateTimeInput' &&
+      field !== '_Neo4jDateInput' &&
+      field !== '_Neo4jTimeInput' &&
+      field !== '_Neo4jLocalTimeInput' &&
+      field !== '_Neo4jLocalDateTimeInput'
     ) {
-      if(field.includes("_Neo4jDateTime")) {
-        field = field.replace("_Neo4jDateTime", "_Neo4jDateTimeInput");
-      }
-      else if(field.includes("_Neo4jDate")) {
-        field = field.replace("_Neo4jDate", "_Neo4jDateInput");
-      }
-      else if(field.includes("_Neo4jTime")) {
-        field = field.replace("_Neo4jTime", "_Neo4jTimeInput");
-      }
-      else if(field.includes("_Neo4jLocalTime")) {
-        field = field.replace("_Neo4jLocalTime", "_Neo4jLocalTimeInput");
-      }
-      else if(field.includes("_Neo4jLocalDateTime")) {
-        field = field.replace("_Neo4jLocalDateTime", "_Neo4jLocalDateTimeInput");
+      if (field.includes('_Neo4jDateTime')) {
+        field = field.replace('_Neo4jDateTime', '_Neo4jDateTimeInput');
+      } else if (field.includes('_Neo4jDate')) {
+        field = field.replace('_Neo4jDate', '_Neo4jDateInput');
+      } else if (field.includes('_Neo4jTime')) {
+        field = field.replace('_Neo4jTime', '_Neo4jTimeInput');
+      } else if (field.includes('_Neo4jLocalTime')) {
+        field = field.replace('_Neo4jLocalTime', '_Neo4jLocalTimeInput');
+      } else if (field.includes('_Neo4jLocalDateTime')) {
+        field = field.replace(
+          '_Neo4jLocalDateTime',
+          '_Neo4jLocalDateTimeInput'
+        );
       }
     }
     acc.push(field);
     return acc;
   }, []);
 };
-
