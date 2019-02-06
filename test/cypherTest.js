@@ -545,7 +545,7 @@ test('Handle @cypher directive on Query Type', t => {
   }
 }
   `,
-    expectedCypherQuery = `WITH apoc.cypher.runFirstColumn("MATCH (g:Genre) WHERE toLower(g.name) CONTAINS toLower($substring) RETURN g", {substring:$substring}, True) AS x UNWIND x AS \`genre\`
+    expectedCypherQuery = `WITH apoc.cypher.runFirstColumn("MATCH (g:Genre) WHERE toLower(g.name) CONTAINS toLower($substring) RETURN g", {offset:$offset, first:$first, substring:$substring}, True) AS x UNWIND x AS \`genre\`
     RETURN \`genre\` { .name ,movies: [(\`genre\`)<-[:\`IN_GENRE\`]-(\`genre_movies\`:\`Movie\`) | genre_movies { .title }][..3] } AS \`genre\` SKIP $offset`;
 
   t.plan(3);
@@ -566,7 +566,7 @@ test.cb('Handle @cypher directive on Mutation type', t => {
     name
   }
 }`,
-    expectedCypherQuery = `CALL apoc.cypher.doIt("CREATE (g:Genre) SET g.name = $name RETURN g", {name:$name}) YIELD value
+    expectedCypherQuery = `CALL apoc.cypher.doIt("CREATE (g:Genre) SET g.name = $name RETURN g", {name:$name, first:$first, offset:$offset}) YIELD value
     WITH apoc.map.values(value, [keys(value)[0]])[0] AS \`genre\`
     RETURN \`genre\` { .name } AS \`genre\` SKIP $offset`;
 
@@ -3587,6 +3587,26 @@ test('Query nested list properties on relationship', t => {
     }
   }`,
     expectedCypherQuery = `MATCH (\`movie\`:\`Movie\` ) RETURN \`movie\` {_id: ID(\`movie\`), .title ,ratings: [(\`movie\`)<-[\`movie_ratings_relation\`:\`RATED\`]-(:\`User\`) | movie_ratings_relation { .rating , .ratings ,time: { hour: \`movie_ratings_relation\`.time.hour , minute: \`movie_ratings_relation\`.time.minute , second: \`movie_ratings_relation\`.time.second , millisecond: \`movie_ratings_relation\`.time.millisecond , microsecond: \`movie_ratings_relation\`.time.microsecond , nanosecond: \`movie_ratings_relation\`.time.nanosecond , timezone: \`movie_ratings_relation\`.time.timezone , formatted: toString(\`movie_ratings_relation\`.time) },date: { year: \`movie_ratings_relation\`.date.year , month: \`movie_ratings_relation\`.date.month , day: \`movie_ratings_relation\`.date.day , formatted: toString(\`movie_ratings_relation\`.date) },datetime: { year: \`movie_ratings_relation\`.datetime.year , month: \`movie_ratings_relation\`.datetime.month , day: \`movie_ratings_relation\`.datetime.day , hour: \`movie_ratings_relation\`.datetime.hour , minute: \`movie_ratings_relation\`.datetime.minute , second: \`movie_ratings_relation\`.datetime.second , millisecond: \`movie_ratings_relation\`.datetime.millisecond , microsecond: \`movie_ratings_relation\`.datetime.microsecond , nanosecond: \`movie_ratings_relation\`.datetime.nanosecond , timezone: \`movie_ratings_relation\`.datetime.timezone , formatted: toString(\`movie_ratings_relation\`.datetime) },datetimes: reduce(a = [], TEMPORAL_INSTANCE IN movie_ratings_relation.datetimes | a + { year: TEMPORAL_INSTANCE.year , month: TEMPORAL_INSTANCE.month , day: TEMPORAL_INSTANCE.day , hour: TEMPORAL_INSTANCE.hour , minute: TEMPORAL_INSTANCE.minute , second: TEMPORAL_INSTANCE.second , millisecond: TEMPORAL_INSTANCE.millisecond , microsecond: TEMPORAL_INSTANCE.microsecond , nanosecond: TEMPORAL_INSTANCE.nanosecond , timezone: TEMPORAL_INSTANCE.timezone , formatted: toString(TEMPORAL_INSTANCE) }),localtime: { hour: \`movie_ratings_relation\`.localtime.hour , minute: \`movie_ratings_relation\`.localtime.minute , second: \`movie_ratings_relation\`.localtime.second , millisecond: \`movie_ratings_relation\`.localtime.millisecond , microsecond: \`movie_ratings_relation\`.localtime.microsecond , nanosecond: \`movie_ratings_relation\`.localtime.nanosecond , formatted: toString(\`movie_ratings_relation\`.localtime) },localdatetime: { year: \`movie_ratings_relation\`.localdatetime.year , month: \`movie_ratings_relation\`.localdatetime.month , day: \`movie_ratings_relation\`.localdatetime.day , hour: \`movie_ratings_relation\`.localdatetime.hour , minute: \`movie_ratings_relation\`.localdatetime.minute , second: \`movie_ratings_relation\`.localdatetime.second , millisecond: \`movie_ratings_relation\`.localdatetime.millisecond , microsecond: \`movie_ratings_relation\`.localdatetime.microsecond , nanosecond: \`movie_ratings_relation\`.localdatetime.nanosecond , formatted: toString(\`movie_ratings_relation\`.localdatetime) },User: head([(:\`Movie\`)<-[\`movie_ratings_relation\`]-(\`movie_ratings_User\`:\`User\`) | movie_ratings_User {_id: ID(\`movie_ratings_User\`), .name ,rated: [(\`movie_ratings_User\`)-[\`movie_ratings_User_rated_relation\`:\`RATED\`]->(:\`Movie\`) | movie_ratings_User_rated_relation { .rating ,time: { hour: \`movie_ratings_User_rated_relation\`.time.hour , minute: \`movie_ratings_User_rated_relation\`.time.minute , second: \`movie_ratings_User_rated_relation\`.time.second , millisecond: \`movie_ratings_User_rated_relation\`.time.millisecond , microsecond: \`movie_ratings_User_rated_relation\`.time.microsecond , nanosecond: \`movie_ratings_User_rated_relation\`.time.nanosecond , timezone: \`movie_ratings_User_rated_relation\`.time.timezone , formatted: toString(\`movie_ratings_User_rated_relation\`.time) },date: { year: \`movie_ratings_User_rated_relation\`.date.year , month: \`movie_ratings_User_rated_relation\`.date.month , day: \`movie_ratings_User_rated_relation\`.date.day , formatted: toString(\`movie_ratings_User_rated_relation\`.date) },datetime: { year: \`movie_ratings_User_rated_relation\`.datetime.year , month: \`movie_ratings_User_rated_relation\`.datetime.month , day: \`movie_ratings_User_rated_relation\`.datetime.day , hour: \`movie_ratings_User_rated_relation\`.datetime.hour , minute: \`movie_ratings_User_rated_relation\`.datetime.minute , second: \`movie_ratings_User_rated_relation\`.datetime.second , millisecond: \`movie_ratings_User_rated_relation\`.datetime.millisecond , microsecond: \`movie_ratings_User_rated_relation\`.datetime.microsecond , nanosecond: \`movie_ratings_User_rated_relation\`.datetime.nanosecond , timezone: \`movie_ratings_User_rated_relation\`.datetime.timezone , formatted: toString(\`movie_ratings_User_rated_relation\`.datetime) },datetimes: reduce(a = [], TEMPORAL_INSTANCE IN movie_ratings_User_rated_relation.datetimes | a + { year: TEMPORAL_INSTANCE.year , month: TEMPORAL_INSTANCE.month , day: TEMPORAL_INSTANCE.day , hour: TEMPORAL_INSTANCE.hour , minute: TEMPORAL_INSTANCE.minute , second: TEMPORAL_INSTANCE.second , millisecond: TEMPORAL_INSTANCE.millisecond , microsecond: TEMPORAL_INSTANCE.microsecond , nanosecond: TEMPORAL_INSTANCE.nanosecond , timezone: TEMPORAL_INSTANCE.timezone , formatted: toString(TEMPORAL_INSTANCE) }),localtime: { hour: \`movie_ratings_User_rated_relation\`.localtime.hour , minute: \`movie_ratings_User_rated_relation\`.localtime.minute , second: \`movie_ratings_User_rated_relation\`.localtime.second , millisecond: \`movie_ratings_User_rated_relation\`.localtime.millisecond , microsecond: \`movie_ratings_User_rated_relation\`.localtime.microsecond , nanosecond: \`movie_ratings_User_rated_relation\`.localtime.nanosecond , formatted: toString(\`movie_ratings_User_rated_relation\`.localtime) },localdatetime: { year: \`movie_ratings_User_rated_relation\`.localdatetime.year , month: \`movie_ratings_User_rated_relation\`.localdatetime.month , day: \`movie_ratings_User_rated_relation\`.localdatetime.day , hour: \`movie_ratings_User_rated_relation\`.localdatetime.hour , minute: \`movie_ratings_User_rated_relation\`.localdatetime.minute , second: \`movie_ratings_User_rated_relation\`.localdatetime.second , millisecond: \`movie_ratings_User_rated_relation\`.localdatetime.millisecond , microsecond: \`movie_ratings_User_rated_relation\`.localdatetime.microsecond , nanosecond: \`movie_ratings_User_rated_relation\`.localdatetime.nanosecond , formatted: toString(\`movie_ratings_User_rated_relation\`.localdatetime) }}] }]) }] } AS \`movie\` SKIP $offset`;
+
+  t.plan(1);
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {},
+    expectedCypherQuery
+  );
+});
+
+test('UUID value generated if no id value provided', t => {
+  const graphQLQuery = `mutation {
+    CreateMovie(title: "Yo Dawg") {
+      title
+    }
+  }`,
+    expectedCypherQuery = `
+    CREATE (\`movie\`:\`Movie\` {movieId: apoc.create.uuid(),title:$params.title})
+    RETURN \`movie\` { .title } AS \`movie\`
+  `;
 
   t.plan(1);
   return augmentedSchemaCypherTestRunner(

@@ -45,8 +45,15 @@ export async function neo4jgraphql(
   let result;
 
   try {
-    result = await session.run(query, cypherParams);
-    //console.log("result: "+JSON.stringify(result, null, 2));
+    if (isMutation(resolveInfo)) {
+      result = await session.writeTransaction(tx => {
+        return tx.run(query, cypherParams);
+      });
+    } else {
+      result = await session.readTransaction(tx => {
+        return tx.run(query, cypherParams);
+      });
+    }
   } finally {
     session.close();
   }

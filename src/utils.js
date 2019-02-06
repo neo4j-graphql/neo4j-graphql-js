@@ -291,20 +291,26 @@ export function getFilterParams(filters, index) {
   }, {});
 }
 
-export function innerFilterParams(filters, temporalArgs, paramKey) {
+export function innerFilterParams(
+  filters,
+  temporalArgs,
+  paramKey,
+  cypherDirective
+) {
   const temporalArgNames = temporalArgs
     ? temporalArgs.reduce((acc, t) => {
         acc.push(t.name.value);
         return acc;
       }, [])
     : [];
+  // don't exclude first, offset, orderBy args for cypher directives
+  const excludedKeys = cypherDirective ? [] : ['first', 'offset', 'orderBy'];
 
   return Object.keys(filters).length > 0
     ? Object.entries(filters)
         // exclude temporal arguments
         .filter(
-          ([key]) =>
-            !['first', 'offset', 'orderBy', ...temporalArgNames].includes(key)
+          ([key]) => ![...excludedKeys, ...temporalArgNames].includes(key)
         )
         .map(([key, value]) => {
           return { key, paramKey, value };
@@ -336,24 +342,31 @@ export function computeSkipLimit(selection, variableValues) {
   return `[${offset}..${parseInt(offset) + parseInt(first)}]`;
 }
 
+function orderByStatement(resolveInfo, orderByVar) {
+  const splitIndex = orderByVar.lastIndexOf('_');
+  const order = orderByVar.substring(splitIndex + 1);
+  const orderBy = orderByVar.substring(0, splitIndex);
+  const { variableName } = typeIdentifiers(resolveInfo.returnType);
+  return ` ${variableName}.${orderBy} ${order === 'asc' ? 'ASC' : 'DESC'} `;
+}
+
 export const computeOrderBy = (resolveInfo, selection) => {
-  const orderByVar = argumentValue(
+  const orderByArgs = argumentValue(
     resolveInfo.operation.selectionSet.selections[0],
     'orderBy',
     resolveInfo.variableValues
   );
 
-  if (orderByVar == undefined) {
+  if (orderByArgs == undefined) {
     return '';
-  } else {
-    const splitIndex = orderByVar.lastIndexOf('_');
-    const order = orderByVar.substring(splitIndex + 1);
-    const orderBy = orderByVar.substring(0, splitIndex);
-    const { variableName } = typeIdentifiers(resolveInfo.returnType);
-    return ` ORDER BY ${variableName}.${orderBy} ${
-      order === 'asc' ? 'ASC' : 'DESC'
-    } `;
   }
+
+  const orderByArray = Array.isArray(orderByArgs) ? orderByArgs : [orderByArgs];
+  const orderByStatments = orderByArray.map(orderByVar =>
+    orderByStatement(resolveInfo, orderByVar)
+  );
+
+  return ' ORDER BY' + orderByStatments.join(',');
 };
 
 export const possiblySetFirstId = ({ args, statements, params }) => {
