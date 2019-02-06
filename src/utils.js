@@ -43,6 +43,18 @@ export const parseFieldSdl = sdl => {
   return sdl ? parse(`type Type { ${sdl} }`).definitions[0].fields[0] : {};
 };
 
+export const parseInputFieldsSdl = fields => {
+  if (Array.isArray(fields)) {
+    fields = fields.join('\n');
+    return fields
+      ? parse(`input Type { ${fields} }`).definitions[0].fields
+      : {};
+  }
+  return fields
+    ? parse(`input Type { ${fields} }`).definitions[0].fields[0]
+    : {};
+};
+
 export const parseDirectiveSdl = sdl => {
   return sdl
     ? parse(`type Type { field: String ${sdl} }`).definitions[0].fields[0]
@@ -91,7 +103,14 @@ export function extractQueryResult({ records }, returnType) {
     ? records[0].get(variableName)
     : null;
 
-  result = convertIntegerFields(result);
+  // handle Integer fields
+  result = _.cloneDeepWith(result, field => {
+    if (neo4j.isInt(field)) {
+      // See: https://neo4j.com/docs/api/javascript-driver/current/class/src/v1/integer.js~Integer.html
+      return field.inSafeRange() ? field.toNumber() : field.toString();
+    }
+  });
+
   return result;
 }
 
@@ -102,22 +121,6 @@ export function typeIdentifiers(returnType) {
     typeName
   };
 }
-
-const convertIntegerFields = result => {
-  const keys = result ? Object.keys(result) : [];
-  let field = undefined;
-  let num = undefined;
-  keys.forEach(e => {
-    field = result[e];
-    if (neo4j.isInt(field)) {
-      num = neo4j.int(field);
-      result[e] = num.toString();
-    } else if (typeof result[e] === 'object') {
-      return convertIntegerFields(result[e]);
-    }
-  });
-  return result;
-};
 
 function getDefaultArguments(fieldName, schemaType) {
   // get default arguments for this field from schema
@@ -192,7 +195,7 @@ export const isRelationTypeDirectedField = fieldName => {
   return fieldName === 'from' || fieldName === 'to';
 };
 
-export const isKind = (type, kind) => type && type.kind === kind;
+export const isKind = (type, kind) => type && type.kind && type.kind === kind;
 
 export const isListType = (type, isList = false) => {
   if (!isKind(type, 'NamedType')) {
@@ -624,27 +627,6 @@ export const getRelationTypeDirectiveArgs = relationshipType => {
         to: directive.arguments.find(e => e.name.value === 'to').value.value
       }
     : undefined;
-};
-
-export const getFieldArgumentsFromAst = (field, typeName, fieldIsList) => {
-  let fieldArgs = field.arguments ? field.arguments : [];
-  let augmentedArgs = [...fieldArgs];
-  if (fieldIsList) {
-    augmentedArgs = possiblyAddArgument(augmentedArgs, 'first', 'Int');
-    augmentedArgs = possiblyAddArgument(augmentedArgs, 'offset', 'Int');
-    augmentedArgs = possiblyAddArgument(
-      augmentedArgs,
-      'orderBy',
-      `_${typeName}Ordering`
-    );
-  }
-  const args = augmentedArgs
-    .reduce((acc, t) => {
-      acc.push(print(t));
-      return acc;
-    }, [])
-    .join('\n');
-  return args.length > 0 ? `(${args})` : '';
 };
 
 export const getRelationMutationPayloadFieldsFromAst = relatedAstNode => {
