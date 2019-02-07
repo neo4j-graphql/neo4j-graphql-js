@@ -1,8 +1,20 @@
 # Changelog
 
+## 2.3.0
+
+- [Fixes nested ordering](https://github.com/neo4j-graphql/neo4j-graphql-js/issues/47)
+- [Ordering by temporal type](https://github.com/neo4j-graphql/neo4j-graphql-js/issues/162)
+- [Support ordering by enum type](https://github.com/neo4j-graphql/neo4j-graphql-js/issues/168)
+- [Fix call stack size exceeded with large schemas](https://github.com/neo4j-graphql/neo4j-graphql-js/issues/172)
+- [Fix customer Cypher query on root query field with no arguments throws error](https://github.com/neo4j-graphql/neo4j-graphql-js/issues/177)
+- [Support arrays of orderBy arguments](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/184)
+- [Ignoring fields with neo4j_ignore directive](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/183)
+- [Don't exclude first, offset, orderBy params from Cypher directives](https://github.com/neo4j-graphql/neo4j-graphql-js/issues/58)
+- [Use Neo4j driver transaction functions](https://github.com/neo4j-graphql/neo4j-graphql-js/commit/1fbc747ec090e538f61f192f77749eb7f1aa878a)
+
 ## 2.2.0
 
--[Add debug config option to disable logging](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/170)
+- [Add debug config option to disable logging](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/170)
 
 ## 2.1.1
 
