@@ -249,9 +249,11 @@ export const possiblyAddArgument = (args, fieldName, fieldType) => {
 };
 
 const augmentType = (astNode, typeMap, resolvers, rootTypes, config) => {
+  const typeName = astNode.name.value;
   const queryType = rootTypes.query;
+  const mutationType = rootTypes.mutation;
   if (isNodeType(astNode)) {
-    if (shouldAugmentType(config, 'query', astNode.name.value)) {
+    if (shouldAugmentType(config, 'query', typeName)) {
       // Only add _id field to type if query API is generated for type
       astNode.fields = addOrReplaceNodeIdField(astNode, resolvers);
     }
@@ -263,12 +265,19 @@ const augmentType = (astNode, typeMap, resolvers, rootTypes, config) => {
       queryType
     );
   }
-  astNode.fields = possiblyAddIgnoreDirective(
-    astNode,
-    typeMap,
-    resolvers,
-    config
-  );
+  // Should only ignore fields on non-root types
+  if (
+    config.ignore === true &&
+    typeName !== queryType &&
+    typeName !== mutationType
+  ) {
+    astNode.fields = possiblyAddIgnoreDirective(
+      astNode,
+      typeMap,
+      resolvers,
+      config
+    );
+  }
   return astNode;
 };
 
