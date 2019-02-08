@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.3.1
+
+- [Remove functionality to infer addition of neo4j_ignore directive](https://github.com/neo4j-graphql/neo4j-graphql-js/commit/4d3ef38a5756ef14bec1cdbbfb5ecb7b6455d4c6)
+
 ## 2.3.0
 
 - [Fixes nested ordering](https://github.com/neo4j-graphql/neo4j-graphql-js/issues/47)
