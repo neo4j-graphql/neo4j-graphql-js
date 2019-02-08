@@ -263,12 +263,16 @@ const augmentType = (astNode, typeMap, resolvers, rootTypes, config) => {
       queryType
     );
   }
-  astNode.fields = possiblyAddIgnoreDirective(
-    astNode,
-    typeMap,
-    resolvers,
-    config
-  );
+  // FIXME: inferring where to add @neo4j_ignore directive improperly causes
+  //        fields to be ignored when logger is added, so remove functionality
+  //        until we refactor how to infer when @neo4j_ignore directive is needed
+  //        see https://github.com/neo4j-graphql/neo4j-graphql-js/issues/189
+  // astNode.fields = possiblyAddIgnoreDirective(
+  //   astNode,
+  //   typeMap,
+  //   resolvers,
+  //   config
+  // );
   return astNode;
 };
 
