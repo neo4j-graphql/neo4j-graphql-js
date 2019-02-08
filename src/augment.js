@@ -249,11 +249,9 @@ export const possiblyAddArgument = (args, fieldName, fieldType) => {
 };
 
 const augmentType = (astNode, typeMap, resolvers, rootTypes, config) => {
-  const typeName = astNode.name.value;
   const queryType = rootTypes.query;
-  const mutationType = rootTypes.mutation;
   if (isNodeType(astNode)) {
-    if (shouldAugmentType(config, 'query', typeName)) {
+    if (shouldAugmentType(config, 'query', astNode.name.value)) {
       // Only add _id field to type if query API is generated for type
       astNode.fields = addOrReplaceNodeIdField(astNode, resolvers);
     }
@@ -265,19 +263,16 @@ const augmentType = (astNode, typeMap, resolvers, rootTypes, config) => {
       queryType
     );
   }
-  // Should only ignore fields on non-root types
-  if (
-    config.ignore === true &&
-    typeName !== queryType &&
-    typeName !== mutationType
-  ) {
-    astNode.fields = possiblyAddIgnoreDirective(
-      astNode,
-      typeMap,
-      resolvers,
-      config
-    );
-  }
+  // FIXME: inferring where to add @neo4j_ignore directive improperly causes
+  //        fields to be ignored when logger is added, so remove functionality
+  //        until we refactor how to infer when @neo4j_ignore directive is needed
+  //        see https://github.com/neo4j-graphql/neo4j-graphql-js/issues/189
+  // astNode.fields = possiblyAddIgnoreDirective(
+  //   astNode,
+  //   typeMap,
+  //   resolvers,
+  //   config
+  // );
   return astNode;
 };
 
