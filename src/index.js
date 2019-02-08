@@ -108,8 +108,7 @@ export const augmentSchema = (
     query: true,
     mutation: true,
     temporal: true,
-    debug: true,
-    ignore: true
+    debug: true
   }
 ) => {
   const typeMap = extractTypeMapFromSchema(schema);
@@ -132,8 +131,7 @@ export const makeAugmentedSchema = ({
     query: true,
     mutation: true,
     temporal: true,
-    debug: true,
-    ignore: true
+    debug: true
   }
 }) => {
   if (schema) {
