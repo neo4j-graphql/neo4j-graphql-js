@@ -1,8 +1,7 @@
-import { print, parse } from 'graphql';
-import { possiblyAddArgument } from './augment';
-import { v1 as neo4j } from 'neo4j-driver';
+import { parse, print } from 'graphql';
 import _ from 'lodash';
 import filter from 'lodash/filter';
+import { v1 as neo4j } from 'neo4j-driver';
 
 function parseArg(arg, variableValues) {
   switch (arg.value.kind) {
@@ -72,7 +71,12 @@ export const printTypeMap = typeMap => {
 export const extractTypeMapFromTypeDefs = typeDefs => {
   // TODO accept alternative typeDefs formats (arr of strings, ast, etc.)
   // into a single string for parse, add validatation
-  const astNodes = parse(typeDefs).definitions;
+  let astNodes;
+  if (typeof typeDefs === 'object' && typeDefs.hasOwnProperty('definitions')) {
+    astNodes = typeDefs.definitions;
+  } else {
+    astNodes = parse(typeDefs).definitions;
+  }
   return astNodes.reduce((acc, t) => {
     if (t.name) acc[t.name.value] = t;
     return acc;
