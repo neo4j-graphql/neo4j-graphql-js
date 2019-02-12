@@ -97,7 +97,7 @@ A package to make it easier to use GraphQL and [Neo4j](https://neo4j.com/) toget
 
 - Send a single query to the database
 - No need to write queries for each resolver
-- Exposes the power of the Cypher query langauge through GraphQL
+- Exposes the power of the Cypher query language through GraphQL
 
 ## Test
 
