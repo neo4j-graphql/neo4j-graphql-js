@@ -443,7 +443,7 @@ type Movie {
   movieId: ID!
   title: String
   year: Int
-  released: _Neo4jDateTime
+  released: _Neo4jDateTime!
   plot: String
   poster: String
   imdbRating: Float
@@ -466,7 +466,7 @@ type Movie {
 }
 
 type Mutation {
-  CreateMovie(movieId: ID, title: String, year: Int, released: _Neo4jDateTimeInput, plot: String, poster: String, imdbRating: Float, avgStars: Float, years: [Int], titles: [String], imdbRatings: [Float], releases: [_Neo4jDateTimeInput]): Movie
+  CreateMovie(movieId: ID, title: String, year: Int, released: _Neo4jDateTimeInput!, plot: String, poster: String, imdbRating: Float, avgStars: Float, years: [Int], titles: [String], imdbRatings: [Float], releases: [_Neo4jDateTimeInput]): Movie
   UpdateMovie(movieId: ID!, title: String, year: Int, released: _Neo4jDateTimeInput, plot: String, poster: String, imdbRating: Float, avgStars: Float, years: [Int], titles: [String], imdbRatings: [Float], releases: [_Neo4jDateTimeInput]): Movie
   DeleteMovie(movieId: ID!): Movie
   AddMovieGenres(from: _MovieInput!, to: _GenreInput!): _AddMovieGenresPayload
