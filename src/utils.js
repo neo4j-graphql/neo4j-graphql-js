@@ -934,6 +934,9 @@ export const getTemporalCypherConstructor = fieldAst => {
 export const getTemporalArguments = args => {
   return args
     ? args.reduce((acc, t) => {
+        if (!t) {
+          return acc;
+        }
         const fieldType = getNamedType(t.type).name.value;
         if (isTemporalInputType(fieldType)) acc.push(t);
         return acc;
