@@ -1,3 +1,12 @@
+import gql from 'graphql-tag';
+
+export const testAST = gql`
+  type Thing {
+    id: ID!
+    name: String
+  }
+`;
+
 export const testSchema = `type Movie {
   _id: String
   movieId: ID!

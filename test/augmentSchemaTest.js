@@ -1,6 +1,9 @@
 import test from 'ava';
-import { augmentedSchema } from './helpers/cypherTestHelpers';
 import { printSchema } from 'graphql';
+
+import { augmentTypeDefs, makeAugmentedSchema } from '../dist';
+import { augmentedSchema } from './helpers/cypherTestHelpers';
+import { testAST } from './helpers/testSchema';
 
 test.cb('Test augmented schema', t => {
   let schema = augmentedSchema();
@@ -568,5 +571,24 @@ type User implements Person {
 `;
 
   t.is(printSchema(schema), expectedSchema);
+  t.end();
+});
+
+test.cb('Test makeAugmentedSchema from AST', t => {
+  const schema = augmentTypeDefs(testAST);
+  const pos = schema.indexOf('}');
+  t.is(
+    schema.slice(0, pos + 1),
+    `type Thing {
+  id: ID!
+  name: String
+}`
+  );
+  t.end();
+});
+
+test.cb('Test augmented typedefs from AST', t => {
+  const schema = makeAugmentedSchema({ typeDefs: testAST });
+  t.is(printSchema(schema).includes('type Thing'), true);
   t.end();
 });
