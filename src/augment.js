@@ -206,7 +206,6 @@ const augmentResolvers = (augmentedTypeMap, resolvers, config) => {
 const possiblyAddOrderingArgument = (args, fieldName) => {
   const orderingType = `_${fieldName}Ordering`;
   if (args.findIndex(e => e.name.value === orderingType) === -1) {
-    // TODO refactor
     args.push({
       kind: 'InputValueDefinition',
       name: {
@@ -1370,10 +1369,10 @@ const shouldAugmentRelationField = (config, rootType, fromName, toName) =>
   shouldAugmentType(config, rootType, toName);
 
 const fieldIsNotIgnored = (astNode, field, resolvers) => {
-  return (
-    !getFieldDirective(field, 'neo4j_ignore') &&
-    !getCustomFieldResolver(astNode, field, resolvers)
-  );
+  return !getFieldDirective(field, 'neo4j_ignore');
+  // FIXME: issue related to inferences on AST field .resolve
+  // See: possiblyAddIgnoreDirective
+  // !getCustomFieldResolver(astNode, field, resolvers)
 };
 
 const isNotSystemField = name => {
