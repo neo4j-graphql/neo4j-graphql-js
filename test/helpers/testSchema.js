@@ -3,7 +3,7 @@ export const testSchema = `type Movie {
   movieId: ID!
   title: String
   year: Int
-  released: DateTime
+  released: DateTime!
   plot: String
   poster: String
   imdbRating: Float

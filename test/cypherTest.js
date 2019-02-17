@@ -3599,12 +3599,12 @@ test('Query nested list properties on relationship', t => {
 
 test('UUID value generated if no id value provided', t => {
   const graphQLQuery = `mutation {
-    CreateMovie(title: "Yo Dawg") {
+    CreateMovie(title: "Yo Dawg", released: {year: 2009, month: 6, day: 9}) {
       title
     }
   }`,
     expectedCypherQuery = `
-    CREATE (\`movie\`:\`Movie\` {movieId: apoc.create.uuid(),title:$params.title})
+    CREATE (\`movie\`:\`Movie\` {movieId: apoc.create.uuid(),title:$params.title,released: datetime($params.released)})
     RETURN \`movie\` { .title } AS \`movie\`
   `;
 
@@ -3624,6 +3624,7 @@ test('Create node with list arguments', t => {
       titles: ["A", "B"]
       imdbRatings: [5.5, 8.95]
       years: [2004, 2018]
+      released: {year: 1992, month: 10, day: 9}
       releases: [
         {
           year: 2020
@@ -3658,7 +3659,7 @@ test('Create node with list arguments', t => {
     }
   }`,
     expectedCypherQuery = `
-    CREATE (\`movie\`:\`Movie\` {movieId: apoc.create.uuid(),title:$params.title,years:$params.years,titles:$params.titles,imdbRatings:$params.imdbRatings,releases: [value IN $params.releases | datetime(value)]})
+    CREATE (\`movie\`:\`Movie\` {movieId: apoc.create.uuid(),title:$params.title,released: datetime($params.released),years:$params.years,titles:$params.titles,imdbRatings:$params.imdbRatings,releases: [value IN $params.releases | datetime(value)]})
     RETURN \`movie\` { .movieId , .title , .titles , .imdbRatings , .years ,releases: reduce(a = [], TEMPORAL_INSTANCE IN movie.releases | a + { year: TEMPORAL_INSTANCE.year , month: TEMPORAL_INSTANCE.month , day: TEMPORAL_INSTANCE.day , hour: TEMPORAL_INSTANCE.hour , second: TEMPORAL_INSTANCE.second , formatted: toString(TEMPORAL_INSTANCE) })} AS \`movie\`
   `;
 
