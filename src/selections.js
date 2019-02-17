@@ -31,6 +31,7 @@ import {
 
 export function buildCypherSelection({
   initial,
+  cypherParams,
   selections,
   variableName,
   schemaType,
@@ -60,6 +61,7 @@ export function buildCypherSelection({
 
   let tailParams = {
     selections: tailSelections,
+    cypherParams,
     variableName,
     schemaType,
     resolveInfo,
@@ -104,9 +106,12 @@ export function buildCypherSelection({
   }
 
   const commaIfTail = tailSelections.length > 0 ? ',' : '';
-
+  const isScalarSchemaType = isGraphqlScalarType(schemaType);
+  const schemaTypeField = !isScalarSchemaType
+    ? schemaType.getFields()[fieldName]
+    : {};
   // Schema meta fields(__schema, __typename, etc)
-  if (!schemaType.getFields()[fieldName]) {
+  if (!isScalarSchemaType && !schemaTypeField) {
     return recurse({
       initial: tailSelections.length
         ? initial
@@ -115,7 +120,8 @@ export function buildCypherSelection({
     });
   }
 
-  const fieldType = schemaType.getFields()[fieldName].type;
+  const fieldType =
+    schemaTypeField && schemaTypeField.type ? schemaTypeField.type : {};
   const innerSchemaType = innerType(fieldType); // for target "type" aka label
 
   if (
@@ -166,6 +172,7 @@ export function buildCypherSelection({
       return recurse({
         initial: `${initial}${fieldName}: apoc.cypher.runFirstColumn("${customCypher}", ${cypherDirectiveArgs(
           variableName,
+          cypherParams,
           headSelection,
           schemaType,
           resolveInfo
@@ -192,7 +199,10 @@ export function buildCypherSelection({
     });
   }
   // We have a graphql object type
-  const innerSchemaTypeAstNode = typeMap[innerSchemaType].astNode;
+  const innerSchemaTypeAstNode =
+    innerSchemaType && typeMap[innerSchemaType]
+      ? typeMap[innerSchemaType].astNode
+      : {};
   const innerSchemaTypeRelation = getRelationTypeDirectiveArgs(
     innerSchemaTypeAstNode
   );
@@ -213,7 +223,7 @@ export function buildCypherSelection({
   const skipLimit = computeSkipLimit(headSelection, resolveInfo.variableValues);
 
   const subSelections = extractSelections(
-    headSelection.selectionSet.selections,
+    headSelection.selectionSet ? headSelection.selectionSet.selections : [],
     resolveInfo.fragments
   );
 
@@ -223,6 +233,7 @@ export function buildCypherSelection({
     variableName: nestedVariable,
     schemaType: innerSchemaType,
     resolveInfo,
+    cypherParams,
     parentSelectionInfo: {
       fieldName,
       schemaType,
@@ -235,7 +246,10 @@ export function buildCypherSelection({
   });
 
   let selection;
-  const fieldArgs = schemaType.getFields()[fieldName].args.map(e => e.astNode);
+  const fieldArgs =
+    !isScalarSchemaType && schemaTypeField && schemaTypeField.args
+      ? schemaTypeField.args.map(e => e.astNode)
+      : [];
   const temporalArgs = getTemporalArguments(fieldArgs);
   const queryParams = paramsToString(
     innerFilterParams(filterParams, temporalArgs)
@@ -259,6 +273,7 @@ export function buildCypherSelection({
     selection = recurse(
       customCypherField({
         ...fieldInfo,
+        cypherParams,
         schemaType,
         schemaTypeRelation,
         customCypher,
