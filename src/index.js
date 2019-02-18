@@ -5,8 +5,7 @@ import {
   extractTypeMapFromTypeDefs,
   addDirectiveDeclarations,
   printTypeMap,
-  getQuerySelections,
-  getMutationSelections
+  getPayloadSelections
 } from './utils';
 import {
   extractTypeMapFromSchema,
@@ -67,9 +66,10 @@ export function cypherQuery(
 ) {
   const { typeName, variableName } = typeIdentifiers(resolveInfo.returnType);
   const schemaType = resolveInfo.schema.getType(typeName);
-  const selections = getQuerySelections(resolveInfo);
+  const selections = getPayloadSelections(resolveInfo);
   return translateQuery({
     resolveInfo,
+    context,
     schemaType,
     selections,
     variableName,
@@ -89,9 +89,10 @@ export function cypherMutation(
 ) {
   const { typeName, variableName } = typeIdentifiers(resolveInfo.returnType);
   const schemaType = resolveInfo.schema.getType(typeName);
-  const selections = getMutationSelections(resolveInfo);
+  const selections = getPayloadSelections(resolveInfo);
   return translateMutation({
     resolveInfo,
+    context,
     schemaType,
     selections,
     variableName,

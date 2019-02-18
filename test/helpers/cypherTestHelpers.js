@@ -26,11 +26,21 @@ type Mutation {
     CreateState(name: String!): State
     UpdateMovie(movieId: ID!, title: String, year: Int, plot: String, poster: String, imdbRating: Float): Movie
     DeleteMovie(movieId: ID!): Movie
-}
+    currentUserId: String @cypher(statement: "RETURN $cypherParams.currentUserId")
+    computedObjectWithCypherParams: currentUserId @cypher(statement: "RETURN { userId: $cypherParams.currentUserId }")
+    computedStringList: [String] @cypher(statement: "UNWIND ['hello', 'world'] AS stringList RETURN stringList")
+    computedTemporal: DateTime @cypher(statement: "WITH datetime() AS now RETURN { year: now.year, month: now.month , day: now.day , hour: now.hour , minute: now.minute , second: now.second , millisecond: now.millisecond , microsecond: now.microsecond , nanosecond: now.nanosecond , timezone: now.timezone , formatted: toString(now) }")
+    customWithArguments(strArg: String, strInputArg: strInput): String @cypher(statement: "RETURN $strInputArg.strArg")
+  }
 `;
 
   const resolvers = {
     Query: {
+      User(object, params, ctx, resolveInfo) {
+        const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
+        t.is(query, expectedCypherQuery);
+        t.deepEqual(queryParams, expectedCypherParams);
+      },
       Movie(object, params, ctx, resolveInfo) {
         const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
         t.is(query, expectedCypherQuery);
@@ -70,6 +80,51 @@ type Mutation {
         const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
         t.is(query, expectedCypherQuery);
         t.deepEqual(queryParams, expectedCypherParams);
+      },
+      computedBoolean(object, params, ctx, resolveInfo) {
+        const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
+        t.is(query, expectedCypherQuery);
+        t.deepEqual(queryParams, expectedCypherParams);
+      },
+      computedInt(object, params, ctx, resolveInfo) {
+        const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
+        t.is(query, expectedCypherQuery);
+        t.deepEqual(queryParams, expectedCypherParams);
+      },
+      computedFloat(object, params, ctx, resolveInfo) {
+        const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
+        t.is(query, expectedCypherQuery);
+        t.deepEqual(queryParams, expectedCypherParams);
+      },
+      currentUserId(object, params, ctx, resolveInfo) {
+        const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
+        t.is(query, expectedCypherQuery);
+        t.deepEqual(queryParams, expectedCypherParams);
+      },
+      computedTemporal(object, params, ctx, resolveInfo) {
+        const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
+        t.is(query, expectedCypherQuery);
+        t.deepEqual(queryParams, expectedCypherParams);
+      },
+      computedObjectWithCypherParams(object, params, ctx, resolveInfo) {
+        const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
+        t.is(query, expectedCypherQuery);
+        t.deepEqual(queryParams, expectedCypherParams);
+      },
+      computedStringList(object, params, ctx, resolveInfo) {
+        const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
+        t.is(query, expectedCypherQuery);
+        t.deepEqual(queryParams, expectedCypherParams);
+      },
+      computedIntList(object, params, ctx, resolveInfo) {
+        const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
+        t.is(query, expectedCypherQuery);
+        t.deepEqual(queryParams, expectedCypherParams);
+      },
+      customWithArguments(object, params, ctx, resolveInfo) {
+        const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
+        t.is(query, expectedCypherQuery);
+        t.deepEqual(queryParams, expectedCypherParams);
       }
     },
     Mutation: {
@@ -102,6 +157,36 @@ type Mutation {
         t.is(query, expectedCypherQuery);
         t.deepEqual(queryParams, expectedCypherParams);
         t.end();
+      },
+      currentUserId(object, params, ctx, resolveInfo) {
+        const [query, queryParams] = cypherMutation(params, ctx, resolveInfo);
+        t.is(query, expectedCypherQuery);
+        t.deepEqual(queryParams, expectedCypherParams);
+        t.end();
+      },
+      computedObjectWithCypherParams(object, params, ctx, resolveInfo) {
+        const [query, queryParams] = cypherMutation(params, ctx, resolveInfo);
+        t.is(query, expectedCypherQuery);
+        t.deepEqual(queryParams, expectedCypherParams);
+        t.end();
+      },
+      computedStringList(object, params, ctx, resolveInfo) {
+        const [query, queryParams] = cypherMutation(params, ctx, resolveInfo);
+        t.is(query, expectedCypherQuery);
+        t.deepEqual(queryParams, expectedCypherParams);
+        t.end();
+      },
+      computedTemporal(object, params, ctx, resolveInfo) {
+        const [query, queryParams] = cypherMutation(params, ctx, resolveInfo);
+        t.is(query, expectedCypherQuery);
+        t.deepEqual(queryParams, expectedCypherParams);
+        t.end();
+      },
+      customWithArguments(object, params, ctx, resolveInfo) {
+        const [query, queryParams] = cypherMutation(params, ctx, resolveInfo);
+        t.is(query, expectedCypherQuery);
+        t.deepEqual(queryParams, expectedCypherParams);
+        t.end();
       }
     }
   };
@@ -115,7 +200,17 @@ type Mutation {
   });
 
   // query the test schema with the test query, assertion is in the resolver
-  return graphql(schema, graphqlQuery, null, null, graphqlParams);
+  return graphql(
+    schema,
+    graphqlQuery,
+    null,
+    {
+      cypherParams: {
+        userId: 'user-id'
+      }
+    },
+    graphqlParams
+  );
 }
 
 // Optimization to prevent schema augmentation from running for every test
@@ -195,6 +290,51 @@ export function augmentedSchemaCypherTestRunner(
         t.deepEqual(queryParams, expectedCypherParams);
       },
       State(object, params, ctx, resolveInfo) {
+        const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
+        t.is(query, expectedCypherQuery);
+        t.deepEqual(queryParams, expectedCypherParams);
+      },
+      computedBoolean(object, params, ctx, resolveInfo) {
+        const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
+        t.is(query, expectedCypherQuery);
+        t.deepEqual(queryParams, expectedCypherParams);
+      },
+      computedInt(object, params, ctx, resolveInfo) {
+        const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
+        t.is(query, expectedCypherQuery);
+        t.deepEqual(queryParams, expectedCypherParams);
+      },
+      computedFloat(object, params, ctx, resolveInfo) {
+        const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
+        t.is(query, expectedCypherQuery);
+        t.deepEqual(queryParams, expectedCypherParams);
+      },
+      currentUserId(object, params, ctx, resolveInfo) {
+        const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
+        t.is(query, expectedCypherQuery);
+        t.deepEqual(queryParams, expectedCypherParams);
+      },
+      computedTemporal(object, params, ctx, resolveInfo) {
+        const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
+        t.is(query, expectedCypherQuery);
+        t.deepEqual(queryParams, expectedCypherParams);
+      },
+      computedObjectWithCypherParams(object, params, ctx, resolveInfo) {
+        const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
+        t.is(query, expectedCypherQuery);
+        t.deepEqual(queryParams, expectedCypherParams);
+      },
+      computedStringList(object, params, ctx, resolveInfo) {
+        const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
+        t.is(query, expectedCypherQuery);
+        t.deepEqual(queryParams, expectedCypherParams);
+      },
+      computedIntList(object, params, ctx, resolveInfo) {
+        const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
+        t.is(query, expectedCypherQuery);
+        t.deepEqual(queryParams, expectedCypherParams);
+      },
+      customWithArguments(object, params, ctx, resolveInfo) {
         const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
         t.is(query, expectedCypherQuery);
         t.deepEqual(queryParams, expectedCypherParams);
@@ -278,6 +418,36 @@ export function augmentedSchemaCypherTestRunner(
         t.is(query, expectedCypherQuery);
         t.deepEqual(queryParams, expectedCypherParams);
         t.end();
+      },
+      currentUserId(object, params, ctx, resolveInfo) {
+        const [query, queryParams] = cypherMutation(params, ctx, resolveInfo);
+        t.is(query, expectedCypherQuery);
+        t.deepEqual(queryParams, expectedCypherParams);
+        t.end();
+      },
+      computedObjectWithCypherParams(object, params, ctx, resolveInfo) {
+        const [query, queryParams] = cypherMutation(params, ctx, resolveInfo);
+        t.is(query, expectedCypherQuery);
+        t.deepEqual(queryParams, expectedCypherParams);
+        t.end();
+      },
+      computedStringList(object, params, ctx, resolveInfo) {
+        const [query, queryParams] = cypherMutation(params, ctx, resolveInfo);
+        t.is(query, expectedCypherQuery);
+        t.deepEqual(queryParams, expectedCypherParams);
+        t.end();
+      },
+      computedTemporal(object, params, ctx, resolveInfo) {
+        const [query, queryParams] = cypherMutation(params, ctx, resolveInfo);
+        t.is(query, expectedCypherQuery);
+        t.deepEqual(queryParams, expectedCypherParams);
+        t.end();
+      },
+      customWithArguments(object, params, ctx, resolveInfo) {
+        const [query, queryParams] = cypherMutation(params, ctx, resolveInfo);
+        t.is(query, expectedCypherQuery);
+        t.deepEqual(queryParams, expectedCypherParams);
+        t.end();
       }
     }
   };
@@ -290,7 +460,17 @@ export function augmentedSchemaCypherTestRunner(
     }
   });
 
-  return graphql(augmentedSchema, graphqlQuery, null, null, graphqlParams);
+  return graphql(
+    augmentedSchema,
+    graphqlQuery,
+    null,
+    {
+      cypherParams: {
+        userId: 'user-id'
+      }
+    },
+    graphqlParams
+  );
 }
 
 const augmentedSchemaTypeDefs = augmentTypeDefs(testSchema);
