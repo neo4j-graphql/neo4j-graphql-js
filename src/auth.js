@@ -33,13 +33,13 @@ export const shouldAddAuthDirective = (config, authDirective) => {
 };
 
 export const possiblyAddDirectiveDeclarations = (typeMap, config) => {
-  const roleType = getRoleType(typeMap);
   if (shouldAddAuthDirective(config, 'isAuthenticated')) {
     typeMap['isAuthenticated'] = parse(
       `directive @isAuthenticated on OBJECT | FIELD_DEFINITION`
     ).definitions[0];
   }
-  if (roleType && shouldAddAuthDirective(config, 'hasRole')) {
+  if (shouldAddAuthDirective(config, 'hasRole')) {
+    getRoleType(typeMap); // ensure Role enum is specified in typedefs
     typeMap['hasRole'] = parse(
       `directive @hasRole(roles: [Role]) on OBJECT | FIELD_DEFINITION`
     ).definitions[0];
@@ -57,11 +57,11 @@ export const possiblyAddDirectiveImplementations = (
   typeMap,
   config
 ) => {
-  const roleType = getRoleType(typeMap);
   if (shouldAddAuthDirective(config, 'isAuthenticated')) {
     schemaDirectives['isAuthenticated'] = IsAuthenticatedDirective;
   }
-  if (roleType && shouldAddAuthDirective(config, 'hasRole')) {
+  if (shouldAddAuthDirective(config, 'hasRole')) {
+    getRoleType(typeMap); // ensure Role enum specified in typedefs
     schemaDirectives['hasRole'] = HasRoleDirective;
   }
   if (shouldAddAuthDirective(config, 'hasScope')) {
