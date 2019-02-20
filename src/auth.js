@@ -71,7 +71,13 @@ export const possiblyAddDirectiveImplementations = (
 };
 
 const getRoleType = typeMap => {
-  return typeMap['Role'];
+  const roleType = typeMap['Role'];
+  if (!roleType) {
+    throw new Error(
+      `A Role enum type is required for the @hasRole auth directive.`
+    );
+  }
+  return roleType;
 };
 
 export const possiblyAddScopeDirective = ({
