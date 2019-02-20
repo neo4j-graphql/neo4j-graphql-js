@@ -12,6 +12,12 @@ directive @MutationMeta(relationship: String, from: String, to: String) on FIELD
 
 directive @neo4j_ignore on FIELD_DEFINITION
 
+directive @isAuthenticated on OBJECT | FIELD_DEFINITION
+
+directive @hasRole(roles: [Role]) on OBJECT | FIELD_DEFINITION
+
+directive @hasScope(scopes: [String]) on OBJECT | FIELD_DEFINITION
+
 input _ActorInput {
   userId: ID!
 }
@@ -590,6 +596,12 @@ type Rated {
   localdatetime: _Neo4jLocalDateTime
   datetimes: [_Neo4jDateTime]
   to: Movie
+}
+
+enum Role {
+  reader
+  user
+  admin
 }
 
 type State {
