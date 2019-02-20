@@ -125,7 +125,7 @@ export const makeAugmentedSchema = ({
   allowUndefinedInResolve = false,
   resolverValidationOptions = {},
   directiveResolvers = null,
-  schemaDirectives = null,
+  schemaDirectives = {},
   parseOptions = {},
   inheritResolversFromInterfaces = false,
   config = {
@@ -156,7 +156,7 @@ export const makeAugmentedSchema = ({
 export const augmentTypeDefs = (typeDefs, config) => {
   let typeMap = extractTypeMapFromTypeDefs(typeDefs);
   // overwrites any provided declarations of system directives
-  typeMap = addDirectiveDeclarations(typeMap);
+  typeMap = addDirectiveDeclarations(typeMap, config);
   // adds managed types; tepmoral, spatial, etc.
   typeMap = addTemporalTypes(typeMap, config);
   return printTypeMap(typeMap);

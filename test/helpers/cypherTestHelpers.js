@@ -192,7 +192,7 @@ type Mutation {
   };
 
   const schema = makeExecutableSchema({
-    typeDefs: augmentTypeDefs(testMovieSchema),
+    typeDefs: augmentTypeDefs(testMovieSchema, { auth: true }),
     resolvers,
     resolverValidationOptions: {
       requireResolversForResolveType: false
@@ -215,20 +215,26 @@ type Mutation {
 
 // Optimization to prevent schema augmentation from running for every test
 const typeMap = extractTypeMapFromTypeDefs(testSchema);
-const augmentedTypeMap = augmentTypeMap(typeMap, {
-  // These custom field resolvers exist only for generating
-  // @neo4j_ignore directives used in a few tests
-  Movie: {
-    customField(object, params, ctx, resolveInfo) {
-      return '';
+const augmentedTypeMap = augmentTypeMap(
+  typeMap,
+  {
+    // These custom field resolvers exist only for generating
+    // @neo4j_ignore directives used in a few tests
+    Movie: {
+      customField(object, params, ctx, resolveInfo) {
+        return '';
+      }
+    },
+    State: {
+      customField(object, params, ctx, resolveInfo) {
+        return '';
+      }
     }
   },
-  State: {
-    customField(object, params, ctx, resolveInfo) {
-      return '';
-    }
+  {
+    auth: true
   }
-});
+);
 const augmentedSchemaCypherTestRunnerTypeDefs = printTypeMap(augmentedTypeMap);
 
 export function augmentedSchemaCypherTestRunner(
@@ -473,7 +479,9 @@ export function augmentedSchemaCypherTestRunner(
   );
 }
 
-const augmentedSchemaTypeDefs = augmentTypeDefs(testSchema);
+const augmentedSchemaTypeDefs = augmentTypeDefs(testSchema, {
+  auth: true
+});
 
 export function augmentedSchema() {
   const schema = makeExecutableSchema({

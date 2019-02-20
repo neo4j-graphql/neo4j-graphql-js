@@ -28,6 +28,10 @@ import {
   getExcludedTypes,
   parseInputFieldsSdl
 } from './utils';
+import {
+  possiblyAddDirectiveImplementations,
+  possiblyAddScopeDirective
+} from './auth';
 
 export const augmentedSchema = (typeMap, resolvers, config) => {
   const augmentedTypeMap = augmentTypeMap(typeMap, resolvers, config);
@@ -36,12 +40,18 @@ export const augmentedSchema = (typeMap, resolvers, config) => {
     resolvers,
     config
   );
+  const schemaDirectives = possiblyAddDirectiveImplementations(
+    schemaDirectives,
+    typeMap,
+    config
+  );
   return makeExecutableSchema({
     typeDefs: printTypeMap(augmentedTypeMap),
     resolvers: augmentedResolvers,
     resolverValidationOptions: {
       requireResolversForResolveType: false
-    }
+    },
+    schemaDirectives
   });
 };
 
@@ -65,6 +75,11 @@ export const makeAugmentedExecutableSchema = ({
     config
   );
   resolverValidationOptions.requireResolversForResolveType = false;
+  schemaDirectives = possiblyAddDirectiveImplementations(
+    schemaDirectives,
+    typeMap,
+    config
+  );
   return makeExecutableSchema({
     typeDefs: printTypeMap(augmentedTypeMap),
     resolvers: augmentedResolvers,
@@ -160,7 +175,7 @@ export const augmentTypeMap = (typeMap, resolvers, config) => {
     }
   });
   typeMap = augmentQueryArguments(typeMap, config, rootTypes);
-  typeMap = addDirectiveDeclarations(typeMap);
+  typeMap = addDirectiveDeclarations(typeMap, config);
   return typeMap;
 };
 
@@ -383,6 +398,12 @@ const possiblyAddQuery = (astNode, typeMap, resolvers, rootTypes, config) => {
   const queryType = rootTypes.query;
   const queryMap = createOperationMap(typeMap.Query);
   if (isNodeType(astNode) && shouldAugmentType(config, 'query', typeName)) {
+    const authDirectives = possiblyAddScopeDirective({
+      entityType: 'node',
+      operationType: 'Read',
+      typeName,
+      config
+    });
     const name = astNode.name.value;
     if (queryMap[name] === undefined) {
       typeMap[queryType].fields.push({
@@ -401,7 +422,8 @@ const possiblyAddQuery = (astNode, typeMap, resolvers, rootTypes, config) => {
               value: name
             }
           }
-        }
+        },
+        directives: [authDirectives]
       });
     }
   }
@@ -443,21 +465,24 @@ const possiblyAddTypeMutations = (astNode, typeMap, resolvers, config) => {
         astNode,
         resolvers,
         typeMap,
-        mutationMap
+        mutationMap,
+        config
       );
       typeMap = possiblyAddTypeMutation(
         `Update`,
         astNode,
         resolvers,
         typeMap,
-        mutationMap
+        mutationMap,
+        config
       );
       typeMap = possiblyAddTypeMutation(
         `Delete`,
         astNode,
         resolvers,
         typeMap,
-        mutationMap
+        mutationMap,
+        config
       );
     }
   }
@@ -516,23 +541,31 @@ const possiblyAddObjectType = (typeMap, name) => {
 };
 
 const possiblyAddTypeMutation = (
-  namePrefix,
+  mutationType,
   astNode,
   resolvers,
   typeMap,
-  mutationMap
+  mutationMap,
+  config
 ) => {
   const typeName = astNode.name.value;
-  const mutationName = namePrefix + typeName;
+  const mutationName = mutationType + typeName;
   // Only generate if the mutation named mutationName does not already exist
   if (mutationMap[mutationName] === undefined) {
     const args = buildMutationArguments(
-      namePrefix,
+      mutationType,
       astNode,
       resolvers,
       typeMap
     );
     if (args.length > 0) {
+      const typeName = astNode.name.value;
+      const authDirectives = possiblyAddScopeDirective({
+        entityType: 'node',
+        operationType: mutationType,
+        typeName,
+        config
+      });
       typeMap['Mutation'].fields.push({
         kind: 'FieldDefinition',
         name: {
@@ -547,7 +580,7 @@ const possiblyAddTypeMutation = (
             value: typeName
           }
         },
-        directives: []
+        directives: [authDirectives]
       });
     }
   }
@@ -648,7 +681,8 @@ const possiblyAddRelationMutationField = (
   typeMap,
   relationName,
   relatedAstNode,
-  relationHasProps
+  relationHasProps,
+  config
 ) => {
   const mutationTypes = ['Add', 'Remove'];
   let mutationName = '';
@@ -667,6 +701,13 @@ const possiblyAddRelationMutationField = (
       // and if we are generating the add relation mutation, then add the .data argument
       const shouldUseRelationDataArgument =
         relationHasProps && hasSomePropertyField && action === 'Add';
+      const authDirectives = possiblyAddScopeDirective({
+        entityType: 'relation',
+        operationType: action,
+        typeName,
+        relatedTypeName: toName,
+        config
+      });
       // Relation mutation type
       typeMap.Mutation.fields.push(
         parseFieldSdl(`
@@ -674,7 +715,9 @@ const possiblyAddRelationMutationField = (
           shouldUseRelationDataArgument
             ? `, data: _${relatedAstNode.name.value}Input!`
             : ''
-        }): ${payloadTypeName} @MutationMeta(relationship: "${relationName}", from: "${fromName}", to: "${toName}")
+        }): ${payloadTypeName} @MutationMeta(relationship: "${relationName}", from: "${fromName}", to: "${toName}") ${
+          authDirectives ? authDirectives : ''
+        }
       `)
       );
       // Prevents overwriting
@@ -815,7 +858,8 @@ const handleRelationTypeDirective = ({
       typeMap,
       relationName,
       relatedAstNode,
-      true
+      true,
+      config
     );
   }
   // Relation type field payload transformation for selection sets
@@ -869,7 +913,8 @@ const handleRelationFieldDirective = ({
       typeMap,
       relationName,
       relatedAstNode,
-      false
+      false,
+      config
     );
   }
   return typeMap;
