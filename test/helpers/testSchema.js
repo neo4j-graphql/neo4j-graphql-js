@@ -1,8 +1,8 @@
-export const testSchema = /* GraphQL */ `
+export const testSchema = `
   type Movie {
     _id: String
     movieId: ID!
-    title: String
+    title: String @isAuthenticated
     year: Int
     released: DateTime!
     plot: String
@@ -253,5 +253,11 @@ export const testSchema = /* GraphQL */ `
 
   input strInput {
     strArg: String
+  }
+
+  enum Role {
+    reader
+    user
+    admin
   }
 `;
