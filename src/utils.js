@@ -1,14 +1,11 @@
 import { print, parse } from 'graphql';
-import { possiblyAddArgument } from './augment';
+import { possiblyAddDirectiveDeclarations } from './auth';
 import { v1 as neo4j } from 'neo4j-driver';
 import _ from 'lodash';
 import filter from 'lodash/filter';
 
 function parseArg(arg, variableValues) {
   switch (arg.value.kind) {
-    case 'Variable': {
-      return variableValues[arg.value.name.value];
-    }
     case 'IntValue': {
       return parseInt(arg.value.value);
     }
@@ -16,7 +13,7 @@ function parseArg(arg, variableValues) {
       return parseFloat(arg.value.value);
     }
     case 'Variable': {
-      return variableValues[arg.name.value];
+      return variableValues[arg.value.name.value];
     }
     case 'ObjectValue': {
       return parseArgs(arg.value.fields, {});
@@ -584,7 +581,7 @@ export const getRelationName = relationDirective => {
   }
 };
 
-export const addDirectiveDeclarations = typeMap => {
+export const addDirectiveDeclarations = (typeMap, config) => {
   // overwrites any provided directive declarations for system directive names
   typeMap['cypher'] = parse(
     `directive @cypher(statement: String) on FIELD_DEFINITION`
@@ -592,15 +589,17 @@ export const addDirectiveDeclarations = typeMap => {
   typeMap['relation'] = parse(
     `directive @relation(name: String, direction: _RelationDirections, from: String, to: String) on FIELD_DEFINITION | OBJECT`
   ).definitions[0];
+  // TODO should we change these system directives to having a '_Neo4j' prefix
   typeMap['MutationMeta'] = parse(
     `directive @MutationMeta(relationship: String, from: String, to: String) on FIELD_DEFINITION`
-  ).definitions[0];
-  typeMap['_RelationDirections'] = parse(
-    `enum _RelationDirections { IN OUT }`
   ).definitions[0];
   typeMap['neo4j_ignore'] = parse(
     `directive @neo4j_ignore on FIELD_DEFINITION`
   ).definitions[0];
+  typeMap['_RelationDirections'] = parse(
+    `enum _RelationDirections { IN OUT }`
+  ).definitions[0];
+  typeMap = possiblyAddDirectiveDeclarations(typeMap, config);
   return typeMap;
 };
 
