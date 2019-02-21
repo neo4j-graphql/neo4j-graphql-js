@@ -14,7 +14,7 @@ test.cb('Config - makeAugmentedSchema - no queries, no mutations', t => {
     config: {
       query: false,
       mutation: false,
-      auth: true
+      auth: false
     }
   });
 
@@ -25,7 +25,7 @@ test.cb('Config - makeAugmentedSchema - no queries, no mutations', t => {
 
 test.cb('Config - augmentSchema - no queries, no mutations', t => {
   const schema = makeExecutableSchema({
-    typeDefs: augmentTypeDefs(typeDefs, { auth: true })
+    typeDefs: augmentTypeDefs(typeDefs, { auth: false })
   });
 
   const augmentedSchema = augmentSchema(schema, {
@@ -54,7 +54,7 @@ test.cb('Config - makeAugmentedSchema - enable queries, no mutations', t => {
 
 test.cb('Config - augmentSchema - enable queries, no mutations', t => {
   const schema = makeExecutableSchema({
-    typeDefs: augmentTypeDefs(typeDefs, { auth: true })
+    typeDefs: augmentTypeDefs(typeDefs, { auth: false })
   });
 
   const augmentedSchema = augmentSchema(schema, {
@@ -86,7 +86,7 @@ test.cb(
 
 test.cb('Config - augmentSchema - enable queries, enable mutations', t => {
   const schema = makeExecutableSchema({
-    typeDefs: augmentTypeDefs(typeDefs, { auth: true })
+    typeDefs: augmentTypeDefs(typeDefs, { auth: false })
   });
 
   const augmentedSchema = augmentSchema(schema, {
@@ -119,7 +119,7 @@ test.cb(
 
 test.cb('Config - augmentSchema - specify types to exclude for mutation', t => {
   const schema = makeExecutableSchema({
-    typeDefs: augmentTypeDefs(typeDefs, { auth: true })
+    typeDefs: augmentTypeDefs(typeDefs, { auth: false })
   });
 
   const augmentedSchema = augmentSchema(schema, {
@@ -158,7 +158,7 @@ type Query {
 
 test.cb('Config - augmentSchema - specify types to exclude for query', t => {
   const schema = makeExecutableSchema({
-    typeDefs: augmentTypeDefs(typeDefs, { auth: true })
+    typeDefs: augmentTypeDefs(typeDefs, { auth: false })
   });
 
   const augmentedSchema = augmentSchema(schema, {
