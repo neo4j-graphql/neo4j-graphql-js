@@ -50,7 +50,7 @@ references:
   report_coverage: &report_coverage
     run:
       name: run report coverage tool
-      command: npm install -g codecov && npm run report-coverage
+      command: npm install codecov && npm run report-coverage
 
   install_node_modules_steps: &install_node_modules_steps
       - checkout
