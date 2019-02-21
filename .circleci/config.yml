@@ -48,8 +48,9 @@ references:
         command: echo "$NEO4J_DIST\n$NEO4J_VERSION\n$APOC_VERSION\n$DATASTORE_VERSION" > neo4j-version
 
   report_coverage: &report_coverage
-      - npm install -g codecov
-      - npm run report-coverage
+    run:
+      name: run report coverage tool
+      command: npm install -g codecov && npm run report-coverage
 
   install_node_modules_steps: &install_node_modules_steps
       - checkout
