@@ -47,6 +47,10 @@ references:
         name: Create Neo4j cache key
         command: echo "$NEO4J_DIST\n$NEO4J_VERSION\n$APOC_VERSION\n$DATASTORE_VERSION" > neo4j-version
 
+  report_coverage: &report_coverage
+      - npm install -g codecov
+      - npm run report-coverage
+
   install_node_modules_steps: &install_node_modules_steps
       - checkout
 
@@ -92,15 +96,6 @@ references:
     run:
       name: Run Tests
       command: ./node_modules/.bin/nyc ./node_modules/.bin/ava test/*.js
-  
-  report_coverage: &report_coverage
-      - run:
-        name: install codecov
-        command: npm install -g codecov
-
-      - run:
-        name: run coverage report
-        command: npm run report-coverage
 
   env_neo4j34ee: &env_neo4j34ee
       NEO4J_DIST: 'enterprise'
