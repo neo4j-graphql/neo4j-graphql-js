@@ -40,6 +40,7 @@ import _ from 'lodash';
 export const customCypherField = ({
   customCypher,
   cypherParams,
+  paramIndex,
   schemaTypeRelation,
   initial,
   fieldName,
@@ -59,16 +60,23 @@ export const customCypherField = ({
   }
   const fieldIsList = !!fieldType.ofType;
   // similar: [ x IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie}, true) |x {.title}][1..2])
+
+  // For @cypher fields with object payload types, customCypherField is
+  // called after the recursive call to compute a subSelection. But recurse()
+  // increments paramIndex. So here we need to decrement it in order to map
+  // appropriately to the indexed keys produced in getFilterParams()
+  const cypherFieldParamsIndex = paramIndex - 1;
   return {
     initial: `${initial}${fieldName}: ${
       fieldIsList ? '' : 'head('
-    }[ ${nestedVariable} IN apoc.cypher.runFirstColumn("${customCypher}", ${cypherDirectiveArgs(
+    }[ ${nestedVariable} IN apoc.cypher.runFirstColumn("${customCypher}", {${cypherDirectiveArgs(
       variableName,
-      cypherParams,
       headSelection,
+      cypherParams,
       schemaType,
-      resolveInfo
-    )}, true) | ${nestedVariable} {${subSelection[0]}}]${
+      resolveInfo,
+      cypherFieldParamsIndex
+    )}}, true) | ${nestedVariable} {${subSelection[0]}}]${
       fieldIsList ? '' : ')'
     }${skipLimit} ${commaIfTail}`,
     ...tailParams
