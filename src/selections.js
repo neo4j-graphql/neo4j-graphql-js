@@ -170,13 +170,14 @@ export function buildCypherSelection({
         variableName = `${variableName}_relation`;
       }
       return recurse({
-        initial: `${initial}${fieldName}: apoc.cypher.runFirstColumn("${customCypher}", ${cypherDirectiveArgs(
+        initial: `${initial}${fieldName}: apoc.cypher.runFirstColumn("${customCypher}", {${cypherDirectiveArgs(
           variableName,
-          cypherParams,
           headSelection,
+          cypherParams,
           schemaType,
-          resolveInfo
-        )}, false)${commaIfTail}`,
+          resolveInfo,
+          paramIndex
+        )}}, false)${commaIfTail}`,
         ...tailParams
       });
     } else if (isTemporalField(schemaType, fieldName)) {
@@ -274,6 +275,7 @@ export function buildCypherSelection({
       customCypherField({
         ...fieldInfo,
         cypherParams,
+        paramIndex,
         schemaType,
         schemaTypeRelation,
         customCypher,
