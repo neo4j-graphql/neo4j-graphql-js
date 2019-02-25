@@ -291,6 +291,10 @@ export function augmentedSchemaCypherTestRunner(
         t.deepEqual(queryParams, expectedCypherParams);
       },
       TemporalNode(object, params, ctx, resolveInfo) {
+        // cypherParams is emptied for the test
+        // Handle @cypher field on root query type with scalar payload, no args
+        // to ensure that only the $this param is used
+        ctx['cypherParams'] = {};
         let [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
         t.is(query, expectedCypherQuery);
         t.deepEqual(queryParams, expectedCypherParams);
