@@ -64,7 +64,7 @@ test('Cypher projection skip limit', t => {
     }
   }`,
     expectedCypherQuery =
-      'MATCH (`movie`:`Movie` {title:$title}) RETURN `movie` { .title ,actors: [(`movie`)<-[:`ACTED_IN`]-(`movie_actors`:`Actor`) | movie_actors { .name }] ,similar: [ movie_similar IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie, cypherParams: $cypherParams, first: 3, offset: 0}, true) | movie_similar { .title }][..3] } AS `movie` SKIP $offset';
+      'MATCH (`movie`:`Movie` {title:$title}) RETURN `movie` { .title ,actors: [(`movie`)<-[:`ACTED_IN`]-(`movie_actors`:`Actor`) | movie_actors { .name }] ,similar: [ movie_similar IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie, cypherParams: $cypherParams, offset: 0, first: $1_first}, true) | movie_similar { .title }][..3] } AS `movie` SKIP $offset';
 
   t.plan(3);
   return Promise.all([
@@ -221,7 +221,7 @@ test('Deeply nested object query', t => {
     }
   }
 }`,
-    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\` {title:$title}) RETURN \`movie\` { .title ,actors: [(\`movie\`)<-[:\`ACTED_IN\`]-(\`movie_actors\`:\`Actor\`) | movie_actors { .name ,movies: [(\`movie_actors\`)-[:\`ACTED_IN\`]->(\`movie_actors_movies\`:\`Movie\`) | movie_actors_movies { .title ,actors: [(\`movie_actors_movies\`)<-[:\`ACTED_IN\`]-(\`movie_actors_movies_actors\`:\`Actor\`{name:$1_name}) | movie_actors_movies_actors { .name ,movies: [(\`movie_actors_movies_actors\`)-[:\`ACTED_IN\`]->(\`movie_actors_movies_actors_movies\`:\`Movie\`) | movie_actors_movies_actors_movies { .title , .year ,similar: [ movie_actors_movies_actors_movies_similar IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie_actors_movies_actors_movies, cypherParams: $cypherParams, first: 3, offset: 0}, true) | movie_actors_movies_actors_movies_similar { .title , .year }][..3] }] }] }] }] } AS \`movie\` SKIP $offset`;
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\` {title:$title}) RETURN \`movie\` { .title ,actors: [(\`movie\`)<-[:\`ACTED_IN\`]-(\`movie_actors\`:\`Actor\`) | movie_actors { .name ,movies: [(\`movie_actors\`)-[:\`ACTED_IN\`]->(\`movie_actors_movies\`:\`Movie\`) | movie_actors_movies { .title ,actors: [(\`movie_actors_movies\`)<-[:\`ACTED_IN\`]-(\`movie_actors_movies_actors\`:\`Actor\`{name:$1_name}) | movie_actors_movies_actors { .name ,movies: [(\`movie_actors_movies_actors\`)-[:\`ACTED_IN\`]->(\`movie_actors_movies_actors_movies\`:\`Movie\`) | movie_actors_movies_actors_movies { .title , .year ,similar: [ movie_actors_movies_actors_movies_similar IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie_actors_movies_actors_movies, cypherParams: $cypherParams, offset: 0, first: $2_first}, true) | movie_actors_movies_actors_movies_similar { .title , .year }][..3] }] }] }] }] } AS \`movie\` SKIP $offset`;
 
   t.plan(3);
   return Promise.all([
@@ -358,7 +358,7 @@ test('Pass @cypher directive params to sub-query', t => {
     }
 
   }`,
-    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\` {title:$title}) RETURN \`movie\` {scaleRating: apoc.cypher.runFirstColumn("WITH $this AS this RETURN $scale * this.imdbRating", {this: movie, cypherParams: $cypherParams, scale: 10}, false)} AS \`movie\` SKIP $offset`;
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\` {title:$title}) RETURN \`movie\` {scaleRating: apoc.cypher.runFirstColumn("WITH $this AS this RETURN $scale * this.imdbRating", {this: movie, cypherParams: $cypherParams, scale: $1_scale}, false)} AS \`movie\` SKIP $offset`;
 
   t.plan(3);
   return Promise.all([
@@ -514,7 +514,7 @@ test('Cypher subquery filters', t => {
       }
     }`,
     expectedCypherQuery =
-      'MATCH (`movie`:`Movie` {title:$title}) RETURN `movie` { .title ,actors: [(`movie`)<-[:`ACTED_IN`]-(`movie_actors`:`Actor`{name:$1_name}) | movie_actors { .name }] ,similar: [ movie_similar IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie, cypherParams: $cypherParams, first: 3, offset: 0}, true) | movie_similar { .title }][..3] } AS `movie` SKIP $offset';
+      'MATCH (`movie`:`Movie` {title:$title}) RETURN `movie` { .title ,actors: [(`movie`)<-[:`ACTED_IN`]-(`movie_actors`:`Actor`{name:$1_name}) | movie_actors { .name }] ,similar: [ movie_similar IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie, cypherParams: $cypherParams, offset: 0, first: $3_first}, true) | movie_similar { .title }][..3] } AS `movie` SKIP $offset';
 
   t.plan(3);
   return Promise.all([
@@ -544,7 +544,7 @@ test('Cypher subquery filters with paging', t => {
       }
     }`,
     expectedCypherQuery =
-      'MATCH (`movie`:`Movie` {title:$title}) RETURN `movie` { .title ,actors: [(`movie`)<-[:`ACTED_IN`]-(`movie_actors`:`Actor`{name:$1_name}) | movie_actors { .name }][..3] ,similar: [ movie_similar IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie, cypherParams: $cypherParams, first: 3, offset: 0}, true) | movie_similar { .title }][..3] } AS `movie` SKIP $offset';
+      'MATCH (`movie`:`Movie` {title:$title}) RETURN `movie` { .title ,actors: [(`movie`)<-[:`ACTED_IN`]-(`movie_actors`:`Actor`{name:$1_name}) | movie_actors { .name }][..3] ,similar: [ movie_similar IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie, cypherParams: $cypherParams, offset: 0, first: $3_first}, true) | movie_similar { .title }][..3] } AS `movie` SKIP $offset';
 
   t.plan(3);
   return Promise.all([
@@ -1043,7 +1043,7 @@ test('Handle GraphQL variables in nested selection - first/offset', t => {
     }
   }
 }`,
-    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\` {year:$year}) RETURN \`movie\` { .title , .year ,similar: [ movie_similar IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie, cypherParams: $cypherParams, first: 3, offset: 0}, true) | movie_similar { .title }][..3] } AS \`movie\` SKIP $offset`;
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\` {year:$year}) RETURN \`movie\` { .title , .year ,similar: [ movie_similar IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie, cypherParams: $cypherParams, offset: 0, first: $1_first}, true) | movie_similar { .title }][..3] } AS \`movie\` SKIP $offset`;
 
   t.plan(3);
 
@@ -1083,7 +1083,7 @@ test('Handle GraphQL variables in nest selection - @cypher param (not first/offs
 
   }
 }`,
-    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\` {year:$year}) RETURN \`movie\` { .title , .year ,similar: [ movie_similar IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie, cypherParams: $cypherParams, first: 3, offset: 0}, true) | movie_similar { .title ,scaleRating: apoc.cypher.runFirstColumn("WITH $this AS this RETURN $scale * this.imdbRating", {this: movie_similar, cypherParams: $cypherParams, scale: 5}, false)}][..3] } AS \`movie\` SKIP $offset`;
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\` {year:$year}) RETURN \`movie\` { .title , .year ,similar: [ movie_similar IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie, cypherParams: $cypherParams, offset: 0, first: $1_first}, true) | movie_similar { .title ,scaleRating: apoc.cypher.runFirstColumn("WITH $this AS this RETURN $scale * this.imdbRating", {this: movie_similar, cypherParams: $cypherParams, scale: $2_scale}, false)}][..3] } AS \`movie\` SKIP $offset`;
 
   t.plan(3);
   return Promise.all([
@@ -4254,7 +4254,7 @@ test('Handle nested @cypher fields using parameterized arguments and cypherParam
       }
     }
   }`,
-    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\` ) RETURN \`movie\` {_id: ID(\`movie\`),currentUserId: apoc.cypher.runFirstColumn("RETURN $cypherParams.currentUserId AS cypherParamsUserId", {this: movie, cypherParams: $cypherParams, strArg: "Yo Dawg"}, false),ratings: [(\`movie\`)<-[\`movie_ratings_relation\`:\`RATED\`]-(:\`User\`) | movie_ratings_relation {currentUserId: apoc.cypher.runFirstColumn("RETURN $cypherParams.currentUserId AS cypherParamsUserId", {this: movie_ratings_relation, cypherParams: $cypherParams, strArg: "Yoo Dawg"}, false),User: head([(:\`Movie\`)<-[\`movie_ratings_relation\`]-(\`movie_ratings_User\`:\`User\`) | movie_ratings_User { .name ,currentUserId: apoc.cypher.runFirstColumn("RETURN $cypherParams.currentUserId AS cypherParamsUserId", {this: movie_ratings_User, cypherParams: $cypherParams, strArg: "Yooo Dawg", strInputArg: { strArg: "Yoooo Dawg"}}, false)}]) }] } AS \`movie\` SKIP $offset`;
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\` ) RETURN \`movie\` {_id: ID(\`movie\`),currentUserId: apoc.cypher.runFirstColumn("RETURN $cypherParams.currentUserId AS cypherParamsUserId", {this: movie, cypherParams: $cypherParams, strArg: $1_strArg}, false),ratings: [(\`movie\`)<-[\`movie_ratings_relation\`:\`RATED\`]-(:\`User\`) | movie_ratings_relation {currentUserId: apoc.cypher.runFirstColumn("RETURN $cypherParams.currentUserId AS cypherParamsUserId", {this: movie_ratings_relation, cypherParams: $cypherParams, strArg: $2_strArg}, false),User: head([(:\`Movie\`)<-[\`movie_ratings_relation\`]-(\`movie_ratings_User\`:\`User\`) | movie_ratings_User { .name ,currentUserId: apoc.cypher.runFirstColumn("RETURN $cypherParams.currentUserId AS cypherParamsUserId", {this: movie_ratings_User, cypherParams: $cypherParams, strArg: $3_strArg, strInputArg: $3_strInputArg}, false)}]) }] } AS \`movie\` SKIP $offset`;
 
   t.plan(1);
   return Promise.all([
@@ -4359,5 +4359,19 @@ test('Handle @cypher query with parameterized input type argument', t => {
       },
       expectedCypherQuery
     )
+  ]);
+});
+
+test('Handle @cypher field on root query type with scalar payload, no args', t => {
+  const graphQLQuery = `query {
+    TemporalNode {
+      computedTimestamp
+    }
+  }`,
+    expectedCypherQuery = `MATCH (\`temporalNode\`:\`TemporalNode\` ) RETURN \`temporalNode\` {computedTimestamp: apoc.cypher.runFirstColumn("RETURN toString(datetime())", {this: temporalNode}, false)} AS \`temporalNode\` SKIP $offset`;
+
+  t.plan(1);
+  return Promise.all([
+    augmentedSchemaCypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery)
   ]);
 });
