@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.4.1
+
+-[Fix for `@cypher` directive field parameters](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/207)
+
 ## 2.4.0
 
 - [Support for authorization schema directives via graphql-auth-directives](https://www.npmjs.com/package/graphql-auth-directives)
