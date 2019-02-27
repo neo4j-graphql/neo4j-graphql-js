@@ -374,6 +374,8 @@ enum _TemporalNodeOrdering {
   localtime_desc
   localdatetime_asc
   localdatetime_desc
+  computedTimestamp_asc
+  computedTimestamp_desc
   _id_asc
   _id_desc
 }
@@ -581,7 +583,7 @@ type Query {
   Genre(_id: String, name: String, first: Int, offset: Int, orderBy: [_GenreOrdering]): [Genre]
   Actor(userId: ID, name: String, _id: String, first: Int, offset: Int, orderBy: [_ActorOrdering]): [Actor]
   Book(genre: BookGenre, _id: String, first: Int, offset: Int, orderBy: [_BookOrdering]): [Book]
-  TemporalNode(datetime: _Neo4jDateTimeInput, name: String, time: _Neo4jTimeInput, date: _Neo4jDateInput, localtime: _Neo4jLocalTimeInput, localdatetime: _Neo4jLocalDateTimeInput, localdatetimes: _Neo4jLocalDateTimeInput, _id: String, first: Int, offset: Int, orderBy: [_TemporalNodeOrdering]): [TemporalNode]
+  TemporalNode(datetime: _Neo4jDateTimeInput, name: String, time: _Neo4jTimeInput, date: _Neo4jDateInput, localtime: _Neo4jLocalTimeInput, localdatetime: _Neo4jLocalDateTimeInput, localdatetimes: _Neo4jLocalDateTimeInput, computedTimestamp: String, _id: String, first: Int, offset: Int, orderBy: [_TemporalNodeOrdering]): [TemporalNode]
 }
 
 type Rated {
@@ -622,6 +624,7 @@ type TemporalNode {
   localtime: _Neo4jLocalTime
   localdatetime: _Neo4jLocalDateTime
   localdatetimes: [_Neo4jLocalDateTime]
+  computedTimestamp: String
   temporalNodes(time: _Neo4jTimeInput, date: _Neo4jDateInput, datetime: _Neo4jDateTimeInput, localtime: _Neo4jLocalTimeInput, localdatetime: _Neo4jLocalDateTimeInput, first: Int, offset: Int, orderBy: [_TemporalNodeOrdering]): [TemporalNode]
   _id: String
 }

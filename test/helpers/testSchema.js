@@ -232,6 +232,7 @@ export const testSchema = `
     localtime: LocalTime
     localdatetime: LocalDateTime
     localdatetimes: [LocalDateTime]
+    computedTimestamp: String @cypher(statement: "RETURN toString(datetime())")
     temporalNodes(
       time: Time
       date: Date

@@ -138,29 +138,41 @@ function getDefaultArguments(fieldName, schemaType) {
 
 export function cypherDirectiveArgs(
   variable,
-  cypherParams,
   headSelection,
+  cypherParams,
   schemaType,
-  resolveInfo
+  resolveInfo,
+  paramIndex
 ) {
+  // Get any default arguments or an empty object
   const defaultArgs = getDefaultArguments(headSelection.name.value, schemaType);
+  // Set the $this parameter by default
+  let args = [`this: ${variable}`];
+  // If cypherParams are provided, add the parameter
+  if (cypherParams) args.push(`cypherParams: $cypherParams`);
+  // Parse field argument values
   const queryArgs = parseArgs(
     headSelection.arguments,
     resolveInfo.variableValues
   );
-
-  const args = JSON.stringify(Object.assign(defaultArgs, queryArgs)).replace(
-    /\"([^(\")"]+)\":/g,
-    ' $1: '
-  );
-
-  return args === '{}'
-    ? `{this: ${variable}, ${
-        cypherParams ? `cypherParams: $cypherParams` : ''
-      }${args.substring(1)}`
-    : `{this: ${variable},${
-        cypherParams ? ` cypherParams: $cypherParams,` : ''
-      }${args.substring(1)}`;
+  // Add arguments that have default values, if no value is provided
+  Object.keys(defaultArgs).forEach(e => {
+    // Use only if default value exists and no value has been provided
+    if (defaultArgs[e] !== undefined && queryArgs[e] === undefined) {
+      // Values are inlined
+      args.push(`${e}: ${defaultArgs[e]}`);
+    }
+  });
+  // Add arguments that have provided values
+  Object.keys(queryArgs).forEach(e => {
+    if (queryArgs[e] !== undefined) {
+      // Use only if value exists
+      args.push(`${e}: $${paramIndex}_${e}`);
+    }
+  });
+  // Return the comma separated join of all param
+  // strings, adding a comma to match current test formats
+  return args.join(', ');
 }
 
 export function _isNamedMutation(name) {
