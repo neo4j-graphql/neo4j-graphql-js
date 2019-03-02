@@ -634,7 +634,7 @@ scalar Time
 type User implements Person {
   userId: ID!
   name: String
-  currentUserId(strArg: String, strInputArg: strInput): String
+  currentUserId(strArg: String = "Neo4j", strInputArg: strInput): String
   rated(rating: Int, time: _Neo4jTimeInput, date: _Neo4jDateInput, datetime: _Neo4jDateTimeInput, localtime: _Neo4jLocalTimeInput, localdatetime: _Neo4jLocalDateTimeInput): [_UserRated]
   friends: _UserFriendsDirections
   favorites(first: Int, offset: Int, orderBy: [_MovieOrdering]): [Movie]
