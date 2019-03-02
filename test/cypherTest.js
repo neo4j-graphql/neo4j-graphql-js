@@ -3944,7 +3944,7 @@ test('Handle @cypher field with String payload using cypherParams', t => {
       name
     }
   }`,
-    expectedCypherQuery = `MATCH (\`user\`:\`User\` ) RETURN \`user\` { .userId ,currentUserId: apoc.cypher.runFirstColumn("RETURN $cypherParams.currentUserId AS cypherParamsUserId", {this: user, cypherParams: $cypherParams}, false), .name } AS \`user\` SKIP $offset`;
+    expectedCypherQuery = `MATCH (\`user\`:\`User\` ) RETURN \`user\` { .userId ,currentUserId: apoc.cypher.runFirstColumn("RETURN $cypherParams.currentUserId AS cypherParamsUserId", {this: user, cypherParams: $cypherParams, strArg: "Neo4j"}, false), .name } AS \`user\` SKIP $offset`;
 
   t.plan(3);
   return Promise.all([
@@ -3987,7 +3987,7 @@ test('Handle nested @cypher fields that use cypherParams', t => {
       }
     }
   }`,
-    expectedCypherQuery = `MATCH (\`user\`:\`User\` ) RETURN \`user\` { .userId ,currentUserId: apoc.cypher.runFirstColumn("RETURN $cypherParams.currentUserId AS cypherParamsUserId", {this: user, cypherParams: $cypherParams}, false), .name ,friends: {to: [(\`user\`)-[\`user_to_relation\`:\`FRIEND_OF\`]->(\`user_to\`:\`User\`) | user_to_relation { .since ,currentUserId: apoc.cypher.runFirstColumn("RETURN $cypherParams.currentUserId AS cypherParamsUserId", {this: user_to_relation, cypherParams: $cypherParams}, false),User: user_to { .name ,currentUserId: apoc.cypher.runFirstColumn("RETURN $cypherParams.currentUserId AS cypherParamsUserId", {this: user_to, cypherParams: $cypherParams}, false)} }] ,from: [(\`user\`)<-[\`user_from_relation\`:\`FRIEND_OF\`]-(\`user_from\`:\`User\`) | user_from_relation { .since ,currentUserId: apoc.cypher.runFirstColumn("RETURN $cypherParams.currentUserId AS cypherParamsUserId", {this: user_from_relation, cypherParams: $cypherParams}, false)}] } ,rated: [(\`user\`)-[\`user_rated_relation\`:\`RATED\`]->(:\`Movie\`) | user_rated_relation { .rating ,currentUserId: apoc.cypher.runFirstColumn("RETURN $cypherParams.currentUserId AS cypherParamsUserId", {this: user_rated_relation, cypherParams: $cypherParams}, false)}] ,favorites: [(\`user\`)-[:\`FAVORITED\`]->(\`user_favorites\`:\`Movie\`) | user_favorites { .movieId ,currentUserId: apoc.cypher.runFirstColumn("RETURN $cypherParams.currentUserId AS cypherParamsUserId", {this: user_favorites, cypherParams: $cypherParams}, false)}] } AS \`user\` SKIP $offset`;
+    expectedCypherQuery = `MATCH (\`user\`:\`User\` ) RETURN \`user\` { .userId ,currentUserId: apoc.cypher.runFirstColumn("RETURN $cypherParams.currentUserId AS cypherParamsUserId", {this: user, cypherParams: $cypherParams, strArg: "Neo4j"}, false), .name ,friends: {to: [(\`user\`)-[\`user_to_relation\`:\`FRIEND_OF\`]->(\`user_to\`:\`User\`) | user_to_relation { .since ,currentUserId: apoc.cypher.runFirstColumn("RETURN $cypherParams.currentUserId AS cypherParamsUserId", {this: user_to_relation, cypherParams: $cypherParams}, false),User: user_to { .name ,currentUserId: apoc.cypher.runFirstColumn("RETURN $cypherParams.currentUserId AS cypherParamsUserId", {this: user_to, cypherParams: $cypherParams, strArg: "Neo4j"}, false)} }] ,from: [(\`user\`)<-[\`user_from_relation\`:\`FRIEND_OF\`]-(\`user_from\`:\`User\`) | user_from_relation { .since ,currentUserId: apoc.cypher.runFirstColumn("RETURN $cypherParams.currentUserId AS cypherParamsUserId", {this: user_from_relation, cypherParams: $cypherParams}, false)}] } ,rated: [(\`user\`)-[\`user_rated_relation\`:\`RATED\`]->(:\`Movie\`) | user_rated_relation { .rating ,currentUserId: apoc.cypher.runFirstColumn("RETURN $cypherParams.currentUserId AS cypherParamsUserId", {this: user_rated_relation, cypherParams: $cypherParams}, false)}] ,favorites: [(\`user\`)-[:\`FAVORITED\`]->(\`user_favorites\`:\`Movie\`) | user_favorites { .movieId ,currentUserId: apoc.cypher.runFirstColumn("RETURN $cypherParams.currentUserId AS cypherParamsUserId", {this: user_favorites, cypherParams: $cypherParams}, false)}] } AS \`user\` SKIP $offset`;
 
   t.plan(1);
   return Promise.all([
@@ -4339,7 +4339,6 @@ test('Handle @cypher query with parameterized input type argument', t => {
       expectedCypherQuery,
       {
         first: -1,
-        cypherParams: CYPHER_PARAMS,
         offset: 0,
         strArg: 'Hello',
         strInputArg: {
@@ -4372,6 +4371,41 @@ test('Handle @cypher field on root query type with scalar payload, no args', t =
 
   t.plan(1);
   return Promise.all([
+    augmentedSchemaCypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery)
+  ]);
+});
+
+test('Handle @cypher field with parameterized value for field of input type argument', t => {
+  const graphQLQuery = `query someQuery(
+    $strArg: String
+  ) {
+    User {
+      name
+      currentUserId(strInputArg: {
+        strArg: $strArg
+      })
+    }
+  }`,
+    expectedCypherQuery = `MATCH (\`user\`:\`User\` ) RETURN \`user\` { .name ,currentUserId: apoc.cypher.runFirstColumn("RETURN $cypherParams.currentUserId AS cypherParamsUserId", {this: user, cypherParams: $cypherParams, strArg: "Neo4j", strInputArg: $1_strInputArg}, false)} AS \`user\` SKIP $offset`;
+
+  t.plan(3);
+  return Promise.all([
+    cypherTestRunner(
+      t,
+      graphQLQuery,
+      {
+        strArg: 'Yo Dawg'
+      },
+      expectedCypherQuery,
+      {
+        '1_strInputArg': {
+          strArg: 'Yo Dawg'
+        },
+        first: -1,
+        offset: 0,
+        cypherParams: CYPHER_PARAMS
+      }
+    ),
     augmentedSchemaCypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery)
   ]);
 });
