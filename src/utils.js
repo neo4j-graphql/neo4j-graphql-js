@@ -16,7 +16,7 @@ function parseArg(arg, variableValues) {
       return variableValues[arg.value.name.value];
     }
     case 'ObjectValue': {
-      return parseArgs(arg.value.fields, {});
+      return parseArgs(arg.value.fields, variableValues);
     }
     case 'ListValue': {
       return _.map(arg.value.values, value =>
@@ -160,7 +160,8 @@ export function cypherDirectiveArgs(
     // Use only if default value exists and no value has been provided
     if (defaultArgs[e] !== undefined && queryArgs[e] === undefined) {
       // Values are inlined
-      args.push(`${e}: ${defaultArgs[e]}`);
+      const inlineDefaultValue = JSON.stringify(defaultArgs[e]);
+      args.push(`${e}: ${inlineDefaultValue}`);
     }
   });
   // Add arguments that have provided values
