@@ -81,7 +81,7 @@ export const testSchema = `
   type User implements Person {
     userId: ID!
     name: String
-    currentUserId(strArg: String, strInputArg: strInput): String
+    currentUserId(strArg: String = "Neo4j", strInputArg: strInput): String
       @cypher(
         statement: "RETURN $cypherParams.currentUserId AS cypherParamsUserId"
       )
