@@ -47,12 +47,12 @@
     "lint-staged": "^7.2.0",
     "node-fetch": "^2.3.0",
     "nodemon": "^1.18.7",
-    "nyc": "^13.1.0",
+    "nyc": "^13.3.0",
     "prettier": "^1.15.3"
   },
   "dependencies": {
     "graphql": "^14.0.2",
-    "graphql-auth-directives": "^2.0.0",
+    "graphql-auth-directives": "^2.1.0",
     "lodash": "^4.17.11",
     "neo4j-driver": "^1.7.2"
   },
