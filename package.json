@@ -1,6 +1,6 @@
 {
   "name": "neo4j-graphql-js",
-  "version": "2.4.1",
+  "version": "2.4.2",
   "description": "A GraphQL to Cypher query execution layer for Neo4j. ",
   "main": "./dist/index.js",
   "scripts": {
