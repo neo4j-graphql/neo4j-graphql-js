@@ -141,8 +141,12 @@ export function buildCypherSelection({
     // FIXME: this will only handle the first inline fragment
     const fragment = fragments[0];
 
-    interfaceLabel = fragment.typeCondition.name.value;
-    const implementationName = fragment.typeCondition.name.value;
+    interfaceLabel = fragment
+      ? fragment.typeCondition.name.value
+      : interfaceName;
+    const implementationName = fragment
+      ? fragment.typeCondition.name.value
+      : interfaceName;
 
     const schemaType = resolveInfo.schema._implementations[interfaceName].find(
       intfc => intfc.name === implementationName
