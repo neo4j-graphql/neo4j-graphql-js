@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.4.2
+
+-[Fix for querying interface type when no fragment is specified](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/210)
+
+- [Fix for `@cypher` directive input type argument parameters](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/213)
+
 ## 2.4.1
 
 -[Fix for `@cypher` directive field parameters](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/207)
