@@ -158,7 +158,18 @@ const buildTestData = (schema, tck) => {
         cypher: testCypher
       },
       testParams
-    );
+    ).then(data => {
+      const errors = data["errors"];
+      if(errors) {
+        const error = errors[0];
+        const message = error.message;
+        console.log(`
+Parse Error:
+testName: ${testName}
+message: ${message}
+`);
+      }
+    });
     return acc;
   }, []);
 };
