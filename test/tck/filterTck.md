@@ -309,10 +309,7 @@ RETURN person { .name } AS person
 query filterQuery($filterPersonGender: Gender) { person(filter: { gender: $filterPersonGender }) { name }}
 ```
 ```params
-{
-    "filterPersonGender":"male",
-    "filterPersonGender2":"female"
-}
+{"filterPersonGender":"male"}
 ```
 ```cypher
 MATCH (person:Person)
