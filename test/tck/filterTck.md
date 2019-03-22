@@ -28,7 +28,9 @@ input _PersonFilter {
   id_contains: ID
   id_not_contains: ID
   id_starts_with: ID
+  id_not_starts_with: ID
   id_ends_with: ID
+  id_not_ends_with: ID
   name: String
   name_not: String
   name_in: [String!]
@@ -330,7 +332,7 @@ RETURN person { .name } AS person
 ```
 ```graphql
 # Matches nodes with value of Enum field not in given list (parameterized)
-query filterQuery($filterPersonGender: Gender) { person(filter: { gender_not_in: $filterPersonGender }) { name }}
+query filterQuery($filterPersonGender: [Gender!]) { person(filter: { gender_not_in: $filterPersonGender }) { name }}
 ```
 ```params
 {"filterPersonGender":["male"]}
@@ -342,7 +344,7 @@ RETURN person { .name } AS person
 ```
 ```graphql
 # Matches nodes with value of Enum field in given list
-{ person(filter: { gender_in: [male] }) { name }}
+{ person(filter: { gender_in: male }) { name }}
 ```
 ```cypher
 MATCH (person:Person)
@@ -523,6 +525,13 @@ RETURN person { .name } AS person
 ```graphql
 # Matches nodes with String field equal to exact value and related type field ends with given substring (parameterized filter)
 query filterQuery($filter: _PersonFilter) { person(filter: $filter) { name }}
+```
+```params
+{
+  "filter": {
+    "name": "Jane"
+  }
+}
 ```
 ```cypher
 MATCH (person:Person)
