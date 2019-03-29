@@ -69,8 +69,15 @@ export default class Neo4jSchemaTree {
   getNode(id) {
     return this.nodes[id];
   }
+  getNodes() {
+    return Object.values(this.nodes);
+  }
+
   getRel(id) {
     return this.rels[id];
+  }
+  getRels() {
+    return Object.values(this.rels);
   }
 
   _populate(nodeTypes, relTypes) {
@@ -87,7 +94,6 @@ export default class Neo4jSchemaTree {
 
       labelCombos.forEach(item => {
         const combo = item.nodeLabels;
-        console.log('combo', combo);
         // A label combination is an array of strings ["X", "Y"] which indicates
         // that some nodes ":X:Y" exist in the graph.
         const id = combo.join(':');
@@ -106,7 +112,7 @@ export default class Neo4jSchemaTree {
             }
 
             propDetail.graphQLType = neo4jTypes.chooseGraphQLType(propDetail);
-            entity.addProperty(propDetail.propName, propDetail);
+            entity.addProperty(propDetail.propertyName, propDetail);
           });
       });
     });
@@ -127,7 +133,7 @@ export default class Neo4jSchemaTree {
           }
 
           propDetail.graphQLType = chooseGraphQLType(propDetail);
-          entity.addProperty(propDetail.propName, propDetail);
+          entity.addProperty(propDetail.propertyName, propDetail);
         });
     });
   }

@@ -1,3 +1,5 @@
+import _ from 'lodash';
+
 /**
  * Base class for a schema entity derived from Neo4j
  */
@@ -16,7 +18,22 @@ class Neo4jSchemaEntity {
     };
   }
 
+  getGraphQLTypeName() {
+    throw new Error('Override me in subclass');
+  }
+
+  getPropertyNames() {
+    return Object.keys(this.properties);
+  }
+
+  getProperty(name) {
+    return this.properties[name];
+  }
+
   addProperty(name, details) {
+    if (_.isNil(name) || _.isNil(details)) {
+      throw new Error('Property must have both name and details');
+    }
     this.properties[name] = details;
     return this;
   }
@@ -26,6 +43,16 @@ class Neo4jNode extends Neo4jSchemaEntity {
   constructor(id) {
     super(id, 'node', {});
   }
+
+  getGraphQLTypeName() {
+    // Make sure to guarantee alphabetic consistent ordering.
+    const parts = this.getLabels();
+    return parts.join('_').replace(/ /g, '_');
+  }
+
+  getLabels() {
+    return this.id.split(/:/g).sort();
+  }
 }
 
 class Neo4jRelationship extends Neo4jSchemaEntity {
@@ -33,12 +60,27 @@ class Neo4jRelationship extends Neo4jSchemaEntity {
     super(id, 'relationship', {});
   }
 
+  getRelationshipType() {
+    // OKAPI returns okapi IDs as :`TYPENAME`
+    return this.id.substring(2, this.id.length - 1);
+  }
+
+  getGraphQLTypeName() {
+    return this.getRelationshipType().replace(/ /g, '_');
+  }
+
   isInboundTo(label) {
-    return this.links.filter(link => link.to.indexOf(label) > -1).length > -1;
+    const linksToThisLabel = this.links.filter(
+      link => link.to.indexOf(label) > -1
+    );
+    return linksToThisLabel.length > 0;
   }
 
   isOutboundFrom(label) {
-    return this.links.filter(link => link.from.indexOf(label) > -1).length > -1;
+    const linksFromThisLabel = this.links.filter(
+      link => link.from.indexOf(label) > -1
+    );
+    return linksFromThisLabel.length > 0;
   }
 
   getToLabels() {
