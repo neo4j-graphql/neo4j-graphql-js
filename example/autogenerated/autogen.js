@@ -12,8 +12,8 @@ const driver = neo4j.driver(
   )
 );
 
-inferSchema(driver)
-  .then(result => {
+const inferAugmentedSchema = driver => {
+  return inferSchema(driver).then(result => {
     console.log('TYPEDEFS:');
     console.log(result.typeDefs);
 
@@ -26,22 +26,25 @@ inferSchema(driver)
     });
 
     // Add auto-generated mutations
-    const augmentedSchema = augmentSchema(schema);
+    return augmentSchema(schema);
+  });
+};
 
-    const server = new ApolloServer({
-      schema: augmentedSchema,
-      // inject the request object into the context to support middleware
-      // inject the Neo4j driver instance to handle database call
-      context: ({ req }) => {
-        return {
-          driver,
-          req
-        };
-      }
-    });
+const createServer = augmentedSchema =>
+  new ApolloServer({
+    schema: augmentedSchema,
+    // inject the request object into the context to support middleware
+    // inject the Neo4j driver instance to handle database call
+    context: ({ req }) => {
+      return {
+        driver,
+        req
+      };
+    }
+  });
 
-    return server;
-  })
+inferAugmentedSchema(driver)
+  .then(createServer)
   .then(server =>
     server.listen(process.env.GRAPHQL_LISTEN_PORT || 3000, '0.0.0.0')
   )
