@@ -34,6 +34,8 @@ export default class Neo4jSchemaTree {
         .run('CALL db.schema.relTypeProperties()')
         .then(results => results.records.map(rec => rec.toObject()));
 
+    console.log('Initializing your Neo4j Schema');
+    console.log('This may take a few moments depending on the size of your DB');
     return Promise.all([
       withSession(this.driver, nodeTypeProperties),
       withSession(this.driver, relTypeProperties)
@@ -97,6 +99,8 @@ export default class Neo4jSchemaTree {
         // A label combination is an array of strings ["X", "Y"] which indicates
         // that some nodes ":X:Y" exist in the graph.
         const id = combo.join(':');
+        const entity = this.nodes[id] || new schema.Neo4jNode(id);
+        this.nodes[id] = entity;
 
         // Pick out only the property data for this label combination.
         nodeTypes
@@ -104,9 +108,6 @@ export default class Neo4jSchemaTree {
           .map(i => _.pick(i, ['propertyName', 'propertyTypes', 'mandatory']))
           .forEach(propDetail => {
             console.log(schema);
-            const entity = new schema.Neo4jNode(id);
-            this.nodes[id] = entity;
-
             if (_.isNil(propDetail.propertyName)) {
               return;
             }
@@ -120,14 +121,13 @@ export default class Neo4jSchemaTree {
     // Rel types
     _.uniq(relTypes.map(r => r.relType)).forEach(relType => {
       const id = relType;
+      const entity = this.rels[id] || new schema.Neo4jRelationship(id);
+      this.rels[id] = entity;
 
       relTypes
         .filter(r => r.relType === relType)
         .map(r => _.pick(r, ['propertyName', 'propertyTypes', 'mandatory']))
         .forEach(propDetail => {
-          const entity = new schema.Neo4jRelationship(id);
-          this.rels[id] = entity;
-
           if (_.isNil(propDetail.propertyName)) {
             return;
           }
