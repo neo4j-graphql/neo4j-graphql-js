@@ -132,7 +132,7 @@ export default class Neo4jSchemaTree {
             return;
           }
 
-          propDetail.graphQLType = chooseGraphQLType(propDetail);
+          propDetail.graphQLType = neo4jTypes.chooseGraphQLType(propDetail);
           entity.addProperty(propDetail.propertyName, propDetail);
         });
     });
