@@ -34,7 +34,8 @@ class Neo4jSchemaEntity {
     if (_.isNil(name) || _.isNil(details)) {
       throw new Error('Property must have both name and details');
     }
-    this.properties[name] = details;
+
+    _.set(this.properties, name, details);
     return this;
   }
 }
