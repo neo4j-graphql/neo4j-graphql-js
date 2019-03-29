@@ -1,157 +1,109 @@
 import _ from 'lodash';
-
-/**
- * Choose a single property type given an array of possible values.  In the simplest
- * and usual case, a property only has one possible type, and so it will get assigned
- * that.  But we have to handle situations where a property can be a long or an int,
- * depending on value, etc.
- * @param {Object} property a property object from OKAPI schema information
- * @returns String a single type name.
- */
-const chooseGraphQLType = property => {
-  const options = property.propertyTypes;
-  const mandatoryModifier = property.mandatory ? '!' : '';
-
-  if (!options || options.length === 0) {
-    return 'String' + mandatoryModifier;
-  }
-  if (options.length === 1) {
-    return options[0] + mandatoryModifier;
-  }
-
-  const has = t => options.indexOf(t) !== -1;
-
-  return (
-    options
-      .filter(a => a)
-      .reduce((a, b) => {
-        // Comparator function: always pick the broader of the two types.
-        if (!a || !b) {
-          return a || b;
-        }
-        if (a === b) {
-          return a;
-        }
-
-        const set = [a, b];
-
-        // String's generality dominates everything else.
-        if (has(set, 'String')) {
-          return 'String';
-        }
-
-        // Types form a partial ordering/lattice.  Some combinations are
-        // nonsense and aren't specified, for example Long vs. Boolean.
-        // In the nonsense cases, you get String at the bottom.
-        // Basically, inconsistently typed neo4j properties are a **problem**,
-        // and you shouldn't have them.
-        if (has(set, 'String')) {
-          return 'String';
-        }
-        // Only a few pairwise combinations make sense...
-        if (has(set, 'Long') && has(set, 'Integer')) {
-          return 'Long';
-        }
-        if (has(set, 'Integer') && has(set, 'Float')) {
-          return 'Float';
-        }
-
-        return 'String';
-      }, null) + mandatoryModifier
-  );
-};
-
-const withSession = (driver, f) => {
-  const s = driver.session();
-
-  return f(s).finally(() => s.close());
-};
-
-const nodeTypeProperties = session =>
-  session
-    .run('CALL db.schema.nodeTypeProperties()')
-    .then(results => results.records.map(rec => rec.toObject()));
-
-const relTypeProperties = session =>
-  session
-    .run('CALL db.schema.relTypeProperties()')
-    .then(results => results.records.map(rec => rec.toObject()));
+import Neo4jSchemaTree from './neo4j-schema/Neo4jSchemaTree';
 
 // OKAPI formats it as ':`Foo`' and we want 'Foo'
 const extractRelationshipType = relTypeName =>
   relTypeName.substring(2, relTypeName.length - 1);
 
-const buildSchemaTree = (nodeTypes, relTypes) => {
-  const tree = {
-    nodes: {},
-    rels: {}
-  };
+const generateGraphQLTypeForTreeEntry = (tree, key) => {
+  const entry = tree.getNode(key);
+  const propNames = Object.keys(entry);
+  const graphqlTypeName = key.replace(/:/g, '_');
 
-  // Process node types first
-  _.uniq(nodeTypes.map(n => n.nodeType)).forEach(nodeType => {
-    // A node type is an OKAPI node type label, looks like ":`Event`"
-    // Not terribly meaningful, but a grouping ID
-    const labelCombos = _.uniq(nodeTypes.filter(i => i.nodeType === nodeType));
+  const typeDeclaration = `type ${graphqlTypeName} {\n`;
 
-    labelCombos.forEach(item => {
-      const combo = item.nodeLabels;
-      console.log('combo', combo);
-      // A label combination is an array of strings ["X", "Y"] which indicates
-      // that some nodes ":X:Y" exist in the graph.
-      const id = `:${combo.join(':')}`;
+  const propertyDeclarations = propNames.map(
+    propName => `   ${propName}: ${entry[propName].graphQLType}\n`
+  );
 
-      // Pick out only the property data for this label combination.
-      nodeTypes
-        .filter(i => i.nodeLabels === combo)
-        .map(i => _.pick(i, ['propertyName', 'propertyTypes', 'mandatory']))
-        .forEach(propDetail => {
-          if (!tree.nodes[id]) {
-            tree.nodes[id] = {};
+  const labels = key.split(/:/);
+
+  // For these labels, figure out which rels are outbound from any member label.
+  // That is, if your node is :Foo:Bar, any rel outbound from just Foo counts.
+  const relDeclarations = _.flatten(
+    labels.map(label => {
+      const inbound = lookupInboundRels(tree, label);
+      const outbound = lookupOutboundRels(tree, label);
+      const relIds = _.uniq(inbound.concat(outbound));
+
+      return relIds.map(relId => {
+        // Create a copy of the links to/from this label.
+        const links = _.cloneDeep(
+          tree.rels[relId].links.filter(
+            link => link.from.indexOf(label) > -1 || link.to.indexOf(label) > -1
+          )
+        ).map(link => {
+          if (link.from.indexOf(label) > -1) {
+            _.set(link, 'direction', 'OUT');
+          } else {
+            _.set(link, 'direction', 'IN');
           }
-
-          if (_.isNil(propDetail.propertyName)) {
-            return;
-          }
-
-          propDetail.graphQLType = chooseGraphQLType(propDetail);
-          tree.nodes[id][propDetail.propertyName] = propDetail;
         });
-    });
-  });
 
-  // Rel types
-  _.uniq(relTypes.map(r => r.relType)).forEach(relType => {
-    const id = extractRelationshipType(relType);
-
-    const props = relTypes
-      .filter(r => r.relType === relType)
-      .map(r => _.pick(r, ['propertyName', 'propertyTypes', 'mandatory']))
-      .forEach(propDetail => {
-        if (!tree.rels[id]) {
-          tree.rels[id] = {};
+        // OUT relationships first.  Get their 'to' labels and generate.
+        const allTargetLabels = _.uniq(
+          _.flatten(
+            links.filter(l => l.direction === 'OUT').map(link => link.to)
+          )
+        );
+        if (allTargetLabels.length > 1) {
+          // If a relationship (:A)-[:relType]->(x) where
+          // x has multiple different labels, we can't express this as a type in
+          // GraphQL.
+          console.warn(
+            `RelID ${relId} for label ${label} has more than one outbound type (${allTargetLabels}); skipping`
+          );
+          return null;
         }
 
-        if (_.isNil(propDetail.propertyName)) {
-          return;
-        }
+        const tag = `@relation(name: "${extractRelationshipType(
+          relId
+        )}", direction: "OUT")`;
+        const targetTypeName = allTargetLabels[0];
 
-        propDetail.graphQLType = chooseGraphQLType(propDetail);
-        tree.rels[id][propDetail.propertyName] = propDetail;
+        return `   ${targetTypeName.toLowerCase()}s: [${targetTypeName}] ${tag}\n`;
       });
-  });
+    })
+  );
 
-  // Tree now looks like this:
-  // {
-  //     nodes: {
-  //     ':Foo:Bar': {
-  //         prop1: {
-  //             propertyTypes: ["String"],
-  //             mandatory: true
-  //         }
-  //     }
-  //     }
-  // }
-  return tree;
+  return (
+    typeDeclaration +
+    propertyDeclarations.join('') +
+    relDeclarations.join('') +
+    '}\n'
+  );
+};
+
+/**
+ * Determine which relationships are outbound from a label under a schema tree.
+ * @param {*} tree a schema tree
+ * @param {*} label a graph label
+ * @returns {Array} of relationship IDs
+ */
+const lookupOutboundRels = (tree, label) =>
+  Object.keys(tree.rels).filter(
+    relId =>
+      tree.rels[relId].links &&
+      tree.rels[relId].links.filter(link => link.from.indexOf(label) !== -1)
+        .length > 0
+  );
+
+const lookupInboundRels = (tree, label) =>
+  Object.keys(tree.rels).filter(
+    relId =>
+      tree.rels[relId].links &&
+      tree.rels[relId].links.filter(link => link.to.indexOf(label) !== -1)
+        .length > 0
+  );
+
+const schemaTreeToGraphQLSchema = tree => {
+  console.log('TREE ', JSON.stringify(tree.toJSON(), null, 2));
+  const nodeTypes = Object.keys(tree.nodes).map(key =>
+    generateGraphQLTypeForTreeEntry(tree, key)
+  );
+
+  const schema = nodeTypes.join('\n');
+  return schema;
 };
 
 /**
@@ -160,8 +112,7 @@ const buildSchemaTree = (nodeTypes, relTypes) => {
  * @returns a GraphQL schema.
  */
 export const inferSchema = driver => {
-  return Promise.all([
-    withSession(driver, nodeTypeProperties),
-    withSession(driver, relTypeProperties)
-  ]).then(([nodeTypes, relTypes]) => buildSchemaTree(nodeTypes, relTypes));
+  const tree = new Neo4jSchemaTree(driver);
+
+  return tree.initialize().then(schemaTreeToGraphQLSchema);
 };
