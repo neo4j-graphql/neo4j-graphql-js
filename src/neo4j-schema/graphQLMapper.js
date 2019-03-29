@@ -33,7 +33,9 @@ const mapOutboundRels = (tree, node) => {
           const tag = relationDirective(rel.getRelationshipType(), 'OUT');
           const targetType = neo4jTypes.label2GraphQLType(targetLabels[0]);
 
-          return `   ${targetType.toLowerCase()}s: [${targetType}] ${tag}\n`;
+          return `   ${rel
+            .getGraphQLTypeName()
+            .toLowerCase()}: [${targetType}] ${tag}\n`;
         })
         .filter(x => x); // Remove nulls
     })
@@ -45,7 +47,12 @@ const mapInboundRels = (tree, node) => {
 
   return _.flatten(
     labels.map(label => {
-      const rels = tree.getRels().filter(rel => rel.isInboundTo(label));
+      // Extra criteria: only treat rels this way that are not also outbound from this label.
+      // This prevents us from treating reflexive relationships (User)-[:FRIENDS]->(User) twice.
+      // Such a relationship is considered outbound, **not** inbound (even though it's both)
+      const rels = tree
+        .getRels()
+        .filter(rel => rel.isInboundTo(label) && !rel.isOutboundFrom(label));
 
       return rels
         .map(rel => {
@@ -108,26 +115,32 @@ const mapRel = (tree, rel) => {
 const mapQuery = tree => {
   const decl = 'type Query {\n';
 
-  const queries = tree.getNodes().map(node => {
-    const typeName = node.getGraphQLTypeName();
-    return `   All${typeName}s: [${typeName}]\n`;
-  });
+  //   Not really needed.
+  //   const queries = tree.getNodes().map(node => {
+  //     const typeName = node.getGraphQLTypeName();
+  //     return `   All${typeName}s: [${typeName}]\n`;
+  //   });
 
-  return decl + queries.join('') + '}\n';
+  const queries = [];
+
+  // return decl + queries.join('') + '}\n';
+  return '';
 };
 
 const generateResolvers = tree => {
   const Query = {};
 
-  tree.getNodes().forEach(node => {
-    const typeName = node.getGraphQLTypeName();
-    const resolverName = `All${typeName}s`;
+  // Not really needed
+  // tree.getNodes().forEach(node => {
+  //     const typeName = node.getGraphQLTypeName();
+  //     const resolverName = `All${typeName}s`;
 
-    Query[resolverName] = (object, params, ctx, resolveInfo) =>
-      neo4jgraphql(object, params, ctx, resolveInfo, true);
-  });
+  //     Query[resolverName] = (object, params, ctx, resolveInfo) =>
+  //         neo4jgraphql(object, params, ctx, resolveInfo, true);
+  // });
 
-  return { Query };
+  // return { Query };
+  return {};
 };
 
 /**
