@@ -14,6 +14,8 @@ const withSession = (driver, f) => {
 export default class Neo4jSchemaTree {
   constructor(driver) {
     this.driver = driver;
+    this.nodes = {};
+    this.rels = {};
   }
 
   toJSON() {
@@ -83,9 +85,6 @@ export default class Neo4jSchemaTree {
   }
 
   _populate(nodeTypes, relTypes) {
-    this.nodes = {};
-    this.rels = {};
-
     // Process node types first
     _.uniq(nodeTypes.map(n => n.nodeType)).forEach(nodeType => {
       // A node type is an OKAPI node type label, looks like ":`Event`"

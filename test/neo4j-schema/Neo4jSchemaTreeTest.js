@@ -51,7 +51,7 @@ test.beforeEach(t => {
   tree = new Neo4jSchemaTree(driver);
 });
 
-test('Neo4jSchemaTree', t => {
+test('Driver ownership', t => {
   t.is(tree.driver, driver);
 });
 
