@@ -13,7 +13,7 @@
     "precommit": "lint-staged",
     "prepublish": "npm run build",
     "pretest": "npm run build",
-    "test": "nyc ava test/cypherTest.js test/augmentSchemaTest.js test/configTest.js --verbose",
+    "test": "nyc ava test/cypherTest.js test/augmentSchemaTest.js test/configTest.js test/neo4j-schema/*.js --verbose",
     "parse-tck": "babel-node test/tck/parseTck.js",
     "test-tck": "nyc ava --fail-fast test/filterTest.js",
     "report-coverage": "nyc report --reporter=text-lcov > coverage.lcov && codecov",

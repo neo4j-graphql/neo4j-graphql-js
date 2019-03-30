@@ -23,7 +23,7 @@ class Neo4jSchemaEntity {
   }
 
   getPropertyNames() {
-    return Object.keys(this.properties);
+    return Object.keys(this.properties).sort();
   }
 
   getProperty(name) {
@@ -85,11 +85,11 @@ class Neo4jRelationship extends Neo4jSchemaEntity {
   }
 
   getToLabels() {
-    return _.uniq(_.flatten(this.links.map(l => l.to)));
+    return _.uniq(_.flatten(this.links.map(l => l.to))).sort();
   }
 
   getFromLabels() {
-    return _.uniq(_.flatten(this.links.map(l => l.from)));
+    return _.uniq(_.flatten(this.links.map(l => l.from))).sort();
   }
 }
 
