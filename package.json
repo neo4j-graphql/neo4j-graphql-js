@@ -13,7 +13,7 @@
     "precommit": "lint-staged",
     "prepublish": "npm run build",
     "pretest": "npm run build",
-    "test": "nyc ava test/cypherTest.js test/augmentSchemaTest.js test/configTest.js test/neo4j-schema/*.js --verbose",
+    "test": "nyc ava test/cypherTest.js test/augmentSchemaTest.js test/configTest.js test/neo4j-schema/*Test.js --verbose",
     "parse-tck": "babel-node test/tck/parseTck.js",
     "test-tck": "nyc ava --fail-fast test/filterTest.js",
     "report-coverage": "nyc report --reporter=text-lcov > coverage.lcov && codecov",
@@ -51,7 +51,8 @@
     "node-fetch": "^2.3.0",
     "nodemon": "^1.18.7",
     "nyc": "^13.3.0",
-    "prettier": "^1.15.3"
+    "prettier": "^1.15.3",
+    "sinon": "^7.3.1"
   },
   "dependencies": {
     "graphql": "^14.0.2",

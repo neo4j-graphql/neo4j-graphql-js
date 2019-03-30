@@ -9,8 +9,8 @@ import _ from 'lodash';
  * @returns String a single type name.
  */
 const chooseGraphQLType = property => {
-  const options = property.propertyTypes;
-  const mandatoryModifier = property.mandatory ? '!' : '';
+  const options = _.get(property, 'propertyTypes');
+  const mandatoryModifier = _.get(property, 'mandatory') ? '!' : '';
 
   const mapSingleType = t => {
     const mapping = {
@@ -77,7 +77,7 @@ const label2GraphQLType = label => {
     throw new Error('Cannot convert nil label to GraphQL type');
   }
 
-  return label.replace(/ :/g, '_');
+  return label.replace(/[ :]/g, '_');
 };
 
 export default {
