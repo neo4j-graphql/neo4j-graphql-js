@@ -12,10 +12,9 @@ let typeDefs;
 let result;
 let resolvers;
 
-const fakeOkapiProperty = (labels, name, t, mandatory = false) => ({
+const fakeOkapiProperty = (labels, name, graphQLType, mandatory = false) => ({
   nodeLabels: labels,
-  propertyName: name,
-  propertyTypes: [t],
+  graphQLType,
   mandatory
 });
 
@@ -32,7 +31,7 @@ test.before(t => {
 
   customer.addProperty(
     'name',
-    fakeOkapiProperty(['Customer'], 'name', 'String')
+    fakeOkapiProperty(['Customer'], 'name', 'String!')
   );
   customer.addProperty(
     'age',
@@ -40,7 +39,7 @@ test.before(t => {
   );
   product.addProperty(
     'sku',
-    fakeOkapiProperty(['Product'], 'sku', 'String', true)
+    fakeOkapiProperty(['Product'], 'sku', 'String!', true)
   );
 
   tree.nodes[customer.id] = customer;
@@ -61,4 +60,24 @@ test('Basic Mapping Result Structure', t => {
 test('Defines a GraphQL type per node', t => {
   t.true(typeDefs.indexOf('type Customer {') > -1);
   t.true(typeDefs.indexOf('type Product {') > -1);
+});
+
+test('Defines properties with correct types', t => {
+  console.log(typeDefs);
+  t.true(typeDefs.indexOf('age: Integer') > -1);
+  t.true(typeDefs.indexOf('name: String!') > -1);
+  t.true(typeDefs.indexOf('sku: String!') > -1);
+});
+
+test('Defines relationships BOTH WAYS with right order and @relation directive', t => {
+  t.true(
+    typeDefs.indexOf(
+      'buys: [Product] @relation(name: "BUYS", direction: "OUT")'
+    ) > -1
+  );
+  t.true(
+    typeDefs.indexOf(
+      'customers: [Customer] @relation(name: "BUYS", direction: "IN")'
+    ) > -1
+  );
 });
