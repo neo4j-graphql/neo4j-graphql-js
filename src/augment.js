@@ -1,11 +1,10 @@
 import { makeExecutableSchema } from 'graphql-tools';
 import { parse, print } from 'graphql';
-import { neo4jgraphql } from './index';
+import { neo4jgraphql } from './resolve';
 import {
   printTypeMap,
   extractTypeMapFromTypeDefs,
   createOperationMap,
-  addDirectiveDeclarations,
   getNamedType,
   getPrimaryKey,
   getFieldDirective,
@@ -30,7 +29,8 @@ import {
 } from './utils';
 import {
   possiblyAddDirectiveImplementations,
-  possiblyAddScopeDirective
+  possiblyAddScopeDirective,
+  addDirectiveDeclarations
 } from './auth';
 
 export const augmentedSchema = (typeMap, resolvers, config) => {

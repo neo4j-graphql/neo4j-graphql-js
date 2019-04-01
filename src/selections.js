@@ -27,7 +27,7 @@ import {
   nodeTypeFieldOnRelationType,
   temporalType,
   temporalField
-} from './translate';
+} from './fields';
 
 export function buildCypherSelection({
   initial,
