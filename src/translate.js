@@ -24,7 +24,8 @@ const {
   getTemporalArguments,
   temporalPredicateClauses,
   isTemporalType,
-  isGraphqlScalarType
+  isGraphqlScalarType,
+  getPrimaryKeys
 } = require('./utils');
 const { getNamedType } = require('graphql');
 const { buildCypherSelection } = require('./selections');
@@ -408,16 +409,25 @@ const nodeUpdate = ({
   const safeVariableName = safeVar(variableName);
   const safeLabelName = safeLabel(typeName);
   const args = getMutationArguments(resolveInfo);
-  const primaryKeyArg = args[0];
-  const primaryKeyArgName = primaryKeyArg.name.value;
+  const typeMap = resolveInfo.schema.getTypeMap();
+  const nodeAst = typeMap[typeName].astNode;
+  const primaryKeys = getPrimaryKeys(nodeAst);
+  const primaryKeyNames = primaryKeys.map(primaryKey => primaryKey.name.value);
+  const primaryKeyArgNames = args.reduce((acc, arg) => {
+    let argName = arg.name.value;
+    if (primaryKeyNames.indexOf(argName) >= 0) {
+      acc.push(argName);
+    }
+    return acc;
+  }, []);
   const temporalArgs = getTemporalArguments(args);
-  const [primaryKeyParam, updateParams] = splitSelectionParameters(
+  const [primaryKeyParams, updateParams] = splitSelectionParameters(
     params,
-    primaryKeyArgName,
+    primaryKeyArgNames,
     'params'
   );
   const temporalClauses = temporalPredicateClauses(
-    primaryKeyParam,
+    primaryKeyParams,
     safeVariableName,
     temporalArgs,
     'params'
@@ -431,10 +441,11 @@ const nodeUpdate = ({
     params: updateParams,
     paramKey: 'params'
   });
+  let primaryKeyArgs = primaryKeyArgNames.map(
+    primaryKeyArgName => `${primaryKeyArgName}: $params.${primaryKeyArgName}`
+  );
   let query = `MATCH (${safeVariableName}:${safeLabelName}${
-    predicate !== ''
-      ? `) ${predicate} `
-      : `{${primaryKeyArgName}: $params.${primaryKeyArgName}})`
+    predicate !== '' ? `) ${predicate} ` : `{${primaryKeyArgs.join(',')}})`
   }
   `;
   if (paramUpdateStatements.length > 0) {
@@ -448,7 +459,10 @@ const nodeUpdate = ({
     resolveInfo,
     paramIndex: 1
   });
-  preparedParams.params[primaryKeyArgName] = primaryKeyParam[primaryKeyArgName];
+  for (let primaryKeyArgName of primaryKeyArgNames) {
+    preparedParams.params[primaryKeyArgName] =
+      primaryKeyParams[primaryKeyArgName];
+  }
   params = { ...preparedParams, ...subParams };
   query += `RETURN ${safeVariableName} {${subQuery}} AS ${safeVariableName}`;
   return [query, params];
@@ -465,20 +479,36 @@ const nodeDelete = ({
   const safeVariableName = safeVar(variableName);
   const safeLabelName = safeLabel(typeName);
   const args = getMutationArguments(resolveInfo);
-  const primaryKeyArg = args[0];
-  const primaryKeyArgName = primaryKeyArg.name.value;
+  const typeMap = resolveInfo.schema.getTypeMap();
+  const nodeAst = typeMap[typeName].astNode;
+  const primaryKeys = getPrimaryKeys(nodeAst);
+  const primaryKeyNames = primaryKeys.map(primaryKey => primaryKey.name.value);
+  const primaryKeyArgNames = args.reduce((acc, arg) => {
+    let argName = arg.name.value;
+    if (primaryKeyNames.indexOf(argName) >= 0) {
+      acc.push(argName);
+    }
+    return acc;
+  }, []);
   const temporalArgs = getTemporalArguments(args);
-  const [primaryKeyParam] = splitSelectionParameters(params, primaryKeyArgName);
+  const [primaryKeyParams] = splitSelectionParameters(
+    params,
+    primaryKeyArgNames,
+    'params'
+  );
   const temporalClauses = temporalPredicateClauses(
-    primaryKeyParam,
+    primaryKeyParams,
     safeVariableName,
     temporalArgs
   );
   let [preparedParams] = buildCypherParameters({ args, params });
+  let primaryKeyArgs = primaryKeyArgNames.map(
+    primaryKeyArgName => `${primaryKeyArgName}: $params.${primaryKeyArgName}`
+  );
   let query = `MATCH (${safeVariableName}:${safeLabelName}${
     temporalClauses.length > 0
       ? `) WHERE ${temporalClauses.join(' AND ')}`
-      : ` {${primaryKeyArgName}: $${primaryKeyArgName}})`
+      : ` {${primaryKeyArgs.join(',')}})`
   }`;
   const [subQuery, subParams] = buildCypherSelection({
     initial: ``,
@@ -546,7 +576,8 @@ const relationshipCreate = ({
   const fromInputAst =
     typeMap[getNamedType(fromInputArg).type.name.value].astNode;
   const fromFields = fromInputAst.fields;
-  const fromParam = fromFields[0].name.value;
+  const fromPrimaryKeys = getPrimaryKeys(fromInputAst);
+  const fromParams = fromPrimaryKeys.map(field => field.name.value);
   const fromTemporalArgs = getTemporalArguments(fromFields);
 
   const toType = toTypeArg.value.value;
@@ -554,7 +585,8 @@ const relationshipCreate = ({
   const toInputArg = args.find(e => e.name.value === 'to').type;
   const toInputAst = typeMap[getNamedType(toInputArg).type.name.value].astNode;
   const toFields = toInputAst.fields;
-  const toParam = toFields[0].name.value;
+  const toPrimaryKeys = getPrimaryKeys(toInputAst);
+  const toParams = toPrimaryKeys.map(field => field.name.value);
   const toTemporalArgs = getTemporalArguments(toFields);
 
   const relationshipName = relationshipNameArg.value.value;
@@ -604,6 +636,12 @@ const relationshipCreate = ({
     variableName: schemaType.name === fromType ? `${toVar}` : `${fromVar}`
   });
   params = { ...preparedParams, ...subParams };
+  let fromKeys = fromParams.map(
+    fromParamName => `${fromParamName}: $from.${fromParamName}`
+  );
+  let toKeys = toParams.map(
+    toParamName => `${toParamName}: $to.${toParamName}`
+  );
   let query = `
       MATCH (${fromVariable}:${fromLabel} ${
     fromTemporalClauses && fromTemporalClauses.length > 0
@@ -611,12 +649,12 @@ const relationshipCreate = ({
         `) WHERE ${fromTemporalClauses.join(' AND ')} `
       : // or a an internal matching clause for normal, scalar property primary keys
         // NOTE this will need to change if we at some point allow for multi field node selection
-        `{${fromParam}: $from.${fromParam}})`
+        `{${fromKeys.join(',')}})`
   }
       MATCH (${toVariable}:${toLabel} ${
     toTemporalClauses && toTemporalClauses.length > 0
       ? `) WHERE ${toTemporalClauses.join(' AND ')} `
-      : `{${toParam}: $to.${toParam}})`
+      : `{${toKeys.join(',')}})`
   }
       CREATE (${fromVariable})-[${relationshipVariable}:${relationshipLabel}${
     paramStatements.length > 0 ? ` {${paramStatements.join(',')}}` : ''
@@ -673,7 +711,8 @@ const relationshipDelete = ({
   const fromInputAst =
     typeMap[getNamedType(fromInputArg).type.name.value].astNode;
   const fromFields = fromInputAst.fields;
-  const fromParam = fromFields[0].name.value;
+  const fromPrimaryKeys = getPrimaryKeys(fromInputAst);
+  const fromParams = fromPrimaryKeys.map(field => field.name.value);
   const fromTemporalArgs = getTemporalArguments(fromFields);
 
   const toType = toTypeArg.value.value;
@@ -681,7 +720,8 @@ const relationshipDelete = ({
   const toInputArg = args.find(e => e.name.value === 'to').type;
   const toInputAst = typeMap[getNamedType(toInputArg).type.name.value].astNode;
   const toFields = toInputAst.fields;
-  const toParam = toFields[0].name.value;
+  const toPrimaryKeys = getPrimaryKeys(toInputAst);
+  const toParams = toPrimaryKeys.map(field => field.name.value);
   const toTemporalArgs = getTemporalArguments(toFields);
 
   const relationshipName = relationshipNameArg.value.value;
@@ -723,18 +763,24 @@ const relationshipDelete = ({
     variableName: schemaType.name === fromType ? `_${toVar}` : `_${fromVar}`
   });
   params = { ...params, ...subParams };
+  let fromKeys = fromParams.map(
+    fromParamName => `${fromParamName}: $from.${fromParamName}`
+  );
+  let toKeys = toParams.map(
+    toParamName => `${toParamName}: $to.${toParamName}`
+  );
   let query = `
       MATCH (${fromVariable}:${fromLabel} ${
     fromTemporalClauses && fromTemporalClauses.length > 0
       ? // uses either a WHERE clause for managed type primary keys (temporal, etc.)
         `) WHERE ${fromTemporalClauses.join(' AND ')} `
       : // or a an internal matching clause for normal, scalar property primary keys
-        `{${fromParam}: $from.${fromParam}})`
+        `{${fromKeys.join(',')}})`
   }
       MATCH (${toVariable}:${toLabel} ${
     toTemporalClauses && toTemporalClauses.length > 0
       ? `) WHERE ${toTemporalClauses.join(' AND ')} `
-      : `{${toParam}: $to.${toParam}})`
+      : `{${toKeys.join(',')}})`
   }
       OPTIONAL MATCH (${fromVariable})-[${relationshipVariable}:${relationshipLabel}]->(${toVariable})
       DELETE ${relationshipVariable}

@@ -689,23 +689,18 @@ const firstField = fields => {
   });
 };
 
-var getPrimaryKey = astNode => {
+const nonNullFields = fields => {
+  return fields.filter(field => {
+    return field.type.kind === 'NonNullType' && field.name.value !== '_id';
+  });
+};
+
+var getPrimaryKeys = astNode => {
   let fields = astNode.fields;
-  let pk = undefined;
+  if (!fields.length) return fields;
   // remove all ignored fields
   fields = fields.filter(field => !getFieldDirective(field, 'neo4j_ignore'));
-  if (!fields.length) return pk;
-  pk = firstNonNullAndIdField(fields);
-  if (!pk) {
-    pk = firstIdField(fields);
-  }
-  if (!pk) {
-    pk = firstNonNullField(fields);
-  }
-  if (!pk) {
-    pk = firstField(fields);
-  }
-  return pk;
+  return nonNullFields(fields);
 };
 
 var createOperationMap = type => {
@@ -793,7 +788,9 @@ var initializeMutationParams = ({
   first,
   offset
 }) => {
-  return (isCreateMutation(resolveInfo) || isUpdateMutation(resolveInfo)) &&
+  return (isCreateMutation(resolveInfo) ||
+    isUpdateMutation(resolveInfo) ||
+    isDeleteMutation(resolveInfo)) &&
     !mutationTypeCypherDirective
     ? { params: otherParams, ...{ first, offset } }
     : { ...otherParams, ...{ first, offset } };
@@ -835,13 +832,13 @@ var filterNullParams = ({ offset, first, otherParams }) => {
   );
 };
 
-var splitSelectionParameters = (params, primaryKeyArgName, paramKey) => {
+var splitSelectionParameters = (params, primaryKeyArgNames, paramKey) => {
   const paramKeys = paramKey
     ? Object.keys(params[paramKey])
     : Object.keys(params);
-  const [primaryKeyParam, updateParams] = paramKeys.reduce(
+  const [primaryKeyParams, updateParams] = paramKeys.reduce(
     (acc, t) => {
-      if (t === primaryKeyArgName) {
+      if (primaryKeyArgNames.indexOf(t) >= 0) {
         if (paramKey) {
           acc[0][t] = params[paramKey][t];
         } else {
@@ -859,11 +856,12 @@ var splitSelectionParameters = (params, primaryKeyArgName, paramKey) => {
     },
     [{}, {}]
   );
+  if (paramKey && _.isEmpty(updateParams)) updateParams[paramKey] = {};
   const first = params.first;
   const offset = params.offset;
   if (first !== undefined) updateParams['first'] = first;
   if (offset !== undefined) updateParams['offset'] = offset;
-  return [primaryKeyParam, updateParams];
+  return [primaryKeyParams, updateParams];
 };
 
 var isTemporalField = (schemaType, name) => {
@@ -1141,7 +1139,7 @@ module.exports = {
   getRelationTypeDirectiveArgs,
   getRelationMutationPayloadFieldsFromAst,
   getNamedType,
-  getPrimaryKey,
+  getPrimaryKeys,
   createOperationMap,
   safeVar,
   safeLabel,
