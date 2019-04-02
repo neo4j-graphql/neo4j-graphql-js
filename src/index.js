@@ -1,14 +1,14 @@
-import { extractTypeMapFromTypeDefs, printTypeMap } from './utils';
-import {
+const { extractTypeMapFromTypeDefs, printTypeMap } = require('./utils');
+const {
   extractTypeMapFromSchema,
   extractResolversFromSchema,
   augmentedSchema,
   makeAugmentedExecutableSchema,
   addTemporalTypes
-} from './augment';
-import { addDirectiveDeclarations } from './auth';
+} = require('./augment');
+const { addDirectiveDeclarations } = require('./auth');
 
-export const augmentSchema = (
+var augmentSchema = (
   schema,
   config = {
     query: true,
@@ -22,7 +22,7 @@ export const augmentSchema = (
   return augmentedSchema(typeMap, resolvers, config);
 };
 
-export const makeAugmentedSchema = ({
+var makeAugmentedSchema = ({
   schema,
   typeDefs,
   resolvers = {},
@@ -58,11 +58,17 @@ export const makeAugmentedSchema = ({
   });
 };
 
-export const augmentTypeDefs = (typeDefs, config) => {
+var augmentTypeDefs = (typeDefs, config) => {
   let typeMap = extractTypeMapFromTypeDefs(typeDefs);
   // overwrites any provided declarations of system directives
   typeMap = addDirectiveDeclarations(typeMap, config);
   // adds managed types; tepmoral, spatial, etc.
   typeMap = addTemporalTypes(typeMap, config);
   return printTypeMap(typeMap);
+};
+
+module.exports = {
+  augmentSchema,
+  makeAugmentedSchema,
+  augmentTypeDefs
 };

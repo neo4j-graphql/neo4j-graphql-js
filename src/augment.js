@@ -1,7 +1,7 @@
-import { makeExecutableSchema } from 'graphql-tools';
-import { parse, print } from 'graphql';
-import { neo4jgraphql } from './resolve';
-import {
+const { makeExecutableSchema } = require('graphql-tools');
+const { parse, print } = require('graphql');
+const { neo4jgraphql } = require('./resolve');
+const {
   printTypeMap,
   extractTypeMapFromTypeDefs,
   createOperationMap,
@@ -26,14 +26,14 @@ import {
   possiblyAddIgnoreDirective,
   getExcludedTypes,
   parseInputFieldsSdl
-} from './utils';
-import {
+} = require('./utils');
+const {
   possiblyAddDirectiveImplementations,
   possiblyAddScopeDirective,
   addDirectiveDeclarations
-} from './auth';
+} = require('./auth');
 
-export const augmentedSchema = (typeMap, resolvers, config) => {
+var augmentedSchema = (typeMap, resolvers, config) => {
   const augmentedTypeMap = augmentTypeMap(typeMap, resolvers, config);
   const augmentedResolvers = augmentResolvers(
     augmentedTypeMap,
@@ -55,7 +55,7 @@ export const augmentedSchema = (typeMap, resolvers, config) => {
   });
 };
 
-export const makeAugmentedExecutableSchema = ({
+var makeAugmentedExecutableSchema = ({
   typeDefs,
   resolvers,
   logger,
@@ -93,7 +93,7 @@ export const makeAugmentedExecutableSchema = ({
   });
 };
 
-export const extractTypeMapFromSchema = schema => {
+var extractTypeMapFromSchema = schema => {
   const typeMap = schema.getTypeMap();
   const directives = schema.getDirectives();
   const types = { ...typeMap, ...directives };
@@ -107,7 +107,7 @@ export const extractTypeMapFromSchema = schema => {
   }, {});
 };
 
-export const extractResolversFromSchema = schema => {
+var extractResolversFromSchema = schema => {
   const _typeMap = schema && schema._typeMap ? schema._typeMap : {};
   const types = Object.keys(_typeMap);
   let type = {};
@@ -154,7 +154,7 @@ const extractFieldResolversFromSchemaType = type => {
     : undefined;
 };
 
-export const augmentTypeMap = (typeMap, resolvers, config) => {
+var augmentTypeMap = (typeMap, resolvers, config) => {
   // IDEA: elevate into config as config.rootTypes?
   const rootTypes = {
     query: 'Query',
@@ -242,7 +242,7 @@ const possiblyAddOrderingArgument = (args, fieldName) => {
   return args;
 };
 
-export const possiblyAddArgument = (args, fieldName, fieldType) => {
+var possiblyAddArgument = (args, fieldName, fieldType) => {
   if (args.findIndex(e => e.name.value === fieldName) === -1) {
     args.push({
       kind: 'InputValueDefinition',
@@ -1424,7 +1424,7 @@ const isNotSystemField = name => {
   return name !== '_id' && name !== 'to' && name !== 'from';
 };
 
-export const addTemporalTypes = (typeMap, config) => {
+var addTemporalTypes = (typeMap, config) => {
   config = decideTemporalConfig(config);
   typeMap = temporalTypes(typeMap, config);
   return transformTemporalFields(typeMap, config);
@@ -1668,4 +1668,14 @@ const transformManagedFieldTypes = fields => {
     acc.push(field);
     return acc;
   }, []);
+};
+
+module.exports = {
+  augmentedSchema,
+  makeAugmentedExecutableSchema,
+  extractTypeMapFromSchema,
+  extractResolversFromSchema,
+  augmentTypeMap,
+  possiblyAddArgument,
+  addTemporalTypes
 };

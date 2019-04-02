@@ -1,4 +1,4 @@
-import {
+const {
   safeLabel,
   safeVar,
   getFilterParams,
@@ -25,13 +25,13 @@ import {
   temporalPredicateClauses,
   isTemporalType,
   isGraphqlScalarType
-} from './utils';
-import { getNamedType } from 'graphql';
-import { buildCypherSelection } from './selections';
-import _ from 'lodash';
+} = require('./utils');
+const { getNamedType } = require('graphql');
+const { buildCypherSelection } = require('./selections');
+const _ = require('lodash');
 
 // Query API root operation branch
-export const translateQuery = ({
+var translateQuery = ({
   resolveInfo,
   context,
   selections,
@@ -232,7 +232,7 @@ const nodeQuery = ({
 };
 
 // Mutation API root operation branch
-export const translateMutation = ({
+var translateMutation = ({
   resolveInfo,
   context,
   schemaType,
@@ -742,4 +742,9 @@ const relationshipDelete = ({
       RETURN {${subQuery}} AS ${schemaTypeName};
     `;
   return [query, params];
+};
+
+module.exports = {
+  translateQuery,
+  translateMutation
 };

@@ -1,13 +1,13 @@
-import {
+const {
   extractQueryResult,
   isMutation,
   typeIdentifiers,
   getPayloadSelections
-} from './utils';
-import { checkRequestError } from './auth';
-import { translateMutation, translateQuery } from './translate';
+} = require('./utils');
+const { checkRequestError } = require('./auth');
+const { translateMutation, translateQuery } = require('./translate');
 
-export async function neo4jgraphql(
+var neo4jgraphql = async function(
   object,
   params,
   context,
@@ -47,9 +47,9 @@ export async function neo4jgraphql(
     session.close();
   }
   return extractQueryResult(result, resolveInfo.returnType);
-}
+};
 
-export function cypherQuery(
+var cypherQuery = function(
   { first = -1, offset = 0, _id, orderBy, ...otherParams },
   context,
   resolveInfo
@@ -70,9 +70,9 @@ export function cypherQuery(
     orderBy,
     otherParams
   });
-}
+};
 
-export function cypherMutation(
+var cypherMutation = function(
   { first = -1, offset = 0, _id, orderBy, ...otherParams },
   context,
   resolveInfo
@@ -91,4 +91,10 @@ export function cypherMutation(
     offset,
     otherParams
   });
-}
+};
+
+module.exports = {
+  neo4jgraphql,
+  cypherQuery,
+  cypherMutation
+};

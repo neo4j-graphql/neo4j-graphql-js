@@ -1,7 +1,7 @@
-import { print, parse } from 'graphql';
-import { v1 as neo4j } from 'neo4j-driver';
-import _ from 'lodash';
-import filter from 'lodash/filter';
+const { print, parse } = require('graphql');
+const neo4j = require('neo4j-driver').v1;
+const _ = require('lodash');
+const filter = require('lodash/filter');
 
 function parseArg(arg, variableValues) {
   switch (arg.value.kind) {
@@ -28,7 +28,7 @@ function parseArg(arg, variableValues) {
   }
 }
 
-export function parseArgs(args, variableValues) {
+var parseArgs = function(args, variableValues) {
   if (!args || args.length === 0) {
     return {};
   }
@@ -36,13 +36,13 @@ export function parseArgs(args, variableValues) {
     acc[arg.name.value] = parseArg(arg, variableValues);
     return acc;
   }, {});
-}
+};
 
-export const parseFieldSdl = sdl => {
+var parseFieldSdl = sdl => {
   return sdl ? parse(`type Type { ${sdl} }`).definitions[0].fields[0] : {};
 };
 
-export const parseInputFieldsSdl = fields => {
+var parseInputFieldsSdl = fields => {
   let arr = [];
   if (Array.isArray(fields)) {
     fields = fields.join('\n');
@@ -56,21 +56,21 @@ export const parseInputFieldsSdl = fields => {
   return arr;
 };
 
-export const parseDirectiveSdl = sdl => {
+var parseDirectiveSdl = sdl => {
   return sdl
     ? parse(`type Type { field: String ${sdl} }`).definitions[0].fields[0]
         .directives[0]
     : {};
 };
 
-export const printTypeMap = typeMap => {
+var printTypeMap = typeMap => {
   return print({
     kind: 'Document',
     definitions: Object.values(typeMap)
   });
 };
 
-export const extractTypeMapFromTypeDefs = typeDefs => {
+var extractTypeMapFromTypeDefs = typeDefs => {
   // TODO accept alternative typeDefs formats (arr of strings, ast, etc.)
   // into a single string for parse, add validatation
   const astNodes = parse(typeDefs).definitions;
@@ -80,7 +80,7 @@ export const extractTypeMapFromTypeDefs = typeDefs => {
   }, {});
 };
 
-export function extractSelections(selections, fragments) {
+var extractSelections = function(selections, fragments) {
   // extract any fragment selection sets into a single array of selections
   return selections.reduce((acc, cur) => {
     if (cur.kind === 'FragmentSpread') {
@@ -93,9 +93,9 @@ export function extractSelections(selections, fragments) {
       return [...acc, cur];
     }
   }, []);
-}
+};
 
-export function extractQueryResult({ records }, returnType) {
+var extractQueryResult = function({ records }, returnType) {
   const { variableName } = typeIdentifiers(returnType);
   let result = null;
   if (isArrayType(returnType)) {
@@ -113,15 +113,15 @@ export function extractQueryResult({ records }, returnType) {
     }
   });
   return result;
-}
+};
 
-export function typeIdentifiers(returnType) {
+var typeIdentifiers = function(returnType) {
   const typeName = innerType(returnType).toString();
   return {
     variableName: lowFirstLetter(typeName),
     typeName
   };
-}
+};
 
 function getDefaultArguments(fieldName, schemaType) {
   // get default arguments for this field from schema
@@ -135,7 +135,7 @@ function getDefaultArguments(fieldName, schemaType) {
   }
 }
 
-export function cypherDirectiveArgs(
+var cypherDirectiveArgs = function(
   variable,
   headSelection,
   cypherParams,
@@ -173,9 +173,9 @@ export function cypherDirectiveArgs(
   // Return the comma separated join of all param
   // strings, adding a comma to match current test formats
   return args.join(', ');
-}
+};
 
-export function _isNamedMutation(name) {
+var _isNamedMutation = function(name) {
   return function(resolveInfo) {
     return (
       isMutation(resolveInfo) &&
@@ -183,40 +183,40 @@ export function _isNamedMutation(name) {
         name.toLowerCase()
     );
   };
-}
+};
 
-export const isCreateMutation = _isNamedMutation('create');
+var isCreateMutation = _isNamedMutation('create');
 
-export const isAddMutation = _isNamedMutation('add');
+var isAddMutation = _isNamedMutation('add');
 
-export const isUpdateMutation = _isNamedMutation('update');
+var isUpdateMutation = _isNamedMutation('update');
 
-export const isDeleteMutation = _isNamedMutation('delete');
+var isDeleteMutation = _isNamedMutation('delete');
 
-export const isRemoveMutation = _isNamedMutation('remove');
+var isRemoveMutation = _isNamedMutation('remove');
 
-export function isMutation(resolveInfo) {
+var isMutation = function(resolveInfo) {
   return resolveInfo.operation.operation === 'mutation';
-}
+};
 
-export function isGraphqlScalarType(type) {
+var isGraphqlScalarType = function(type) {
   return (
     type.constructor.name === 'GraphQLScalarType' ||
     type.constructor.name === 'GraphQLEnumType'
   );
-}
+};
 
-export function isArrayType(type) {
+var isArrayType = function(type) {
   return type ? type.toString().startsWith('[') : false;
-}
+};
 
-export const isRelationTypeDirectedField = fieldName => {
+var isRelationTypeDirectedField = fieldName => {
   return fieldName === 'from' || fieldName === 'to';
 };
 
-export const isKind = (type, kind) => type && type.kind && type.kind === kind;
+var isKind = (type, kind) => type && type.kind && type.kind === kind;
 
-export const isListType = (type, isList = false) => {
+var isListType = (type, isList = false) => {
   if (!isKind(type, 'NamedType')) {
     if (isKind(type, 'ListType')) isList = true;
     return isListType(type.type, isList);
@@ -224,7 +224,7 @@ export const isListType = (type, isList = false) => {
   return isList;
 };
 
-export const isNonNullType = (type, isRequired = false, parent = {}) => {
+var isNonNullType = (type, isRequired = false, parent = {}) => {
   if (!isKind(type, 'NamedType')) {
     return isNonNullType(type.type, isRequired, type);
   }
@@ -234,7 +234,7 @@ export const isNonNullType = (type, isRequired = false, parent = {}) => {
   return isRequired;
 };
 
-export const isBasicScalar = name => {
+var isBasicScalar = name => {
   return (
     name === 'ID' ||
     name === 'String' ||
@@ -244,7 +244,7 @@ export const isBasicScalar = name => {
   );
 };
 
-export const isNodeType = astNode => {
+var isNodeType = astNode => {
   return (
     astNode &&
     // must be graphql object type
@@ -261,7 +261,7 @@ export const isNodeType = astNode => {
   );
 };
 
-export const isRelationTypePayload = schemaType => {
+var isRelationTypePayload = schemaType => {
   const astNode = schemaType ? schemaType.astNode : undefined;
   const directive = astNode ? getRelationTypeDirectiveArgs(astNode) : undefined;
   return astNode && astNode.fields && directive
@@ -271,18 +271,18 @@ export const isRelationTypePayload = schemaType => {
     : undefined;
 };
 
-export const isRootSelection = ({ selectionInfo, rootType }) =>
+var isRootSelection = ({ selectionInfo, rootType }) =>
   selectionInfo && selectionInfo.rootType === rootType;
 
-export function lowFirstLetter(word) {
+var lowFirstLetter = function(word) {
   return word.charAt(0).toLowerCase() + word.slice(1);
-}
+};
 
-export function innerType(type) {
+var innerType = function(type) {
   return type.ofType ? innerType(type.ofType) : type;
-}
+};
 
-export function filtersFromSelections(selections, variableValues) {
+var filtersFromSelections = function(selections, variableValues) {
   if (
     selections &&
     selections.length &&
@@ -299,9 +299,9 @@ export function filtersFromSelections(selections, variableValues) {
     }, {});
   }
   return {};
-}
+};
 
-export function getFilterParams(filters, index) {
+var getFilterParams = function(filters, index) {
   return Object.entries(filters).reduce((result, [key, value]) => {
     result[key] = index
       ? {
@@ -311,9 +311,9 @@ export function getFilterParams(filters, index) {
       : value;
     return result;
   }, {});
-}
+};
 
-export function innerFilterParams(
+var innerFilterParams = function(
   filters,
   temporalArgs,
   paramKey,
@@ -338,9 +338,9 @@ export function innerFilterParams(
           return { key, paramKey, value };
         })
     : [];
-}
+};
 
-export function paramsToString(params, cypherParams) {
+var paramsToString = function(params, cypherParams) {
   if (params.length > 0) {
     const strings = _.map(params, param => {
       return `${param.key}:${param.paramKey ? `$${param.paramKey}.` : '$'}${
@@ -354,9 +354,9 @@ export function paramsToString(params, cypherParams) {
     }`;
   }
   return '';
-}
+};
 
-export function computeSkipLimit(selection, variableValues) {
+var computeSkipLimit = function(selection, variableValues) {
   let first = argumentValue(selection, 'first', variableValues);
   let offset = argumentValue(selection, 'offset', variableValues);
 
@@ -364,7 +364,7 @@ export function computeSkipLimit(selection, variableValues) {
   if (offset === null) return `[..${first}]`;
   if (first === null) return `[${offset}..]`;
   return `[${offset}..${parseInt(offset) + parseInt(first)}]`;
-}
+};
 
 function orderByStatement(resolveInfo, orderByVar) {
   const splitIndex = orderByVar.lastIndexOf('_');
@@ -374,7 +374,7 @@ function orderByStatement(resolveInfo, orderByVar) {
   return ` ${variableName}.${orderBy} ${order === 'asc' ? 'ASC' : 'DESC'} `;
 }
 
-export const computeOrderBy = (resolveInfo, selection) => {
+var computeOrderBy = (resolveInfo, selection) => {
   const orderByArgs = argumentValue(
     resolveInfo.operation.selectionSet.selections[0],
     'orderBy',
@@ -393,7 +393,7 @@ export const computeOrderBy = (resolveInfo, selection) => {
   return ' ORDER BY' + orderByStatments.join(',');
 };
 
-export const possiblySetFirstId = ({ args, statements, params }) => {
+var possiblySetFirstId = ({ args, statements, params }) => {
   const arg = args.find(e => getNamedType(e).name.value === 'ID');
   // arg is the first ID field if it exists, and we set the value
   // if no value is provided for the field name (arg.name.value) in params
@@ -403,23 +403,18 @@ export const possiblySetFirstId = ({ args, statements, params }) => {
   return statements;
 };
 
-export const getQueryArguments = resolveInfo => {
+var getQueryArguments = resolveInfo => {
   return resolveInfo.schema.getQueryType().getFields()[resolveInfo.fieldName]
     .astNode.arguments;
 };
 
-export const getMutationArguments = resolveInfo => {
+var getMutationArguments = resolveInfo => {
   return resolveInfo.schema.getMutationType().getFields()[resolveInfo.fieldName]
     .astNode.arguments;
 };
 
 // TODO refactor
-export const buildCypherParameters = ({
-  args,
-  statements = [],
-  params,
-  paramKey
-}) => {
+var buildCypherParameters = ({ args, statements = [], params, paramKey }) => {
   const dataParams = paramKey ? params[paramKey] : params;
   const paramKeys = dataParams ? Object.keys(dataParams) : [];
   if (args) {
@@ -548,20 +543,17 @@ const directiveWithArgs = (directiveName, args) => (schemaType, fieldName) => {
   return ret;
 };
 
-export const cypherDirective = directiveWithArgs('cypher', ['statement']);
+var cypherDirective = directiveWithArgs('cypher', ['statement']);
 
-export const relationDirective = directiveWithArgs('relation', [
-  'name',
-  'direction'
-]);
+var relationDirective = directiveWithArgs('relation', ['name', 'direction']);
 
-export const getTypeDirective = (relatedAstNode, name) => {
+var getTypeDirective = (relatedAstNode, name) => {
   return relatedAstNode && relatedAstNode.directives
     ? relatedAstNode.directives.find(e => e.name.value === name)
     : undefined;
 };
 
-export const getFieldDirective = (field, directive) => {
+var getFieldDirective = (field, directive) => {
   return (
     field &&
     field.directives &&
@@ -569,7 +561,7 @@ export const getFieldDirective = (field, directive) => {
   );
 };
 
-export const getRelationDirection = relationDirective => {
+var getRelationDirection = relationDirective => {
   let direction = {};
   try {
     direction = relationDirective.arguments.filter(
@@ -582,7 +574,7 @@ export const getRelationDirection = relationDirective => {
   }
 };
 
-export const getRelationName = relationDirective => {
+var getRelationName = relationDirective => {
   let name = {};
   try {
     name = relationDirective.arguments.filter(a => a.name.value === 'name')[0];
@@ -593,7 +585,7 @@ export const getRelationName = relationDirective => {
   }
 };
 
-export const getQueryCypherDirective = resolveInfo => {
+var getQueryCypherDirective = resolveInfo => {
   return resolveInfo.schema
     .getQueryType()
     .getFields()
@@ -602,7 +594,7 @@ export const getQueryCypherDirective = resolveInfo => {
     });
 };
 
-export const getMutationCypherDirective = resolveInfo => {
+var getMutationCypherDirective = resolveInfo => {
   return resolveInfo.schema
     .getMutationType()
     .getFields()
@@ -620,7 +612,7 @@ function argumentValue(selection, name, variableValues) {
   }
 }
 
-export const getRelationTypeDirectiveArgs = relationshipType => {
+var getRelationTypeDirectiveArgs = relationshipType => {
   const directive =
     relationshipType && relationshipType.directives
       ? relationshipType.directives.find(e => e.name.value === 'relation')
@@ -636,7 +628,7 @@ export const getRelationTypeDirectiveArgs = relationshipType => {
     : undefined;
 };
 
-export const getRelationMutationPayloadFieldsFromAst = relatedAstNode => {
+var getRelationMutationPayloadFieldsFromAst = relatedAstNode => {
   let isList = false;
   let fieldName = '';
   return relatedAstNode.fields
@@ -656,7 +648,7 @@ export const getRelationMutationPayloadFieldsFromAst = relatedAstNode => {
     .join('\n');
 };
 
-export const getNamedType = type => {
+var getNamedType = type => {
   if (type.kind !== 'NamedType') {
     return getNamedType(type.type);
   }
@@ -697,7 +689,7 @@ const firstField = fields => {
   });
 };
 
-export const getPrimaryKey = astNode => {
+var getPrimaryKey = astNode => {
   let fields = astNode.fields;
   let pk = undefined;
   // remove all ignored fields
@@ -716,7 +708,7 @@ export const getPrimaryKey = astNode => {
   return pk;
 };
 
-export const createOperationMap = type => {
+var createOperationMap = type => {
   const fields = type ? type.fields : [];
   return fields.reduce((acc, t) => {
     acc[t.name.value] = t;
@@ -729,7 +721,7 @@ export const createOperationMap = type => {
  * @param {String} i input variable name
  * @returns {String} escaped text suitable for interpolation in cypher
  */
-export const safeVar = i => {
+var safeVar = i => {
   // There are rare cases where the var input is an object and has to be stringified
   // to produce the right output.
   const asStr = `${i}`;
@@ -744,13 +736,13 @@ export const safeVar = i => {
  * @param {String} l a label name
  * @returns {String} an escaped label name suitable for cypher concat
  */
-export const safeLabel = l => {
+var safeLabel = l => {
   const asStr = `${l}`;
   const escapeInner = asStr.replace(/\`/g, '\\`');
   return '`' + escapeInner + '`';
 };
 
-export const decideNestedVariableName = ({
+var decideNestedVariableName = ({
   schemaTypeRelation,
   innerSchemaTypeRelation,
   variableName,
@@ -794,7 +786,7 @@ export const decideNestedVariableName = ({
   return variableName + '_' + fieldName;
 };
 
-export const initializeMutationParams = ({
+var initializeMutationParams = ({
   resolveInfo,
   mutationTypeCypherDirective,
   otherParams,
@@ -807,10 +799,10 @@ export const initializeMutationParams = ({
     : { ...otherParams, ...{ first, offset } };
 };
 
-export const getOuterSkipLimit = first =>
+var getOuterSkipLimit = first =>
   `SKIP $offset${first > -1 ? ' LIMIT $first' : ''}`;
 
-export const getPayloadSelections = resolveInfo => {
+var getPayloadSelections = resolveInfo => {
   const filteredFieldNodes = filter(
     resolveInfo.fieldNodes,
     n => n.name.value === resolveInfo.fieldName
@@ -826,7 +818,7 @@ export const getPayloadSelections = resolveInfo => {
   return [];
 };
 
-export const filterNullParams = ({ offset, first, otherParams }) => {
+var filterNullParams = ({ offset, first, otherParams }) => {
   return Object.entries({
     ...{ offset, first },
     ...otherParams
@@ -843,11 +835,7 @@ export const filterNullParams = ({ offset, first, otherParams }) => {
   );
 };
 
-export const splitSelectionParameters = (
-  params,
-  primaryKeyArgName,
-  paramKey
-) => {
+var splitSelectionParameters = (params, primaryKeyArgName, paramKey) => {
   const paramKeys = paramKey
     ? Object.keys(params[paramKey])
     : Object.keys(params);
@@ -878,7 +866,7 @@ export const splitSelectionParameters = (
   return [primaryKeyParam, updateParams];
 };
 
-export const isTemporalField = (schemaType, name) => {
+var isTemporalField = (schemaType, name) => {
   const type = schemaType ? schemaType.name : '';
   return (
     (isTemporalType(type) && name === 'year') ||
@@ -895,7 +883,7 @@ export const isTemporalField = (schemaType, name) => {
   );
 };
 
-export const isTemporalType = name => {
+var isTemporalType = name => {
   return (
     name === '_Neo4jTime' ||
     name === '_Neo4jDate' ||
@@ -905,7 +893,7 @@ export const isTemporalType = name => {
   );
 };
 
-export const getTemporalCypherConstructor = fieldAst => {
+var getTemporalCypherConstructor = fieldAst => {
   let cypherFunction = undefined;
   const type = fieldAst ? getNamedType(fieldAst.type).name.value : '';
   switch (type) {
@@ -930,7 +918,7 @@ export const getTemporalCypherConstructor = fieldAst => {
   return cypherFunction;
 };
 
-export const getTemporalArguments = args => {
+var getTemporalArguments = args => {
   return args
     ? args.reduce((acc, t) => {
         if (!t) {
@@ -943,7 +931,7 @@ export const getTemporalArguments = args => {
     : [];
 };
 
-export const isTemporalInputType = name => {
+var isTemporalInputType = name => {
   return (
     name === '_Neo4jTimeInput' ||
     name === '_Neo4jDateInput' ||
@@ -953,7 +941,7 @@ export const isTemporalInputType = name => {
   );
 };
 
-export const temporalPredicateClauses = (
+var temporalPredicateClauses = (
   filters,
   variableName,
   temporalArgs,
@@ -1001,7 +989,7 @@ export const temporalPredicateClauses = (
 };
 
 // An ignored type is a type without at least 1 non-ignored field
-export const excludeIgnoredTypes = (typeMap, config = {}) => {
+var excludeIgnoredTypes = (typeMap, config = {}) => {
   const queryExclusionMap = {};
   const mutationExclusionMap = {};
   // If .query is an object and .exclude is provided, use it, else use new arr
@@ -1037,7 +1025,7 @@ export const excludeIgnoredTypes = (typeMap, config = {}) => {
   return config;
 };
 
-export const getExcludedTypes = (config, rootType) => {
+var getExcludedTypes = (config, rootType) => {
   return config &&
     rootType &&
     config[rootType] &&
@@ -1047,12 +1035,7 @@ export const getExcludedTypes = (config, rootType) => {
     : [];
 };
 
-export const possiblyAddIgnoreDirective = (
-  astNode,
-  typeMap,
-  resolvers,
-  config
-) => {
+var possiblyAddIgnoreDirective = (astNode, typeMap, resolvers, config) => {
   const fields = astNode && astNode.fields ? astNode.fields : [];
   let valueTypeName = '';
   return fields.map(field => {
@@ -1079,7 +1062,7 @@ export const possiblyAddIgnoreDirective = (
   });
 };
 
-export const getCustomFieldResolver = (astNode, field, resolvers) => {
+var getCustomFieldResolver = (astNode, field, resolvers) => {
   const typeResolver =
     astNode && astNode.name && astNode.name.value
       ? resolvers[astNode.name.value]
@@ -1087,7 +1070,7 @@ export const getCustomFieldResolver = (astNode, field, resolvers) => {
   return typeResolver ? typeResolver[field.name.value] : undefined;
 };
 
-export const removeIgnoredFields = (schemaType, selections) => {
+var removeIgnoredFields = (schemaType, selections) => {
   if (!isGraphqlScalarType(schemaType) && selections && selections.length) {
     let schemaTypeField = '';
     selections = selections.filter(e => {
@@ -1105,4 +1088,78 @@ export const removeIgnoredFields = (schemaType, selections) => {
     });
   }
   return selections;
+};
+
+module.exports = {
+  parseArgs,
+  parseFieldSdl,
+  parseInputFieldsSdl,
+  parseDirectiveSdl,
+  printTypeMap,
+  extractTypeMapFromTypeDefs,
+  extractSelections,
+  extractQueryResult,
+  typeIdentifiers,
+  cypherDirectiveArgs,
+  _isNamedMutation,
+  isCreateMutation,
+  isAddMutation,
+  isUpdateMutation,
+  isDeleteMutation,
+  isRemoveMutation,
+  isMutation,
+  isGraphqlScalarType,
+  isArrayType,
+  isRelationTypeDirectedField,
+  isKind,
+  isListType,
+  isNonNullType,
+  isBasicScalar,
+  isNodeType,
+  isRelationTypePayload,
+  isRootSelection,
+  lowFirstLetter,
+  innerType,
+  filtersFromSelections,
+  getFilterParams,
+  innerFilterParams,
+  paramsToString,
+  computeSkipLimit,
+  computeOrderBy,
+  possiblySetFirstId,
+  getQueryArguments,
+  getMutationArguments,
+  buildCypherParameters,
+  cypherDirective,
+  relationDirective,
+  getTypeDirective,
+  getFieldDirective,
+  getRelationDirection,
+  getRelationName,
+  getQueryCypherDirective,
+  getMutationCypherDirective,
+  getRelationTypeDirectiveArgs,
+  getRelationMutationPayloadFieldsFromAst,
+  getNamedType,
+  getPrimaryKey,
+  createOperationMap,
+  safeVar,
+  safeLabel,
+  decideNestedVariableName,
+  initializeMutationParams,
+  getOuterSkipLimit,
+  getPayloadSelections,
+  filterNullParams,
+  splitSelectionParameters,
+  isTemporalField,
+  isTemporalType,
+  getTemporalCypherConstructor,
+  getTemporalArguments,
+  isTemporalInputType,
+  temporalPredicateClauses,
+  excludeIgnoredTypes,
+  getExcludedTypes,
+  possiblyAddIgnoreDirective,
+  getCustomFieldResolver,
+  removeIgnoredFields
 };
