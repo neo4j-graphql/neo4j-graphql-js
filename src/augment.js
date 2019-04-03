@@ -561,31 +561,29 @@ const possiblyAddTypeMutation = (
       resolvers,
       typeMap
     );
-    if (args.length > 0) {
-      const typeName = astNode.name.value;
-      const authDirectives = possiblyAddScopeDirective({
-        entityType: 'node',
-        operationType: mutationType,
-        typeName,
-        config
-      });
-      typeMap['Mutation'].fields.push({
-        kind: 'FieldDefinition',
+    const typeName = astNode.name.value;
+    const authDirectives = possiblyAddScopeDirective({
+      entityType: 'node',
+      operationType: mutationType,
+      typeName,
+      config
+    });
+    typeMap['Mutation'].fields.push({
+      kind: 'FieldDefinition',
+      name: {
+        kind: 'Name',
+        value: mutationName
+      },
+      arguments: args,
+      type: {
+        kind: 'NamedType',
         name: {
           kind: 'Name',
-          value: mutationName
-        },
-        arguments: args,
-        type: {
-          kind: 'NamedType',
-          name: {
-            kind: 'Name',
-            value: typeName
-          }
-        },
-        directives: [authDirectives]
-      });
-    }
+          value: typeName
+        }
+      },
+      directives: [authDirectives]
+    });
   }
   return typeMap;
 };
@@ -698,8 +696,11 @@ const possiblyAddRelationMutationField = (
       const fromInputAst = typeMap[fromName];
       const toInputAst = typeMap[toName];
       const fromInputPrimaryKeys = getPrimaryKeys(fromInputAst);
+      const shouldUseRelationFromArgument = !!fromInputPrimaryKeys.length;
       const toInputPrimaryKeys = getPrimaryKeys(toInputAst);
-      if (fromInputPrimaryKeys.length && toInputPrimaryKeys.length) {
+      const shouldUseRelationToArgument = !!toInputPrimaryKeys.length;
+
+      if (fromInputPrimaryKeys.length || toInputPrimaryKeys.length) {
         payloadTypeName = `_${mutationName}Payload`;
         hasSomePropertyField = relatedAstNode.fields.find(
           e => e.name.value !== 'from' && e.name.value !== 'to'
@@ -719,7 +720,13 @@ const possiblyAddRelationMutationField = (
         // Relation mutation type
         typeMap.Mutation.fields.push(
           parseFieldSdl(`
-              ${mutationName}(from: _${fromName}Input!, to: _${toName}Input!${
+              ${mutationName}(${
+            shouldUseRelationFromArgument ? `from: _${fromName}Input!` : ''
+          }${
+            shouldUseRelationFromArgument && shouldUseRelationToArgument
+              ? `, `
+              : ''
+          }${shouldUseRelationToArgument ? `to: _${toName}Input!` : ''}${
             shouldUseRelationDataArgument
               ? `, data: _${relatedAstNode.name.value}Input!`
               : ''
@@ -731,9 +738,15 @@ const possiblyAddRelationMutationField = (
         // Prevents overwriting
         if (typeMap[payloadTypeName] === undefined) {
           typeMap[payloadTypeName] = parse(`
-            type ${payloadTypeName} @relation(name: "${relationName}", from: "${fromName}", to: "${toName}") {
-              from: ${fromName}
-              to: ${toName}
+            type ${payloadTypeName} @relation(name: "${relationName}", ${
+            shouldUseRelationFromArgument ? `from: "${fromName}"` : ''
+          }${
+            shouldUseRelationFromArgument && shouldUseRelationToArgument
+              ? ', '
+              : ''
+          }${shouldUseRelationToArgument ? `to: "${toName}"` : ''}) {
+              ${shouldUseRelationFromArgument ? `from: ${fromName}` : ''}
+              ${shouldUseRelationToArgument ? `to: ${toName}` : ''}
               ${
                 shouldUseRelationDataArgument
                   ? getRelationMutationPayloadFieldsFromAst(relatedAstNode)
@@ -1487,43 +1500,39 @@ const buildUpdateMutationArguments = (
   resolvers
 ) => {
   let mutationArgs = [];
-  if (primaryKeys.length) {
-    const primaryKeyNames = primaryKeys.map(
-      primaryKey => primaryKey.name.value
-    );
-    // Primary key fields are first args and required for node selection
-    const parsedPrimaryKeyFields = primaryKeys.map(
-      primaryKey =>
-        `${primaryKey.name.value}: ${getNamedType(primaryKey).name.value}!`
-    );
-    let type = {};
-    let valueTypeName = '';
-    let valueType = {};
-    let fieldName = '';
-    mutationArgs = astNode.fields.reduce((acc, t) => {
-      type = getNamedType(t);
-      fieldName = t.name.value;
-      valueTypeName = type.name.value;
-      valueType = typeMap[valueTypeName];
-      if (fieldIsNotIgnored(astNode, t, resolvers)) {
-        if (
-          primaryKeyNames.indexOf(fieldName) < 0 &&
-          isNotSystemField(fieldName) &&
-          !getFieldDirective(t, 'cypher') &&
-          (isBasicScalar(valueTypeName) ||
-            isKind(valueType, 'EnumTypeDefinition') ||
-            isKind(valueType, 'ScalarTypeDefinition') ||
-            isTemporalType(valueTypeName))
-        ) {
-          acc.push(print(t));
-        }
+  const primaryKeyNames = primaryKeys.map(primaryKey => primaryKey.name.value);
+  // Primary key fields are first args and required for node selection
+  const parsedPrimaryKeyFields = primaryKeys.map(
+    primaryKey =>
+      `${primaryKey.name.value}: ${getNamedType(primaryKey).name.value}!`
+  );
+  let type = {};
+  let valueTypeName = '';
+  let valueType = {};
+  let fieldName = '';
+  mutationArgs = astNode.fields.reduce((acc, t) => {
+    type = getNamedType(t);
+    fieldName = t.name.value;
+    valueTypeName = type.name.value;
+    valueType = typeMap[valueTypeName];
+    if (fieldIsNotIgnored(astNode, t, resolvers)) {
+      if (
+        primaryKeyNames.indexOf(fieldName) < 0 &&
+        isNotSystemField(fieldName) &&
+        !getFieldDirective(t, 'cypher') &&
+        (isBasicScalar(valueTypeName) ||
+          isKind(valueType, 'EnumTypeDefinition') ||
+          isKind(valueType, 'ScalarTypeDefinition') ||
+          isTemporalType(valueTypeName))
+      ) {
+        acc.push(print(t));
       }
-      return acc;
-    }, []);
-    mutationArgs.unshift(...parsedPrimaryKeyFields);
-    mutationArgs = transformManagedFieldTypes(mutationArgs);
-    mutationArgs = parseInputFieldsSdl(mutationArgs);
-  }
+    }
+    return acc;
+  }, []);
+  mutationArgs.unshift(...parsedPrimaryKeyFields);
+  mutationArgs = transformManagedFieldTypes(mutationArgs);
+  mutationArgs = parseInputFieldsSdl(mutationArgs);
   return mutationArgs;
 };
 

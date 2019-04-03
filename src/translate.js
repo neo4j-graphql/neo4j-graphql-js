@@ -572,28 +572,42 @@ const relationshipCreate = ({
 
   const fromType = fromTypeArg.value.value;
   const fromVar = `${lowFirstLetter(fromType)}_from`;
-  const fromInputArg = args.find(e => e.name.value === 'from').type;
-  const fromInputAst =
-    typeMap[getNamedType(fromInputArg).type.name.value].astNode;
-  const fromFields = fromInputAst.fields;
-  const fromPrimaryKeys = getPrimaryKeys(fromInputAst);
-  const fromParams = fromPrimaryKeys.map(field => field.name.value);
-  const fromTemporalArgs = getTemporalArguments(fromFields);
+  const fromInputArg = args.find(e => e.name.value === 'from');
+  let fromParams = [];
+  let fromTemporalArgs = [];
+  if (fromInputArg) {
+    const fromInputAst =
+      typeMap[getNamedType(fromInputArg.type).type.name.value].astNode;
+    const fromFields = fromInputAst.fields;
+    const fromPrimaryKeys = getPrimaryKeys(fromInputAst);
+    fromParams = fromPrimaryKeys.map(field => field.name.value);
+    fromTemporalArgs = getTemporalArguments(fromFields);
+  }
 
   const toType = toTypeArg.value.value;
   const toVar = `${lowFirstLetter(toType)}_to`;
-  const toInputArg = args.find(e => e.name.value === 'to').type;
-  const toInputAst = typeMap[getNamedType(toInputArg).type.name.value].astNode;
-  const toFields = toInputAst.fields;
-  const toPrimaryKeys = getPrimaryKeys(toInputAst);
-  const toParams = toPrimaryKeys.map(field => field.name.value);
-  const toTemporalArgs = getTemporalArguments(toFields);
+  const toInputArg = args.find(e => e.name.value === 'to');
+  let toParams = [];
+  let toTemporalArgs = [];
+  if (toInputArg) {
+    const toInputAst =
+      typeMap[getNamedType(toInputArg.type).type.name.value].astNode;
+    const toFields = toInputAst.fields;
+    const toPrimaryKeys = getPrimaryKeys(toInputAst);
+    toParams = toPrimaryKeys.map(field => field.name.value);
+    toTemporalArgs = getTemporalArguments(toFields);
+  }
 
   const relationshipName = relationshipNameArg.value.value;
   const lowercased = relationshipName.toLowerCase();
   const dataInputArg = args.find(e => e.name.value === 'data');
-  const dataInputAst = dataInputArg
-    ? typeMap[getNamedType(dataInputArg.type).type.name.value].astNode
+  const dataInputType = dataInputArg
+    ? getNamedType(dataInputArg.type)
+    : undefined;
+  const dataInputAst = dataInputType
+    ? dataInputType.type
+      ? typeMap[dataInputType.type.name.value].astNode
+      : typeMap[dataInputType.name.value].astNode
     : undefined;
   const dataFields = dataInputAst ? dataInputAst.fields : [];
 
@@ -707,22 +721,31 @@ const relationshipDelete = ({
 
   const fromType = fromTypeArg.value.value;
   const fromVar = `${lowFirstLetter(fromType)}_from`;
-  const fromInputArg = args.find(e => e.name.value === 'from').type;
-  const fromInputAst =
-    typeMap[getNamedType(fromInputArg).type.name.value].astNode;
-  const fromFields = fromInputAst.fields;
-  const fromPrimaryKeys = getPrimaryKeys(fromInputAst);
-  const fromParams = fromPrimaryKeys.map(field => field.name.value);
-  const fromTemporalArgs = getTemporalArguments(fromFields);
+  const fromInputArg = args.find(e => e.name.value === 'from');
+  let fromParams = [];
+  let fromTemporalArgs = [];
+  if (fromInputArg) {
+    const fromInputAst =
+      typeMap[getNamedType(fromInputArg.type).type.name.value].astNode;
+    const fromFields = fromInputAst.fields;
+    const fromPrimaryKeys = getPrimaryKeys(fromInputAst);
+    fromParams = fromPrimaryKeys.map(field => field.name.value);
+    fromTemporalArgs = getTemporalArguments(fromFields);
+  }
 
   const toType = toTypeArg.value.value;
   const toVar = `${lowFirstLetter(toType)}_to`;
-  const toInputArg = args.find(e => e.name.value === 'to').type;
-  const toInputAst = typeMap[getNamedType(toInputArg).type.name.value].astNode;
-  const toFields = toInputAst.fields;
-  const toPrimaryKeys = getPrimaryKeys(toInputAst);
-  const toParams = toPrimaryKeys.map(field => field.name.value);
-  const toTemporalArgs = getTemporalArguments(toFields);
+  const toInputArg = args.find(e => e.name.value === 'to');
+  let toParams = [];
+  let toTemporalArgs = [];
+  if (toInputArg) {
+    const toInputAst =
+      typeMap[getNamedType(toInputArg.type).type.name.value].astNode;
+    const toFields = toInputAst.fields;
+    const toPrimaryKeys = getPrimaryKeys(toInputAst);
+    toParams = toPrimaryKeys.map(field => field.name.value);
+    toTemporalArgs = getTemporalArguments(toFields);
+  }
 
   const relationshipName = relationshipNameArg.value.value;
 

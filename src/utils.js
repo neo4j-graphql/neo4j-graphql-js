@@ -617,15 +617,17 @@ var getRelationTypeDirectiveArgs = relationshipType => {
     relationshipType && relationshipType.directives
       ? relationshipType.directives.find(e => e.name.value === 'relation')
       : undefined;
-  return directive
-    ? {
-        name: directive.arguments.find(e => e.name.value === 'name').value
-          .value,
-        from: directive.arguments.find(e => e.name.value === 'from').value
-          .value,
-        to: directive.arguments.find(e => e.name.value === 'to').value.value
-      }
-    : undefined;
+  let args = undefined;
+  if (directive) {
+    args = {
+      name: directive.arguments.find(e => e.name.value === 'name').value.value
+    };
+    const fromInputArg = directive.arguments.find(e => e.name.value === 'from');
+    if (fromInputArg) args.from = fromInputArg.value.value;
+    const toInputArg = directive.arguments.find(e => e.name.value === 'to');
+    if (toInputArg) args.to = toInputArg.value.value;
+  }
+  return args;
 };
 
 var getRelationMutationPayloadFieldsFromAst = relatedAstNode => {
