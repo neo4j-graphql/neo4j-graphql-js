@@ -341,8 +341,11 @@ const possiblyAddResolvers = (operationTypeMap, resolvers, config) => {
 const possiblyAddTypeInput = (astNode, typeMap, resolvers, config) => {
   const typeName = astNode.name.value;
   if (shouldAugmentType(config, 'mutation', typeName)) {
-    const inputName = `_${astNode.name.value}Input`;
-    if (isNodeType(astNode)) {
+    let inputSuffix = '';
+    let inputName = '';
+    if (isNodeType(astNode) || getTypeDirective(astNode, 'relation')) {
+      inputSuffix = isNodeType(astNode) ? 'Input' : 'PKInput';
+      inputName = `_${astNode.name.value}${inputSuffix}`;
       if (typeMap[inputName] === undefined) {
         const pks = getPrimaryKeys(astNode);
         if (pks.length) {
@@ -353,11 +356,14 @@ const possiblyAddTypeInput = (astNode, typeMap, resolvers, config) => {
                 getNamedType(pk).name.value
               )}!`
           );
-          const nodeInputType = `input ${inputName} { ${pkFields.join(' ')} }`;
-          typeMap[inputName] = parse(nodeInputType);
+          const inputType = `input ${inputName} { ${pkFields.join(' ')} }`;
+          typeMap[inputName] = parse(inputType);
         }
       }
-    } else if (getTypeDirective(astNode, 'relation')) {
+    }
+    if (getTypeDirective(astNode, 'relation')) {
+      inputSuffix = 'FullInput';
+      inputName = `_${astNode.name.value}${inputSuffix}`;
       // Only used for the .data argument in generated relation creation mutations
       if (typeMap[inputName] === undefined) {
         const fields = astNode.fields;
@@ -700,6 +706,11 @@ const possiblyAddRelationMutationField = (
       const toInputPrimaryKeys = getPrimaryKeys(toInputAst);
       const shouldUseRelationToArgument = !!toInputPrimaryKeys.length;
 
+      const dataName =
+        action === 'Remove'
+          ? `_${relatedAstNode.name.value}PKInput`
+          : `_${relatedAstNode.name.value}FullInput`;
+
       if (fromInputPrimaryKeys.length || toInputPrimaryKeys.length) {
         payloadTypeName = `_${mutationName}Payload`;
         hasSomePropertyField = relatedAstNode.fields.find(
@@ -709,7 +720,9 @@ const possiblyAddRelationMutationField = (
         // and if there is at least 1 field that is not .to or .from (hasSomePropertyField)
         // and if we are generating the add relation mutation, then add the .data argument
         const shouldUseRelationDataArgument =
-          relationHasProps && hasSomePropertyField;
+          relationHasProps &&
+          hasSomePropertyField &&
+          (action !== 'Remove' || getPrimaryKeys(relatedAstNode).length);
         const authDirectives = possiblyAddScopeDirective({
           entityType: 'relation',
           operationType: action,
@@ -728,7 +741,7 @@ const possiblyAddRelationMutationField = (
               : ''
           }${shouldUseRelationToArgument ? `to: _${toName}Input!` : ''}${
             shouldUseRelationDataArgument
-              ? `, data: _${relatedAstNode.name.value}Input${
+              ? `, data: ${dataName}${
                   getPrimaryKeys(relatedAstNode).length ? '!' : ''
                 }`
               : ''
