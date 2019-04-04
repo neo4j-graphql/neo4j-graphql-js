@@ -647,7 +647,7 @@ const relationshipCreate = ({
       to: toVar,
       variableName: lowercased
     },
-    variableName: schemaType.name === fromType ? `${toVar}` : `${fromVar}`
+    variableName: schemaType.name === fromType ? toVar : fromVar
   });
   params = { ...preparedParams, ...subParams };
   let fromKeys = fromParams.map(
@@ -748,24 +748,39 @@ const relationshipDelete = ({
   }
 
   const relationshipName = relationshipNameArg.value.value;
+  const lowercased = relationshipName.toLowerCase();
+  const dataInputArg = args.find(e => e.name.value === 'data');
+  const dataInputType = dataInputArg
+    ? getNamedType(dataInputArg.type)
+    : undefined;
+  const dataInputAst = dataInputType
+    ? dataInputType.type
+      ? typeMap[dataInputType.type.name.value].astNode
+      : typeMap[dataInputType.name.value].astNode
+    : undefined;
+  const dataFields = dataInputAst ? dataInputAst.fields : [];
 
+  const [preparedParams, paramStatements] = buildCypherParameters({
+    args: dataFields,
+    params,
+    paramKey: 'data'
+  });
   const schemaTypeName = safeVar(schemaType);
   const fromVariable = safeVar(fromVar);
   const fromLabel = safeLabel(fromType);
   const toVariable = safeVar(toVar);
   const toLabel = safeLabel(toType);
   const relationshipVariable = safeVar(fromVar + toVar);
+  const relationshipProperties = safeVar(`${relationshipVariable}_properties`);
   const relationshipLabel = safeLabel(relationshipName);
-  const fromRootVariable = safeVar('_' + fromVar);
-  const toRootVariable = safeVar('_' + toVar);
   const fromTemporalClauses = temporalPredicateClauses(
-    params.from,
+    preparedParams.from,
     fromVariable,
     fromTemporalArgs,
     'from'
   );
   const toTemporalClauses = temporalPredicateClauses(
-    params.to,
+    preparedParams.to,
     toVariable,
     toTemporalArgs,
     'to'
@@ -774,18 +789,18 @@ const relationshipDelete = ({
   const [subQuery, subParams] = buildCypherSelection({
     initial: '',
     selections,
-    variableName,
     schemaType,
     resolveInfo,
     paramIndex: 1,
     parentSelectionInfo: {
       rootType: 'relationship',
-      from: `_${fromVar}`,
-      to: `_${toVar}`
+      from: fromVar,
+      to: toVar,
+      variableName: lowercased
     },
-    variableName: schemaType.name === fromType ? `_${toVar}` : `_${fromVar}`
+    variableName: schemaType.name === fromType ? toVar : fromVar
   });
-  params = { ...params, ...subParams };
+  params = { ...preparedParams, ...subParams };
   let fromKeys = fromParams.map(
     fromParamName => `${fromParamName}: $from.${fromParamName}`
   );
@@ -805,10 +820,12 @@ const relationshipDelete = ({
       ? `) WHERE ${toTemporalClauses.join(' AND ')} `
       : `{${toKeys.join(',')}})`
   }
-      OPTIONAL MATCH (${fromVariable})-[${relationshipVariable}:${relationshipLabel}]->(${toVariable})
+      MATCH (${fromVariable})-[${relationshipVariable}:${relationshipLabel}${
+    paramStatements.length > 0 ? ` {${paramStatements.join(',')}}` : ''
+  }]->(${toVariable})
+      WITH COUNT(*) AS scope, ${fromVariable} AS ${fromVariable}, ${toVariable} AS ${toVariable}, ${relationshipVariable}, properties(${relationshipVariable}) AS ${relationshipProperties}
       DELETE ${relationshipVariable}
-      WITH COUNT(*) AS scope, ${fromVariable} AS ${fromRootVariable}, ${toVariable} AS ${toRootVariable}
-      RETURN {${subQuery}} AS ${schemaTypeName};
+      RETURN ${relationshipProperties} { ${subQuery} } AS ${schemaTypeName};
     `;
   return [query, params];
 };

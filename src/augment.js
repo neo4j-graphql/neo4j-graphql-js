@@ -709,7 +709,7 @@ const possiblyAddRelationMutationField = (
         // and if there is at least 1 field that is not .to or .from (hasSomePropertyField)
         // and if we are generating the add relation mutation, then add the .data argument
         const shouldUseRelationDataArgument =
-          relationHasProps && hasSomePropertyField && action === 'Add';
+          relationHasProps && hasSomePropertyField;
         const authDirectives = possiblyAddScopeDirective({
           entityType: 'relation',
           operationType: action,
@@ -728,7 +728,9 @@ const possiblyAddRelationMutationField = (
               : ''
           }${shouldUseRelationToArgument ? `to: _${toName}Input!` : ''}${
             shouldUseRelationDataArgument
-              ? `, data: _${relatedAstNode.name.value}Input!`
+              ? `, data: _${relatedAstNode.name.value}Input${
+                  getPrimaryKeys(relatedAstNode).length ? '!' : ''
+                }`
               : ''
           }): ${payloadTypeName} @MutationMeta(relationship: "${relationName}", from: "${fromName}", to: "${toName}") ${
             authDirectives ? authDirectives : ''
