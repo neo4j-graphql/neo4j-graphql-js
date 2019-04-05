@@ -771,15 +771,7 @@ const relationshipUpdate = ({
     dataPrimaryKeyArgNames,
     'data'
   );
-  const [preparedParams] = buildCypherParameters({
-    args: dataFields,
-    params,
-    paramKey: 'data'
-  });
-  const [
-    nonPrimaryKeyPreparedParams,
-    dataParamUpdateStatements
-  ] = buildCypherParameters({
+  const [preparedParams, dataParamUpdateStatements] = buildCypherParameters({
     args: dataFields,
     params: updateParams,
     paramKey: 'data'
@@ -823,6 +815,10 @@ const relationshipUpdate = ({
     },
     variableName: schemaType.name === fromType ? toVar : fromVar
   });
+  for (let primaryKeyArgName of dataPrimaryKeyArgNames) {
+    preparedParams.data[primaryKeyArgName] =
+      dataPrimaryKeyParams[primaryKeyArgName];
+  }
   params = { ...preparedParams, ...subParams };
   let fromKeys = fromParams.map(
     fromParamName => `${fromParamName}: $from.${fromParamName}`
