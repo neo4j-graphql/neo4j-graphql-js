@@ -935,7 +935,6 @@ const relationshipDelete = ({
       : typeMap[dataInputType.name.value].astNode
     : undefined;
   const dataFields = dataInputAst ? dataInputAst.fields : [];
-  const dataPrimaryKeys = getPrimaryKeys(dataInputAst);
   const dataTemporalArgs = getTemporalArguments(dataFields);
 
   const [preparedParams, paramStatements] = buildCypherParameters({
