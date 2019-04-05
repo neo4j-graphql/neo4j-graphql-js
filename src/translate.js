@@ -790,7 +790,6 @@ const relationshipUpdate = ({
   const toVariable = safeVar(toVar);
   const toLabel = safeLabel(toType);
   const relationshipVariable = safeVar(fromVar + toVar);
-  const relationshipProperties = safeVar(`${relationshipVariable}_properties`);
   const relationshipLabel = safeLabel(relationshipName);
   const fromTemporalClauses = temporalPredicateClauses(
     preparedParams.from,
@@ -941,7 +940,6 @@ const relationshipDelete = ({
     : undefined;
   const dataFields = dataInputAst ? dataInputAst.fields : [];
   const dataPrimaryKeys = getPrimaryKeys(dataInputAst);
-  const dataPrimaryKeyArgNames = dataPrimaryKeys.map(field => field.name.value);
   const dataTemporalArgs = getTemporalArguments(dataFields);
 
   const [preparedParams, paramStatements] = buildCypherParameters({
