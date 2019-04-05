@@ -804,6 +804,12 @@ const relationshipUpdate = ({
     toTemporalArgs,
     'to'
   );
+  const dataTemporalClauses = temporalPredicateClauses(
+    preparedParams.data,
+    relationshipVariable,
+    dataTemporalArgs,
+    'data'
+  );
   const [subQuery, subParams] = buildCypherSelection({
     initial: '',
     selections,
@@ -841,8 +847,12 @@ const relationshipUpdate = ({
       ? `) WHERE ${toTemporalClauses.join(' AND ')} `
       : `{${toKeys.join(',')}})`
   }
-      MATCH (${fromVariable})-[${relationshipVariable}:${relationshipLabel}${
-    dataPrimaryKeyArgs.length > 0 ? ` {${dataPrimaryKeyArgs.join(',')}}` : ''
+      MATCH (${fromVariable})-[${relationshipVariable}:${relationshipLabel} ${
+    dataTemporalClauses && dataTemporalClauses.length > 0
+      ? `) WHERE ${dataTemporalClauses.join(' AND ')} `
+      : dataPrimaryKeyArgs.length > 0
+      ? ` {${dataPrimaryKeyArgs.join(',')}}`
+      : ''
   }]->(${toVariable})
       SET ${relationshipVariable} += {${dataParamUpdateStatements.join(',')}}
       RETURN ${relationshipVariable} { ${subQuery} } AS ${schemaTypeName};
@@ -930,6 +940,9 @@ const relationshipDelete = ({
       : typeMap[dataInputType.name.value].astNode
     : undefined;
   const dataFields = dataInputAst ? dataInputAst.fields : [];
+  const dataPrimaryKeys = getPrimaryKeys(dataInputAst);
+  const dataPrimaryKeyArgNames = dataPrimaryKeys.map(field => field.name.value);
+  const dataTemporalArgs = getTemporalArguments(dataFields);
 
   const [preparedParams, paramStatements] = buildCypherParameters({
     args: dataFields,
@@ -955,6 +968,12 @@ const relationshipDelete = ({
     toVariable,
     toTemporalArgs,
     'to'
+  );
+  const dataTemporalClauses = temporalPredicateClauses(
+    preparedParams.data,
+    relationshipVariable,
+    dataTemporalArgs,
+    'data'
   );
   // TODO cleaner semantics: remove use of _ prefixes in root variableNames and variableName
   const [subQuery, subParams] = buildCypherSelection({
@@ -991,8 +1010,12 @@ const relationshipDelete = ({
       ? `) WHERE ${toTemporalClauses.join(' AND ')} `
       : `{${toKeys.join(',')}})`
   }
-      MATCH (${fromVariable})-[${relationshipVariable}:${relationshipLabel}${
-    paramStatements.length > 0 ? ` {${paramStatements.join(',')}}` : ''
+      MATCH (${fromVariable})-[${relationshipVariable}:${relationshipLabel} ${
+    dataTemporalClauses && dataTemporalClauses.length > 0
+      ? `) WHERE ${dataTemporalClauses.join(' AND ')} `
+      : paramStatements.length > 0
+      ? ` {${paramStatements.join(',')}}`
+      : ''
   }]->(${toVariable})
       WITH COUNT(*) AS scope, ${fromVariable} AS ${fromVariable}, ${toVariable} AS ${toVariable}, ${relationshipVariable}, properties(${relationshipVariable}) AS ${relationshipProperties}
       DELETE ${relationshipVariable}
