@@ -102,6 +102,7 @@ var possiblyAddScopeDirective = ({
     }
     if (entityType === 'relation') {
       if (operationType === 'Add') operationType = 'Create';
+      else if (operationType === 'Change') operationType = 'Update';
       else if (operationType === 'Remove') operationType = 'Delete';
       return `@hasScope(scopes: ["${typeName}: ${operationType}", "${relatedTypeName}: ${operationType}"])`;
     }

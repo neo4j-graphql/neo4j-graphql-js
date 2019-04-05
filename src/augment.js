@@ -692,6 +692,22 @@ const possiblyAddRelationMutationField = (
   config
 ) => {
   const mutationTypes = ['Add', 'Remove'];
+  const lowercaseFieldName =
+    capitalizedFieldName.charAt(0).toLowerCase() +
+    capitalizedFieldName.substr(1);
+  const astNode = typeMap[typeName];
+  const fields = astNode.fields;
+  const fieldCount = fields ? fields.length : 0;
+  for (let fieldIndex = 0; fieldIndex < fieldCount; ++fieldIndex) {
+    let field = fields[fieldIndex];
+    let fieldName = field.name.value;
+    if (fieldName == capitalizedFieldName || fieldName == lowercaseFieldName) {
+      if (!getFieldDirective(field, 'relation')) {
+        mutationTypes.splice(1, 0, 'Change');
+      }
+      break;
+    }
+  }
   let mutationName = '';
   let payloadTypeName = '';
   let hasSomePropertyField = false;

@@ -6,6 +6,7 @@ const {
   isAddMutation,
   isCreateMutation,
   isUpdateMutation,
+  isChangeMutation,
   isRemoveMutation,
   isDeleteMutation,
   computeOrderBy,
@@ -291,10 +292,13 @@ var translateMutation = ({
     return relationshipCreate({
       ...mutationInfo
     });
+  } else if (isChangeMutation(resolveInfo)) {
+    return relationshipUpdate({
+      ...mutationInfo
+    });
   } else if (isRemoveMutation(resolveInfo)) {
     return relationshipDelete({
-      ...mutationInfo,
-      variableName
+      ...mutationInfo
     });
   } else {
     // throw error - don't know how to handle this type of mutation
@@ -529,7 +533,7 @@ RETURN ${safeVariableName}`;
   return [query, params];
 };
 
-// Relation Add / Remove
+// Relation Add / Change / Remove
 const relationshipCreate = ({
   resolveInfo,
   selections,
@@ -678,10 +682,9 @@ const relationshipCreate = ({
   return [query, params];
 };
 
-const relationshipDelete = ({
+const relationshipUpdate = ({
   resolveInfo,
   selections,
-  variableName,
   schemaType,
   params
 }) => {
@@ -695,7 +698,175 @@ const relationshipDelete = ({
       });
   } catch (e) {
     throw new Error(
-      'Missing required MutationMeta directive on add relationship directive'
+      'Missing required MutationMeta directive on change relationship directive'
+    );
+  }
+
+  try {
+    relationshipNameArg = mutationMeta.arguments.find(x => {
+      return x.name.value === 'relationship';
+    });
+    fromTypeArg = mutationMeta.arguments.find(x => {
+      return x.name.value === 'from';
+    });
+    toTypeArg = mutationMeta.arguments.find(x => {
+      return x.name.value === 'to';
+    });
+  } catch (e) {
+    throw new Error(
+      'Missing required argument in MutationMeta directive (relationship, from, or to)'
+    );
+  }
+
+  //TODO: need to handle one-to-one and one-to-many
+  const args = getMutationArguments(resolveInfo);
+  const typeMap = resolveInfo.schema.getTypeMap();
+
+  const fromType = fromTypeArg.value.value;
+  const fromVar = `${lowFirstLetter(fromType)}_from`;
+  const fromInputArg = args.find(e => e.name.value === 'from');
+  let fromParams = [];
+  let fromTemporalArgs = [];
+  if (fromInputArg) {
+    const fromInputAst =
+      typeMap[getNamedType(fromInputArg.type).type.name.value].astNode;
+    const fromFields = fromInputAst.fields;
+    const fromPrimaryKeys = getPrimaryKeys(fromInputAst);
+    fromParams = fromPrimaryKeys.map(field => field.name.value);
+    fromTemporalArgs = getTemporalArguments(fromFields);
+  }
+
+  const toType = toTypeArg.value.value;
+  const toVar = `${lowFirstLetter(toType)}_to`;
+  const toInputArg = args.find(e => e.name.value === 'to');
+  let toParams = [];
+  let toTemporalArgs = [];
+  if (toInputArg) {
+    const toInputAst =
+      typeMap[getNamedType(toInputArg.type).type.name.value].astNode;
+    const toFields = toInputAst.fields;
+    const toPrimaryKeys = getPrimaryKeys(toInputAst);
+    toParams = toPrimaryKeys.map(field => field.name.value);
+    toTemporalArgs = getTemporalArguments(toFields);
+  }
+
+  const relationshipName = relationshipNameArg.value.value;
+  const lowercased = relationshipName.toLowerCase();
+  const dataInputArg = args.find(e => e.name.value === 'data');
+  const dataInputType = dataInputArg
+    ? getNamedType(dataInputArg.type)
+    : undefined;
+  const dataInputAst = dataInputType
+    ? dataInputType.type
+      ? typeMap[dataInputType.type.name.value].astNode
+      : typeMap[dataInputType.name.value].astNode
+    : undefined;
+  const dataFields = dataInputAst ? dataInputAst.fields : [];
+  const dataPrimaryKeys = getPrimaryKeys(dataInputAst);
+  const dataPrimaryKeyArgNames = dataPrimaryKeys.map(field => field.name.value);
+  const dataTemporalArgs = getTemporalArguments(dataFields);
+
+  const [dataPrimaryKeyParams, updateParams] = splitSelectionParameters(
+    params,
+    dataPrimaryKeyArgNames,
+    'data'
+  );
+  const [preparedParams] = buildCypherParameters({
+    args: dataFields,
+    params,
+    paramKey: 'data'
+  });
+  const [
+    nonPrimaryKeyPreparedParams,
+    dataParamUpdateStatements
+  ] = buildCypherParameters({
+    args: dataFields,
+    params: updateParams,
+    paramKey: 'data'
+  });
+  const schemaTypeName = safeVar(schemaType);
+  const fromVariable = safeVar(fromVar);
+  const fromLabel = safeLabel(fromType);
+  const toVariable = safeVar(toVar);
+  const toLabel = safeLabel(toType);
+  const relationshipVariable = safeVar(fromVar + toVar);
+  const relationshipProperties = safeVar(`${relationshipVariable}_properties`);
+  const relationshipLabel = safeLabel(relationshipName);
+  const fromTemporalClauses = temporalPredicateClauses(
+    preparedParams.from,
+    fromVariable,
+    fromTemporalArgs,
+    'from'
+  );
+  const toTemporalClauses = temporalPredicateClauses(
+    preparedParams.to,
+    toVariable,
+    toTemporalArgs,
+    'to'
+  );
+  const [subQuery, subParams] = buildCypherSelection({
+    initial: '',
+    selections,
+    schemaType,
+    resolveInfo,
+    paramIndex: 1,
+    parentSelectionInfo: {
+      rootType: 'relationship',
+      from: fromVar,
+      to: toVar,
+      variableName: lowercased
+    },
+    variableName: schemaType.name === fromType ? toVar : fromVar
+  });
+  params = { ...preparedParams, ...subParams };
+  let fromKeys = fromParams.map(
+    fromParamName => `${fromParamName}: $from.${fromParamName}`
+  );
+  let toKeys = toParams.map(
+    toParamName => `${toParamName}: $to.${toParamName}`
+  );
+  const dataPrimaryKeyArgs = dataPrimaryKeyArgNames.map(
+    primaryKeyArgName => `${primaryKeyArgName}: $data.${primaryKeyArgName}`
+  );
+  let query = `
+      MATCH (${fromVariable}:${fromLabel} ${
+    fromTemporalClauses && fromTemporalClauses.length > 0
+      ? // uses either a WHERE clause for managed type primary keys (temporal, etc.)
+        `) WHERE ${fromTemporalClauses.join(' AND ')} `
+      : // or a an internal matching clause for normal, scalar property primary keys
+        `{${fromKeys.join(',')}})`
+  }
+      MATCH (${toVariable}:${toLabel} ${
+    toTemporalClauses && toTemporalClauses.length > 0
+      ? `) WHERE ${toTemporalClauses.join(' AND ')} `
+      : `{${toKeys.join(',')}})`
+  }
+      MATCH (${fromVariable})-[${relationshipVariable}:${relationshipLabel}${
+    dataPrimaryKeyArgs.length > 0 ? ` {${dataPrimaryKeyArgs.join(',')}}` : ''
+  }]->(${toVariable})
+      SET ${relationshipVariable} += {${dataParamUpdateStatements.join(',')}}
+      RETURN ${relationshipVariable} { ${subQuery} } AS ${schemaTypeName};
+    `;
+  return [query, params];
+};
+
+const relationshipDelete = ({
+  resolveInfo,
+  selections,
+  schemaType,
+  params
+}) => {
+  let mutationMeta, relationshipNameArg, fromTypeArg, toTypeArg;
+  try {
+    mutationMeta = resolveInfo.schema
+      .getMutationType()
+      .getFields()
+      [resolveInfo.fieldName].astNode.directives.find(x => {
+        return x.name.value === 'MutationMeta';
+      });
+  } catch (e) {
+    throw new Error(
+      'Missing required MutationMeta directive on remove relationship directive'
     );
   }
 

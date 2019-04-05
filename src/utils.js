@@ -191,6 +191,8 @@ var isAddMutation = _isNamedMutation('add');
 
 var isUpdateMutation = _isNamedMutation('update');
 
+var isChangeMutation = _isNamedMutation('change');
+
 var isDeleteMutation = _isNamedMutation('delete');
 
 var isRemoveMutation = _isNamedMutation('remove');
@@ -835,35 +837,39 @@ var filterNullParams = ({ offset, first, otherParams }) => {
 };
 
 var splitSelectionParameters = (params, primaryKeyArgNames, paramKey) => {
-  const paramKeys = paramKey
-    ? Object.keys(params[paramKey])
-    : Object.keys(params);
-  const [primaryKeyParams, updateParams] = paramKeys.reduce(
+  const paramKeys = Object.keys(params);
+  const [primaryKeyParams, otherParams] = paramKeys.reduce(
     (acc, t) => {
-      if (primaryKeyArgNames.indexOf(t) >= 0) {
-        if (paramKey) {
-          acc[0][t] = params[paramKey][t];
-        } else {
+      if (!paramKey) {
+        if (primaryKeyArgNames.indexOf(t) >= 0) {
           acc[0][t] = params[t];
-        }
-      } else {
-        if (paramKey) {
-          if (acc[1][paramKey] === undefined) acc[1][paramKey] = {};
-          acc[1][paramKey][t] = params[paramKey][t];
         } else {
           acc[1][t] = params[t];
         }
+      } else if (t == paramKey) {
+        const subParamKeys = paramKey
+          ? Object.keys(params[paramKey])
+          : undefined;
+        [acc[0], acc[1][t]] = subParamKeys.reduce(
+          (subAcc, subT) => {
+            if (primaryKeyArgNames.indexOf(subT) >= 0) {
+              subAcc[0][subT] = params[t][subT];
+            } else {
+              if (subAcc[1] === undefined) subAcc[1] = {};
+              subAcc[1][subT] = params[t][subT];
+            }
+            return subAcc;
+          },
+          [{}, {}]
+        );
+      } else {
+        acc[1][t] = params[t];
       }
       return acc;
     },
     [{}, {}]
   );
-  if (paramKey && _.isEmpty(updateParams)) updateParams[paramKey] = {};
-  const first = params.first;
-  const offset = params.offset;
-  if (first !== undefined) updateParams['first'] = first;
-  if (offset !== undefined) updateParams['offset'] = offset;
-  return [primaryKeyParams, updateParams];
+  return [primaryKeyParams, otherParams];
 };
 
 var isTemporalField = (schemaType, name) => {
@@ -1105,6 +1111,7 @@ module.exports = {
   isCreateMutation,
   isAddMutation,
   isUpdateMutation,
+  isChangeMutation,
   isDeleteMutation,
   isRemoveMutation,
   isMutation,
