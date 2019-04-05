@@ -796,7 +796,7 @@ const relationshipUpdate = ({
     'to'
   );
   const dataTemporalClauses = temporalPredicateClauses(
-    preparedParams.data,
+    dataPrimaryKeyParams,
     relationshipVariable,
     dataTemporalArgs,
     'data'
