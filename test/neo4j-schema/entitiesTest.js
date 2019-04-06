@@ -41,6 +41,7 @@ test('Neo4jRelationship basics', t => {
 
 test('Neo4jRelationship type', t =>
   t.is(r.getRelationshipType(), 'REL WITH SPACE'));
+
 test('Neo4jRelationship graphQLTypeName', t =>
   t.is(r.getGraphQLTypeName(), 'REL_WITH_SPACE'));
 
@@ -64,4 +65,19 @@ test('Neo4j Relationship Links', t => {
 
   t.deepEqual(r.getToLabels(), ['C', 'D', 'F']);
   t.deepEqual(r.getFromLabels(), ['A', 'B', 'E']);
+
+  t.false(r.isUnivalent());
+});
+
+test('Neo4j Univalent/Multivalent Relationships', t => {
+  const univalentLinks = [{ from: ['A', 'B'], to: ['C', 'D'] }];
+  const multiValentLinks = [
+    { from: ['A', 'B'], to: ['C', 'D'] },
+    { from: ['E'], to: ['F'] }
+  ];
+
+  r.links = univalentLinks;
+  t.true(r.isUnivalent());
+  r.links = multiValentLinks;
+  t.false(r.isUnivalent());
 });
