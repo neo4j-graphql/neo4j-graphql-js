@@ -70,6 +70,26 @@ class Neo4jRelationship extends Neo4jSchemaEntity {
     return this.getRelationshipType().replace(/ /g, '_');
   }
 
+  /**
+   * A univalent relationship is one that connects exactly one type of node label to exactly one type of
+   * other node label.  Imagine you have (:Customer)-[:BUYS]->(:Product).  In this case, BUYS is univalent
+   * because it always connects from:Customer to:Product.
+   *
+   * If you had a graph which was (:Customer)-[:BUYS]->(:Product), (:Company)-[:BUYS]->(:Product) then
+   * the BUYS relationship would be multivalent because it connects [Customer, Company] -> [Product].
+   *
+   * Important note, since nodes can have multiple labels, you could end up in a situation where
+   * (:A:B)-[:WHATEVER]->(:C:D).  This is still univalent, because WHATEVER always connects things which
+   * are all of :A:B to those that are all of :C:D.   If you had this situation:
+   * (:A:B)-[:WHATEVER]->(:C:D) and then (:A)-[:WHATEVER]->(:C) this is not univalent.
+   */
+  isUnivalent() {
+    return (
+      this.links && this.links.length === 1
+      // Length of links[0].from and to doesn't matter, as label combinations may be in use.
+    );
+  }
+
   isInboundTo(label) {
     const linksToThisLabel = this.links.filter(
       link => link.to.indexOf(label) > -1
