@@ -1,4 +1,8 @@
-import { augmentTypeDefs, augmentSchema } from '../../src/index';
+import {
+  augmentTypeDefs,
+  augmentSchema,
+  makeAugmentedSchema
+} from '../../src/index';
 import { ApolloServer, gql, makeExecutableSchema } from 'apollo-server';
 import { v1 as neo4j } from 'neo4j-driver';
 // import { typeDefs, resolvers } from './movies-schema';
@@ -17,6 +21,11 @@ const inferAugmentedSchema = driver => {
     console.log('TYPEDEFS:');
     console.log(result.typeDefs);
 
+    return makeAugmentedSchema({
+      typeDefs: result.typeDefs
+    });
+    /*
+    console.log('Making executable...');
     const schema = makeExecutableSchema({
       typeDefs: augmentTypeDefs(result.typeDefs),
       resolverValidationOptions: {
@@ -25,8 +34,10 @@ const inferAugmentedSchema = driver => {
       resolvers: result.resolvers
     });
 
+    console.log('Augmenting...');
     // Add auto-generated mutations
     return augmentSchema(schema);
+    */
   });
 };
 
