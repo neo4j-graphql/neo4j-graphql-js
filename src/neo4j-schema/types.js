@@ -12,12 +12,35 @@ const chooseGraphQLType = property => {
   const options = _.get(property, 'propertyTypes');
   const mandatoryModifier = _.get(property, 'mandatory') ? '!' : '';
 
+  // This stores and performs the mapping of a primitive Neo4j type t
+  // to a GraphQL primitive type (the output)
   const mapSingleType = t => {
     const mapping = {
+      // Primitives
       Long: 'Int',
       Float: 'Float',
-      String: 'String'
+      Double: 'Float',
+      String: 'String',
+      Boolean: 'Boolean',
+      Date: 'Date',
+      DateTime: 'DateTime',
+      LocalTime: 'LocalTime',
+      LocalDateTime: 'LocalDateTime',
+      Time: 'Time',
+
+      // Array types
+      LongArray: '[Int]',
+      DoubleArray: '[Float]',
+      FloatArray: '[Float]',
+      BooleanArray: '[Boolean]',
+      StringArray: '[String]',
+      DateArray: '[Date]',
+      DateTimeArray: '[DateTime]',
+      TimeArray: '[Time]',
+      LocalTimeArray: '[LocalTime]',
+      LocalDateTimeArray: '[LocalDateTime]'
     };
+
     return mapping[t] || 'String';
   };
 

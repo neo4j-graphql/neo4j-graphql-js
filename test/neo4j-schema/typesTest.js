@@ -17,10 +17,46 @@ test('chooseGraphQLType', t => {
   t.is(types.chooseGraphQLType(null), 'String');
   t.is(types.chooseGraphQLType(prop(['String'], true)), 'String!');
   t.is(types.chooseGraphQLType(prop(['Long', 'String'], true)), 'String!');
-  // TODO: Review type mappings to GraphQL with Will
-  // t.is(types.chooseGraphQLType(prop(['Integer', 'Float'], false)), 'Float');
-  t.is(
-    types.chooseGraphQLType(prop(['Integer', 'String', 'Float'], false)),
-    'String'
-  );
+
+  // Types which are the same between both.
+  const sameTypes = [
+    'Float',
+    'String',
+    'Boolean',
+    'Date',
+    'DateTime',
+    'LocalTime',
+    'LocalDateTime',
+    'Time'
+  ];
+  sameTypes.forEach(typeName => {
+    t.is(types.chooseGraphQLType(prop([typeName], false)), typeName);
+  });
+
+  // Array types map to [Type]
+  sameTypes.forEach(typeName => {
+    const arrayNeo4jTypeName = `${typeName}Array`;
+    t.is(
+      types.chooseGraphQLType(prop([arrayNeo4jTypeName], false)),
+      '[' + typeName + ']'
+    );
+  });
+
+  const mappedTypes = [
+    { neo4j: 'Long', graphQL: 'Int' },
+    { neo4j: 'Double', graphQL: 'Float' }
+  ];
+
+  mappedTypes.forEach(mt => {
+    t.is(types.chooseGraphQLType(prop([mt.neo4j], false)), mt.graphQL);
+  });
+
+  // Arrays of mapped types.
+  mappedTypes.forEach(mt => {
+    const arrayNeo4jTypeName = `${mt.neo4j}Array`;
+    t.is(
+      types.chooseGraphQLType(prop([arrayNeo4jTypeName], false)),
+      '[' + mt.graphQL + ']'
+    );
+  });
 });
