@@ -75,6 +75,9 @@ test('Initialize', t => {
 
     t.deepEqual(rel.getPropertyNames(), []);
     t.deepEqual(withProps.getPropertyNames(), ['a', 'b']);
+
+    t.is(tree.getNodeByLabels(['B', 'A']), n);
+    t.is(tree.getNodeByLabels(['Nonexistant']), undefined);
   });
 });
 

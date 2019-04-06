@@ -73,13 +73,32 @@ export default class Neo4jSchemaTree {
   getNode(id) {
     return this.nodes[id];
   }
+
   getNodes() {
     return Object.values(this.nodes);
+  }
+
+  /**
+   * @param {Array[String]} labels a set of labels
+   * @returns {Neo4jNode} if it exists, null otherwise.
+   */
+  getNodeByLabels(labels) {
+    const lookingFor = _.uniq(labels);
+    const total = lookingFor.length;
+
+    return this.getNodes().filter(n => {
+      const here = n.getLabels();
+
+      const matches = here.filter(label => lookingFor.indexOf(label) > -1)
+        .length;
+      return matches === total;
+    })[0];
   }
 
   getRel(id) {
     return this.rels[id];
   }
+
   getRels() {
     return Object.values(this.rels);
   }
