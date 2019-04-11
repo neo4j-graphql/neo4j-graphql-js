@@ -777,7 +777,9 @@ const possiblyAddRelationMutationField = (
           }${shouldUseRelationToArgument ? `to: _${toName}Input!` : ''}${
             shouldUseRelationDataArgument
               ? `, data: ${dataName}${
-                  getPrimaryKeys(relatedAstNode).length ? '!' : ''
+                  action === 'Change' || getPrimaryKeys(relatedAstNode).length
+                    ? '!'
+                    : ''
                 }`
               : ''
           }): ${payloadTypeName} @MutationMeta(relationship: "${relationName}", from: "${fromName}", to: "${toName}") ${
