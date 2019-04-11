@@ -25,7 +25,9 @@ const {
   getCustomFieldResolver,
   possiblyAddIgnoreDirective,
   getExcludedTypes,
-  parseInputFieldsSdl
+  parseInputFieldsSdl,
+  fieldCopyNullable,
+  fieldCopyNonNullable
 } = require('./utils');
 const {
   possiblyAddDirectiveImplementations,
@@ -343,11 +345,13 @@ const possiblyAddTypeInput = (astNode, typeMap, resolvers, config) => {
   if (shouldAugmentType(config, 'mutation', typeName)) {
     let inputSuffix = '';
     let inputName = '';
+    let inputType = '';
+    let pks = [];
     if (isNodeType(astNode) || getTypeDirective(astNode, 'relation')) {
-      inputSuffix = isNodeType(astNode) ? 'Input' : 'PKInput';
+      inputSuffix = isNodeType(astNode) ? 'Input' : 'RemoveInput';
       inputName = `_${astNode.name.value}${inputSuffix}`;
       if (typeMap[inputName] === undefined) {
-        const pks = getPrimaryKeys(astNode);
+        pks = getPrimaryKeys(astNode);
         if (pks.length) {
           // Always exactly require the pks of a node type
           let pkFields = pks.map(
@@ -356,41 +360,59 @@ const possiblyAddTypeInput = (astNode, typeMap, resolvers, config) => {
                 getNamedType(pk).name.value
               )}!`
           );
-          const inputType = `input ${inputName} { ${pkFields.join(' ')} }`;
+          inputType = `input ${inputName} { ${pkFields.join(' ')} }`;
           typeMap[inputName] = parse(inputType);
         }
       }
     }
     if (getTypeDirective(astNode, 'relation')) {
-      inputSuffix = 'FullInput';
-      inputName = `_${astNode.name.value}${inputSuffix}`;
-      // Only used for the .data argument in generated relation creation mutations
-      if (typeMap[inputName] === undefined) {
-        const fields = astNode.fields;
-        // The .data arg on add relation mutations,
-        // which is the only arg in the API that uses
-        // relation input types, is only generate if there
-        // is at least one non-directed field (property field)
-        const hasSomePropertyField = fields.find(
-          e => e.name.value !== 'from' && e.name.value !== 'to'
-        );
-        const fromField = fields.find(e => e.name.value === 'from');
-        const fromName = getNamedType(fromField).name.value;
-        const toField = fields.find(e => e.name.value === 'to');
-        const toName = getNamedType(toField).name.value;
-        // only generate an input type for the relationship if we know that both
-        // the from and to nodes are not excluded, since thus we know that
-        // relation mutations are generated for this relation, which would
-        // make use of the relation input type
-        if (
-          hasSomePropertyField &&
-          shouldAugmentRelationField(config, 'mutation', fromName, toName)
-        ) {
-          const relationInputFields = buildRelationTypeInputFields(
+      const fields = astNode.fields;
+      // The .data arg on add/change/remove relation mutations,
+      // which is the only arg in the API that uses
+      // relation input types, is only generate if there
+      // is at least one non-directed field (property field)
+      const hasSomePropertyField = fields.find(
+        e => e.name.value !== 'from' && e.name.value !== 'to'
+      );
+      const fromField = fields.find(e => e.name.value === 'from');
+      const fromName = getNamedType(fromField).name.value;
+      const toField = fields.find(e => e.name.value === 'to');
+      const toName = getNamedType(toField).name.value;
+      // only generate an input type for the relationship if we know that both
+      // the from and to nodes are not excluded, since thus we know that
+      // relation mutations are generated for this relation, which would
+      // make use of the relation input type
+      if (
+        hasSomePropertyField &&
+        shouldAugmentRelationField(config, 'mutation', fromName, toName)
+      ) {
+        inputSuffix = 'AddInput';
+        inputName = `_${astNode.name.value}${inputSuffix}`;
+        // Only used for the .data argument in generated relation creation mutations
+        if (typeMap[inputName] === undefined) {
+          const relationInputFields = buildAddRelationTypeInputFields(
             astNode,
             fields,
             typeMap,
             resolvers
+          );
+          typeMap[inputName] = parse(
+            `input ${inputName} {${relationInputFields}}`
+          );
+        }
+
+        inputSuffix = 'ChangeInput';
+        inputName = `_${astNode.name.value}${inputSuffix}`;
+        // Only used for the .data argument in generated relation creation mutations
+        if (typeMap[inputName] === undefined) {
+          pks = getPrimaryKeys(astNode);
+          const pkNames = pks.map(pk => pk.name.value);
+          const relationInputFields = buildChangeRelationTypeInputFields(
+            astNode,
+            fields,
+            typeMap,
+            resolvers,
+            pkNames
           );
           typeMap[inputName] = parse(
             `input ${inputName} {${relationInputFields}}`
@@ -722,10 +744,7 @@ const possiblyAddRelationMutationField = (
       const toInputPrimaryKeys = getPrimaryKeys(toInputAst);
       const shouldUseRelationToArgument = !!toInputPrimaryKeys.length;
 
-      const dataName =
-        action === 'Remove'
-          ? `_${relatedAstNode.name.value}PKInput`
-          : `_${relatedAstNode.name.value}FullInput`;
+      const dataName = `_${relatedAstNode.name.value}${action}Input`;
 
       if (fromInputPrimaryKeys.length || toInputPrimaryKeys.length) {
         payloadTypeName = `_${mutationName}Payload`;
@@ -1633,7 +1652,12 @@ const buildCreateMutationArguments = (astNode, typeMap, resolvers) => {
   return mutationArgs;
 };
 
-const buildRelationTypeInputFields = (astNode, fields, typeMap, resolvers) => {
+const buildAddRelationTypeInputFields = (
+  astNode,
+  fields,
+  typeMap,
+  resolvers
+) => {
   let fieldName = '';
   let valueTypeName = '';
   let valueType = {};
@@ -1655,6 +1679,48 @@ const buildRelationTypeInputFields = (astNode, fields, typeMap, resolvers) => {
           kind: 'InputValueDefinition',
           name: t.name,
           type: t.type
+        })
+      );
+    }
+    return acc;
+  }, []);
+  relationInputFields = transformManagedFieldTypes(relationInputFields);
+  return relationInputFields.join('\n');
+};
+
+const buildChangeRelationTypeInputFields = (
+  astNode,
+  fields,
+  typeMap,
+  resolvers,
+  primaryKeyNames
+) => {
+  let fieldName = '';
+  let f = {};
+  let valueTypeName = '';
+  let valueType = {};
+  let relationInputFields = fields.reduce((acc, t) => {
+    fieldName = t.name.value;
+    f =
+      primaryKeyNames.indexOf(fieldName) >= 0
+        ? fieldCopyNonNullable(t)
+        : fieldCopyNullable(t);
+    valueTypeName = getNamedType(f).name.value;
+    valueType = typeMap[valueTypeName];
+    if (
+      fieldIsNotIgnored(astNode, f, resolvers) &&
+      isNotSystemField(fieldName) &&
+      !getFieldDirective(f, 'cypher') &&
+      (isBasicScalar(valueTypeName) ||
+        isKind(valueType, 'EnumTypeDefinition') ||
+        isKind(valueType, 'ScalarTypeDefinition') ||
+        isTemporalType(valueTypeName))
+    ) {
+      acc.push(
+        print({
+          kind: 'InputValueDefinition',
+          name: f.name,
+          type: f.type
         })
       );
     }

@@ -1096,6 +1096,59 @@ var removeIgnoredFields = (schemaType, selections) => {
   return selections;
 };
 
+var fieldCopyNullable = field => {
+  const newField = {};
+  if (field && field.kind && field.kind === 'FieldDefinition') {
+    if (isNonNullType(field)) {
+      // keep key-value pairs except for type and loc
+      ['kind', 'description', 'name', 'arguments', 'directives'].forEach(e => {
+        newField[e] = field[e];
+      });
+      const fieldType = field.type;
+      const newFieldType = getNamedType(fieldType);
+      newField.type = newFieldType;
+      if (field.loc) {
+        newField.loc = {
+          start: field.loc.start,
+          end: field.loc.end - 1
+        };
+      }
+    }
+  }
+  return Object.keys(newField).length > 0 ? newField : field;
+};
+
+var fieldCopyNonNullable = field => {
+  const newField = {};
+  if (field && field.kind && field.kind === 'FieldDefinition') {
+    if (!isNonNullType(field)) {
+      // keep key-value pairs except for type and loc
+      ['kind', 'description', 'name', 'arguments', 'directives'].forEach(e => {
+        newField[e] = field[e];
+      });
+      const fieldType = field.type;
+      const newFieldType = {
+        kind: 'NonNullType',
+        type: getNamedType(currentFieldType)
+      };
+      if (fieldType.loc) {
+        newFieldType.loc = {
+          start: fieldType.loc.start,
+          end: fieldType.loc.end + 1
+        };
+      }
+      newField.type = newFieldType;
+      if (field.loc) {
+        newField.loc = {
+          start: field.loc.start,
+          end: field.loc.end + 1
+        };
+      }
+    }
+  }
+  return Object.keys(newField).length > 0 ? newField : field;
+};
+
 module.exports = {
   parseArgs,
   parseFieldSdl,
@@ -1168,5 +1221,7 @@ module.exports = {
   getExcludedTypes,
   possiblyAddIgnoreDirective,
   getCustomFieldResolver,
-  removeIgnoredFields
+  removeIgnoredFields,
+  fieldCopyNullable,
+  fieldCopyNonNullable
 };
