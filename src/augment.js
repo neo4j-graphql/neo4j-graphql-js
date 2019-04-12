@@ -1577,7 +1577,8 @@ const buildUpdateMutationArguments = (
           isKind(valueType, 'ScalarTypeDefinition') ||
           isTemporalType(valueTypeName))
       ) {
-        acc.push(print(t));
+        const f = fieldCopyNullable(t);
+        acc.push(print(f));
       }
     }
     return acc;
