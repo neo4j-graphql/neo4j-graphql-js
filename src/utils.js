@@ -633,19 +633,12 @@ var getRelationTypeDirectiveArgs = relationshipType => {
 };
 
 var getRelationMutationPayloadFieldsFromAst = relatedAstNode => {
-  let isList = false;
   let fieldName = '';
   return relatedAstNode.fields
     .reduce((acc, t) => {
       fieldName = t.name.value;
       if (fieldName !== 'to' && fieldName !== 'from') {
-        isList = isListType(t);
-        // Use name directly in order to prevent requiring required fields on the payload type
-        acc.push(
-          `${fieldName}: ${isList ? '[' : ''}${getNamedType(t).name.value}${
-            isList ? `]` : ''
-          }${print(t.directives)}`
-        );
+        acc.push(print(t));
       }
       return acc;
     }, [])

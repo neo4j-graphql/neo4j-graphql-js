@@ -797,8 +797,8 @@ const possiblyAddRelationMutationField = (
               ? ', '
               : ''
           }${shouldUseRelationToArgument ? `to: "${toName}"` : ''}) {
-              ${shouldUseRelationFromArgument ? `from: ${fromName}` : ''}
-              ${shouldUseRelationToArgument ? `to: ${toName}` : ''}
+              ${shouldUseRelationFromArgument ? `from: ${fromName}!` : ''}
+              ${shouldUseRelationToArgument ? `to: ${toName}!` : ''}
               ${
                 shouldUseRelationDataArgument
                   ? getRelationMutationPayloadFieldsFromAst(relatedAstNode)
