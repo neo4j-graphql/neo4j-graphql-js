@@ -589,13 +589,27 @@ const possiblyAddTypeMutation = (
       resolvers,
       typeMap
     );
-    const typeName = astNode.name.value;
     const authDirectives = possiblyAddScopeDirective({
       entityType: 'node',
       operationType: mutationType,
       typeName,
       config
     });
+    // Return list if this mutation can affect multiple nodes at once
+    const fieldNamedType = {
+      kind: 'NamedType',
+      name: {
+        kind: 'Name',
+        value: typeName
+      }
+    };
+    const fieldType =
+      !getPrimaryKeys(astNode).length && mutationType !== 'Create'
+        ? {
+            kind: 'ListType',
+            type: fieldNamedType
+          }
+        : fieldNamedType;
     typeMap['Mutation'].fields.push({
       kind: 'FieldDefinition',
       name: {
@@ -603,13 +617,7 @@ const possiblyAddTypeMutation = (
         value: mutationName
       },
       arguments: args,
-      type: {
-        kind: 'NamedType',
-        name: {
-          kind: 'Name',
-          value: typeName
-        }
-      },
+      type: fieldType,
       directives: [authDirectives]
     });
   }
@@ -765,6 +773,13 @@ const possiblyAddRelationMutationField = (
           relatedTypeName: toName,
           config
         });
+        // Return list if this mutation can affect multiple relations at once
+        const payloadReturnType =
+          (isNodeType(relatedAstNode) ||
+            !getPrimaryKeys(relatedAstNode).length) &&
+          action !== 'Add'
+            ? `[${payloadTypeName}]`
+            : payloadTypeName;
         // Relation mutation type
         typeMap.Mutation.fields.push(
           parseFieldSdl(`
@@ -782,7 +797,7 @@ const possiblyAddRelationMutationField = (
                     : ''
                 }`
               : ''
-          }): ${payloadTypeName} @MutationMeta(relationship: "${relationName}", from: "${fromName}", to: "${toName}") ${
+          }): ${payloadReturnType} @MutationMeta(relationship: "${relationName}", from: "${fromName}", to: "${toName}") ${
             authDirectives ? authDirectives : ''
           }
           `)
