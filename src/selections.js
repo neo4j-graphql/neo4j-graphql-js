@@ -1,4 +1,4 @@
-const {
+import {
   computeSkipLimit,
   cypherDirective,
   cypherDirectiveArgs,
@@ -19,17 +19,17 @@ const {
   getTemporalArguments,
   temporalPredicateClauses,
   removeIgnoredFields
-} = require('./utils');
-const {
+} from './utils';
+import {
   customCypherField,
   relationFieldOnNodeType,
   relationTypeFieldOnNodeType,
   nodeTypeFieldOnRelationType,
   temporalType,
   temporalField
-} = require('./fields');
+} from './fields';
 
-var buildCypherSelection = function({
+export function buildCypherSelection({
   initial,
   cypherParams,
   selections,
@@ -346,8 +346,4 @@ var buildCypherSelection = function({
     );
   }
   return [selection[0], { ...selection[1], ...subSelection[1] }];
-};
-
-module.exports = {
-  buildCypherSelection
-};
+}

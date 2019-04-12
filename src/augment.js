@@ -1,7 +1,7 @@
-const { makeExecutableSchema } = require('graphql-tools');
-const { parse, print } = require('graphql');
-const { neo4jgraphql } = require('./resolve');
-const {
+import { makeExecutableSchema } from 'graphql-tools';
+import { parse, print } from 'graphql';
+import { neo4jgraphql } from './resolve';
+import {
   printTypeMap,
   extractTypeMapFromTypeDefs,
   createOperationMap,
@@ -28,14 +28,14 @@ const {
   parseInputFieldsSdl,
   fieldCopyNullable,
   fieldCopyNonNullable
-} = require('./utils');
-const {
+} from './utils';
+import {
   possiblyAddDirectiveImplementations,
   possiblyAddScopeDirective,
   addDirectiveDeclarations
-} = require('./auth');
+} from './auth';
 
-var augmentedSchema = (typeMap, resolvers, config) => {
+export const augmentedSchema = (typeMap, resolvers, config) => {
   const augmentedTypeMap = augmentTypeMap(typeMap, resolvers, config);
   const augmentedResolvers = augmentResolvers(
     augmentedTypeMap,
@@ -57,7 +57,7 @@ var augmentedSchema = (typeMap, resolvers, config) => {
   });
 };
 
-var makeAugmentedExecutableSchema = ({
+export const makeAugmentedExecutableSchema = ({
   typeDefs,
   resolvers,
   logger,
@@ -95,7 +95,7 @@ var makeAugmentedExecutableSchema = ({
   });
 };
 
-var extractTypeMapFromSchema = schema => {
+export const extractTypeMapFromSchema = schema => {
   const typeMap = schema.getTypeMap();
   const directives = schema.getDirectives();
   const types = { ...typeMap, ...directives };
@@ -109,7 +109,7 @@ var extractTypeMapFromSchema = schema => {
   }, {});
 };
 
-var extractResolversFromSchema = schema => {
+export const extractResolversFromSchema = schema => {
   const _typeMap = schema && schema._typeMap ? schema._typeMap : {};
   const types = Object.keys(_typeMap);
   let type = {};
@@ -156,7 +156,7 @@ const extractFieldResolversFromSchemaType = type => {
     : undefined;
 };
 
-var augmentTypeMap = (typeMap, resolvers, config) => {
+export const augmentTypeMap = (typeMap, resolvers, config) => {
   // IDEA: elevate into config as config.rootTypes?
   const rootTypes = {
     query: 'Query',
@@ -244,7 +244,7 @@ const possiblyAddOrderingArgument = (args, fieldName) => {
   return args;
 };
 
-var possiblyAddArgument = (args, fieldName, fieldType) => {
+export const possiblyAddArgument = (args, fieldName, fieldType) => {
   if (args.findIndex(e => e.name.value === fieldName) === -1) {
     args.push({
       kind: 'InputValueDefinition',
@@ -1513,7 +1513,7 @@ const isNotSystemField = name => {
   return name !== '_id' && name !== 'to' && name !== 'from';
 };
 
-var addTemporalTypes = (typeMap, config) => {
+export const addTemporalTypes = (typeMap, config) => {
   config = decideTemporalConfig(config);
   typeMap = temporalTypes(typeMap, config);
   return transformTemporalFields(typeMap, config);
@@ -1775,14 +1775,4 @@ const transformManagedFieldTypes = fields => {
     acc.push(field);
     return acc;
   }, []);
-};
-
-module.exports = {
-  augmentedSchema,
-  makeAugmentedExecutableSchema,
-  extractTypeMapFromSchema,
-  extractResolversFromSchema,
-  augmentTypeMap,
-  possiblyAddArgument,
-  addTemporalTypes
 };

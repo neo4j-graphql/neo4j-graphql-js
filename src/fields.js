@@ -1,4 +1,4 @@
-const {
+import {
   isArrayType,
   cypherDirectiveArgs,
   safeLabel,
@@ -12,10 +12,10 @@ const {
   isRootSelection,
   temporalPredicateClauses,
   isTemporalType
-} = require('./utils');
-const _ = require('lodash');
+} from './utils';
+import _ from 'lodash';
 
-var customCypherField = ({
+export const customCypherField = ({
   customCypher,
   cypherParams,
   paramIndex,
@@ -61,7 +61,7 @@ var customCypherField = ({
   };
 };
 
-var relationFieldOnNodeType = ({
+export const relationFieldOnNodeType = ({
   initial,
   fieldName,
   fieldType,
@@ -140,7 +140,7 @@ var relationFieldOnNodeType = ({
   };
 };
 
-var relationTypeFieldOnNodeType = ({
+export const relationTypeFieldOnNodeType = ({
   innerSchemaTypeRelation,
   initial,
   fieldName,
@@ -194,7 +194,7 @@ var relationTypeFieldOnNodeType = ({
   };
 };
 
-var nodeTypeFieldOnRelationType = ({
+export const nodeTypeFieldOnRelationType = ({
   fieldInfo,
   schemaTypeRelation,
   innerSchemaType,
@@ -340,7 +340,7 @@ const directedNodeTypeFieldOnRelationType = ({
   }
 };
 
-var temporalField = ({
+export const temporalField = ({
   initial,
   fieldName,
   commaIfTail,
@@ -401,7 +401,7 @@ var temporalField = ({
   };
 };
 
-var temporalType = ({
+export const temporalType = ({
   initial,
   fieldName,
   subSelection,
@@ -530,13 +530,4 @@ const buildSortMultiArgs = param => {
       return e.includes('_asc') ? `'^${fieldName}'` : `'${fieldName}'`;
     })
     .join(',');
-};
-
-module.exports = {
-  customCypherField,
-  relationFieldOnNodeType,
-  relationTypeFieldOnNodeType,
-  nodeTypeFieldOnRelationType,
-  temporalField,
-  temporalType
 };

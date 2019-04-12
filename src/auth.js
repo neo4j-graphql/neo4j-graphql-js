@@ -1,16 +1,16 @@
 // Initial support for checking auth
-const { parse } = require('graphql');
-const {
+import { parse } from 'graphql';
+import {
   IsAuthenticatedDirective,
   HasRoleDirective,
   HasScopeDirective
-} = require('graphql-auth-directives');
-const { parseDirectiveSdl } = require('./utils');
+} from 'graphql-auth-directives';
+import { parseDirectiveSdl } from './utils';
 /*
  *  Check is context.req.error or context.error
  *  have been defined.
  */
-var checkRequestError = context => {
+export const checkRequestError = context => {
   if (context && context.req && context.req.error) {
     return context.req.error;
   } else if (context && context.error) {
@@ -20,7 +20,7 @@ var checkRequestError = context => {
   }
 };
 
-var shouldAddAuthDirective = (config, authDirective) => {
+export const shouldAddAuthDirective = (config, authDirective) => {
   if (config && typeof config === 'object') {
     return (
       config.auth === true ||
@@ -32,7 +32,7 @@ var shouldAddAuthDirective = (config, authDirective) => {
   return false;
 };
 
-var possiblyAddDirectiveDeclarations = (typeMap, config) => {
+export const possiblyAddDirectiveDeclarations = (typeMap, config) => {
   if (shouldAddAuthDirective(config, 'isAuthenticated')) {
     typeMap['isAuthenticated'] = parse(
       `directive @isAuthenticated on OBJECT | FIELD_DEFINITION`
@@ -52,7 +52,7 @@ var possiblyAddDirectiveDeclarations = (typeMap, config) => {
   return typeMap;
 };
 
-var possiblyAddDirectiveImplementations = (
+export const possiblyAddDirectiveImplementations = (
   schemaDirectives,
   typeMap,
   config
@@ -80,7 +80,7 @@ const getRoleType = typeMap => {
   return roleType;
 };
 
-var possiblyAddScopeDirective = ({
+export const possiblyAddScopeDirective = ({
   typeName,
   relatedTypeName,
   operationType,
@@ -110,7 +110,7 @@ var possiblyAddScopeDirective = ({
   return undefined;
 };
 
-var addDirectiveDeclarations = (typeMap, config) => {
+export const addDirectiveDeclarations = (typeMap, config) => {
   // overwrites any provided directive declarations for system directive names
   typeMap['cypher'] = parse(
     `directive @cypher(statement: String) on FIELD_DEFINITION`
@@ -130,13 +130,4 @@ var addDirectiveDeclarations = (typeMap, config) => {
   ).definitions[0];
   typeMap = possiblyAddDirectiveDeclarations(typeMap, config);
   return typeMap;
-};
-
-module.exports = {
-  checkRequestError,
-  shouldAddAuthDirective,
-  possiblyAddDirectiveDeclarations,
-  possiblyAddDirectiveImplementations,
-  possiblyAddScopeDirective,
-  addDirectiveDeclarations
 };
