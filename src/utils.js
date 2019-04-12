@@ -1,5 +1,4 @@
 import { print, parse } from 'graphql';
-import { possiblyAddDirectiveDeclarations } from './auth';
 import { v1 as neo4j } from 'neo4j-driver';
 import _ from 'lodash';
 import filter from 'lodash/filter';
@@ -191,6 +190,8 @@ export const isCreateMutation = _isNamedMutation('create');
 export const isAddMutation = _isNamedMutation('add');
 
 export const isUpdateMutation = _isNamedMutation('update');
+
+export const isChangeMutation = _isNamedMutation('change');
 
 export const isDeleteMutation = _isNamedMutation('delete');
 
@@ -594,28 +595,6 @@ export const getRelationName = relationDirective => {
   }
 };
 
-export const addDirectiveDeclarations = (typeMap, config) => {
-  // overwrites any provided directive declarations for system directive names
-  typeMap['cypher'] = parse(
-    `directive @cypher(statement: String) on FIELD_DEFINITION`
-  ).definitions[0];
-  typeMap['relation'] = parse(
-    `directive @relation(name: String, direction: _RelationDirections, from: String, to: String) on FIELD_DEFINITION | OBJECT`
-  ).definitions[0];
-  // TODO should we change these system directives to having a '_Neo4j' prefix
-  typeMap['MutationMeta'] = parse(
-    `directive @MutationMeta(relationship: String, from: String, to: String) on FIELD_DEFINITION`
-  ).definitions[0];
-  typeMap['neo4j_ignore'] = parse(
-    `directive @neo4j_ignore on FIELD_DEFINITION`
-  ).definitions[0];
-  typeMap['_RelationDirections'] = parse(
-    `enum _RelationDirections { IN OUT }`
-  ).definitions[0];
-  typeMap = possiblyAddDirectiveDeclarations(typeMap, config);
-  return typeMap;
-};
-
 export const getQueryCypherDirective = resolveInfo => {
   return resolveInfo.schema
     .getQueryType()
@@ -648,31 +627,26 @@ export const getRelationTypeDirectiveArgs = relationshipType => {
     relationshipType && relationshipType.directives
       ? relationshipType.directives.find(e => e.name.value === 'relation')
       : undefined;
-  return directive
-    ? {
-        name: directive.arguments.find(e => e.name.value === 'name').value
-          .value,
-        from: directive.arguments.find(e => e.name.value === 'from').value
-          .value,
-        to: directive.arguments.find(e => e.name.value === 'to').value.value
-      }
-    : undefined;
+  let args = undefined;
+  if (directive) {
+    args = {
+      name: directive.arguments.find(e => e.name.value === 'name').value.value
+    };
+    const fromInputArg = directive.arguments.find(e => e.name.value === 'from');
+    if (fromInputArg) args.from = fromInputArg.value.value;
+    const toInputArg = directive.arguments.find(e => e.name.value === 'to');
+    if (toInputArg) args.to = toInputArg.value.value;
+  }
+  return args;
 };
 
 export const getRelationMutationPayloadFieldsFromAst = relatedAstNode => {
-  let isList = false;
   let fieldName = '';
   return relatedAstNode.fields
     .reduce((acc, t) => {
       fieldName = t.name.value;
       if (fieldName !== 'to' && fieldName !== 'from') {
-        isList = isListType(t);
-        // Use name directly in order to prevent requiring required fields on the payload type
-        acc.push(
-          `${fieldName}: ${isList ? '[' : ''}${getNamedType(t).name.value}${
-            isList ? `]` : ''
-          }${print(t.directives)}`
-        );
+        acc.push(print(t));
       }
       return acc;
     }, [])
@@ -720,23 +694,18 @@ const firstField = fields => {
   });
 };
 
-export const getPrimaryKey = astNode => {
+const nonNullFields = fields => {
+  return fields.filter(field => {
+    return field.type.kind === 'NonNullType' && field.name.value !== '_id';
+  });
+};
+
+export const getPrimaryKeys = astNode => {
   let fields = astNode.fields;
-  let pk = undefined;
+  if (!fields.length) return fields;
   // remove all ignored fields
   fields = fields.filter(field => !getFieldDirective(field, 'neo4j_ignore'));
-  if (!fields.length) return pk;
-  pk = firstNonNullAndIdField(fields);
-  if (!pk) {
-    pk = firstIdField(fields);
-  }
-  if (!pk) {
-    pk = firstNonNullField(fields);
-  }
-  if (!pk) {
-    pk = firstField(fields);
-  }
-  return pk;
+  return nonNullFields(fields);
 };
 
 export const createOperationMap = type => {
@@ -824,7 +793,9 @@ export const initializeMutationParams = ({
   first,
   offset
 }) => {
-  return (isCreateMutation(resolveInfo) || isUpdateMutation(resolveInfo)) &&
+  return (isCreateMutation(resolveInfo) ||
+    isUpdateMutation(resolveInfo) ||
+    isDeleteMutation(resolveInfo)) &&
     !mutationTypeCypherDirective
     ? { params: otherParams, ...{ first, offset } }
     : { ...otherParams, ...{ first, offset } };
@@ -868,37 +839,42 @@ export const filterNullParams = ({ offset, first, otherParams }) => {
 
 export const splitSelectionParameters = (
   params,
-  primaryKeyArgName,
+  primaryKeyArgNames,
   paramKey
 ) => {
-  const paramKeys = paramKey
-    ? Object.keys(params[paramKey])
-    : Object.keys(params);
-  const [primaryKeyParam, updateParams] = paramKeys.reduce(
+  const paramKeys = Object.keys(params);
+  const [primaryKeyParams, otherParams] = paramKeys.reduce(
     (acc, t) => {
-      if (t === primaryKeyArgName) {
-        if (paramKey) {
-          acc[0][t] = params[paramKey][t];
-        } else {
+      if (!paramKey) {
+        if (primaryKeyArgNames.indexOf(t) >= 0) {
           acc[0][t] = params[t];
-        }
-      } else {
-        if (paramKey) {
-          if (acc[1][paramKey] === undefined) acc[1][paramKey] = {};
-          acc[1][paramKey][t] = params[paramKey][t];
         } else {
           acc[1][t] = params[t];
         }
+      } else if (t == paramKey) {
+        const subParamKeys = paramKey
+          ? Object.keys(params[paramKey])
+          : undefined;
+        [acc[0], acc[1][t]] = subParamKeys.reduce(
+          (subAcc, subT) => {
+            if (primaryKeyArgNames.indexOf(subT) >= 0) {
+              subAcc[0][subT] = params[t][subT];
+            } else {
+              if (subAcc[1] === undefined) subAcc[1] = {};
+              subAcc[1][subT] = params[t][subT];
+            }
+            return subAcc;
+          },
+          [{}, {}]
+        );
+      } else {
+        acc[1][t] = params[t];
       }
       return acc;
     },
     [{}, {}]
   );
-  const first = params.first;
-  const offset = params.offset;
-  if (first !== undefined) updateParams['first'] = first;
-  if (offset !== undefined) updateParams['offset'] = offset;
-  return [primaryKeyParam, updateParams];
+  return [primaryKeyParams, otherParams];
 };
 
 export const isTemporalField = (schemaType, name) => {
@@ -1128,4 +1104,57 @@ export const removeIgnoredFields = (schemaType, selections) => {
     });
   }
   return selections;
+};
+
+export const fieldCopyNullable = field => {
+  const newField = {};
+  if (field && field.kind && field.kind === 'FieldDefinition') {
+    if (isNonNullType(field)) {
+      // keep key-value pairs except for type and loc
+      ['kind', 'description', 'name', 'arguments', 'directives'].forEach(e => {
+        newField[e] = field[e];
+      });
+      const fieldType = field.type;
+      const newFieldType = getNamedType(fieldType);
+      newField.type = newFieldType;
+      if (field.loc) {
+        newField.loc = {
+          start: field.loc.start,
+          end: field.loc.end - 1
+        };
+      }
+    }
+  }
+  return Object.keys(newField).length > 0 ? newField : field;
+};
+
+export const fieldCopyNonNullable = field => {
+  const newField = {};
+  if (field && field.kind && field.kind === 'FieldDefinition') {
+    if (!isNonNullType(field)) {
+      // keep key-value pairs except for type and loc
+      ['kind', 'description', 'name', 'arguments', 'directives'].forEach(e => {
+        newField[e] = field[e];
+      });
+      const fieldType = field.type;
+      const newFieldType = {
+        kind: 'NonNullType',
+        type: getNamedType(currentFieldType)
+      };
+      if (fieldType.loc) {
+        newFieldType.loc = {
+          start: fieldType.loc.start,
+          end: fieldType.loc.end + 1
+        };
+      }
+      newField.type = newFieldType;
+      if (field.loc) {
+        newField.loc = {
+          start: field.loc.start,
+          end: field.loc.end + 1
+        };
+      }
+    }
+  }
+  return Object.keys(newField).length > 0 ? newField : field;
 };
