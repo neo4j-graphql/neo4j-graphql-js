@@ -209,7 +209,7 @@ MATCH (`person`:`Person`) WHERE (`person`.name = $filter.name) RETURN `person` {
 
 ### String field equal to given value (parameterized)
 ```graphql
-query filterQuery($name: String) { person(filter: {name : $name}) { name }}
+query filterQuery($name: String) { person(filter: {name: $name}) { name }}
 ```
 ```params
 {
@@ -535,7 +535,7 @@ MATCH (`person`:`Person`) WHERE ($filter._company_not_null = TRUE AND EXISTS((`p
 
 ### ALL related nodes matching filter
 ```graphql
-{ person(filter: { company : { name : "ACME" } }) { name }}
+{ person(filter: { company: { name: "ACME" } }) { name }}
 ```
 ```cypher
 MATCH (`person`:`Person`) WHERE (EXISTS((`person`)-[:WORKS_AT]->(:Company)) AND ALL(`company` IN [(`person`)-[`person_filter_company`:WORKS_AT]->(`_company`:Company) | `_company`] WHERE (`company`.name = $filter.company.name))) RETURN `person` { .name } AS `person`
@@ -543,10 +543,26 @@ MATCH (`person`:`Person`) WHERE (EXISTS((`person`)-[:WORKS_AT]->(:Company)) AND 
 
 ### ALL related nodes NOT matching filter
 ```graphql
-{ person(filter: { company_not : { name : "ACME" } }) { name }}
+{ person(filter: { company_not: { name: "ACME" } }) { name }}
 ```
 ```cypher
 MATCH (`person`:`Person`) WHERE (EXISTS((`person`)-[:WORKS_AT]->(:Company)) AND NONE(`company` IN [(`person`)-[`person_filter_company`:WORKS_AT]->(`_company`:Company) | `_company`] WHERE (`company`.name = $filter.company_not.name))) RETURN `person` { .name } AS `person`
+```
+
+### ALL related nodes matching filter in given list
+```graphql
+{ person( filter: { company_in: [ { name: "Neo4j" }, { name: "ACME" } ] }) { name } }
+```
+```cypher
+MATCH (`person`:`Person`) WHERE (EXISTS((`person`)-[:WORKS_AT]->(:Company)) AND ALL(`company` IN [(`person`)-[`person_filter_company`:WORKS_AT]->(`_company`:Company) | `_company`] WHERE ANY(_company_in IN $filter.company_in WHERE ((_company_in.name IS NULL OR `company`.name = _company_in.name))))) RETURN `person` { .name } AS `person`
+```
+
+### ALL related nodes not matching filter in given list
+```graphql
+{ person( filter: { company_not_in: [ { name: "Neo4j" }, { name: "ACME" } ] }) { name } }
+```
+```cypher
+MATCH (`person`:`Person`) WHERE (EXISTS((`person`)-[:WORKS_AT]->(:Company)) AND ALL(`company` IN [(`person`)-[`person_filter_company`:WORKS_AT]->(`_company`:Company) | `_company`] WHERE NONE(_company_not_in IN $filter.company_not_in WHERE ((_company_not_in.name IS NULL OR `company`.name = _company_not_in.name))))) RETURN `person` { .name } AS `person`
 ```
 
 ### String field equal to given value AND String field on ALL related nodes ends with given substring (parameterized filter)
@@ -585,7 +601,7 @@ MATCH (`company`:`Company`) RETURN `company` {employees: [(`company`)<-[:`WORKS_
 
 ### ALL related nodes matching String field in given list
 ```graphql
-{ p: Company(filter: { employees : { name_in : ["Jane","Joe"] } }) { name }}
+{ p: Company(filter: { employees: { name_in: ["Jane","Joe"] } }) { name }}
 ```
 ```cypher
 MATCH (`company`:`Company`) WHERE (EXISTS((`company`)<-[:WORKS_AT]-(:Person)) AND ALL(`person` IN [(`company`)<-[`company_filter_person`:WORKS_AT]-(`_person`:Person) | `_person`] WHERE (`person`.name IN $filter.employees.name_in))) RETURN `company` { .name } AS `company`
@@ -593,7 +609,7 @@ MATCH (`company`:`Company`) WHERE (EXISTS((`company`)<-[:WORKS_AT]-(:Person)) AN
 
 ### SOME related nodes matching given filter
 ```graphql
-{ p: Company(filter: { employees_some : { name : "Jane" } }) { name }}
+{ p: Company(filter: { employees_some: { name: "Jane" } }) { name }}
 ```
 ```cypher
 MATCH (`company`:`Company`) WHERE (EXISTS((`company`)<-[:WORKS_AT]-(:Person)) AND ANY(`person` IN [(`company`)<-[`company_filter_person`:WORKS_AT]-(`_person`:Person) | `_person`] WHERE (`person`.name = $filter.employees_some.name))) RETURN `company` { .name } AS `company`
@@ -601,7 +617,7 @@ MATCH (`company`:`Company`) WHERE (EXISTS((`company`)<-[:WORKS_AT]-(:Person)) AN
 
 ### EVERY related node matching given filter
 ```graphql
-{ p: Company(filter: { employees_every : { name : "Jill" } }) { name }}
+{ p: Company(filter: { employees_every: { name: "Jill" } }) { name }}
 ```
 ```cypher
 MATCH (`company`:`Company`) WHERE (EXISTS((`company`)<-[:WORKS_AT]-(:Person)) AND ALL(`person` IN [(`company`)<-[`company_filter_person`:WORKS_AT]-(`_person`:Person) | `_person`] WHERE (`person`.name = $filter.employees_every.name))) RETURN `company` { .name } AS `company`
@@ -609,7 +625,7 @@ MATCH (`company`:`Company`) WHERE (EXISTS((`company`)<-[:WORKS_AT]-(:Person)) AN
 
 ### NONE of related nodes matching given filter
 ```graphql
-{ p: Company(filter: { employees_none : { name : "Jane" } }) { name }}
+{ p: Company(filter: { employees_none: { name: "Jane" } }) { name }}
 ```
 ```cypher
 MATCH (`company`:`Company`) WHERE (EXISTS((`company`)<-[:WORKS_AT]-(:Person)) AND NONE(`person` IN [(`company`)<-[`company_filter_person`:WORKS_AT]-(`_person`:Person) | `_person`] WHERE (`person`.name = $filter.employees_none.name))) RETURN `company` { .name } AS `company`
@@ -617,7 +633,7 @@ MATCH (`company`:`Company`) WHERE (EXISTS((`company`)<-[:WORKS_AT]-(:Person)) AN
 
 ### SINGLE related node matching given filter
 ```graphql
-{ p: Company(filter: { employees_single : { name : "Jill" } }) { name }}
+{ p: Company(filter: { employees_single: { name: "Jill" } }) { name }}
 ```
 ```cypher
 MATCH (`company`:`Company`) WHERE (EXISTS((`company`)<-[:WORKS_AT]-(:Person)) AND SINGLE(`person` IN [(`company`)<-[`company_filter_person`:WORKS_AT]-(`_person`:Person) | `_person`] WHERE (`person`.name = $filter.employees_single.name))) RETURN `company` { .name } AS `company`
