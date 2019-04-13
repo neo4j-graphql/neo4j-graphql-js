@@ -48,7 +48,7 @@ export default class Neo4jSchemaTree {
   }
 
   _populateRelationshipLinkTypes() {
-    console.log('Getting from/to relationship metadata');
+    // console.log('Getting from/to relationship metadata');
 
     const okapiIds = Object.keys(this.rels);
 
@@ -125,7 +125,7 @@ export default class Neo4jSchemaTree {
           .filter(i => i.nodeLabels === combo)
           .map(i => _.pick(i, ['propertyName', 'propertyTypes', 'mandatory']))
           .forEach(propDetail => {
-            console.log(schema);
+            // console.log(schema);
             if (_.isNil(propDetail.propertyName)) {
               return;
             }

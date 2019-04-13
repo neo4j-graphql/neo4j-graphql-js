@@ -32,9 +32,15 @@ const mapOutboundRels = (tree, node) => {
           const tag = relationDirective(rel.getRelationshipType(), 'OUT');
           const targetType = neo4jTypes.label2GraphQLType(targetLabels[0]);
 
-          return `   ${rel
-            .getGraphQLTypeName()
-            .toLowerCase()}: [${targetType}] ${tag}\n`;
+          const propName = rel.getGraphQLTypeName().toLowerCase();
+          const propNavigateToNode = `   ${propName}: [${targetType}] ${tag}\n`;
+
+          // TODO -- identify proper naming for "navigate to rel" properties.
+          const propNavigateToRel = `   ${rel.getRelationshipType()}_rel: [${rel.getGraphQLTypeName()}]\n`;
+
+          return (
+            propNavigateToNode + (rel.isUnivalent() ? propNavigateToRel : '')
+          );
         })
         .filter(x => x); // Remove nulls
     })
@@ -154,7 +160,7 @@ const mapRel = (tree, rel) => {
   const mapUnivalentRel = rel => {
     const propNames = rel.getPropertyNames();
     const graphqlTypeName = rel.getGraphQLTypeName();
-    const typeDeclaration = `type ${graphqlTypeName} {\n`;
+    const typeDeclaration = `type ${graphqlTypeName} @relation(name: "${rel.getRelationshipType()}") {\n`;
 
     // It's univalent so this assumption holds:
     const fromNodeLabels = rel.links[0].from;
@@ -179,7 +185,7 @@ const mapRel = (tree, rel) => {
     }
 
     // Relationships must be connected, so from/to is always !mandatory.
-    const fromDecl = `  from: ${fromNode.getGraphQLTypeName()}!\n`;
+    const fromDecl = `  from: ${fromNode.getGraphQLTypeName()}\n`;
     const toDecl = `  to: ${toNode.getGraphQLTypeName()}!\n`;
 
     const propertyDeclarations = propNames.map(
@@ -196,10 +202,13 @@ const mapRel = (tree, rel) => {
   };
 
   if (rel.isUnivalent()) {
-    console.log('UNIVALENT', rel);
     return mapUnivalentRel(rel);
   }
 
+  // TODO - agree on whether multi-valence is supported or not (probably not)
+  // pending type union support, e.g.
+  // union ThingThatBuysStuff = Customer | Company
+  // type BUYS {from: ThingThatBuysStuff}
   console.warn(
     'Relationship',
     rel,
