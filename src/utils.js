@@ -23,6 +23,9 @@ function parseArg(arg, variableValues) {
         parseArg({ value }, variableValues)
       );
     }
+    case 'NullValue': {
+      return null;
+    }
     default: {
       return arg.value.value;
     }
@@ -43,7 +46,11 @@ export const parseFieldSdl = sdl => {
   return sdl ? parse(`type Type { ${sdl} }`).definitions[0].fields[0] : {};
 };
 
-export const parseInputFieldsSdl = fields => {
+export const parseInputFieldSdl = sdl => {
+  return sdl ? parse(`input Type { ${sdl} }`).definitions[0].fields : {};
+};
+
+export const buildInputValueDefinitions = fields => {
   let arr = [];
   if (Array.isArray(fields)) {
     fields = fields.join('\n');
@@ -217,10 +224,10 @@ export const isRelationTypeDirectedField = fieldName => {
 
 export const isKind = (type, kind) => type && type.kind && type.kind === kind;
 
-export const isListType = (type, isList = false) => {
+export const _isListType = (type, isList = false) => {
   if (!isKind(type, 'NamedType')) {
     if (isKind(type, 'ListType')) isList = true;
-    return isListType(type.type, isList);
+    return _isListType(type.type, isList);
   }
   return isList;
 };
@@ -327,8 +334,9 @@ export function innerFilterParams(
       }, [])
     : [];
   // don't exclude first, offset, orderBy args for cypher directives
-  const excludedKeys = cypherDirective ? [] : ['first', 'offset', 'orderBy'];
-
+  const excludedKeys = cypherDirective
+    ? []
+    : ['first', 'offset', 'orderBy', 'filter'];
   return Object.keys(filters).length > 0
     ? Object.entries(filters)
         // exclude temporal arguments
@@ -395,7 +403,7 @@ export const computeOrderBy = (resolveInfo, selection) => {
 };
 
 export const possiblySetFirstId = ({ args, statements, params }) => {
-  const arg = args.find(e => getNamedType(e).name.value === 'ID');
+  const arg = args.find(e => _getNamedType(e).name.value === 'ID');
   // arg is the first ID field if it exists, and we set the value
   // if no value is provided for the field name (arg.name.value) in params
   if (arg && arg.name.value && params[arg.name.value] === undefined) {
@@ -429,7 +437,7 @@ export const buildCypherParameters = ({
       // Get the AST definition for the argument matching this param name
       const fieldAst = args.find(arg => arg.name.value === paramName);
       if (fieldAst) {
-        const fieldType = getNamedType(fieldAst.type);
+        const fieldType = _getNamedType(fieldAst.type);
         if (isTemporalInputType(fieldType.name.value)) {
           const formatted = param.formatted;
           const temporalFunction = getTemporalCypherConstructor(fieldAst);
@@ -566,7 +574,7 @@ export const getFieldDirective = (field, directive) => {
   return (
     field &&
     field.directives &&
-    field.directives.find(e => e.name.value === directive)
+    field.directives.find(e => e && e.name && e.name.value === directive)
   );
 };
 
@@ -666,10 +674,10 @@ export const getRelationMutationPayloadFieldsFromAst = relatedAstNode => {
     .reduce((acc, t) => {
       fieldName = t.name.value;
       if (fieldName !== 'to' && fieldName !== 'from') {
-        isList = isListType(t);
+        isList = _isListType(t);
         // Use name directly in order to prevent requiring required fields on the payload type
         acc.push(
-          `${fieldName}: ${isList ? '[' : ''}${getNamedType(t).name.value}${
+          `${fieldName}: ${isList ? '[' : ''}${_getNamedType(t).name.value}${
             isList ? `]` : ''
           }${print(t.directives)}`
         );
@@ -679,9 +687,9 @@ export const getRelationMutationPayloadFieldsFromAst = relatedAstNode => {
     .join('\n');
 };
 
-export const getNamedType = type => {
+export const _getNamedType = type => {
   if (type.kind !== 'NamedType') {
-    return getNamedType(type.type);
+    return _getNamedType(type.type);
   }
   return type;
 };
@@ -689,7 +697,7 @@ export const getNamedType = type => {
 const firstNonNullAndIdField = fields => {
   let valueTypeName = '';
   return fields.find(e => {
-    valueTypeName = getNamedType(e).name.value;
+    valueTypeName = _getNamedType(e).name.value;
     return (
       e.name.value !== '_id' &&
       e.type.kind === 'NonNullType' &&
@@ -701,7 +709,7 @@ const firstNonNullAndIdField = fields => {
 const firstIdField = fields => {
   let valueTypeName = '';
   return fields.find(e => {
-    valueTypeName = getNamedType(e).name.value;
+    valueTypeName = _getNamedType(e).name.value;
     return e.name.value !== '_id' && valueTypeName === 'ID';
   });
 };
@@ -709,7 +717,7 @@ const firstIdField = fields => {
 const firstNonNullField = fields => {
   let valueTypeName = '';
   return fields.find(e => {
-    valueTypeName = getNamedType(e).name.value;
+    valueTypeName = _getNamedType(e).name.value;
     return valueTypeName === 'NonNullType';
   });
 };
@@ -830,8 +838,8 @@ export const initializeMutationParams = ({
     : { ...otherParams, ...{ first, offset } };
 };
 
-export const getOuterSkipLimit = first =>
-  `SKIP $offset${first > -1 ? ' LIMIT $first' : ''}`;
+export const getOuterSkipLimit = (first, offset) =>
+  `${offset > 0 ? ` SKIP $offset` : ''}${first > -1 ? ' LIMIT $first' : ''}`;
 
 export const getPayloadSelections = resolveInfo => {
   const filteredFieldNodes = filter(
@@ -930,7 +938,7 @@ export const isTemporalType = name => {
 
 export const getTemporalCypherConstructor = fieldAst => {
   let cypherFunction = undefined;
-  const type = fieldAst ? getNamedType(fieldAst.type).name.value : '';
+  const type = fieldAst ? _getNamedType(fieldAst.type).name.value : '';
   switch (type) {
     case '_Neo4jTimeInput':
       cypherFunction = 'time';
@@ -959,7 +967,7 @@ export const getTemporalArguments = args => {
         if (!t) {
           return acc;
         }
-        const fieldType = getNamedType(t.type).name.value;
+        const fieldType = _getNamedType(t.type).name.value;
         if (isTemporalInputType(fieldType)) acc.push(t);
         return acc;
       }, [])
@@ -1081,7 +1089,7 @@ export const possiblyAddIgnoreDirective = (
   return fields.map(field => {
     // for any field of any type, if a custom resolver is provided
     // but there is no @ignore directive
-    valueTypeName = getNamedType(field).name.value;
+    valueTypeName = _getNamedType(field).name.value;
     if (
       // has a custom resolver but not a directive
       getCustomFieldResolver(astNode, field, resolvers) &&
