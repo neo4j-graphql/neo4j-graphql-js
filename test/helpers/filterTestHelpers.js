@@ -16,6 +16,11 @@ export const filterTestRunner = (
         const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
         t.is(query, expectedCypherQuery);
         t.deepEqual(queryParams, expectedCypherParams);
+      },
+      Company(object, params, ctx, resolveInfo) {
+        const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
+        t.is(query, expectedCypherQuery);
+        t.deepEqual(queryParams, expectedCypherParams);
       }
     }
   };
