@@ -162,7 +162,9 @@ export function buildCypherSelection({
   if (fieldName === '_id') {
     return recurse({
       initial: `${initial}${fieldName}: ID(${safeVar(
-        variableName
+        getRelationTypeDirectiveArgs(schemaTypeAstNode)
+          ? `${variableName}_relation`
+          : variableName
       )})${commaIfTail}`,
       ...tailParams
     });
