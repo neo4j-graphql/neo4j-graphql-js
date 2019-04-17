@@ -93,6 +93,11 @@ references:
       name: Wait for GraphQL server to be available
       command: ./scripts/wait-for-graphql.sh
 
+  parse_tck: &parse_tck
+    run:
+      name: Parse TCK and generate TCK tests to be run
+      command: npm run parse-tck
+
   run_tests: &run_tests
     run:
       name: Run Tests
@@ -133,6 +138,7 @@ references:
     - *start_neo4j
     - *start_graphql
     - *wait_for_graphql
+    - *parse_tck
     - *run_tests
     - *report_coverage
 
