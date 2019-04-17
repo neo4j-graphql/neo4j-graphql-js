@@ -6,7 +6,7 @@ import {
   extractTypeMapFromTypeDefs,
   createOperationMap,
   addDirectiveDeclarations,
-  getNamedType,
+  _getNamedType,
   getPrimaryKey,
   getFieldDirective,
   getRelationTypeDirectiveArgs,
@@ -15,7 +15,7 @@ import {
   getRelationName,
   getTypeDirective,
   isBasicScalar,
-  isListType,
+  _isListType,
   isKind,
   isNonNullType,
   isNodeType,
@@ -26,7 +26,7 @@ import {
   getCustomFieldResolver,
   possiblyAddIgnoreDirective,
   getExcludedTypes,
-  parseInputFieldsSdl
+  buildInputValueDefinitions
 } from './utils';
 import {
   possiblyAddDirectiveImplementations,
@@ -170,6 +170,7 @@ export const augmentTypeMap = (typeMap, resolvers, config) => {
       typeMap = possiblyAddQuery(type, typeMap, resolvers, rootTypes, config);
       typeMap = possiblyAddOrderingEnum(type, typeMap, resolvers, config);
       typeMap = possiblyAddTypeInput(type, typeMap, resolvers, config);
+      typeMap = possiblyAddFilterInput(type, typeMap, resolvers, config);
       typeMap = possiblyAddTypeMutations(type, typeMap, resolvers, config);
       typeMap = handleRelationFields(type, typeMap, resolvers, config);
     }
@@ -220,7 +221,7 @@ const augmentResolvers = (augmentedTypeMap, resolvers, config) => {
 
 const possiblyAddOrderingArgument = (args, fieldName) => {
   const orderingType = `_${fieldName}Ordering`;
-  if (args.findIndex(e => e.name.value === orderingType) === -1) {
+  if (args.findIndex(e => e.name.value === fieldName) === -1) {
     args.push({
       kind: 'InputValueDefinition',
       name: {
@@ -302,21 +303,29 @@ const augmentQueryArguments = (typeMap, config, rootTypes) => {
   if (queryNames.length > 0) {
     queryNames.forEach(t => {
       field = queryMap[t];
-      valueTypeName = getNamedType(field).name.value;
+      valueTypeName = _getNamedType(field).name.value;
       valueType = typeMap[valueTypeName];
       if (
         isNodeType(valueType) &&
-        isListType(field) &&
         shouldAugmentType(config, 'query', valueTypeName)
       ) {
         // does not add arguments if the field value type is excluded
         args = field.arguments;
-        queryMap[t].arguments = possiblyAddArgument(args, 'first', 'Int');
-        queryMap[t].arguments = possiblyAddArgument(args, 'offset', 'Int');
-        queryMap[t].arguments = possiblyAddOrderingArgument(
-          args,
-          valueTypeName
-        );
+        if (_isListType(field)) {
+          queryMap[t].arguments = possiblyAddArgument(args, 'first', 'Int');
+          queryMap[t].arguments = possiblyAddArgument(args, 'offset', 'Int');
+          queryMap[t].arguments = possiblyAddOrderingArgument(
+            args,
+            valueTypeName
+          );
+        }
+        if (!getFieldDirective(field, 'cypher')) {
+          queryMap[t].arguments = possiblyAddArgument(
+            args,
+            'filter',
+            `_${valueTypeName}Filter`
+          );
+        }
       }
     });
     typeMap[queryType].fields = Object.values(queryMap);
@@ -349,13 +358,13 @@ const possiblyAddTypeInput = (astNode, typeMap, resolvers, config) => {
           const nodeInputType = `
             input ${inputName} { ${pk.name.value}: ${
             // Always exactly require the pk of a node type
-            decideFieldType(getNamedType(pk).name.value)
+            decideFieldType(_getNamedType(pk).name.value)
           }! }`;
           typeMap[inputName] = parse(nodeInputType);
         }
       }
     } else if (getTypeDirective(astNode, 'relation')) {
-      // Only used for the .data argument in generated relation creation mutations
+      // Only used for the .data argument in generated  relation creation mutations
       if (typeMap[inputName] === undefined) {
         const fields = astNode.fields;
         // The .data arg on add relation mutations,
@@ -366,9 +375,9 @@ const possiblyAddTypeInput = (astNode, typeMap, resolvers, config) => {
           e => e.name.value !== 'from' && e.name.value !== 'to'
         );
         const fromField = fields.find(e => e.name.value === 'from');
-        const fromName = getNamedType(fromField).name.value;
+        const fromName = _getNamedType(fromField).name.value;
         const toField = fields.find(e => e.name.value === 'to');
-        const toName = getNamedType(toField).name.value;
+        const toName = _getNamedType(toField).name.value;
         // only generate an input type for the relationship if we know that both
         // the from and to nodes are not excluded, since thus we know that
         // relation mutations are generated for this relation, which would
@@ -428,6 +437,119 @@ const possiblyAddQuery = (astNode, typeMap, resolvers, rootTypes, config) => {
     }
   }
   return typeMap;
+};
+
+const possiblyAddFilterInput = (astNode, typeMap, resolvers, config) => {
+  const typeName = astNode.name.value;
+  if (isNodeType(astNode) && shouldAugmentType(config, 'query', typeName)) {
+    const name = `_${astNode.name.value}Filter`;
+    const filterFields = buildFilterFields(
+      name,
+      astNode,
+      typeMap,
+      resolvers,
+      config
+    );
+    if (typeMap[name] === undefined && filterFields.length) {
+      typeMap[name] = parse(`input ${name} {${filterFields.join('')}}`);
+    }
+    // if existent, we could merge with provided custom filter here
+  }
+  return typeMap;
+};
+
+const buildFilterFields = (filterType, astNode, typeMap, resolvers, config) => {
+  const fields = astNode.fields;
+  const filterFields = fields.reduce((acc, t) => {
+    const fieldName = t.name.value;
+    const valueTypeName = _getNamedType(t).name.value;
+    const isList = _isListType(t);
+    const valueType = typeMap[valueTypeName];
+    if (
+      fieldIsNotIgnored(astNode, t, resolvers) &&
+      isNotSystemField(fieldName) &&
+      !getFieldDirective(t, 'cypher')
+    ) {
+      const filters = [];
+      if (!isList) {
+        if (valueTypeName === 'ID' || valueTypeName == 'String') {
+          filters.push(`${fieldName}: ${valueTypeName}
+            ${fieldName}_not: ${valueTypeName}
+            ${fieldName}_in: [${valueTypeName}!]
+            ${fieldName}_not_in: [${valueTypeName}!]
+            ${fieldName}_contains: ${valueTypeName}
+            ${fieldName}_not_contains: ${valueTypeName}
+            ${fieldName}_starts_with: ${valueTypeName}
+            ${fieldName}_not_starts_with: ${valueTypeName}
+            ${fieldName}_ends_with: ${valueTypeName}
+            ${fieldName}_not_ends_with: ${valueTypeName}
+          `);
+        } else if (valueTypeName === 'Int' || valueTypeName === 'Float') {
+          filters.push(`
+            ${fieldName}: ${valueTypeName}
+            ${fieldName}_not: ${valueTypeName}
+            ${fieldName}_in: [${valueTypeName}!]
+            ${fieldName}_not_in: [${valueTypeName}!]
+            ${fieldName}_lt: ${valueTypeName}
+            ${fieldName}_lte: ${valueTypeName}
+            ${fieldName}_gt: ${valueTypeName}
+            ${fieldName}_gte: ${valueTypeName}
+            `);
+        } else if (valueTypeName === 'Boolean') {
+          filters.push(`
+            ${fieldName}: ${valueTypeName}
+            ${fieldName}_not: ${valueTypeName}
+          `);
+        } else if (isKind(valueType, 'EnumTypeDefinition')) {
+          filters.push(`
+            ${fieldName}: ${valueTypeName}
+            ${fieldName}_not: ${valueTypeName}
+            ${fieldName}_in: [${valueTypeName}!]
+            ${fieldName}_not_in: [${valueTypeName}!]
+          `);
+        } else if (
+          isKind(valueType, 'ObjectTypeDefinition') &&
+          getFieldDirective(t, 'relation') &&
+          shouldAugmentType(config, 'query', valueTypeName)
+        ) {
+          // one-to-one @relation field
+          filters.push(`
+            ${fieldName}: _${valueTypeName}Filter
+            ${fieldName}_not: _${valueTypeName}Filter
+            ${fieldName}_in: [_${valueTypeName}Filter!]
+            ${fieldName}_not_in: [_${valueTypeName}Filter!]
+          `);
+        }
+      } else if (
+        isKind(valueType, 'ObjectTypeDefinition') &&
+        getFieldDirective(t, 'relation') &&
+        shouldAugmentType(config, 'query', valueTypeName)
+      ) {
+        // one-to-many @relation field
+        filters.push(`
+          ${fieldName}: _${valueTypeName}Filter
+          ${fieldName}_not: _${valueTypeName}Filter
+          ${fieldName}_in: [_${valueTypeName}Filter!]
+          ${fieldName}_not_in: [_${valueTypeName}Filter!]
+          ${fieldName}_some: _${valueTypeName}Filter
+          ${fieldName}_none: _${valueTypeName}Filter
+          ${fieldName}_single: _${valueTypeName}Filter
+          ${fieldName}_every: _${valueTypeName}Filter
+        `);
+      }
+      if (filters.length) {
+        acc.push(...filters);
+      }
+    }
+    return acc;
+  }, []);
+  if (filterFields) {
+    filterFields.unshift(`
+    AND: [${filterType}]
+    OR: [${filterType}]
+  `);
+  }
+  return filterFields;
 };
 
 const possiblyAddOrderingEnum = (astNode, typeMap, resolvers, config) => {
@@ -501,7 +623,7 @@ const possiblyAddTypeFieldArguments = (
   let relationType = {};
   let args = [];
   fields.forEach(field => {
-    relationTypeName = getNamedType(field).name.value;
+    relationTypeName = _getNamedType(field).name.value;
     relationType = typeMap[relationTypeName];
     if (
       fieldIsNotIgnored(astNode, field, resolvers) &&
@@ -510,15 +632,23 @@ const possiblyAddTypeFieldArguments = (
       // we know astNode is a node type, so this field should be a node type
       // as well, since the generated args are only for node type lists
       isNodeType(relationType) &&
-      // the args (first / offset / orderBy) are only generated for list fields
-      isListType(field) &&
       (getFieldDirective(field, 'relation') ||
         getFieldDirective(field, 'cypher'))
     ) {
       args = field.arguments;
-      field.arguments = possiblyAddArgument(args, 'first', 'Int');
-      field.arguments = possiblyAddArgument(args, 'offset', 'Int');
-      field.arguments = possiblyAddOrderingArgument(args, relationTypeName);
+      if (_isListType(field)) {
+        // the args (first / offset / orderBy) are only generated for list fields
+        field.arguments = possiblyAddArgument(args, 'first', 'Int');
+        field.arguments = possiblyAddArgument(args, 'offset', 'Int');
+        field.arguments = possiblyAddOrderingArgument(args, relationTypeName);
+      }
+      if (!getFieldDirective(field, 'cypher')) {
+        field.arguments = possiblyAddArgument(
+          args,
+          'filter',
+          `_${relationTypeName}Filter`
+        );
+      }
     }
   });
   return fields;
@@ -610,7 +740,7 @@ const possiblyAddRelationTypeFieldPayload = (
       // TODO refactor
       const relationTypePayloadFields = fields
         .reduce((acc, t) => {
-          fieldValueName = getNamedType(t).name.value;
+          fieldValueName = _getNamedType(t).name.value;
           fieldName = t.name.value;
           if (fieldName === 'from') {
             fromValue = fieldValueName;
@@ -629,7 +759,7 @@ const possiblyAddRelationTypeFieldPayload = (
 
       if (fromValue && fromValue === toValue) {
         // If field is a list type, then make .from and .to list types
-        const fieldIsList = isListType(field);
+        const fieldIsList = _isListType(field);
         const fieldArgs = getFieldArgumentsFromAst(field, typeName);
         typeMap[`${fieldTypeName}Directions`] = parse(`
         type ${fieldTypeName}Directions ${print(relationAstNode.directives)} {
@@ -775,7 +905,7 @@ const handleRelationFields = (astNode, typeMap, resolvers, config) => {
     for (; fieldIndex < fieldCount; ++fieldIndex) {
       field = fields[fieldIndex];
       if (fieldIsNotIgnored(astNode, field, resolvers)) {
-        fieldValueName = getNamedType(field).name.value;
+        fieldValueName = _getNamedType(field).name.value;
         capitalizedFieldName =
           field.name.value.charAt(0).toUpperCase() + field.name.value.substr(1);
         relatedAstNode = typeMap[fieldValueName];
@@ -927,7 +1057,7 @@ const replaceRelationTypeValue = (
   capitalizedFieldName,
   typeName
 ) => {
-  const isList = isListType(field);
+  const isList = _isListType(field);
   let type = {
     kind: 'NamedType',
     name: {
@@ -989,61 +1119,63 @@ const addRelationTypeDirectives = typeMap => {
   let typeDirectiveIndex = -1;
   Object.keys(typeMap).forEach(typeName => {
     astNode = typeMap[typeName];
-    name = astNode.name.value;
-    fields = astNode.fields;
-    to = fields ? fields.find(e => e.name.value === 'to') : undefined;
-    from = fields ? fields.find(e => e.name.value === 'from') : undefined;
-    if (to && !from) {
-      throw new Error(
-        `Relationship type ${name} has a 'to' field but no corresponding 'from' field`
-      );
-    }
-    if (from && !to) {
-      throw new Error(
-        `Relationship type ${name} has a 'from' field but no corresponding 'to' field`
-      );
-    }
-    if (from && to) {
-      // get values of .to and .from fields
-      fromTypeName = getNamedType(from).name.value;
-      toTypeName = getNamedType(to).name.value;
-      // assume the default relationship name
-      relationName = transformRelationName(astNode);
-      // get its relation type directive
-      typeDirectiveIndex = astNode.directives.findIndex(
-        e => e.name.value === 'relation'
-      );
-      if (typeDirectiveIndex >= 0) {
-        typeDirective = astNode.directives[typeDirectiveIndex];
-        // get the arguments of type directive
-        let args = typeDirective ? typeDirective.arguments : [];
-        if (args.length > 0) {
-          // get its name argument
-          let nameArg = args.find(e => e.name.value === 'name');
-          if (nameArg) {
-            relationName = nameArg.value.value;
-          }
-        }
-        // replace it if it exists in order to force correct configuration
-        astNode.directives[typeDirectiveIndex] = parseDirectiveSdl(`
-          @relation(
-            name: ${relationName}, 
-            from: ${fromTypeName},
-            to: ${toTypeName}
-          )
-        `);
-      } else {
-        astNode.directives.push(
-          parseDirectiveSdl(`
-          @relation(
-            name: ${relationName}, 
-            from: ${fromTypeName},
-            to: ${toTypeName}
-          )
-        `)
+    if (astNode.kind === 'ObjectTypeDefinition') {
+      name = astNode.name.value;
+      fields = astNode.fields;
+      to = fields ? fields.find(e => e.name.value === 'to') : undefined;
+      from = fields ? fields.find(e => e.name.value === 'from') : undefined;
+      if (to && !from) {
+        throw new Error(
+          `Relationship type ${name} has a 'to' field but no corresponding 'from' field`
         );
       }
-      typeMap[typeName] = astNode;
+      if (from && !to) {
+        throw new Error(
+          `Relationship type ${name} has a 'from' field but no corresponding 'to' field`
+        );
+      }
+      if (from && to) {
+        // get values of .to and .from fields
+        fromTypeName = _getNamedType(from).name.value;
+        toTypeName = _getNamedType(to).name.value;
+        // assume the default relationship name
+        relationName = transformRelationName(astNode);
+        // get its relation type directive
+        typeDirectiveIndex = astNode.directives.findIndex(
+          e => e.name.value === 'relation'
+        );
+        if (typeDirectiveIndex >= 0) {
+          typeDirective = astNode.directives[typeDirectiveIndex];
+          // get the arguments of type directive
+          let args = typeDirective ? typeDirective.arguments : [];
+          if (args.length > 0) {
+            // get its name argument
+            let nameArg = args.find(e => e.name.value === 'name');
+            if (nameArg) {
+              relationName = nameArg.value.value;
+            }
+          }
+          // replace it if it exists in order to force correct configuration
+          astNode.directives[typeDirectiveIndex] = parseDirectiveSdl(`
+            @relation(
+              name: ${relationName}, 
+              from: ${fromTypeName},
+              to: ${toTypeName}
+            )
+          `);
+        } else {
+          astNode.directives.push(
+            parseDirectiveSdl(`
+            @relation(
+              name: ${relationName}, 
+              from: ${fromTypeName},
+              to: ${toTypeName}
+            )
+          `)
+          );
+        }
+        typeMap[typeName] = astNode;
+      }
     }
   });
   return typeMap;
@@ -1056,11 +1188,11 @@ const createOrderingFields = (astNode, typeMap, resolvers) => {
   let valueTypeName = '';
   let fieldName = '';
   return fields.reduce((acc, field) => {
-    type = getNamedType(field);
+    type = _getNamedType(field);
     valueTypeName = type.name.value;
     valueType = typeMap[valueTypeName];
     if (
-      !isListType(field) &&
+      !_isListType(field) &&
       fieldIsNotIgnored(astNode, field, resolvers) &&
       (isBasicScalar(type.name.value) ||
         isKind(valueType, 'EnumTypeDefinition') ||
@@ -1093,7 +1225,7 @@ const createQueryArguments = (astNode, resolvers, typeMap) => {
   let queryArg = {};
   return astNode.fields.reduce((acc, t) => {
     if (fieldIsNotIgnored(astNode, t, resolvers)) {
-      type = getNamedType(t);
+      type = _getNamedType(t);
       valueTypeName = type.name.value;
       valueKind = typeMap[valueTypeName]
         ? typeMap[valueTypeName].kind
@@ -1482,7 +1614,7 @@ const buildUpdateMutationArguments = (
   resolvers
 ) => {
   const primaryKeyName = primaryKey.name.value;
-  const primaryKeyType = getNamedType(primaryKey);
+  const primaryKeyType = _getNamedType(primaryKey);
   // Primary key field is first arg and required for node selection
   const parsedPrimaryKeyField = `${primaryKeyName}: ${
     primaryKeyType.name.value
@@ -1493,7 +1625,7 @@ const buildUpdateMutationArguments = (
   let fieldName = '';
   let mutationArgs = [];
   mutationArgs = astNode.fields.reduce((acc, t) => {
-    type = getNamedType(t);
+    type = _getNamedType(t);
     fieldName = t.name.value;
     valueTypeName = type.name.value;
     valueType = typeMap[valueTypeName];
@@ -1523,7 +1655,7 @@ const buildUpdateMutationArguments = (
   if (mutationArgs.length > 0) {
     mutationArgs.unshift(parsedPrimaryKeyField);
     mutationArgs = transformManagedFieldTypes(mutationArgs);
-    mutationArgs = parseInputFieldsSdl(mutationArgs);
+    mutationArgs = buildInputValueDefinitions(mutationArgs);
   }
   return mutationArgs;
 };
@@ -1543,14 +1675,14 @@ const buildDeleteMutationArguments = primaryKey => {
           kind: 'NamedType',
           name: {
             kind: 'Name',
-            value: getNamedType(primaryKey).name.value
+            value: _getNamedType(primaryKey).name.value
           }
         }
       }
     })
   );
   mutationArgs = transformManagedFieldTypes(mutationArgs);
-  return parseInputFieldsSdl(mutationArgs);
+  return buildInputValueDefinitions(mutationArgs);
 };
 
 const buildCreateMutationArguments = (astNode, typeMap, resolvers) => {
@@ -1561,7 +1693,7 @@ const buildCreateMutationArguments = (astNode, typeMap, resolvers) => {
   let firstIdField = undefined;
   let field = {};
   let mutationArgs = astNode.fields.reduce((acc, t) => {
-    type = getNamedType(t);
+    type = _getNamedType(t);
     fieldName = t.name.value;
     valueTypeName = type.name.value;
     valueType = typeMap[valueTypeName];
@@ -1576,7 +1708,7 @@ const buildCreateMutationArguments = (astNode, typeMap, resolvers) => {
       ) {
         if (
           isNonNullType(t) &&
-          !isListType(t) &&
+          !_isListType(t) &&
           valueTypeName === 'ID' &&
           !firstIdField
         ) {
@@ -1606,7 +1738,7 @@ const buildCreateMutationArguments = (astNode, typeMap, resolvers) => {
   // Transform managed field types: _Neo4jTime -> _Neo4jTimeInput
   mutationArgs = transformManagedFieldTypes(mutationArgs);
   // Use a helper to get the AST for all fields
-  mutationArgs = parseInputFieldsSdl(mutationArgs);
+  mutationArgs = buildInputValueDefinitions(mutationArgs);
   return mutationArgs;
 };
 
@@ -1616,7 +1748,7 @@ const buildRelationTypeInputFields = (astNode, fields, typeMap, resolvers) => {
   let valueType = {};
   let relationInputFields = fields.reduce((acc, t) => {
     fieldName = t.name.value;
-    valueTypeName = getNamedType(t).name.value;
+    valueTypeName = _getNamedType(t).name.value;
     valueType = typeMap[valueTypeName];
     if (
       fieldIsNotIgnored(astNode, t, resolvers) &&

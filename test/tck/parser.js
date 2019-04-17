@@ -61,35 +61,29 @@ const extractTestBlocks = data => {
       // extract the array elements of this graphql block
       const graphqlBlock = extractBlock('graphql', lines, index);
       if (graphqlBlock) {
-        const testName = getTestName(graphqlBlock);
-        // only extract test if it has a name
-        if (testName) {
-          // remove its test name comment
-          graphqlBlock.shift();
-          acc.push({
-            test: testName,
-            graphql: graphqlBlock,
-            params: extractBlock('params', lines, index),
-            cypher: extractBlock('cypher', lines, index)
-          });
-        }
+        acc.push({
+          test: getTestName(lines, index),
+          graphql: graphqlBlock,
+          params: extractBlock('params', lines, index),
+          cypher: extractBlock('cypher', lines, index)
+        });
       }
     }
     return acc;
   }, []);
 };
 
-const getTestName = block => {
-  // expects test name on next line
-  let testName = block
-    ? block.find(e => (e.charAt(0) === '#' ? true : false))
-    : undefined;
-  // if test name provided, removes it from the extracted graphql block
-  if (testName) {
-    // removes # prefix, trims whitespace
-    testName = testName.substring(1).trim();
+const getTestName = (lines, index) => {
+  // expects test name on line immediately before ```graphql block
+  const nameIndex = index - 1;
+  let name = nameIndex >= 0 ? lines[nameIndex] : '';
+  if (name && name.startsWith('###')) {
+    // removes ### prefix, trims whitespace
+    name = name.substring(3).trim();
+  } else {
+    name = `Unnamed test on line ${index + 1}`;
   }
-  return testName;
+  return name;
 };
 
 const buildTestDeclarations = tck => {
@@ -97,7 +91,7 @@ const buildTestDeclarations = tck => {
   const testData = buildTestData(schema, tck);
   return testData
     .reduce((acc, test) => {
-      // escape " so that we can wrap the cypher in backticks `s
+      // escape " so that we can wrap the cypher in "s
       const cypherStatement = test.cypher.replace(/"/g, '\\"');
       // ava test string template
       acc.push(`test("${test.name}", t => {
@@ -159,8 +153,8 @@ const buildTestData = (schema, tck) => {
       },
       testParams
     ).then(data => {
-      const errors = data["errors"];
-      if(errors) {
+      const errors = data['errors'];
+      if (errors) {
         const error = errors[0];
         const message = error.message;
         console.log(`
