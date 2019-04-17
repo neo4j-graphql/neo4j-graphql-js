@@ -115,13 +115,13 @@ references:
       DATASTORE_VERSION: '3_4'
   env_neo4j35ce: &env_neo4j35ce
       NEO4J_DIST: 'community'
-      NEO4J_VERSION: '3.5.0'
-      APOC_VERSION: '3.5.0.1'
+      NEO4J_VERSION: '3.5.4'
+      APOC_VERSION: '3.5.0.2'
       DATASTORE_VERSION: '3_5'
   env_neo4j35ee: &env_neo4j35ee
       NEO4J_DIST: 'enterprise'
-      NEO4J_VERSION: '3.5.0'
-      APOC_VERSION: '3.5.0.1'
+      NEO4J_VERSION: '3.5.4'
+      APOC_VERSION: '3.5.0.2'
       DATASTORE_VERSION: '3_5'
 
   install_neo4j_steps: &install_neo4j_steps
