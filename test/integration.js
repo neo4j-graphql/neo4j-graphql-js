@@ -1078,3 +1078,729 @@ test.serial('Query for temporal property on relationship', async t => {
       t.fail(error);
     });
 });
+
+test('Basic filter', async t => {
+  t.plan(1);
+
+  let expected = {
+    data: {
+      Movie: [
+        {
+          __typename: 'Movie',
+          title: '20,000 Leagues Under the Sea'
+        },
+        {
+          __typename: 'Movie',
+          title: 'Billy Blazes, Esq.'
+        },
+        {
+          __typename: 'Movie',
+          title: 'Birth of a Nation, The'
+        },
+        {
+          __typename: 'Movie',
+          title: "Dog's Life, A"
+        },
+        {
+          __typename: 'Movie',
+          title: 'Immigrant, The'
+        },
+        {
+          __typename: 'Movie',
+          title: "Intolerance: Love's Struggle Throughout the Ages"
+        },
+        {
+          __typename: 'Movie',
+          title: 'Trip to the Moon, A (Voyage dans la lune, Le)'
+        }
+      ]
+    }
+  };
+
+  await client
+    .query({
+      query: gql`
+        {
+          Movie(filter: { year_lt: 1920 }, orderBy: [title_asc]) {
+            title
+          }
+        }
+      `
+    })
+    .then(data => {
+      t.deepEqual(data.data, expected.data);
+    })
+    .catch(error => {
+      t.fail(error);
+    });
+});
+
+test('Filter with AND', async t => {
+  t.plan(1);
+
+  let expected = {
+    data: {
+      Movie: [
+        {
+          __typename: 'Movie',
+          title: 'Billy Blazes, Esq.'
+        },
+        {
+          __typename: 'Movie',
+          title: 'Birth of a Nation, The'
+        }
+      ]
+    }
+  };
+
+  await client
+    .query({
+      query: gql`
+        {
+          Movie(
+            filter: { AND: [{ year_lt: 1920, title_starts_with: "B" }] }
+            orderBy: [title_asc]
+          ) {
+            title
+          }
+        }
+      `
+    })
+    .then(data => {
+      t.deepEqual(data.data, expected.data);
+    })
+    .catch(error => {
+      t.fail(error);
+    });
+});
+
+test('Filter with OR', async t => {
+  t.plan(1);
+
+  let expected = {
+    data: {
+      Movie: [
+        {
+          __typename: 'Movie',
+          title: '20,000 Leagues Under the Sea'
+        },
+        {
+          __typename: 'Movie',
+          title: 'Billy Blazes, Esq.'
+        },
+        {
+          __typename: 'Movie',
+          title: 'Birth of a Nation, The'
+        },
+        {
+          __typename: 'Movie',
+          title: "Dog's Life, A"
+        },
+        {
+          __typename: 'Movie',
+          title: 'Immigrant, The'
+        },
+        {
+          __typename: 'Movie',
+          title: "Intolerance: Love's Struggle Throughout the Ages"
+        },
+        {
+          __typename: 'Movie',
+          title: 'River Runs Through It, A'
+        },
+        {
+          __typename: 'Movie',
+          title: 'Trip to the Moon, A (Voyage dans la lune, Le)'
+        }
+      ]
+    }
+  };
+
+  await client
+    .query({
+      query: gql`
+        {
+          Movie(
+            filter: {
+              OR: [{ year_lt: 1920 }, { title_contains: "River Runs" }]
+            }
+            orderBy: [title_asc]
+          ) {
+            title
+          }
+        }
+      `
+    })
+    .then(data => {
+      t.deepEqual(data.data, expected.data);
+    })
+    .catch(error => {
+      t.fail(error);
+    });
+});
+
+test('Filter with nested AND and OR', async t => {
+  t.plan(1);
+
+  let expected = {
+    data: {
+      Movie: [
+        {
+          __typename: 'Movie',
+          title: '20,000 Leagues Under the Sea',
+          genres: [
+            {
+              __typename: 'Genre',
+              name: 'Sci-Fi'
+            },
+            {
+              __typename: 'Genre',
+              name: 'Adventure'
+            },
+            {
+              __typename: 'Genre',
+              name: 'Action'
+            }
+          ]
+        },
+        {
+          __typename: 'Movie',
+          title: 'Babylon 5: The River of Souls',
+          genres: [
+            {
+              __typename: 'Genre',
+              name: 'Sci-Fi'
+            },
+            {
+              __typename: 'Genre',
+              name: 'Drama'
+            }
+          ]
+        },
+        {
+          __typename: 'Movie',
+          title: 'Billy Blazes, Esq.',
+          genres: [
+            {
+              __typename: 'Genre',
+              name: 'Western'
+            },
+            {
+              __typename: 'Genre',
+              name: 'Comedy'
+            }
+          ]
+        },
+        {
+          __typename: 'Movie',
+          title: 'Birth of a Nation, The',
+          genres: [
+            {
+              __typename: 'Genre',
+              name: 'War'
+            },
+            {
+              __typename: 'Genre',
+              name: 'Drama'
+            }
+          ]
+        },
+        {
+          __typename: 'Movie',
+          title: 'Bridge on the River Kwai, The',
+          genres: [
+            {
+              __typename: 'Genre',
+              name: 'Drama'
+            },
+            {
+              __typename: 'Genre',
+              name: 'Adventure'
+            },
+            {
+              __typename: 'Genre',
+              name: 'War'
+            }
+          ]
+        },
+        {
+          __typename: 'Movie',
+          title: 'Crimson Rivers, The (Rivières pourpres, Les)',
+          genres: [
+            {
+              __typename: 'Genre',
+              name: 'Drama'
+            },
+            {
+              __typename: 'Genre',
+              name: 'Crime'
+            },
+            {
+              __typename: 'Genre',
+              name: 'Mystery'
+            },
+            {
+              __typename: 'Genre',
+              name: 'Thriller'
+            }
+          ]
+        },
+        {
+          __typename: 'Movie',
+          title: "Dog's Life, A",
+          genres: [
+            {
+              __typename: 'Genre',
+              name: 'Comedy'
+            }
+          ]
+        },
+        {
+          __typename: 'Movie',
+          title: 'Frozen River',
+          genres: [
+            {
+              __typename: 'Genre',
+              name: 'Drama'
+            }
+          ]
+        },
+        {
+          __typename: 'Movie',
+          title: 'Immigrant, The',
+          genres: [
+            {
+              __typename: 'Genre',
+              name: 'Comedy'
+            }
+          ]
+        },
+        {
+          __typename: 'Movie',
+          title: "Intolerance: Love's Struggle Throughout the Ages",
+          genres: [
+            {
+              __typename: 'Genre',
+              name: 'Drama'
+            }
+          ]
+        },
+        {
+          __typename: 'Movie',
+          title: 'Man from Snowy River, The',
+          genres: [
+            {
+              __typename: 'Genre',
+              name: 'Western'
+            },
+            {
+              __typename: 'Genre',
+              name: 'Romance'
+            },
+            {
+              __typename: 'Genre',
+              name: 'Drama'
+            }
+          ]
+        },
+        {
+          __typename: 'Movie',
+          title: 'Mystic River',
+          genres: [
+            {
+              __typename: 'Genre',
+              name: 'Drama'
+            },
+            {
+              __typename: 'Genre',
+              name: 'Mystery'
+            },
+            {
+              __typename: 'Genre',
+              name: 'Crime'
+            }
+          ]
+        },
+        {
+          __typename: 'Movie',
+          title: 'Return to Snowy River (a.k.a. The Man From Snowy River II)',
+          genres: [
+            {
+              __typename: 'Genre',
+              name: 'Western'
+            },
+            {
+              __typename: 'Genre',
+              name: 'Drama'
+            },
+            {
+              __typename: 'Genre',
+              name: 'Adventure'
+            }
+          ]
+        },
+        {
+          __typename: 'Movie',
+          title: 'River Runs Through It, A',
+          genres: [
+            {
+              __typename: 'Genre',
+              name: 'Drama'
+            }
+          ]
+        },
+        {
+          __typename: 'Movie',
+          title: "River's Edge",
+          genres: [
+            {
+              __typename: 'Genre',
+              name: 'Drama'
+            },
+            {
+              __typename: 'Genre',
+              name: 'Crime'
+            }
+          ]
+        },
+        {
+          __typename: 'Movie',
+          title: 'River, The',
+          genres: [
+            {
+              __typename: 'Genre',
+              name: 'Drama'
+            }
+          ]
+        },
+        {
+          __typename: 'Movie',
+          title: 'Trip to the Moon, A (Voyage dans la lune, Le)',
+          genres: [
+            {
+              __typename: 'Genre',
+              name: 'Action'
+            },
+            {
+              __typename: 'Genre',
+              name: 'Adventure'
+            },
+            {
+              __typename: 'Genre',
+              name: 'Fantasy'
+            },
+            {
+              __typename: 'Genre',
+              name: 'Sci-Fi'
+            }
+          ]
+        },
+        {
+          __typename: 'Movie',
+          title: 'Wild River',
+          genres: [
+            {
+              __typename: 'Genre',
+              name: 'Romance'
+            },
+            {
+              __typename: 'Genre',
+              name: 'Drama'
+            }
+          ]
+        }
+      ]
+    }
+  };
+
+  await client
+    .query({
+      query: gql`
+        {
+          Movie(
+            filter: {
+              OR: [
+                { year_lt: 1920 }
+                {
+                  AND: [
+                    { title_contains: "River" }
+                    { genres_some: { name: "Drama" } }
+                  ]
+                }
+              ]
+            }
+            orderBy: [title_asc]
+          ) {
+            title
+            genres {
+              name
+            }
+          }
+        }
+      `
+    })
+    .then(data => {
+      t.deepEqual(data.data, expected.data);
+    })
+    .catch(error => {
+      t.fail(error);
+    });
+});
+
+test('Filter in selection', async t => {
+  t.plan(1);
+
+  let expected = {
+    data: {
+      Movie: [
+        {
+          __typename: 'Movie',
+          title: '20,000 Leagues Under the Sea',
+          genres: []
+        },
+        {
+          __typename: 'Movie',
+          title: 'Babylon 5: The River of Souls',
+          genres: [
+            {
+              __typename: 'Genre',
+              name: 'Drama'
+            }
+          ]
+        },
+        {
+          __typename: 'Movie',
+          title: 'Billy Blazes, Esq.',
+          genres: []
+        },
+        {
+          __typename: 'Movie',
+          title: 'Birth of a Nation, The',
+          genres: [
+            {
+              __typename: 'Genre',
+              name: 'Drama'
+            }
+          ]
+        },
+        {
+          __typename: 'Movie',
+          title: 'Bridge on the River Kwai, The',
+          genres: [
+            {
+              __typename: 'Genre',
+              name: 'Drama'
+            }
+          ]
+        },
+        {
+          __typename: 'Movie',
+          title: 'Crimson Rivers, The (Rivières pourpres, Les)',
+          genres: [
+            {
+              __typename: 'Genre',
+              name: 'Drama'
+            }
+          ]
+        },
+        {
+          __typename: 'Movie',
+          title: "Dog's Life, A",
+          genres: []
+        },
+        {
+          __typename: 'Movie',
+          title: 'Frozen River',
+          genres: [
+            {
+              __typename: 'Genre',
+              name: 'Drama'
+            }
+          ]
+        },
+        {
+          __typename: 'Movie',
+          title: 'Immigrant, The',
+          genres: []
+        },
+        {
+          __typename: 'Movie',
+          title: "Intolerance: Love's Struggle Throughout the Ages",
+          genres: [
+            {
+              __typename: 'Genre',
+              name: 'Drama'
+            }
+          ]
+        },
+        {
+          __typename: 'Movie',
+          title: 'Man from Snowy River, The',
+          genres: [
+            {
+              __typename: 'Genre',
+              name: 'Drama'
+            }
+          ]
+        },
+        {
+          __typename: 'Movie',
+          title: 'Mystic River',
+          genres: [
+            {
+              __typename: 'Genre',
+              name: 'Drama'
+            }
+          ]
+        },
+        {
+          __typename: 'Movie',
+          title: 'Return to Snowy River (a.k.a. The Man From Snowy River II)',
+          genres: [
+            {
+              __typename: 'Genre',
+              name: 'Drama'
+            }
+          ]
+        },
+        {
+          __typename: 'Movie',
+          title: 'River Runs Through It, A',
+          genres: [
+            {
+              __typename: 'Genre',
+              name: 'Drama'
+            }
+          ]
+        },
+        {
+          __typename: 'Movie',
+          title: "River's Edge",
+          genres: [
+            {
+              __typename: 'Genre',
+              name: 'Drama'
+            }
+          ]
+        },
+        {
+          __typename: 'Movie',
+          title: 'River, The',
+          genres: [
+            {
+              __typename: 'Genre',
+              name: 'Drama'
+            }
+          ]
+        },
+        {
+          __typename: 'Movie',
+          title: 'Trip to the Moon, A (Voyage dans la lune, Le)',
+          genres: []
+        },
+        {
+          __typename: 'Movie',
+          title: 'Wild River',
+          genres: [
+            {
+              __typename: 'Genre',
+              name: 'Drama'
+            }
+          ]
+        }
+      ]
+    }
+  };
+
+  await client
+    .query({
+      query: gql`
+        {
+          Movie(
+            filter: {
+              OR: [
+                { year_lt: 1920 }
+                {
+                  AND: [
+                    { title_contains: "River" }
+                    { genres_some: { name: "Drama" } }
+                  ]
+                }
+              ]
+            }
+            orderBy: [title_asc]
+          ) {
+            title
+            genres(filter: { name: "Drama" }) {
+              name
+            }
+          }
+        }
+      `
+    })
+    .then(data => {
+      t.deepEqual(data.data, expected.data);
+    })
+    .catch(error => {
+      t.fail(error);
+    });
+});
+
+test('Nested filter', async t => {
+  t.plan(1);
+
+  let expected = {
+    data: {
+      Movie: [
+        {
+          __typename: 'Movie',
+          title: 'River Runs Through It, A',
+          actors: [
+            {
+              __typename: 'Actor',
+              name: ' Tom Skerritt'
+            },
+            {
+              __typename: 'Actor',
+              name: ' Brad Pitt'
+            },
+            {
+              __typename: 'Actor',
+              name: ' Brenda Blethyn'
+            },
+            {
+              __typename: 'Actor',
+              name: 'Craig Sheffer'
+            }
+          ]
+        }
+      ]
+    }
+  };
+
+  await client
+    .query({
+      query: gql`
+        {
+          Movie(
+            filter: {
+              title_starts_with: "River"
+              actors_some: { name_contains: "Brad" }
+            }
+            orderBy: [title_asc]
+          ) {
+            title
+            actors {
+              name
+            }
+          }
+        }
+      `
+    })
+    .then(data => {
+      t.deepEqual(data.data, expected.data);
+    })
+    .catch(error => {
+      t.fail(error);
+    });
+});
