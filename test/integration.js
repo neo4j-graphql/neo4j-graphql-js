@@ -1804,3 +1804,66 @@ test('Nested filter', async t => {
       t.fail(error);
     });
 });
+
+test('Filter with GraphQL variable', async t => {
+  t.plan(1);
+
+  let expected = {
+    data: {
+      Movie: [
+        {
+          __typename: 'Movie',
+          title: 'River Runs Through It, A',
+          actors: [
+            {
+              __typename: 'Actor',
+              name: ' Tom Skerritt'
+            },
+            {
+              __typename: 'Actor',
+              name: ' Brad Pitt'
+            },
+            {
+              __typename: 'Actor',
+              name: ' Brenda Blethyn'
+            },
+            {
+              __typename: 'Actor',
+              name: 'Craig Sheffer'
+            }
+          ]
+        }
+      ]
+    }
+  };
+
+  await client
+    .query({
+      query: gql`
+        query NestedFilterWithVars($title: String, $name: String) {
+          Movie(
+            filter: {
+              title_starts_with: $title
+              actors_some: { name_contains: $name }
+            }
+            orderBy: [title_asc]
+          ) {
+            title
+            actors {
+              name
+            }
+          }
+        }
+      `,
+      variables: {
+        title: 'River',
+        name: 'Brad'
+      }
+    })
+    .then(data => {
+      t.deepEqual(data.data, expected.data);
+    })
+    .catch(error => {
+      t.fail(error);
+    });
+});
