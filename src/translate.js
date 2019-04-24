@@ -31,9 +31,18 @@ import {
   getTemporalArguments,
   temporalPredicateClauses,
   isTemporalType,
-  isGraphqlScalarType
+  isGraphqlScalarType,
+  innerType,
+  relationDirective,
+  typeIdentifiers
 } from './utils';
-import { getNamedType } from 'graphql';
+import {
+  getNamedType,
+  isScalarType,
+  isEnumType,
+  isInputType,
+  isListType
+} from 'graphql';
 import { buildCypherSelection } from './selections';
 import _ from 'lodash';
 
@@ -94,7 +103,10 @@ export const relationFieldOnNodeType = ({
   isInlineFragment,
   interfaceLabel,
   innerSchemaType,
+  paramIndex,
+  fieldArgs,
   filterParams,
+  selectionFilters,
   temporalArgs,
   selections,
   schemaType,
@@ -102,24 +114,38 @@ export const relationFieldOnNodeType = ({
   skipLimit,
   commaIfTail,
   tailParams,
-  temporalClauses
+  temporalClauses,
+  resolveInfo
 }) => {
-  const arrayFilterParams = _.pickBy(
-    filterParams,
-    (param, keyName) => Array.isArray(param.value) && !('orderBy' === keyName)
-  );
+  const safeVariableName = safeVar(nestedVariable);
   const allParams = innerFilterParams(filterParams, temporalArgs);
   const queryParams = paramsToString(
     _.filter(allParams, param => !Array.isArray(param.value))
   );
-  const safeVariableName = safeVar(nestedVariable);
+  // build predicates for filter argument if provided
+  const filterPredicates = buildFilterPredicates(
+    fieldArgs,
+    innerSchemaType,
+    nestedVariable,
+    resolveInfo,
+    selectionFilters,
+    paramIndex
+  );
+  const arrayFilterParams = _.pickBy(
+    filterParams,
+    (param, keyName) => Array.isArray(param.value) && !('orderBy' === keyName)
+  );
   const arrayPredicates = _.map(arrayFilterParams, (value, key) => {
     const param = _.find(allParams, param => param.key === key);
     return `${safeVariableName}.${safeVar(key)} IN $${
       param.value.index
     }_${key}`;
   });
-  const whereClauses = [...temporalClauses, ...arrayPredicates];
+  const whereClauses = [
+    ...temporalClauses,
+    ...arrayPredicates,
+    ...filterPredicates
+  ];
   const orderByParam = filterParams['orderBy'];
   const temporalOrdering = temporalOrderingFieldExists(
     schemaType,
@@ -141,7 +167,7 @@ export const relationFieldOnNodeType = ({
     }(${safeVariableName}:${safeLabel(
       isInlineFragment ? interfaceLabel : innerSchemaType.name
     )}${queryParams})${
-      whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : ''
+      whereClauses.length > 0 ? ` WHERE ${whereClauses.join(' AND ')}` : ''
     } | ${nestedVariable} {${
       isInlineFragment
         ? 'FRAGMENT_TYPE: "' + interfaceLabel + '",' + subSelection[0]
@@ -521,7 +547,7 @@ export const translateQuery = ({
     safeVariableName,
     temporalArgs
   );
-  const outerSkipLimit = getOuterSkipLimit(first);
+  const outerSkipLimit = getOuterSkipLimit(first, offset);
   const orderByValue = computeOrderBy(resolveInfo, selections);
 
   if (queryTypeCypherDirective) {
@@ -611,7 +637,7 @@ const customQuery = ({
     !temporalType && !isScalarType
       ? `{${subQuery}} AS ${safeVariableName}${orderByValue}`
       : ''
-  } ${outerSkipLimit}`;
+  }${outerSkipLimit}`;
   return [query, params];
 };
 
@@ -634,6 +660,7 @@ const nodeQuery = ({
 }) => {
   const safeVariableName = safeVar(variableName);
   const safeLabelName = safeLabel(typeName);
+  const rootParamIndex = 1;
   const [subQuery, subParams] = buildCypherSelection({
     initial: '',
     cypherParams,
@@ -641,12 +668,18 @@ const nodeQuery = ({
     variableName,
     schemaType,
     resolveInfo,
-    paramIndex: 1
+    paramIndex: rootParamIndex
   });
   const params = { ...nonNullParams, ...subParams };
   if (cypherParams) {
     params['cypherParams'] = cypherParams;
   }
+
+  // transform null filters in root filter argument
+  const filterParam = params['filter'];
+  if (filterParam)
+    params['filter'] = transformExistentialFilterParams(filterParam);
+
   const arrayParams = _.pickBy(filterParams, Array.isArray);
   const args = innerFilterParams(filterParams, temporalArgs);
 
@@ -666,19 +699,34 @@ const nodeQuery = ({
     (value, key) => `${safeVariableName}.${safeVar(key)} IN $${key}`
   );
 
+  // build predicates for filter argument if provided
+  const fieldArgs = getQueryArguments(resolveInfo);
+  const filterPredicates = buildFilterPredicates(
+    fieldArgs,
+    schemaType,
+    variableName,
+    resolveInfo,
+    nonNullParams,
+    rootParamIndex
+  );
+
   const predicateClauses = [
     idWherePredicate,
+    ...filterPredicates,
     ...nullFieldPredicates,
     ...temporalClauses,
     ...arrayPredicates
   ]
     .filter(predicate => !!predicate)
     .join(' AND ');
+
   const predicate = predicateClauses ? `WHERE ${predicateClauses} ` : '';
 
   const query =
-    `MATCH (${safeVariableName}:${safeLabelName} ${argString}) ${predicate}` +
-    `RETURN ${safeVariableName} {${subQuery}} AS ${safeVariableName}${orderByValue} ${outerSkipLimit}`;
+    `MATCH (${safeVariableName}:${safeLabelName}${
+      argString ? ` ${argString}` : ''
+    }) ${predicate}` +
+    `RETURN ${safeVariableName} {${subQuery}} AS ${safeVariableName}${orderByValue}${outerSkipLimit}`;
 
   return [query, params];
 };
@@ -695,7 +743,7 @@ export const translateMutation = ({
   offset,
   otherParams
 }) => {
-  const outerSkipLimit = getOuterSkipLimit(first);
+  const outerSkipLimit = getOuterSkipLimit(first, offset);
   const orderByValue = computeOrderBy(resolveInfo, selections);
   const mutationTypeCypherDirective = getMutationCypherDirective(resolveInfo);
   const params = initializeMutationParams({
@@ -802,7 +850,7 @@ const customMutation = ({
     WITH apoc.map.values(value, [keys(value)[0]])[0] AS ${safeVariableName}
     RETURN ${safeVariableName} ${
     !temporalType && !isScalarType
-      ? `{${subQuery}} AS ${safeVariableName}${orderByValue} ${outerSkipLimit}`
+      ? `{${subQuery}} AS ${safeVariableName}${orderByValue}${outerSkipLimit}`
       : ''
   }`;
   return [query, params];
@@ -1057,18 +1105,18 @@ const relationshipCreate = ({
   });
   params = { ...preparedParams, ...subParams };
   let query = `
-      MATCH (${fromVariable}:${fromLabel} ${
+      MATCH (${fromVariable}:${fromLabel}${
     fromTemporalClauses && fromTemporalClauses.length > 0
       ? // uses either a WHERE clause for managed type primary keys (temporal, etc.)
         `) WHERE ${fromTemporalClauses.join(' AND ')} `
       : // or a an internal matching clause for normal, scalar property primary keys
         // NOTE this will need to change if we at some point allow for multi field node selection
-        `{${fromParam}: $from.${fromParam}})`
+        ` {${fromParam}: $from.${fromParam}})`
   }
-      MATCH (${toVariable}:${toLabel} ${
+      MATCH (${toVariable}:${toLabel}${
     toTemporalClauses && toTemporalClauses.length > 0
       ? `) WHERE ${toTemporalClauses.join(' AND ')} `
-      : `{${toParam}: $to.${toParam}})`
+      : ` {${toParam}: $to.${toParam}})`
   }
       CREATE (${fromVariable})-[${relationshipVariable}:${relationshipLabel}${
     paramStatements.length > 0 ? ` {${paramStatements.join(',')}}` : ''
@@ -1176,17 +1224,17 @@ const relationshipDelete = ({
   });
   params = { ...params, ...subParams };
   let query = `
-      MATCH (${fromVariable}:${fromLabel} ${
+      MATCH (${fromVariable}:${fromLabel}${
     fromTemporalClauses && fromTemporalClauses.length > 0
       ? // uses either a WHERE clause for managed type primary keys (temporal, etc.)
         `) WHERE ${fromTemporalClauses.join(' AND ')} `
       : // or a an internal matching clause for normal, scalar property primary keys
-        `{${fromParam}: $from.${fromParam}})`
+        ` {${fromParam}: $from.${fromParam}})`
   }
-      MATCH (${toVariable}:${toLabel} ${
+      MATCH (${toVariable}:${toLabel}${
     toTemporalClauses && toTemporalClauses.length > 0
       ? `) WHERE ${toTemporalClauses.join(' AND ')} `
-      : `{${toParam}: $to.${toParam}})`
+      : ` {${toParam}: $to.${toParam}})`
   }
       OPTIONAL MATCH (${fromVariable})-[${relationshipVariable}:${relationshipLabel}]->(${toVariable})
       DELETE ${relationshipVariable}
@@ -1266,4 +1314,626 @@ const buildSortMultiArgs = param => {
       return e.includes('_asc') ? `'^${fieldName}'` : `'${fieldName}'`;
     })
     .join(',');
+};
+
+const buildFilterPredicates = (
+  fieldArgs,
+  schemaType,
+  variableName,
+  resolveInfo,
+  params,
+  paramIndex
+) => {
+  const filterArg = fieldArgs.find(e => e.name.value === 'filter');
+  const filterValue = Object.keys(params).length ? params['filter'] : undefined;
+  let filterPredicates = [];
+  // if field has both a filter argument and argument data is provided
+  if (filterArg && filterValue) {
+    const schema = resolveInfo.schema;
+    const typeName = getNamedType(filterArg).type.name.value;
+    const filterSchemaType = schema.getType(typeName);
+    // get fields of filter type
+    const typeFields = filterSchemaType.getFields();
+    // align with naming scheme of extracted argument Cypher params
+    const filterParam =
+      paramIndex > 1 ? `$${paramIndex - 1}_filter` : `$filter`;
+    // recursively translate argument filterParam relative to schemaType
+    filterPredicates = translateFilterArguments(
+      schemaType,
+      variableName,
+      typeFields,
+      filterParam,
+      schema,
+      filterValue
+    );
+  }
+  return filterPredicates;
+};
+
+const translateFilterArguments = (
+  schemaType,
+  variableName,
+  typeFields,
+  filterParam,
+  schema,
+  filterValue,
+  parentVariableName
+) => {
+  // root call to translateFilterArgument, recursive calls in buildUniquePredicates
+  // translates each provided filter relative to its corresponding field in typeFields
+  return Object.entries(filterValue).reduce((predicates, [name, value]) => {
+    const predicate = translateFilterArgument({
+      parentVariableName,
+      field: typeFields[name],
+      filterValue: value,
+      fieldName: name,
+      variableName,
+      filterParam,
+      schemaType,
+      schema
+    });
+    if (predicate) predicates.push(`(${predicate})`);
+    return predicates;
+  }, []);
+};
+
+const translateFilterArgument = ({
+  parentVariableName,
+  isListFilterArgument,
+  field,
+  filterValue,
+  fieldName,
+  variableName,
+  filterParam,
+  schemaType,
+  schema
+}) => {
+  const fieldType = field.type;
+  const innerFieldType = innerType(fieldType);
+  // get name of filter field type (ex: _PersonFilter)
+  const typeName = innerFieldType.name;
+  // build path for parameter data for current filter field
+  const parameterPath = `${
+    parentVariableName ? parentVariableName : filterParam
+  }.${fieldName}`;
+  // parse field name into prefix (ex: name, company) and
+  // possible suffix identifying operation type (ex: _gt, _in)
+  const parsedFilterName = parseFilterArgumentName(fieldName);
+  const filterOperationField = parsedFilterName.name;
+  const filterOperationType = parsedFilterName.type;
+  // short-circuit evaluation: predicate used to skip a field
+  // if processing a list of objects that possibly contain different arguments
+  const nullFieldPredicate = decideNullSkippingPredicate({
+    parameterPath,
+    isListFilterArgument,
+    parentVariableName
+  });
+  if (isScalarType(innerFieldType) || isEnumType(innerFieldType)) {
+    // translations of scalar type filters are simply relative
+    // to their field name suffix, filterOperationType
+    return translateScalarFilter({
+      isListFilterArgument,
+      filterOperationField,
+      filterOperationType,
+      filterValue,
+      variableName,
+      parameterPath,
+      parentVariableName,
+      filterParam,
+      nullFieldPredicate
+    });
+  } else if (isInputType(innerFieldType)) {
+    // translations of input type filters decide arguments for a call to buildPredicateFunction
+    return translateInputFilter({
+      isListFilterArgument,
+      filterOperationField,
+      filterOperationType,
+      filterValue,
+      variableName,
+      fieldName,
+      filterParam,
+      typeName,
+      fieldType,
+      schema,
+      schemaType,
+      parameterPath,
+      parentVariableName,
+      nullFieldPredicate
+    });
+  }
+};
+
+const parseFilterArgumentName = fieldName => {
+  const fieldNameParts = fieldName.split('_');
+  let filterType = '';
+  if (fieldNameParts.length > 1) {
+    fieldName = fieldNameParts.shift();
+    filterType = fieldNameParts.join('_');
+  }
+  return {
+    name: fieldName,
+    type: filterType
+  };
+};
+
+const translateScalarFilter = ({
+  isListFilterArgument,
+  filterOperationField,
+  filterOperationType,
+  filterValue,
+  variableName,
+  parameterPath,
+  parentVariableName,
+  filterParam,
+  nullFieldPredicate
+}) => {
+  const safeVariableName = safeVar(variableName);
+  // build path to node/relationship property
+  const propertyPath = `${safeVariableName}.${filterOperationField}`;
+  if (isExistentialFilter(filterOperationType, filterValue)) {
+    return translateNullFilter({
+      propertyPath,
+      filterOperationField,
+      filterOperationType,
+      filterParam,
+      parentVariableName,
+      isListFilterArgument
+    });
+  }
+  // some object arguments in an array filter may differ internally
+  // so skip the field predicate if a corresponding value is not provided
+  return `${nullFieldPredicate}${buildScalarFilterPredicate(
+    filterOperationType,
+    propertyPath
+  )} ${parameterPath}`;
+};
+
+const isExistentialFilter = (type, value) =>
+  (!type || type === 'not') && value === null;
+
+const decideNullSkippingPredicate = ({
+  parameterPath,
+  isListFilterArgument,
+  parentVariableName
+}) =>
+  isListFilterArgument && parentVariableName
+    ? `${parameterPath} IS NULL OR `
+    : '';
+
+const translateNullFilter = ({
+  filterOperationField,
+  filterOperationType,
+  filterParam,
+  propertyPath,
+  parentVariableName,
+  isListFilterArgument
+}) => {
+  const isNegationFilter = filterOperationType === 'not';
+  // allign with modified parameter names for null filters
+  const paramPath = `${
+    parentVariableName ? parentVariableName : filterParam
+  }._${filterOperationField}_${isNegationFilter ? `not_` : ''}null`;
+  // build a predicate for checking the existence of a
+  // property or relationship
+  const predicate = `${paramPath} = TRUE AND${
+    isNegationFilter ? '' : ' NOT'
+  } EXISTS(${propertyPath})`;
+  // skip the field if it is null in the case of it
+  // existing within one of many objects in a list filter
+  const nullFieldPredicate = decideNullSkippingPredicate({
+    parameterPath: paramPath,
+    isListFilterArgument,
+    parentVariableName
+  });
+  return `${nullFieldPredicate}${predicate}`;
+};
+
+const buildScalarFilterPredicate = (filterOperationType, propertyPath) => {
+  switch (filterOperationType) {
+    case 'not':
+      return `NOT ${propertyPath} = `;
+    case 'in':
+      return `${propertyPath} IN`;
+    case 'not_in':
+      return `NOT ${propertyPath} IN`;
+    case 'contains':
+      return `${propertyPath} CONTAINS`;
+    case 'not_contains':
+      return `NOT ${propertyPath} CONTAINS`;
+    case 'starts_with':
+      return `${propertyPath} STARTS WITH`;
+    case 'not_starts_with':
+      return `NOT ${propertyPath} STARTS WITH`;
+    case 'ends_with':
+      return `${propertyPath} ENDS WITH`;
+    case 'not_ends_with':
+      return `NOT ${propertyPath} ENDS WITH`;
+    case 'lt':
+      return `${propertyPath} <`;
+    case 'lte':
+      return `${propertyPath} <=`;
+    case 'gt':
+      return `${propertyPath} >`;
+    case 'gte':
+      return `${propertyPath} >=`;
+    default:
+      return `${propertyPath} =`;
+  }
+};
+
+const translateInputFilter = ({
+  isListFilterArgument,
+  filterOperationField,
+  filterOperationType,
+  filterValue,
+  variableName,
+  fieldName,
+  filterParam,
+  typeName,
+  fieldType,
+  schema,
+  schemaType,
+  parameterPath,
+  parentVariableName,
+  nullFieldPredicate
+}) => {
+  const filterSchemaType = schema.getType(typeName);
+  const typeFields = filterSchemaType.getFields();
+  if (filterOperationField === 'AND' || filterOperationField === 'OR') {
+    return translateLogicalFilter({
+      filterValue,
+      variableName,
+      filterOperationField,
+      fieldName,
+      filterParam,
+      typeFields,
+      schema,
+      schemaType,
+      parameterPath,
+      parentVariableName,
+      isListFilterArgument,
+      nullFieldPredicate
+    });
+  } else {
+    const { name: relLabel, direction: relDirection } = relationDirective(
+      schemaType,
+      filterOperationField
+    );
+    if (relLabel && relDirection) {
+      return translateRelationshipFilter({
+        relLabel,
+        relDirection,
+        filterValue,
+        variableName,
+        filterOperationField,
+        filterOperationType,
+        fieldName,
+        filterParam,
+        typeFields,
+        fieldType,
+        schema,
+        schemaType,
+        parameterPath,
+        parentVariableName,
+        isListFilterArgument,
+        nullFieldPredicate
+      });
+    }
+  }
+};
+
+const translateLogicalFilter = ({
+  filterValue,
+  variableName,
+  filterOperationField,
+  fieldName,
+  filterParam,
+  typeFields,
+  schema,
+  schemaType,
+  parameterPath,
+  parentVariableName,
+  isListFilterArgument,
+  nullFieldPredicate
+}) => {
+  const listElementVariable = `_${fieldName}`;
+  const predicateListVariable = parameterPath;
+  // build predicate expressions for all unique arguments within filterValue
+  // isListFilterArgument is true here so that nullFieldPredicate is used
+  const predicates = buildUniquePredicates({
+    schemaType,
+    variableName,
+    listVariable: listElementVariable,
+    filterValue,
+    filterParam,
+    typeFields,
+    schema,
+    isListFilterArgument: true
+  });
+  // decide root predicate function
+  const rootPredicateFunction = decidePredicateFunction({
+    filterOperationField
+  });
+  // build root predicate expression
+  return buildPredicateFunction({
+    listElementVariable,
+    parameterPath,
+    parentVariableName,
+    rootPredicateFunction,
+    predicateListVariable,
+    predicates,
+    isListFilterArgument,
+    nullFieldPredicate
+  });
+};
+
+const translateRelationshipFilter = ({
+  relLabel,
+  relDirection,
+  filterValue,
+  variableName,
+  filterOperationField,
+  filterOperationType,
+  fieldName,
+  filterParam,
+  typeFields,
+  fieldType,
+  schema,
+  schemaType,
+  parameterPath,
+  parentVariableName,
+  isListFilterArgument,
+  nullFieldPredicate
+}) => {
+  // get related type for relationship variables and pattern
+  const innerSchemaType = innerType(
+    schemaType.getFields()[filterOperationField].type
+  );
+  // build safe relationship variables
+  const {
+    typeName: relatedTypeName,
+    variableName: relatedTypeNameLow
+  } = typeIdentifiers(innerSchemaType);
+  // because ALL(n IN [] WHERE n) currently returns true
+  // an existence predicate is added to make sure a relationship exists
+  // otherwise a node returns when it has 0 such relationships, since the
+  // predicate function then evaluates an empty list
+  const pathExistencePredicate = buildRelationshipExistencePath(
+    variableName,
+    relLabel,
+    relDirection,
+    relatedTypeName
+  );
+  if (isExistentialFilter(filterOperationType, filterValue)) {
+    return translateNullFilter({
+      propertyPath: pathExistencePredicate,
+      filterOperationField,
+      filterOperationType,
+      filterParam,
+      parentVariableName,
+      isListFilterArgument
+    });
+  }
+  const schemaTypeNameLow = schemaType.name.toLowerCase();
+  const safeRelVariableName = safeVar(
+    `${schemaTypeNameLow}_filter_${relatedTypeNameLow}`
+  );
+  const safeRelatedTypeNameLow = safeVar(relatedTypeNameLow);
+  // build a list comprehension containing path pattern for related type
+  const predicateListVariable = buildRelationshipListPattern({
+    fromVar: schemaTypeNameLow,
+    relVar: safeRelVariableName,
+    relLabel: relLabel,
+    relDirection: relDirection,
+    toVar: relatedTypeNameLow,
+    toLabel: relatedTypeName,
+    fieldName
+  });
+  // decide root predicate function
+  let rootPredicateFunction = decidePredicateFunction({
+    filterOperationField,
+    filterOperationType,
+    isRelation: true
+  });
+  let predicates = '';
+  if (isListType(fieldType)) {
+    const listVariable = `_${fieldName}`;
+    predicates = buildUniquePredicates({
+      isListFilterArgument: true,
+      schemaType: innerSchemaType,
+      variableName: relatedTypeNameLow,
+      listVariable,
+      filterValue,
+      filterParam,
+      typeFields,
+      schema
+    });
+    // build root predicate to contain nested predicate
+    predicates = `${rootPredicateFunction}(${listVariable} IN ${parameterPath} WHERE (${predicates}))`;
+    // change root predicate to ALL to act as a boolean
+    // evaluation of the above nested rootPredicateFunction
+    rootPredicateFunction = 'ALL';
+  } else {
+    predicates = buildUniquePredicates({
+      schemaType: innerSchemaType,
+      variableName: relatedTypeNameLow,
+      listVariable: parameterPath,
+      filterValue,
+      filterParam,
+      typeFields,
+      schema
+    });
+  }
+  return buildPredicateFunction({
+    listElementVariable: safeRelatedTypeNameLow,
+    parameterPath,
+    parentVariableName,
+    rootPredicateFunction,
+    predicateListVariable,
+    predicates,
+    pathExistencePredicate,
+    isListFilterArgument,
+    nullFieldPredicate
+  });
+};
+
+const buildPredicateFunction = ({
+  listElementVariable,
+  rootPredicateFunction,
+  predicateListVariable,
+  predicates,
+  pathExistencePredicate,
+  nullFieldPredicate
+}) => {
+  // https://neo4j.com/docs/cypher-manual/current/functions/predicate/
+  return `${nullFieldPredicate}${
+    pathExistencePredicate ? `EXISTS(${pathExistencePredicate}) AND ` : ''
+  }${rootPredicateFunction}(${listElementVariable} IN ${predicateListVariable} WHERE ${predicates})`;
+};
+
+const decidePredicateFunction = ({
+  filterOperationField,
+  filterOperationType,
+  isRelation
+}) => {
+  if (filterOperationField === 'AND') return 'ALL';
+  else if (filterOperationField === 'OR') return 'ANY';
+  else if (isRelation) {
+    switch (filterOperationType) {
+      case 'not':
+        return 'NONE';
+      case 'in':
+        return 'ANY';
+      case 'not_in':
+        return 'NONE';
+      case 'some':
+        return 'ANY';
+      case 'every':
+        return 'ALL';
+      case 'none':
+        return 'NONE';
+      case 'single':
+        return 'SINGLE';
+      default:
+        return 'ALL';
+    }
+  }
+};
+
+const buildRelationshipListPattern = ({
+  fromVar,
+  relVar,
+  relLabel,
+  relDirection,
+  toVar,
+  toLabel
+}) => {
+  // prevents related node variable from
+  // conflicting with parent variables
+  toVar = `_${toVar}`;
+  const safeFromVar = safeVar(fromVar);
+  const safeToVar = safeVar(toVar);
+  // builds a path pattern within a list comprehension
+  // that extracts related nodes
+  return `[(${safeFromVar})${
+    relDirection === 'IN' ? '<' : ''
+  }-[${relVar}:${relLabel}]-${
+    relDirection === 'OUT' ? '>' : ''
+  }(${safeToVar}:${toLabel}) | ${safeToVar}]`;
+};
+
+const buildRelationshipExistencePath = (
+  fromVar,
+  relLabel,
+  relDirection,
+  toType
+) => {
+  const safeFromVar = safeVar(fromVar);
+  return `(${safeFromVar})${relDirection === 'IN' ? '<' : ''}-[:${relLabel}]-${
+    relDirection === 'OUT' ? '>' : ''
+  }(:${toType})`;
+};
+
+const decideFilterParamName = (name, value) => {
+  if (value === null) {
+    const parsedFilterName = parseFilterArgumentName(name);
+    const filterOperationType = parsedFilterName.type;
+    if (!filterOperationType || filterOperationType === 'not') {
+      return `_${name}_null`;
+    }
+  }
+  return name;
+};
+
+const buildUniquePredicates = ({
+  schemaType,
+  variableName,
+  listVariable,
+  filterValue,
+  filterParam,
+  typeFields,
+  schema,
+  isListFilterArgument = false
+}) => {
+  // coercion of object argument to array for general use of reduce
+  if (!Array.isArray(filterValue)) filterValue = [filterValue];
+  // used to prevent building a duplicate translation when
+  // the same filter field is provided in multiple objects
+  const translatedFilters = {};
+  // recursion: calls translateFilterArgument for every field
+  return filterValue
+    .reduce((predicates, filter) => {
+      Object.entries(filter).forEach(([name, value]) => {
+        const filterParamName = decideFilterParamName(name, value);
+        if (!translatedFilters[filterParamName]) {
+          const predicate = translateFilterArgument({
+            isListFilterArgument: isListFilterArgument,
+            parentVariableName: listVariable,
+            field: typeFields[name],
+            filterValue: value,
+            fieldName: name,
+            variableName,
+            filterParam,
+            schemaType,
+            schema
+          });
+          if (predicate) {
+            translatedFilters[filterParamName] = true;
+            predicates.push(`(${predicate})`);
+          }
+        }
+      });
+      return predicates;
+    }, [])
+    .join(' AND ');
+};
+
+export const transformExistentialFilterParams = filterParam => {
+  return Object.entries(filterParam).reduce((acc, [key, value]) => {
+    const parsed = parseFilterArgumentName(key);
+    const filterOperationType = parsed.type;
+    // align with parameter naming scheme used during translation
+    if (isExistentialFilter(filterOperationType, value)) {
+      // name: null -> _name_null: true
+      // company_not: null -> _company_not_null: true
+      key = decideFilterParamName(key, value);
+      value = true;
+    } else if (typeof value === 'object') {
+      // recurse: array filter
+      if (Array.isArray(value)) {
+        value = value.map(filter => {
+          // prevent recursing for scalar list filters
+          if (typeof filter === 'object') {
+            return transformExistentialFilterParams(filter);
+          }
+          return filter;
+        });
+      } else {
+        // recurse: object filter
+        value = transformExistentialFilterParams(value);
+      }
+    }
+    acc[key] = value;
+    return acc;
+  }, {});
 };

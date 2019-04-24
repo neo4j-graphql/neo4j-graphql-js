@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.5.0
+
+- [Initial support for generated filter argument](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/228)
+- Don't include `SKIP` clause in the generated Cypher query if no `offset` parameter is specified.
+- Dependency updates.
+
 ## 2.4.2
 
 - [Fix for querying interface type when no fragment is specified](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/210)

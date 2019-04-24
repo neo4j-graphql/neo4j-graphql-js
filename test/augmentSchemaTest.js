@@ -18,6 +18,39 @@ directive @hasRole(roles: [Role]) on OBJECT | FIELD_DEFINITION
 
 directive @hasScope(scopes: [String]) on OBJECT | FIELD_DEFINITION
 
+input _ActorFilter {
+  AND: [_ActorFilter]
+  OR: [_ActorFilter]
+  userId: ID
+  userId_not: ID
+  userId_in: [ID!]
+  userId_not_in: [ID!]
+  userId_contains: ID
+  userId_not_contains: ID
+  userId_starts_with: ID
+  userId_not_starts_with: ID
+  userId_ends_with: ID
+  userId_not_ends_with: ID
+  name: String
+  name_not: String
+  name_in: [String!]
+  name_not_in: [String!]
+  name_contains: String
+  name_not_contains: String
+  name_starts_with: String
+  name_not_starts_with: String
+  name_ends_with: String
+  name_not_ends_with: String
+  movies: _MovieFilter
+  movies_not: _MovieFilter
+  movies_in: [_MovieFilter!]
+  movies_not_in: [_MovieFilter!]
+  movies_some: _MovieFilter
+  movies_none: _MovieFilter
+  movies_single: _MovieFilter
+  movies_every: _MovieFilter
+}
+
 input _ActorInput {
   userId: ID!
 }
@@ -107,6 +140,15 @@ type _AddUserRatedPayload {
   datetimes: [_Neo4jDateTime]
 }
 
+input _BookFilter {
+  AND: [_BookFilter]
+  OR: [_BookFilter]
+  genre: BookGenre
+  genre_not: BookGenre
+  genre_in: [BookGenre!]
+  genre_not_in: [BookGenre!]
+}
+
 input _BookInput {
   genre: BookGenre!
 }
@@ -116,6 +158,21 @@ enum _BookOrdering {
   genre_desc
   _id_asc
   _id_desc
+}
+
+input _currentUserIdFilter {
+  AND: [_currentUserIdFilter]
+  OR: [_currentUserIdFilter]
+  userId: String
+  userId_not: String
+  userId_in: [String!]
+  userId_not_in: [String!]
+  userId_contains: String
+  userId_not_contains: String
+  userId_starts_with: String
+  userId_not_starts_with: String
+  userId_ends_with: String
+  userId_not_ends_with: String
 }
 
 input _currentUserIdInput {
@@ -139,6 +196,29 @@ input _FriendOfInput {
   localdatetime: _Neo4jLocalDateTimeInput
 }
 
+input _GenreFilter {
+  AND: [_GenreFilter]
+  OR: [_GenreFilter]
+  name: String
+  name_not: String
+  name_in: [String!]
+  name_not_in: [String!]
+  name_contains: String
+  name_not_contains: String
+  name_starts_with: String
+  name_not_starts_with: String
+  name_ends_with: String
+  name_not_ends_with: String
+  movies: _MovieFilter
+  movies_not: _MovieFilter
+  movies_in: [_MovieFilter!]
+  movies_not_in: [_MovieFilter!]
+  movies_some: _MovieFilter
+  movies_none: _MovieFilter
+  movies_single: _MovieFilter
+  movies_every: _MovieFilter
+}
+
 input _GenreInput {
   name: String!
 }
@@ -146,6 +226,95 @@ input _GenreInput {
 enum _GenreOrdering {
   name_desc
   name_asc
+}
+
+input _MovieFilter {
+  AND: [_MovieFilter]
+  OR: [_MovieFilter]
+  movieId: ID
+  movieId_not: ID
+  movieId_in: [ID!]
+  movieId_not_in: [ID!]
+  movieId_contains: ID
+  movieId_not_contains: ID
+  movieId_starts_with: ID
+  movieId_not_starts_with: ID
+  movieId_ends_with: ID
+  movieId_not_ends_with: ID
+  title: String
+  title_not: String
+  title_in: [String!]
+  title_not_in: [String!]
+  title_contains: String
+  title_not_contains: String
+  title_starts_with: String
+  title_not_starts_with: String
+  title_ends_with: String
+  title_not_ends_with: String
+  year: Int
+  year_not: Int
+  year_in: [Int!]
+  year_not_in: [Int!]
+  year_lt: Int
+  year_lte: Int
+  year_gt: Int
+  year_gte: Int
+  plot: String
+  plot_not: String
+  plot_in: [String!]
+  plot_not_in: [String!]
+  plot_contains: String
+  plot_not_contains: String
+  plot_starts_with: String
+  plot_not_starts_with: String
+  plot_ends_with: String
+  plot_not_ends_with: String
+  poster: String
+  poster_not: String
+  poster_in: [String!]
+  poster_not_in: [String!]
+  poster_contains: String
+  poster_not_contains: String
+  poster_starts_with: String
+  poster_not_starts_with: String
+  poster_ends_with: String
+  poster_not_ends_with: String
+  imdbRating: Float
+  imdbRating_not: Float
+  imdbRating_in: [Float!]
+  imdbRating_not_in: [Float!]
+  imdbRating_lt: Float
+  imdbRating_lte: Float
+  imdbRating_gt: Float
+  imdbRating_gte: Float
+  genres: _GenreFilter
+  genres_not: _GenreFilter
+  genres_in: [_GenreFilter!]
+  genres_not_in: [_GenreFilter!]
+  genres_some: _GenreFilter
+  genres_none: _GenreFilter
+  genres_single: _GenreFilter
+  genres_every: _GenreFilter
+  actors: _ActorFilter
+  actors_not: _ActorFilter
+  actors_in: [_ActorFilter!]
+  actors_not_in: [_ActorFilter!]
+  actors_some: _ActorFilter
+  actors_none: _ActorFilter
+  actors_single: _ActorFilter
+  actors_every: _ActorFilter
+  avgStars: Float
+  avgStars_not: Float
+  avgStars_in: [Float!]
+  avgStars_not_in: [Float!]
+  avgStars_lt: Float
+  avgStars_lte: Float
+  avgStars_gt: Float
+  avgStars_gte: Float
+  filmedIn: _StateFilter
+  filmedIn_not: _StateFilter
+  filmedIn_in: [_StateFilter!]
+  filmedIn_not_in: [_StateFilter!]
 }
 
 input _MovieInput {
@@ -346,6 +515,21 @@ type _RemoveUserRatedPayload {
   to: Movie
 }
 
+input _StateFilter {
+  AND: [_StateFilter]
+  OR: [_StateFilter]
+  name: String
+  name_not: String
+  name_in: [String!]
+  name_not_in: [String!]
+  name_contains: String
+  name_not_contains: String
+  name_starts_with: String
+  name_not_starts_with: String
+  name_ends_with: String
+  name_not_ends_with: String
+}
+
 input _StateInput {
   name: String!
 }
@@ -355,6 +539,29 @@ enum _StateOrdering {
   name_desc
   _id_asc
   _id_desc
+}
+
+input _TemporalNodeFilter {
+  AND: [_TemporalNodeFilter]
+  OR: [_TemporalNodeFilter]
+  name: String
+  name_not: String
+  name_in: [String!]
+  name_not_in: [String!]
+  name_contains: String
+  name_not_contains: String
+  name_starts_with: String
+  name_not_starts_with: String
+  name_ends_with: String
+  name_not_ends_with: String
+  temporalNodes: _TemporalNodeFilter
+  temporalNodes_not: _TemporalNodeFilter
+  temporalNodes_in: [_TemporalNodeFilter!]
+  temporalNodes_not_in: [_TemporalNodeFilter!]
+  temporalNodes_some: _TemporalNodeFilter
+  temporalNodes_none: _TemporalNodeFilter
+  temporalNodes_single: _TemporalNodeFilter
+  temporalNodes_every: _TemporalNodeFilter
 }
 
 input _TemporalNodeInput {
@@ -378,6 +585,39 @@ enum _TemporalNodeOrdering {
   computedTimestamp_desc
   _id_asc
   _id_desc
+}
+
+input _UserFilter {
+  AND: [_UserFilter]
+  OR: [_UserFilter]
+  userId: ID
+  userId_not: ID
+  userId_in: [ID!]
+  userId_not_in: [ID!]
+  userId_contains: ID
+  userId_not_contains: ID
+  userId_starts_with: ID
+  userId_not_starts_with: ID
+  userId_ends_with: ID
+  userId_not_ends_with: ID
+  name: String
+  name_not: String
+  name_in: [String!]
+  name_not_in: [String!]
+  name_contains: String
+  name_not_contains: String
+  name_starts_with: String
+  name_not_starts_with: String
+  name_ends_with: String
+  name_not_ends_with: String
+  favorites: _MovieFilter
+  favorites_not: _MovieFilter
+  favorites_in: [_MovieFilter!]
+  favorites_not_in: [_MovieFilter!]
+  favorites_some: _MovieFilter
+  favorites_none: _MovieFilter
+  favorites_single: _MovieFilter
+  favorites_every: _MovieFilter
 }
 
 type _UserFriends {
@@ -428,7 +668,7 @@ type _UserRated {
 type Actor implements Person {
   userId: ID!
   name: String
-  movies(first: Int, offset: Int, orderBy: [_MovieOrdering]): [Movie]
+  movies(first: Int, offset: Int, orderBy: [_MovieOrdering], filter: _MovieFilter): [Movie]
   _id: String
 }
 
@@ -468,7 +708,7 @@ type FriendOf {
 type Genre {
   _id: String
   name: String
-  movies(first: Int = 3, offset: Int = 0, orderBy: [_MovieOrdering]): [Movie]
+  movies(first: Int = 3, offset: Int = 0, orderBy: [_MovieOrdering], filter: _MovieFilter): [Movie]
   highestRatedMovie: Movie
 }
 
@@ -489,13 +729,13 @@ type Movie {
   plot: String
   poster: String
   imdbRating: Float
-  genres(first: Int, offset: Int, orderBy: [_GenreOrdering]): [Genre]
+  genres(first: Int, offset: Int, orderBy: [_GenreOrdering], filter: _GenreFilter): [Genre]
   similar(first: Int = 3, offset: Int = 0, orderBy: [_MovieOrdering]): [Movie]
   mostSimilar: Movie
   degree: Int
-  actors(first: Int = 3, offset: Int = 0, name: String, names: [String], orderBy: [_ActorOrdering]): [Actor]
+  actors(first: Int = 3, offset: Int = 0, name: String, names: [String], orderBy: [_ActorOrdering], filter: _ActorFilter): [Actor]
   avgStars: Float
-  filmedIn: State
+  filmedIn(filter: _StateFilter): State
   scaleRating(scale: Int = 3): Float
   scaleRatingFloat(scale: Float = 1.5): Float
   actorMovies(first: Int, offset: Int, orderBy: [_MovieOrdering]): [Movie]
@@ -562,15 +802,15 @@ interface Person {
 }
 
 type Query {
-  Movie(_id: String, movieId: ID, title: String, year: Int, released: _Neo4jDateTimeInput, plot: String, poster: String, imdbRating: Float, first: Int, offset: Int, orderBy: [_MovieOrdering]): [Movie]
-  MoviesByYear(year: Int, first: Int, offset: Int, orderBy: [_MovieOrdering]): [Movie]
-  MoviesByYears(year: [Int], first: Int, offset: Int, orderBy: [_MovieOrdering]): [Movie]
-  MovieById(movieId: ID!): Movie
-  MovieBy_Id(_id: String!): Movie
+  Movie(_id: String, movieId: ID, title: String, year: Int, released: _Neo4jDateTimeInput, plot: String, poster: String, imdbRating: Float, first: Int, offset: Int, orderBy: [_MovieOrdering], filter: _MovieFilter): [Movie]
+  MoviesByYear(year: Int, first: Int, offset: Int, orderBy: [_MovieOrdering], filter: _MovieFilter): [Movie]
+  MoviesByYears(year: [Int], first: Int, offset: Int, orderBy: [_MovieOrdering], filter: _MovieFilter): [Movie]
+  MovieById(movieId: ID!, filter: _MovieFilter): Movie
+  MovieBy_Id(_id: String!, filter: _MovieFilter): Movie
   GenresBySubstring(substring: String, first: Int, offset: Int, orderBy: [_GenreOrdering]): [Genre]
-  State(first: Int, offset: Int, orderBy: [_StateOrdering]): [State]
-  User(userId: ID, name: String, _id: String, first: Int, offset: Int, orderBy: [_UserOrdering]): [User]
-  Books(first: Int, offset: Int, orderBy: [_BookOrdering]): [Book]
+  State(first: Int, offset: Int, orderBy: [_StateOrdering], filter: _StateFilter): [State]
+  User(userId: ID, name: String, _id: String, first: Int, offset: Int, orderBy: [_UserOrdering], filter: _UserFilter): [User]
+  Books(first: Int, offset: Int, orderBy: [_BookOrdering], filter: _BookFilter): [Book]
   currentUserId: String
   computedBoolean: Boolean
   computedFloat: Float
@@ -580,10 +820,10 @@ type Query {
   computedTemporal: _Neo4jDateTime
   computedObjectWithCypherParams: currentUserId
   customWithArguments(strArg: String, strInputArg: strInput): String
-  Genre(_id: String, name: String, first: Int, offset: Int, orderBy: [_GenreOrdering]): [Genre]
-  Actor(userId: ID, name: String, _id: String, first: Int, offset: Int, orderBy: [_ActorOrdering]): [Actor]
-  Book(genre: BookGenre, _id: String, first: Int, offset: Int, orderBy: [_BookOrdering]): [Book]
-  TemporalNode(datetime: _Neo4jDateTimeInput, name: String, time: _Neo4jTimeInput, date: _Neo4jDateInput, localtime: _Neo4jLocalTimeInput, localdatetime: _Neo4jLocalDateTimeInput, localdatetimes: _Neo4jLocalDateTimeInput, computedTimestamp: String, _id: String, first: Int, offset: Int, orderBy: [_TemporalNodeOrdering]): [TemporalNode]
+  Genre(_id: String, name: String, first: Int, offset: Int, orderBy: [_GenreOrdering], filter: _GenreFilter): [Genre]
+  Actor(userId: ID, name: String, _id: String, first: Int, offset: Int, orderBy: [_ActorOrdering], filter: _ActorFilter): [Actor]
+  Book(genre: BookGenre, _id: String, first: Int, offset: Int, orderBy: [_BookOrdering], filter: _BookFilter): [Book]
+  TemporalNode(datetime: _Neo4jDateTimeInput, name: String, time: _Neo4jTimeInput, date: _Neo4jDateInput, localtime: _Neo4jLocalTimeInput, localdatetime: _Neo4jLocalDateTimeInput, localdatetimes: _Neo4jLocalDateTimeInput, computedTimestamp: String, _id: String, first: Int, offset: Int, orderBy: [_TemporalNodeOrdering], filter: _TemporalNodeFilter): [TemporalNode]
 }
 
 type Rated {
@@ -625,7 +865,7 @@ type TemporalNode {
   localdatetime: _Neo4jLocalDateTime
   localdatetimes: [_Neo4jLocalDateTime]
   computedTimestamp: String
-  temporalNodes(time: _Neo4jTimeInput, date: _Neo4jDateInput, datetime: _Neo4jDateTimeInput, localtime: _Neo4jLocalTimeInput, localdatetime: _Neo4jLocalDateTimeInput, first: Int, offset: Int, orderBy: [_TemporalNodeOrdering]): [TemporalNode]
+  temporalNodes(time: _Neo4jTimeInput, date: _Neo4jDateInput, datetime: _Neo4jDateTimeInput, localtime: _Neo4jLocalTimeInput, localdatetime: _Neo4jLocalDateTimeInput, first: Int, offset: Int, orderBy: [_TemporalNodeOrdering], filter: _TemporalNodeFilter): [TemporalNode]
   _id: String
 }
 
@@ -637,7 +877,7 @@ type User implements Person {
   currentUserId(strArg: String = "Neo4j", strInputArg: strInput): String
   rated(rating: Int, time: _Neo4jTimeInput, date: _Neo4jDateInput, datetime: _Neo4jDateTimeInput, localtime: _Neo4jLocalTimeInput, localdatetime: _Neo4jLocalDateTimeInput): [_UserRated]
   friends: _UserFriendsDirections
-  favorites(first: Int, offset: Int, orderBy: [_MovieOrdering]): [Movie]
+  favorites(first: Int, offset: Int, orderBy: [_MovieOrdering], filter: _MovieFilter): [Movie]
   _id: String
 }
 `;

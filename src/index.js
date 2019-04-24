@@ -37,7 +37,7 @@ export async function neo4jgraphql(
 
   if (debug) {
     console.log(query);
-    console.log(cypherParams);
+    console.log(JSON.stringify(cypherParams, null, 2));
   }
 
   const session = context.driver.session();

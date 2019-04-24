@@ -26,7 +26,8 @@ import {
   relationTypeFieldOnNodeType,
   nodeTypeFieldOnRelationType,
   temporalType,
-  temporalField
+  temporalField,
+  transformExistentialFilterParams
 } from './translate';
 
 export function buildCypherSelection({
@@ -245,7 +246,8 @@ export function buildCypherSelection({
       variableName,
       fieldType,
       filterParams,
-      selections
+      selections,
+      paramIndex
     },
     secondParentSelectionInfo: parentSelectionInfo
   });
@@ -308,14 +310,31 @@ export function buildCypherSelection({
         ...fieldInfo,
         schemaType,
         selections,
+        selectionFilters,
         relDirection,
         relType,
         isInlineFragment,
         interfaceLabel,
         innerSchemaType,
-        temporalClauses
+        temporalClauses,
+        resolveInfo,
+        paramIndex,
+        fieldArgs
       })
     );
+    // post-processing of extracted argument parameter data for
+    // null filters used for existence predicates
+    const parentParamIndex = parentSelectionInfo.paramIndex;
+    const filterParamKey = `${parentParamIndex}_filter`;
+    // gets filter argument from subSelection because they
+    // overwrite those in selection[1] in the below root return
+    const fieldArgumentParams = subSelection[1];
+    const filterParam = fieldArgumentParams[filterParamKey];
+    if (filterParam) {
+      subSelection[1][filterParamKey] = transformExistentialFilterParams(
+        filterParam
+      );
+    }
   } else if (schemaTypeRelation) {
     // Object type field on relation type
     // (from, to, renamed, relation mutation payloads...)
