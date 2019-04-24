@@ -24,7 +24,8 @@ const withSession = (driver, f) => {
  * approach that is based on sampling.
  */
 export default class Neo4jSchemaTree {
-  constructor(driver) {
+  // TODO: config is where method of generating metadata can be passed
+  constructor(driver, config = {}) {
     this.driver = driver;
     this.nodes = {};
     this.rels = {};

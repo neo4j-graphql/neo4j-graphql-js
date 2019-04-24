@@ -11,8 +11,10 @@ const driver = neo4j.driver(
   )
 );
 
+const schemaInferenceOptions = {};
+
 const inferAugmentedSchema = driver => {
-  return inferSchema(driver).then(result => {
+  return inferSchema(driver, schemaInferenceOptions).then(result => {
     console.log('TYPEDEFS:');
     console.log(result.typeDefs);
 

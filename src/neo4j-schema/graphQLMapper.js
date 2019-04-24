@@ -103,7 +103,7 @@ const mapInboundRels = (tree, node) => {
   );
 };
 
-const mapNode = (tree, node) => {
+const mapNode = (tree, node, config) => {
   if (!node instanceof schema.Neo4jNode) {
     throw new Error('Mapped node must be instanceof Neo4jNode');
   }
@@ -144,7 +144,7 @@ const mapNode = (tree, node) => {
   );
 };
 
-const mapRel = (tree, rel) => {
+const mapRel = (tree, rel, config) => {
   if (!rel instanceof schema.Neo4jRelationship) {
     throw new Error('Mapped relationship must be instanceof Neo4jRelationship');
   }
@@ -211,10 +211,6 @@ const mapRel = (tree, rel) => {
     return mapUnivalentRel(rel);
   }
 
-  // TODO - agree on whether multi-valence is supported or not (probably not)
-  // pending type union support, e.g.
-  // union ThingThatBuysStuff = Customer | Company
-  // type BUYS {from: ThingThatBuysStuff}
   console.warn(
     'Relationship',
     rel,
@@ -259,9 +255,9 @@ const generateResolvers = tree => {
  * @param {Neo4jSchemaTree} tree
  * @returns {Object} containing typeDefs and resolvers
  */
-const map = tree => {
-  const nodeTypes = tree.getNodes().map(node => mapNode(tree, node));
-  const relTypes = tree.getRels().map(rel => mapRel(tree, rel));
+const map = (tree, config = {}) => {
+  const nodeTypes = tree.getNodes().map(node => mapNode(tree, node, config));
+  const relTypes = tree.getRels().map(rel => mapRel(tree, rel, config));
   const query = mapQuery(tree);
 
   const typeDefs = nodeTypes.concat(relTypes).join('\n') + '\n\n' + query;
