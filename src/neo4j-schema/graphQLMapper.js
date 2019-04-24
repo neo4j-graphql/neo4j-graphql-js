@@ -122,6 +122,12 @@ const mapNode = (tree, node) => {
     );
   }
 
+  // Normally schema augmentation does this for the user automatically, but we do it
+  // again here for another reason: GraphQL types must have properties, so if in the
+  // schema we end up with a node label that has no normal properties, by adding this
+  // one, we can still generate a type for an otherwise "empty" node label.
+  const idProp = `   _id: Long!\n`;
+
   const propertyDeclarations = propNames.map(
     propName => `   ${propName}: ${node.getProperty(propName).graphQLType}\n`
   );
@@ -132,7 +138,7 @@ const mapNode = (tree, node) => {
 
   return (
     typeDeclaration +
-    propertyDeclarations.join('') +
+    [idProp].concat(propertyDeclarations).join('') +
     relDeclarations.join('') +
     '}\n'
   );
@@ -185,7 +191,7 @@ const mapRel = (tree, rel) => {
     }
 
     // Relationships must be connected, so from/to is always !mandatory.
-    const fromDecl = `  from: ${fromNode.getGraphQLTypeName()}\n`;
+    const fromDecl = `  from: ${fromNode.getGraphQLTypeName()}!\n`;
     const toDecl = `  to: ${toNode.getGraphQLTypeName()}!\n`;
 
     const propertyDeclarations = propNames.map(

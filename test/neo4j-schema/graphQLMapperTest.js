@@ -62,6 +62,10 @@ test('Defines a GraphQL type per node', t => {
   t.true(typeDefs.indexOf('type Product {') > -1);
 });
 
+test('All nodes get an _id property to permit propertyless-node labels to work', t => {
+  t.true(typeDefs.indexOf('_id: Long!') > -1);
+});
+
 test('Defines properties with correct types', t => {
   console.log(typeDefs);
   t.true(typeDefs.indexOf('age: Integer') > -1);
