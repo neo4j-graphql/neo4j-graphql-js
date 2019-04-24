@@ -11,7 +11,9 @@ const driver = neo4j.driver(
   )
 );
 
-const schemaInferenceOptions = {};
+const schemaInferenceOptions = {
+  alwaysIncludeRelationships: true
+};
 
 const inferAugmentedSchema = driver => {
   return inferSchema(driver, schemaInferenceOptions).then(result => {

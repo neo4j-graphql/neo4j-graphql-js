@@ -5,7 +5,7 @@ import _ from 'lodash';
 const relationDirective = (relType, direction) =>
   `@relation(name: "${relType}", direction: "${direction}")`;
 
-const mapOutboundRels = (tree, node) => {
+const mapOutboundRels = (tree, node, config) => {
   const labels = node.getLabels();
 
   return _.flatten(
@@ -21,6 +21,10 @@ const mapOutboundRels = (tree, node) => {
           ).sort();
 
           if (targetLabels.length > 1) {
+            // This situation isn't handled yet, and arises when you have a setup like this:
+            // (:Customer)-[:BUYS]->(:Product)
+            // (:Customer)-[:BUYS]->(:Service)
+            // In this case, without type unions the destination type for :BUYS is ambiguous.
             console.warn(
               `RelID ${
                 rel.id
@@ -35,11 +39,17 @@ const mapOutboundRels = (tree, node) => {
           const propName = rel.getGraphQLTypeName().toLowerCase();
           const propNavigateToNode = `   ${propName}: [${targetType}] ${tag}\n`;
 
-          // TODO -- identify proper naming for "navigate to rel" properties.
+          // If a relationship has props, we should always generate a type and field for
+          // it to provide access to those props.  If it doesn't have props, then only
+          // generate if user has told us to with the config.  Finally -- only univalents
+          // are supported ATM.
+          const shouldIncludeRelLink =
+            rel.isUnivalent() &&
+            (rel.hasProperties() || config.alwaysIncludeRelationships);
           const propNavigateToRel = `   ${rel.getRelationshipType()}_rel: [${rel.getGraphQLTypeName()}]\n`;
 
           return (
-            propNavigateToNode + (rel.isUnivalent() ? propNavigateToRel : '')
+            propNavigateToNode + (shouldIncludeRelLink ? propNavigateToRel : '')
           );
         })
         .filter(x => x); // Remove nulls
@@ -47,7 +57,7 @@ const mapOutboundRels = (tree, node) => {
   );
 };
 
-const mapInboundRels = (tree, node) => {
+const mapInboundRels = (tree, node, config) => {
   const labels = node.getLabels();
 
   return _.flatten(
@@ -132,8 +142,8 @@ const mapNode = (tree, node, config) => {
     propName => `   ${propName}: ${node.getProperty(propName).graphQLType}\n`
   );
 
-  const relDeclarations = mapOutboundRels(tree, node).concat(
-    mapInboundRels(tree, node)
+  const relDeclarations = mapOutboundRels(tree, node, config).concat(
+    mapInboundRels(tree, node, config)
   );
 
   return (
@@ -208,6 +218,14 @@ const mapRel = (tree, rel, config) => {
   };
 
   if (rel.isUnivalent()) {
+    if (!rel.hasProperties() && !config.alwaysIncludeRelationships) {
+      const rt = rel.getRelationshipType();
+      console.info(
+        `Relationship :${rt} has no properties and does not need to be generated`
+      );
+      return '';
+    }
+
     return mapUnivalentRel(rel);
   }
 

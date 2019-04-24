@@ -112,8 +112,8 @@ const schemaTreeToGraphQLSchema = tree => {
  * @param {} driver
  * @returns a GraphQL schema.
  */
-export const inferSchema = driver => {
-  const tree = new Neo4jSchemaTree(driver);
+export const inferSchema = (driver, config = {}) => {
+  const tree = new Neo4jSchemaTree(driver, config);
 
   return tree.initialize().then(graphQLMapper);
 };

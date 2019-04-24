@@ -26,6 +26,10 @@ class Neo4jSchemaEntity {
     return Object.keys(this.properties).sort();
   }
 
+  hasProperties() {
+    return this.getPropertyNames().length > 0;
+  }
+
   getProperty(name) {
     return this.properties[name];
   }
