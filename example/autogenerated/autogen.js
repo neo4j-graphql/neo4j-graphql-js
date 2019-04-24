@@ -1,11 +1,6 @@
-import {
-  augmentTypeDefs,
-  augmentSchema,
-  makeAugmentedSchema
-} from '../../src/index';
-import { ApolloServer, gql, makeExecutableSchema } from 'apollo-server';
+import { makeAugmentedSchema } from '../../src/index';
+import { ApolloServer } from 'apollo-server';
 import { v1 as neo4j } from 'neo4j-driver';
-// import { typeDefs, resolvers } from './movies-schema';
 import { inferSchema } from '../../src/inferSchema';
 
 const driver = neo4j.driver(
@@ -24,20 +19,6 @@ const inferAugmentedSchema = driver => {
     return makeAugmentedSchema({
       typeDefs: result.typeDefs
     });
-    /*
-    console.log('Making executable...');
-    const schema = makeExecutableSchema({
-      typeDefs: augmentTypeDefs(result.typeDefs),
-      resolverValidationOptions: {
-        requireResolversForResolveType: false
-      },
-      resolvers: result.resolvers
-    });
-
-    console.log('Augmenting...');
-    // Add auto-generated mutations
-    return augmentSchema(schema);
-    */
   });
 };
 
@@ -54,11 +35,11 @@ const createServer = augmentedSchema =>
     }
   });
 
+const port = process.env.GRAPHQL_LISTEN_PORT || 3000;
+
 inferAugmentedSchema(driver)
   .then(createServer)
-  .then(server =>
-    server.listen(process.env.GRAPHQL_LISTEN_PORT || 3000, '0.0.0.0')
-  )
+  .then(server => server.listen(port, '0.0.0.0'))
   .then(({ url }) => {
     console.log(`GraphQL API ready at ${url}`);
   })
