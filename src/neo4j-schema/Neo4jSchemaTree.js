@@ -11,6 +11,18 @@ const withSession = (driver, f) => {
   return f(s).finally(() => s.close());
 };
 
+/**
+ * This object harvests Neo4j schema information out of a running instance and organizes
+ * it into a tree structure.
+ *
+ * Currently, it does this by using built-in Neo4j procedures (db.schema.nodeTypeProperties())
+ * This approach has the drawback that it scans the entire database to make sure that the
+ * resulting schema is complete and accurate, which can increase startup times and churn the
+ * page cache, but guarantees 100% accurate results.
+ *
+ * TODO - in a future version, we will make the schema harvesting swappable for an APOC
+ * approach that is based on sampling.
+ */
 export default class Neo4jSchemaTree {
   constructor(driver) {
     this.driver = driver;
