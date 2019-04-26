@@ -31,7 +31,17 @@ test('chooseGraphQLType', t => {
   ];
   sameTypes.forEach(typeName => {
     t.is(types.chooseGraphQLType(prop([typeName], false)), typeName);
+
+    // Repeated types always resolve to the same thing.
+    t.is(
+      types.chooseGraphQLType(prop([typeName, typeName, typeName], false)),
+      typeName
+    );
   });
+
+  // String dominates all other types.
+  const lotsOfTypes = _.cloneDeep(sameTypes);
+  t.is(types.chooseGraphQLType(prop(lotsOfTypes, false)), 'String');
 
   // Array types map to [Type]
   sameTypes.forEach(typeName => {
@@ -59,4 +69,11 @@ test('chooseGraphQLType', t => {
       '[' + mt.graphQL + ']'
     );
   });
+
+  // Domination relationships:
+  // Long is wider than integer, but in the end, that maps to Int in GraphQL
+  t.is(types.chooseGraphQLType(prop(['Long', 'Integer'], false)), 'Int');
+
+  // Float is wider than Integer
+  t.is(types.chooseGraphQLType(prop(['Integer', 'Float'], false)), 'Float');
 });

@@ -51,7 +51,7 @@ const chooseGraphQLType = property => {
     return mapSingleType(options[0]) + mandatoryModifier;
   }
 
-  const has = t => options.indexOf(t) !== -1;
+  const has = (set, item) => set.indexOf(item) !== -1;
 
   return (
     mapSingleType(
@@ -78,9 +78,6 @@ const chooseGraphQLType = property => {
           // In the nonsense cases, you get String at the bottom.
           // Basically, inconsistently typed neo4j properties are a **problem**,
           // and you shouldn't have them.
-          if (has(set, 'String')) {
-            return 'String';
-          }
           // Only a few pairwise combinations make sense...
           if (has(set, 'Long') && has(set, 'Integer')) {
             return 'Long';
