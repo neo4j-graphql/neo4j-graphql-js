@@ -54,7 +54,8 @@ test('chooseGraphQLType', t => {
 
   const mappedTypes = [
     { neo4j: 'Long', graphQL: 'Int' },
-    { neo4j: 'Double', graphQL: 'Float' }
+    { neo4j: 'Double', graphQL: 'Float' },
+    { neo4j: 'Integer', graphQL: 'Int' }
   ];
 
   mappedTypes.forEach(mt => {
