@@ -95,17 +95,37 @@ class Neo4jRelationship extends Neo4jSchemaEntity {
   }
 
   isInboundTo(label) {
-    const linksToThisLabel = this.links.filter(
-      link => link.to.indexOf(label) > -1
-    );
+    const comparisonSet = this._setify(label);
+
+    const linksToThisLabel = this.links.filter(link => {
+      const hereToSet = new Set(link.to);
+      const intersection = this._setIntersection(comparisonSet, hereToSet);
+      return intersection.size === comparisonSet.size;
+    });
     return linksToThisLabel.length > 0;
   }
 
+  _setify(thing) {
+    return new Set(_.isArray(thing) ? thing : [thing]);
+  }
+
+  _setIntersection(a, b) {
+    return new Set([...a].filter(x => b.has(x)));
+  }
+
+  /**
+   * Returns true if the relationship is outbound from a label or set of labels.
+   * @param {*} label a single label or array of labels.
+   */
   isOutboundFrom(label) {
-    const linksFromThisLabel = this.links.filter(
-      link => link.from.indexOf(label) > -1
-    );
-    return linksFromThisLabel.length > 0;
+    const comparisonSet = this._setify(label);
+
+    const linksFromThisLabelSet = this.links.filter(link => {
+      const hereFromSet = new Set(link.from);
+      const intersection = this._setIntersection(comparisonSet, hereFromSet);
+      return intersection.size === comparisonSet.size;
+    });
+    return linksFromThisLabelSet.length > 0;
   }
 
   getToLabels() {

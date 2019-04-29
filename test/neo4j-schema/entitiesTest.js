@@ -63,6 +63,10 @@ test('Neo4j Relationship Links', t => {
     t.false(r.isOutboundFrom(label));
   });
 
+  // isOutboundFrom/isInboundTo should also work on sets.
+  t.true(r.isOutboundFrom(['B', 'A']));
+  t.true(r.isInboundTo(['C', 'D']));
+
   t.deepEqual(r.getToLabels(), ['C', 'D', 'F']);
   t.deepEqual(r.getFromLabels(), ['A', 'B', 'E']);
 
