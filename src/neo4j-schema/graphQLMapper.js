@@ -8,109 +8,98 @@ const relationDirective = (relType, direction) =>
 const mapOutboundRels = (tree, node, config) => {
   const labels = node.getLabels();
 
-  return _.flatten(
-    labels.map(label => {
-      // Figure out which relationships are outbound from any label incident to
-      // this node.
-      const rels = tree.getRels().filter(rel => rel.isOutboundFrom(label));
+  // Figure out which relationships are outbound from any label incident to
+  // this node.
+  const rels = tree.getRels().filter(rel => rel.isOutboundFrom(labels));
 
-      return rels
-        .map(rel => {
-          const targetLabels = _.uniq(
-            _.flatten(rel.links.map(l => l.to))
-          ).sort();
+  return rels
+    .map(rel => {
+      const targetLabels = _.uniq(_.flatten(rel.links.map(l => l.to)).sort());
 
-          if (targetLabels.length > 1) {
-            // This situation isn't handled yet, and arises when you have a setup like this:
-            // (:Customer)-[:BUYS]->(:Product)
-            // (:Customer)-[:BUYS]->(:Service)
-            // In this case, without type unions the destination type for :BUYS is ambiguous.
-            console.warn(
-              `RelID ${
-                rel.id
-              } for label ${label} has > 1 target type (${targetLabels}); skipping`
-            );
-            return null;
-          }
+      if (targetLabels.length > 1) {
+        // This situation isn't handled yet, and arises when you have a setup like this:
+        // (:Customer)-[:BUYS]->(:Product)
+        // (:Customer)-[:BUYS]->(:Service)
+        // In this case, without type unions the destination type for :BUYS is ambiguous.
+        console.warn(
+          `RelID ${
+            rel.id
+          } for label set ${labels} has > 1 target type (${targetLabels}); skipping`
+        );
+        return null;
+      }
 
-          const tag = relationDirective(rel.getRelationshipType(), 'OUT');
-          const targetType = neo4jTypes.label2GraphQLType(targetLabels[0]);
+      const tag = relationDirective(rel.getRelationshipType(), 'OUT');
+      const targetType = neo4jTypes.label2GraphQLType(targetLabels[0]);
 
-          const propName = rel.getGraphQLTypeName().toLowerCase();
-          const propNavigateToNode = `   ${propName}: [${targetType}] ${tag}\n`;
+      const propName = rel.getGraphQLTypeName().toLowerCase();
+      const propNavigateToNode = `   ${propName}: [${targetType}] ${tag}\n`;
 
-          // If a relationship has props, we should always generate a type and field for
-          // it to provide access to those props.  If it doesn't have props, then only
-          // generate if user has told us to with the config.  Finally -- only univalents
-          // are supported ATM.
-          const shouldIncludeRelLink =
-            rel.isUnivalent() &&
-            (rel.hasProperties() || config.alwaysIncludeRelationships);
-          const propNavigateToRel = `   ${rel.getRelationshipType()}_rel: [${rel.getGraphQLTypeName()}]\n`;
+      // If a relationship has props, we should always generate a type and field for
+      // it to provide access to those props.  If it doesn't have props, then only
+      // generate if user has told us to with the config.  Finally -- only univalents
+      // are supported ATM.
+      const shouldIncludeRelLink =
+        rel.isUnivalent() &&
+        (rel.hasProperties() || config.alwaysIncludeRelationships);
+      const propNavigateToRel = `   ${rel.getRelationshipType()}_rel: [${rel.getGraphQLTypeName()}]\n`;
 
-          return (
-            propNavigateToNode + (shouldIncludeRelLink ? propNavigateToRel : '')
-          );
-        })
-        .filter(x => x); // Remove nulls
+      return (
+        propNavigateToNode + (shouldIncludeRelLink ? propNavigateToRel : '')
+      );
     })
-  );
+    .filter(x => x); // Remove nulls
 };
 
 const mapInboundRels = (tree, node, config) => {
   const labels = node.getLabels();
 
-  return _.flatten(
-    labels.map(label => {
-      // Extra criteria: only treat rels this way that are not also outbound from this label.
-      // This prevents us from treating reflexive relationships (User)-[:FRIENDS]->(User) twice.
-      // Such a relationship is considered outbound, **not** inbound (even though it's both)
-      const rels = tree
-        .getRels()
-        .filter(rel => rel.isInboundTo(label) && !rel.isOutboundFrom(label));
+  // Extra criteria: only treat rels this way that are not also outbound from this label.
+  // This prevents us from treating reflexive relationships (User)-[:FRIENDS]->(User) twice.
+  // Such a relationship is considered outbound, **not** inbound (even though it's both)
+  const rels = tree
+    .getRels()
+    .filter(rel => rel.isInboundTo(labels) && !rel.isOutboundFrom(labels));
 
-      // In this scenario:
-      // (:Product)<-[:ORDERED]-(:Customer)
-      // (:Product)<-[:LOOKED_AT]-(:Customer)
-      // We have *2 inbound rels* with the *same origin type* (Customer).
-      // We therefore can't make both types:
-      // customers: [Customer] @rel(...)
-      const namingConflictsExist =
-        _.uniq(rels.map(rel => rel.getFromLabels().join('_'))).length <
-        rels.length;
+  // In this scenario:
+  // (:Product)<-[:ORDERED]-(:Customer)
+  // (:Product)<-[:LOOKED_AT]-(:Customer)
+  // We have *2 inbound rels* with the *same origin type* (Customer).
+  // We therefore can't make both types:
+  // customers: [Customer] @rel(...)
+  const namingConflictsExist =
+    _.uniq(rels.map(rel => rel.getFromLabels().join('_'))).length < rels.length;
 
-      return rels
-        .map(rel => {
-          const originLabels = rel.getFromLabels();
+  return rels
+    .map(rel => {
+      const originLabels = rel.getFromLabels();
 
-          if (originLabels.length > 1) {
-            console.warn(
-              `RelID ${
-                rel.id
-              } for label ${label} has > 1 origin type (${originLabels}); skipipng`
-            );
-            return null;
-          }
+      if (originLabels.length > 1) {
+        console.warn(
+          `RelID ${
+            rel.id
+          } for label set ${labels} has > 1 origin type (${originLabels}); skipping`
+        );
+        return null;
+      }
 
-          const tag = relationDirective(rel.getRelationshipType(), 'IN');
+      const tag = relationDirective(rel.getRelationshipType(), 'IN');
 
-          const lc = s => s.toLowerCase();
-          const plural = s => `${s}s`;
+      const lc = s => s.toLowerCase();
+      const plural = s => `${s}s`;
 
-          // Suppose it's (:Product)<-[:ORDERED]-(:Customer).  If there's a naming
-          // conflict to be avoided we'll call the rel customers_ORDERED.
-          // If no conflict, it's just 'customers'.
-          const originType = neo4jTypes.label2GraphQLType(originLabels[0]);
+      // Suppose it's (:Product)<-[:ORDERED]-(:Customer).  If there's a naming
+      // conflict to be avoided we'll call the rel customers_ORDERED.
+      // If no conflict, it's just 'customers'.
+      const originType = neo4jTypes.label2GraphQLType(originLabels[0]);
 
-          const propName = namingConflictsExist
-            ? lc(plural(originType)) + '_' + lc(rel.getGraphQLTypeName())
-            : lc(plural(originType));
+      const propName = namingConflictsExist
+        ? lc(plural(originType)) + '_' + lc(rel.getGraphQLTypeName())
+        : lc(plural(originType));
 
-          return `   ${propName}: [${originType}] ${tag}\n`;
-        })
-        .filter(x => x);
+      return `   ${propName}: [${originType}] ${tag}\n`;
     })
-  );
+    .filter(x => x);
 };
 
 const mapNode = (tree, node, config) => {
