@@ -1,19 +1,20 @@
-import { augmentTypeDefs, augmentSchema } from '../../src/index';
-import { ApolloServer, gql, makeExecutableSchema } from 'apollo-server';
+import { makeAugmentedSchema } from '../../src/index';
+import { ApolloServer } from 'apollo-server-express';
+import express from 'express';
+import bodyParser from 'body-parser';
 import { v1 as neo4j } from 'neo4j-driver';
 import { typeDefs, resolvers } from './movies-schema';
-import { inferSchema } from '../../src/inferSchema';
 
-const schema = makeExecutableSchema({
-  typeDefs: augmentTypeDefs(typeDefs),
+const schema = makeAugmentedSchema({
+  typeDefs,
+  resolvers,
   resolverValidationOptions: {
     requireResolversForResolveType: false
-  },
-  resolvers
+  }
 });
 
 // Add auto-generated mutations
-const augmentedSchema = augmentSchema(schema);
+//const augmentedSchema = augmentSchema(schema);
 
 const driver = neo4j.driver(
   process.env.NEO4J_URI || 'bolt://localhost:7687',
@@ -23,14 +24,18 @@ const driver = neo4j.driver(
   )
 );
 
-inferSchema(driver)
-  .then(result => {
-    console.log(result);
-  })
-  .catch(err => console.error(err));
+const app = express();
+app.use(bodyParser.json());
+
+const checkErrorHeaderMiddleware = async (req, res, next) => {
+  req.error = req.headers['x-error'];
+  next();
+};
+
+app.use('*', checkErrorHeaderMiddleware);
 
 const server = new ApolloServer({
-  schema: augmentedSchema,
+  schema,
   // inject the request object into the context to support middleware
   // inject the Neo4j driver instance to handle database call
   context: ({ req }) => {
@@ -41,8 +46,5 @@ const server = new ApolloServer({
   }
 });
 
-server
-  .listen(process.env.GRAPHQL_LISTEN_PORT || 3000, '0.0.0.0')
-  .then(({ url }) => {
-    console.log(`GraphQL API ready at ${url}`);
-  });
+server.applyMiddleware({ app, path: '/' });
+app.listen(3000, '0.0.0.0');
