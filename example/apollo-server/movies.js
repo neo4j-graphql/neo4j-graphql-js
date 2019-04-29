@@ -2,7 +2,6 @@ import { augmentTypeDefs, augmentSchema } from '../../src/index';
 import { ApolloServer, gql, makeExecutableSchema } from 'apollo-server';
 import { v1 as neo4j } from 'neo4j-driver';
 import { typeDefs, resolvers } from './movies-schema';
-import { inferSchema } from '../../src/inferSchema';
 
 const schema = makeExecutableSchema({
   typeDefs: augmentTypeDefs(typeDefs),
@@ -22,12 +21,6 @@ const driver = neo4j.driver(
     process.env.NEO4J_PASSWORD || 'letmein'
   )
 );
-
-inferSchema(driver)
-  .then(result => {
-    console.log(result);
-  })
-  .catch(err => console.error(err));
 
 const server = new ApolloServer({
   schema: augmentedSchema,
