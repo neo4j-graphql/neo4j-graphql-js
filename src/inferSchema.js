@@ -1,6 +1,4 @@
 import _ from 'lodash';
-import Neo4jSchemaTree from './neo4j-schema/Neo4jSchemaTree';
-import graphQLMapper from './neo4j-schema/graphQLMapper';
 
 // OKAPI formats it as ':`Foo`' and we want 'Foo'
 const extractRelationshipType = relTypeName =>
@@ -105,15 +103,4 @@ const schemaTreeToGraphQLSchema = tree => {
 
   const schema = nodeTypes.join('\n');
   return schema;
-};
-
-/**
- * Infer a GraphQL schema by inspecting the contents of a Neo4j instance.
- * @param {} driver
- * @returns a GraphQL schema.
- */
-export const inferSchema = (driver, config = {}) => {
-  const tree = new Neo4jSchemaTree(driver, config);
-
-  return tree.initialize().then(graphQLMapper);
 };

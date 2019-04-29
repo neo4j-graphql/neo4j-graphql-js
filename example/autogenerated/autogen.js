@@ -1,7 +1,6 @@
-import { makeAugmentedSchema } from '../../src/index';
+import { makeAugmentedSchema, inferSchema } from '../../src/index';
 import { ApolloServer } from 'apollo-server';
 import { v1 as neo4j } from 'neo4j-driver';
-import { inferSchema } from '../../src/inferSchema';
 
 const driver = neo4j.driver(
   process.env.NEO4J_URI || 'bolt://localhost:7687',
