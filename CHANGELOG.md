@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.6.0
+
+- [Infer GraphQL type definitions from existing Neo4j database](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/223). See [`inferSchema` in API docs.](https://grandstack.io/docs/neo4j-graphql-js-api.html#inferschemadriver-options-promise)
+
 ## 2.5.0
 
 - [Initial support for generated filter argument](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/228)
