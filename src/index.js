@@ -16,6 +16,8 @@ import {
 } from './augment';
 import { checkRequestError } from './auth';
 import { translateMutation, translateQuery } from './translate';
+import Neo4jSchemaTree from './neo4j-schema/Neo4jSchemaTree';
+import graphQLMapper from './neo4j-schema/graphQLMapper';
 
 export async function neo4jgraphql(
   object,
@@ -37,7 +39,7 @@ export async function neo4jgraphql(
 
   if (debug) {
     console.log(query);
-    console.log(cypherParams);
+    console.log(JSON.stringify(cypherParams, null, 2));
   }
 
   const session = context.driver.session();
@@ -160,4 +162,15 @@ export const augmentTypeDefs = (typeDefs, config) => {
   // adds managed types; tepmoral, spatial, etc.
   typeMap = addTemporalTypes(typeMap, config);
   return printTypeMap(typeMap);
+};
+
+/**
+ * Infer a GraphQL schema by inspecting the contents of a Neo4j instance.
+ * @param {} driver
+ * @returns a GraphQL schema.
+ */
+export const inferSchema = (driver, config = {}) => {
+  const tree = new Neo4jSchemaTree(driver, config);
+
+  return tree.initialize().then(graphQLMapper);
 };

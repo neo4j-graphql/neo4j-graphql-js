@@ -7,8 +7,14 @@ import { typeDefs, resolvers } from './movies-schema';
 
 const schema = makeAugmentedSchema({
   typeDefs,
-  resolvers
+  resolvers,
+  resolverValidationOptions: {
+    requireResolversForResolveType: false
+  }
 });
+
+// Add auto-generated mutations
+//const augmentedSchema = augmentSchema(schema);
 
 const driver = neo4j.driver(
   process.env.NEO4J_URI || 'bolt://localhost:7687',

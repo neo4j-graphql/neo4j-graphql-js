@@ -93,10 +93,15 @@ references:
       name: Wait for GraphQL server to be available
       command: ./scripts/wait-for-graphql.sh
 
+  parse_tck: &parse_tck
+    run:
+      name: Parse TCK and generate TCK tests to be run
+      command: npm run parse-tck
+
   run_tests: &run_tests
     run:
       name: Run Tests
-      command: ./node_modules/.bin/nyc ./node_modules/.bin/ava test/*.js
+      command: ./node_modules/.bin/nyc ./node_modules/.bin/ava test/*.js test/neo4j-schema/*Test.js
 
   env_neo4j34ee: &env_neo4j34ee
       NEO4J_DIST: 'enterprise'
@@ -110,13 +115,13 @@ references:
       DATASTORE_VERSION: '3_4'
   env_neo4j35ce: &env_neo4j35ce
       NEO4J_DIST: 'community'
-      NEO4J_VERSION: '3.5.0'
-      APOC_VERSION: '3.5.0.1'
+      NEO4J_VERSION: '3.5.4'
+      APOC_VERSION: '3.5.0.2'
       DATASTORE_VERSION: '3_5'
   env_neo4j35ee: &env_neo4j35ee
       NEO4J_DIST: 'enterprise'
-      NEO4J_VERSION: '3.5.0'
-      APOC_VERSION: '3.5.0.1'
+      NEO4J_VERSION: '3.5.4'
+      APOC_VERSION: '3.5.0.2'
       DATASTORE_VERSION: '3_5'
 
   install_neo4j_steps: &install_neo4j_steps
@@ -133,6 +138,7 @@ references:
     - *start_neo4j
     - *start_graphql
     - *wait_for_graphql
+    - *parse_tck
     - *run_tests
     - *report_coverage
 
