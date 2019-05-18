@@ -836,7 +836,8 @@ const customMutation = ({
     variableName,
     schemaType,
     resolveInfo,
-    paramIndex: 1
+    paramIndex: 1,
+    cypherParams
   });
   const isScalarType = isGraphqlScalarType(schemaType);
   const temporalType = isTemporalType(schemaType.name);
