@@ -795,11 +795,14 @@ const nodeQuery = ({
 
   const predicate = predicateClauses ? `WHERE ${predicateClauses} ` : '';
 
+  const orderByClause = orderByValue
+    ? `WITH ${safeVariableName} ${orderByValue}`
+    : '';
   let query =
     `MATCH (${safeVariableName}:${safeLabelName}${
       argString ? ` ${argString}` : ''
     }) ${predicate}` +
-    `RETURN ${safeVariableName} {${subQuery}} AS ${safeVariableName}${orderByValue}${outerSkipLimit}`;
+    `${orderByClause} RETURN ${safeVariableName} {${subQuery}} AS ${safeVariableName}${outerSkipLimit}`;
 
   return [query, params];
 };
