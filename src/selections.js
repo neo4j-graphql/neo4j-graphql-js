@@ -10,7 +10,7 @@ import {
   isGraphqlScalarType,
   extractSelections,
   relationDirective,
-  getRelationTypeDirectiveArgs,
+  getRelationTypeDirective,
   decideNestedVariableName,
   safeLabel,
   safeVar,
@@ -26,8 +26,7 @@ import {
   relationTypeFieldOnNodeType,
   nodeTypeFieldOnRelationType,
   temporalType,
-  temporalField,
-  transformExistentialFilterParams
+  temporalField
 } from './translate';
 
 export function buildCypherSelection({
@@ -45,7 +44,7 @@ export function buildCypherSelection({
     return [initial, {}];
   }
   selections = removeIgnoredFields(schemaType, selections);
-  const selectionFilters = filtersFromSelections(
+  let selectionFilters = filtersFromSelections(
     selections,
     resolveInfo.variableValues
   );
@@ -64,6 +63,7 @@ export function buildCypherSelection({
     selections: tailSelections,
     cypherParams,
     variableName,
+    paramIndex,
     schemaType,
     resolveInfo,
     parentSelectionInfo,
@@ -171,7 +171,7 @@ export function buildCypherSelection({
   // Main control flow
   if (isGraphqlScalarType(innerSchemaType)) {
     if (customCypher) {
-      if (getRelationTypeDirectiveArgs(schemaTypeAstNode)) {
+      if (getRelationTypeDirective(schemaTypeAstNode)) {
         variableName = `${variableName}_relation`;
       }
       return recurse({
@@ -209,10 +209,10 @@ export function buildCypherSelection({
     innerSchemaType && typeMap[innerSchemaType]
       ? typeMap[innerSchemaType].astNode
       : {};
-  const innerSchemaTypeRelation = getRelationTypeDirectiveArgs(
+  const innerSchemaTypeRelation = getRelationTypeDirective(
     innerSchemaTypeAstNode
   );
-  const schemaTypeRelation = getRelationTypeDirectiveArgs(schemaTypeAstNode);
+  const schemaTypeRelation = getRelationTypeDirective(schemaTypeAstNode);
   const { name: relType, direction: relDirection } = relationDirective(
     schemaType,
     fieldName
@@ -233,7 +233,7 @@ export function buildCypherSelection({
     resolveInfo.fragments
   );
 
-  const subSelection = recurse({
+  let subSelection = recurse({
     initial: '',
     selections: subSelections,
     variableName: nestedVariable,
@@ -305,64 +305,63 @@ export function buildCypherSelection({
       nestedVariable,
       temporalArgs
     );
-    selection = recurse(
-      relationFieldOnNodeType({
-        ...fieldInfo,
-        schemaType,
-        selections,
-        selectionFilters,
-        relDirection,
-        relType,
-        isInlineFragment,
-        interfaceLabel,
-        innerSchemaType,
-        temporalClauses,
-        resolveInfo,
-        paramIndex,
-        fieldArgs
-      })
-    );
-    // post-processing of extracted argument parameter data for
-    // null filters used for existence predicates
-    const parentParamIndex = parentSelectionInfo.paramIndex;
-    const filterParamKey = `${parentParamIndex}_filter`;
-    // gets filter argument from subSelection because they
-    // overwrite those in selection[1] in the below root return
-    const fieldArgumentParams = subSelection[1];
-    const filterParam = fieldArgumentParams[filterParamKey];
-    if (filterParam) {
-      subSelection[1][filterParamKey] = transformExistentialFilterParams(
-        filterParam
-      );
-    }
+    // translate field, arguments and argument params
+    const translation = relationFieldOnNodeType({
+      ...fieldInfo,
+      schemaType,
+      selections,
+      selectionFilters,
+      relDirection,
+      relType,
+      isInlineFragment,
+      interfaceLabel,
+      innerSchemaType,
+      temporalClauses,
+      resolveInfo,
+      paramIndex,
+      fieldArgs
+    });
+    selection = recurse(translation.selection);
+    // set subSelection to update field argument params
+    subSelection = translation.subSelection;
   } else if (schemaTypeRelation) {
     // Object type field on relation type
     // (from, to, renamed, relation mutation payloads...)
-    selection = recurse(
-      nodeTypeFieldOnRelationType({
-        fieldInfo,
-        schemaTypeRelation,
-        innerSchemaType,
-        isInlineFragment,
-        interfaceLabel,
-        paramIndex,
-        schemaType,
-        filterParams,
-        temporalArgs,
-        parentSelectionInfo
-      })
-    );
+    const translation = nodeTypeFieldOnRelationType({
+      fieldInfo,
+      schemaTypeRelation,
+      innerSchemaType,
+      isInlineFragment,
+      interfaceLabel,
+      paramIndex,
+      schemaType,
+      filterParams,
+      temporalArgs,
+      parentSelectionInfo,
+      resolveInfo,
+      selectionFilters,
+      fieldArgs
+    });
+    selection = recurse(translation.selection);
+    // set subSelection to update field argument params
+    subSelection = translation.subSelection;
   } else if (innerSchemaTypeRelation) {
     // Relation type field on node type (field payload types...)
-    selection = recurse(
-      relationTypeFieldOnNodeType({
-        ...fieldInfo,
-        innerSchemaTypeRelation,
-        schemaType,
-        filterParams,
-        temporalArgs
-      })
-    );
+    const translation = relationTypeFieldOnNodeType({
+      ...fieldInfo,
+      innerSchemaTypeRelation,
+      schemaType,
+      innerSchemaType,
+      filterParams,
+      temporalArgs,
+      resolveInfo,
+      selectionFilters,
+      paramIndex,
+      fieldArgs
+    });
+    selection = recurse(translation.selection);
+    // set subSelection to update field argument params
+    subSelection = translation.subSelection;
   }
   return [selection[0], { ...selection[1], ...subSelection[1] }];
 }

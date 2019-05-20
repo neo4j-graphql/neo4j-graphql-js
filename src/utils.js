@@ -271,7 +271,7 @@ export const isNodeType = astNode => {
 
 export const isRelationTypePayload = schemaType => {
   const astNode = schemaType ? schemaType.astNode : undefined;
-  const directive = astNode ? getRelationTypeDirectiveArgs(astNode) : undefined;
+  const directive = astNode ? getRelationTypeDirective(astNode) : undefined;
   return astNode && astNode.fields && directive
     ? astNode.fields.find(e => {
         return e.name.value === directive.from || e.name.value === directive.to;
@@ -530,11 +530,13 @@ export const buildCypherParameters = ({
 const directiveWithArgs = (directiveName, args) => (schemaType, fieldName) => {
   function fieldDirective(schemaType, fieldName, directiveName) {
     return !isGraphqlScalarType(schemaType)
-      ? schemaType
-          .getFields()
-          [fieldName].astNode.directives.find(
-            e => e.name.value === directiveName
-          )
+      ? schemaType.getFields() &&
+          schemaType.getFields()[fieldName] &&
+          schemaType
+            .getFields()
+            [fieldName].astNode.directives.find(
+              e => e.name.value === directiveName
+            )
       : {};
   }
 
@@ -651,7 +653,7 @@ function argumentValue(selection, name, variableValues) {
   }
 }
 
-export const getRelationTypeDirectiveArgs = relationshipType => {
+export const getRelationTypeDirective = relationshipType => {
   const directive =
     relationshipType && relationshipType.directives
       ? relationshipType.directives.find(e => e.name.value === 'relation')
@@ -912,17 +914,18 @@ export const splitSelectionParameters = (
 export const isTemporalField = (schemaType, name) => {
   const type = schemaType ? schemaType.name : '';
   return (
-    (isTemporalType(type) && name === 'year') ||
-    name === 'month' ||
-    name === 'day' ||
-    name === 'hour' ||
-    name === 'minute' ||
-    name === 'second' ||
-    name === 'microsecond' ||
-    name === 'millisecond' ||
-    name === 'nanosecond' ||
-    name === 'timezone' ||
-    name === 'formatted'
+    isTemporalType(type) &&
+    (name === 'year' ||
+      name === 'month' ||
+      name === 'day' ||
+      name === 'hour' ||
+      name === 'minute' ||
+      name === 'second' ||
+      name === 'microsecond' ||
+      name === 'millisecond' ||
+      name === 'nanosecond' ||
+      name === 'timezone' ||
+      name === 'formatted')
   );
 };
 
@@ -937,28 +940,25 @@ export const isTemporalType = name => {
 };
 
 export const getTemporalCypherConstructor = fieldAst => {
-  let cypherFunction = undefined;
   const type = fieldAst ? _getNamedType(fieldAst.type).name.value : '';
-  switch (type) {
+  return decideTemporalConstructor(type);
+};
+
+export const decideTemporalConstructor = typeName => {
+  switch (typeName) {
     case '_Neo4jTimeInput':
-      cypherFunction = 'time';
-      break;
+      return 'time';
     case '_Neo4jDateInput':
-      cypherFunction = 'date';
-      break;
+      return 'date';
     case '_Neo4jDateTimeInput':
-      cypherFunction = 'datetime';
-      break;
+      return 'datetime';
     case '_Neo4jLocalTimeInput':
-      cypherFunction = 'localtime';
-      break;
+      return 'localtime';
     case '_Neo4jLocalDateTimeInput':
-      cypherFunction = 'localdatetime';
-      break;
+      return 'localdatetime';
     default:
-      break;
+      return '';
   }
-  return cypherFunction;
 };
 
 export const getTemporalArguments = args => {

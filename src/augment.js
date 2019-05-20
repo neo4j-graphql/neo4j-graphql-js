@@ -9,7 +9,7 @@ import {
   _getNamedType,
   getPrimaryKey,
   getFieldDirective,
-  getRelationTypeDirectiveArgs,
+  getRelationTypeDirective,
   getRelationMutationPayloadFieldsFromAst,
   getRelationDirection,
   getRelationName,
@@ -441,36 +441,206 @@ const possiblyAddQuery = (astNode, typeMap, resolvers, rootTypes, config) => {
 
 const possiblyAddFilterInput = (astNode, typeMap, resolvers, config) => {
   const typeName = astNode.name.value;
-  if (isNodeType(astNode) && shouldAugmentType(config, 'query', typeName)) {
-    const name = `_${astNode.name.value}Filter`;
-    const filterFields = buildFilterFields(
-      name,
-      astNode,
-      typeMap,
-      resolvers,
-      config
-    );
-    if (typeMap[name] === undefined && filterFields.length) {
-      typeMap[name] = parse(`input ${name} {${filterFields.join('')}}`);
+  let filterType = `_${typeName}Filter`;
+  const filterFields = [];
+  if (shouldAugmentType(config, 'query', typeName)) {
+    if (isNodeType(astNode)) {
+      astNode.fields.forEach(t => {
+        const fieldName = t.name.value;
+        const isList = _isListType(t);
+        let valueTypeName = _getNamedType(t).name.value;
+        const valueType = typeMap[valueTypeName];
+        if (
+          fieldIsNotIgnored(astNode, t, resolvers) &&
+          isNotSystemField(fieldName) &&
+          !getFieldDirective(t, 'cypher')
+        ) {
+          const relatedType = typeMap[valueTypeName];
+          const relationTypeDirective = getRelationTypeDirective(relatedType);
+          let isRelationType = false;
+          let isReflexiveRelationType = false;
+          let relationFilterName = `_${typeName}${valueTypeName}Filter`;
+          const reflexiveFilterName = `_${valueTypeName}DirectionsFilter`;
+          if (relationTypeDirective) {
+            isRelationType = true;
+            let fromType = '';
+            let toType = '';
+            fromType = relationTypeDirective.from;
+            toType = relationTypeDirective.to;
+            if (fromType === toType) {
+              isReflexiveRelationType = true;
+              if (typeMap[reflexiveFilterName] === undefined) {
+                relationFilterName = `_${valueTypeName}Filter`;
+                typeMap[reflexiveFilterName] = parse(`
+                  input ${reflexiveFilterName} {
+                    from: ${relationFilterName}
+                    to: ${relationFilterName}
+                  }
+                `);
+                const relationTypeFilters = buildFilterFields({
+                  filterType: relationFilterName,
+                  astNode: relatedType,
+                  typeMap,
+                  resolvers,
+                  config
+                });
+                relationTypeFilters.push(`
+                  ${toType}: _${toType}Filter
+                `);
+                typeMap[relationFilterName] = parse(
+                  `input ${relationFilterName} {${relationTypeFilters.join(
+                    ''
+                  )}}`
+                );
+              }
+            } else {
+              if (typeMap[relationFilterName] === undefined) {
+                const relationTypeFilters = buildFilterFields({
+                  filterType: relationFilterName,
+                  astNode: relatedType,
+                  typeMap,
+                  resolvers,
+                  config
+                });
+                let relatedTypeName = toType;
+                if (typeName === toType) {
+                  relatedTypeName = fromType;
+                }
+                relationTypeFilters.push(`
+                  ${relatedTypeName}: _${relatedTypeName}Filter
+                `);
+                typeMap[relationFilterName] = parse(
+                  `input ${relationFilterName} {${relationTypeFilters.join(
+                    ''
+                  )}}`
+                );
+              }
+            }
+          }
+          if (!isList) {
+            if (valueTypeName === 'ID' || valueTypeName == 'String') {
+              filterFields.push(`${fieldName}: ${valueTypeName}
+                ${fieldName}_not: ${valueTypeName}
+                ${fieldName}_in: [${valueTypeName}!]
+                ${fieldName}_not_in: [${valueTypeName}!]
+                ${fieldName}_contains: ${valueTypeName}
+                ${fieldName}_not_contains: ${valueTypeName}
+                ${fieldName}_starts_with: ${valueTypeName}
+                ${fieldName}_not_starts_with: ${valueTypeName}
+                ${fieldName}_ends_with: ${valueTypeName}
+                ${fieldName}_not_ends_with: ${valueTypeName}
+              `);
+            } else if (
+              valueTypeName === 'Int' ||
+              valueTypeName === 'Float' ||
+              isTemporalType(valueTypeName)
+            ) {
+              if (isTemporalType(valueTypeName)) {
+                valueTypeName = `${valueTypeName}Input`;
+              }
+              filterFields.push(`
+                ${fieldName}: ${valueTypeName}
+                ${fieldName}_not: ${valueTypeName}
+                ${fieldName}_in: [${valueTypeName}!]
+                ${fieldName}_not_in: [${valueTypeName}!]
+                ${fieldName}_lt: ${valueTypeName}
+                ${fieldName}_lte: ${valueTypeName}
+                ${fieldName}_gt: ${valueTypeName}
+                ${fieldName}_gte: ${valueTypeName}
+              `);
+            } else if (valueTypeName === 'Boolean') {
+              filterFields.push(`
+                ${fieldName}: ${valueTypeName}
+                ${fieldName}_not: ${valueTypeName}
+              `);
+            } else if (isKind(valueType, 'EnumTypeDefinition')) {
+              filterFields.push(`
+                ${fieldName}: ${valueTypeName}
+                ${fieldName}_not: ${valueTypeName}
+                ${fieldName}_in: [${valueTypeName}!]
+                ${fieldName}_not_in: [${valueTypeName}!]
+              `);
+            } else if (
+              isKind(valueType, 'ObjectTypeDefinition') &&
+              shouldAugmentType(config, 'query', valueTypeName)
+            ) {
+              let relationFilterType = '';
+              if (getFieldDirective(t, 'relation')) {
+                relationFilterType = `_${valueTypeName}Filter`;
+              } else if (isReflexiveRelationType) {
+                relationFilterType = reflexiveFilterName;
+              } else if (isRelationType) {
+                relationFilterType = relationFilterName;
+              }
+              if (relationFilterType) {
+                filterFields.push(`
+                  ${fieldName}: ${relationFilterType}
+                  ${fieldName}_not: ${relationFilterType}
+                  ${fieldName}_in: [${relationFilterType}!]
+                  ${fieldName}_not_in: [${relationFilterType}!]
+                `);
+              }
+            }
+          } else if (
+            isKind(valueType, 'ObjectTypeDefinition') &&
+            shouldAugmentType(config, 'query', valueTypeName)
+          ) {
+            let relationFilterType = '';
+            if (getFieldDirective(t, 'relation')) {
+              relationFilterType = `_${valueTypeName}Filter`;
+            } else if (isReflexiveRelationType) {
+              relationFilterType = reflexiveFilterName;
+            } else if (isRelationType) {
+              relationFilterType = relationFilterName;
+            }
+            if (relationFilterType) {
+              filterFields.push(`
+                ${fieldName}: ${relationFilterType}
+                ${fieldName}_not: ${relationFilterType}
+                ${fieldName}_in: [${relationFilterType}!]
+                ${fieldName}_not_in: [${relationFilterType}!]
+                ${fieldName}_some: ${relationFilterType}
+                ${fieldName}_none: ${relationFilterType}
+                ${fieldName}_single: ${relationFilterType}
+                ${fieldName}_every: ${relationFilterType}
+              `);
+            }
+          }
+        }
+      });
     }
-    // if existent, we could merge with provided custom filter here
+  }
+  if (filterFields.length) {
+    filterFields.unshift(`
+    AND: [${filterType}!]
+    OR: [${filterType}!]
+  `);
+  }
+  if (typeMap[filterType] === undefined && filterFields.length) {
+    typeMap[filterType] = parse(
+      `input ${filterType} {${filterFields.join('')}}`
+    );
   }
   return typeMap;
 };
 
-const buildFilterFields = (filterType, astNode, typeMap, resolvers, config) => {
-  const fields = astNode.fields;
-  const filterFields = fields.reduce((acc, t) => {
+const buildFilterFields = ({
+  filterType,
+  astNode,
+  typeMap,
+  resolvers,
+  config
+}) => {
+  const filterFields = astNode.fields.reduce((filters, t) => {
     const fieldName = t.name.value;
-    const valueTypeName = _getNamedType(t).name.value;
     const isList = _isListType(t);
     const valueType = typeMap[valueTypeName];
+    let valueTypeName = _getNamedType(t).name.value;
     if (
       fieldIsNotIgnored(astNode, t, resolvers) &&
       isNotSystemField(fieldName) &&
       !getFieldDirective(t, 'cypher')
     ) {
-      const filters = [];
       if (!isList) {
         if (valueTypeName === 'ID' || valueTypeName == 'String') {
           filters.push(`${fieldName}: ${valueTypeName}
@@ -484,7 +654,14 @@ const buildFilterFields = (filterType, astNode, typeMap, resolvers, config) => {
             ${fieldName}_ends_with: ${valueTypeName}
             ${fieldName}_not_ends_with: ${valueTypeName}
           `);
-        } else if (valueTypeName === 'Int' || valueTypeName === 'Float') {
+        } else if (
+          valueTypeName === 'Int' ||
+          valueTypeName === 'Float' ||
+          isTemporalType(valueTypeName)
+        ) {
+          if (isTemporalType(valueTypeName)) {
+            valueTypeName = `${valueTypeName}Input`;
+          }
           filters.push(`
             ${fieldName}: ${valueTypeName}
             ${fieldName}_not: ${valueTypeName}
@@ -494,7 +671,7 @@ const buildFilterFields = (filterType, astNode, typeMap, resolvers, config) => {
             ${fieldName}_lte: ${valueTypeName}
             ${fieldName}_gt: ${valueTypeName}
             ${fieldName}_gte: ${valueTypeName}
-            `);
+          `);
         } else if (valueTypeName === 'Boolean') {
           filters.push(`
             ${fieldName}: ${valueTypeName}
@@ -509,45 +686,43 @@ const buildFilterFields = (filterType, astNode, typeMap, resolvers, config) => {
           `);
         } else if (
           isKind(valueType, 'ObjectTypeDefinition') &&
-          getFieldDirective(t, 'relation') &&
           shouldAugmentType(config, 'query', valueTypeName)
         ) {
-          // one-to-one @relation field
+          if (getFieldDirective(t, 'relation')) {
+            // one-to-one @relation field
+            filters.push(`
+              ${fieldName}: _${valueTypeName}Filter
+              ${fieldName}_not: _${valueTypeName}Filter
+              ${fieldName}_in: [_${valueTypeName}Filter!]
+              ${fieldName}_not_in: [_${valueTypeName}Filter!]
+            `);
+          }
+        }
+      } else if (
+        isKind(valueType, 'ObjectTypeDefinition') &&
+        shouldAugmentType(config, 'query', valueTypeName)
+      ) {
+        if (getFieldDirective(t, 'relation')) {
           filters.push(`
             ${fieldName}: _${valueTypeName}Filter
             ${fieldName}_not: _${valueTypeName}Filter
             ${fieldName}_in: [_${valueTypeName}Filter!]
             ${fieldName}_not_in: [_${valueTypeName}Filter!]
-          `);
-        }
-      } else if (
-        isKind(valueType, 'ObjectTypeDefinition') &&
-        getFieldDirective(t, 'relation') &&
-        shouldAugmentType(config, 'query', valueTypeName)
-      ) {
-        // one-to-many @relation field
-        filters.push(`
-          ${fieldName}: _${valueTypeName}Filter
-          ${fieldName}_not: _${valueTypeName}Filter
-          ${fieldName}_in: [_${valueTypeName}Filter!]
-          ${fieldName}_not_in: [_${valueTypeName}Filter!]
-          ${fieldName}_some: _${valueTypeName}Filter
-          ${fieldName}_none: _${valueTypeName}Filter
-          ${fieldName}_single: _${valueTypeName}Filter
-          ${fieldName}_every: _${valueTypeName}Filter
+            ${fieldName}_some: _${valueTypeName}Filter
+            ${fieldName}_none: _${valueTypeName}Filter
+            ${fieldName}_single: _${valueTypeName}Filter
+            ${fieldName}_every: _${valueTypeName}Filter
         `);
-      }
-      if (filters.length) {
-        acc.push(...filters);
+        }
       }
     }
-    return acc;
+    return filters;
   }, []);
-  if (filterFields) {
+  if (filterFields.length) {
     filterFields.unshift(`
-    AND: [${filterType}]
-    OR: [${filterType}]
-  `);
+      AND: [${filterType}!]
+      OR: [${filterType}!]
+    `);
   }
   return filterFields;
 };
@@ -619,39 +794,47 @@ const possiblyAddTypeFieldArguments = (
   queryType
 ) => {
   const fields = astNode.fields;
-  let relationTypeName = '';
-  let relationType = {};
-  let args = [];
   fields.forEach(field => {
-    relationTypeName = _getNamedType(field).name.value;
-    relationType = typeMap[relationTypeName];
+    let fieldTypeName = _getNamedType(field).name.value;
+    let fieldType = typeMap[fieldTypeName];
+    let args = field.arguments;
     if (
+      fieldType &&
       fieldIsNotIgnored(astNode, field, resolvers) &&
-      // only adds args if node payload type has not been excluded
-      shouldAugmentType(config, 'query', relationTypeName) &&
-      // we know astNode is a node type, so this field should be a node type
-      // as well, since the generated args are only for node type lists
-      isNodeType(relationType) &&
-      (getFieldDirective(field, 'relation') ||
-        getFieldDirective(field, 'cypher'))
+      shouldAugmentType(config, 'query', fieldTypeName)
     ) {
-      args = field.arguments;
-      if (_isListType(field)) {
-        // the args (first / offset / orderBy) are only generated for list fields
-        field.arguments = possiblyAddArgument(args, 'first', 'Int');
-        field.arguments = possiblyAddArgument(args, 'offset', 'Int');
-        field.arguments = possiblyAddOrderingArgument(args, relationTypeName);
+      const relationTypeDirective = getRelationTypeDirective(fieldType);
+      if (isNodeType(fieldType)) {
+        if (getFieldDirective(field, 'cypher')) {
+          if (_isListType(field)) {
+            args = addPaginationArgs(args, fieldTypeName);
+          }
+        } else if (getFieldDirective(field, 'relation')) {
+          if (_isListType(field)) {
+            args = addPaginationArgs(args, fieldTypeName);
+          }
+          args = possiblyAddArgument(args, 'filter', `_${fieldTypeName}Filter`);
+        }
+      } else if (relationTypeDirective) {
+        const fromType = relationTypeDirective.from;
+        const toType = relationTypeDirective.to;
+        let filterTypeName = `_${astNode.name.value}${fieldTypeName}Filter`;
+        if (fromType === toType) {
+          filterTypeName = `_${fieldTypeName}Filter`;
+        }
+        args = possiblyAddArgument(args, 'filter', filterTypeName);
       }
-      if (!getFieldDirective(field, 'cypher')) {
-        field.arguments = possiblyAddArgument(
-          args,
-          'filter',
-          `_${relationTypeName}Filter`
-        );
-      }
+      field.arguments = args;
     }
   });
   return fields;
+};
+
+const addPaginationArgs = (args, fieldTypeName) => {
+  args = possiblyAddArgument(args, 'first', 'Int');
+  args = possiblyAddArgument(args, 'offset', 'Int');
+  args = possiblyAddOrderingArgument(args, fieldTypeName);
+  return args;
 };
 
 const possiblyAddObjectType = (typeMap, name) => {
@@ -735,7 +918,7 @@ const possiblyAddRelationTypeFieldPayload = (
     let fromValue = undefined;
     let toValue = undefined;
     let fields = relationAstNode.fields;
-    const relationTypeDirective = getRelationTypeDirectiveArgs(relationAstNode);
+    const relationTypeDirective = getRelationTypeDirective(relationAstNode);
     if (relationTypeDirective) {
       // TODO refactor
       const relationTypePayloadFields = fields
@@ -760,7 +943,12 @@ const possiblyAddRelationTypeFieldPayload = (
       if (fromValue && fromValue === toValue) {
         // If field is a list type, then make .from and .to list types
         const fieldIsList = _isListType(field);
-        const fieldArgs = getFieldArgumentsFromAst(field, typeName);
+        const fieldArgs = getFieldArgumentsFromAst(
+          field,
+          typeName,
+          fieldIsList,
+          fieldTypeName
+        );
         typeMap[`${fieldTypeName}Directions`] = parse(`
         type ${fieldTypeName}Directions ${print(relationAstNode.directives)} {
             from${fieldArgs}: ${fieldIsList ? '[' : ''}${fieldTypeName}${
@@ -853,7 +1041,7 @@ const possiblyAddRelationMutationField = (
       // Prevents overwriting
       if (typeMap[payloadTypeName] === undefined) {
         typeMap[payloadTypeName] = parse(`
-        type ${payloadTypeName} @relation(name: "${relationName}", from: "${fromName}", to: "${toName}") {
+        type ${payloadTypeName} @relation(name: \"${relationName}\", from: \"${fromName}\", to: \"${toName}\") {
           from: ${fromName}
           to: ${toName}
           ${
@@ -1158,18 +1346,18 @@ const addRelationTypeDirectives = typeMap => {
           // replace it if it exists in order to force correct configuration
           astNode.directives[typeDirectiveIndex] = parseDirectiveSdl(`
             @relation(
-              name: ${relationName}, 
-              from: ${fromTypeName},
-              to: ${toTypeName}
+              name: \"${relationName}\", 
+              from: \"${fromTypeName}\",
+              to: \"${toTypeName}\"
             )
           `);
         } else {
           astNode.directives.push(
             parseDirectiveSdl(`
             @relation(
-              name: ${relationName}, 
-              from: ${fromTypeName},
-              to: ${toTypeName}
+              name: \"${relationName}\", 
+              from: \"${fromTypeName}\",
+              to: \"${toTypeName}\"
             )
           `)
           );
@@ -1562,19 +1750,25 @@ export const addTemporalTypes = (typeMap, config) => {
   return transformTemporalFields(typeMap, config);
 };
 
-const getFieldArgumentsFromAst = (field, typeName, fieldIsList) => {
-  let fieldArgs = field.arguments ? field.arguments : [];
-  let paginationArgs = [];
+const getFieldArgumentsFromAst = (
+  field,
+  typeName,
+  fieldIsList,
+  fieldTypeName
+) => {
+  let args = field.arguments ? field.arguments : [];
   if (fieldIsList) {
-    paginationArgs = possiblyAddArgument(fieldArgs, 'first', 'Int');
-    paginationArgs = possiblyAddArgument(fieldArgs, 'offset', 'Int');
-    paginationArgs = possiblyAddArgument(
-      fieldArgs,
-      'orderBy',
-      `_${typeName}Ordering`
-    );
+    // TODO https://github.com/neo4j-graphql/neo4j-graphql-js/issues/232
+    // args = possiblyAddArgument(args, 'first', 'Int');
+    // args = possiblyAddArgument(args, 'offset', 'Int');
+    // args = possiblyAddArgument(
+    //   args,
+    //   'orderBy',
+    //   `${fieldTypeName}Ordering`
+    // );
   }
-  const args = [paginationArgs, ...fieldArgs]
+  args = possiblyAddArgument(args, 'filter', `${fieldTypeName}Filter`);
+  args = args
     .reduce((acc, t) => {
       acc.push(print(t));
       return acc;

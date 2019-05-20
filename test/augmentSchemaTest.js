@@ -19,8 +19,8 @@ directive @hasRole(roles: [Role]) on OBJECT | FIELD_DEFINITION
 directive @hasScope(scopes: [String]) on OBJECT | FIELD_DEFINITION
 
 input _ActorFilter {
-  AND: [_ActorFilter]
-  OR: [_ActorFilter]
+  AND: [_ActorFilter!]
+  OR: [_ActorFilter!]
   userId: ID
   userId_not: ID
   userId_in: [ID!]
@@ -141,8 +141,8 @@ type _AddUserRatedPayload {
 }
 
 input _BookFilter {
-  AND: [_BookFilter]
-  OR: [_BookFilter]
+  AND: [_BookFilter!]
+  OR: [_BookFilter!]
   genre: BookGenre
   genre_not: BookGenre
   genre_in: [BookGenre!]
@@ -161,8 +161,8 @@ enum _BookOrdering {
 }
 
 input _currentUserIdFilter {
-  AND: [_currentUserIdFilter]
-  OR: [_currentUserIdFilter]
+  AND: [_currentUserIdFilter!]
+  OR: [_currentUserIdFilter!]
   userId: String
   userId_not: String
   userId_in: [String!]
@@ -186,6 +186,65 @@ enum _currentUserIdOrdering {
   _id_desc
 }
 
+input _FriendOfDirectionsFilter {
+  from: _FriendOfFilter
+  to: _FriendOfFilter
+}
+
+input _FriendOfFilter {
+  AND: [_FriendOfFilter!]
+  OR: [_FriendOfFilter!]
+  since: Int
+  since_not: Int
+  since_in: [Int!]
+  since_not_in: [Int!]
+  since_lt: Int
+  since_lte: Int
+  since_gt: Int
+  since_gte: Int
+  time: _Neo4jTimeInput
+  time_not: _Neo4jTimeInput
+  time_in: [_Neo4jTimeInput!]
+  time_not_in: [_Neo4jTimeInput!]
+  time_lt: _Neo4jTimeInput
+  time_lte: _Neo4jTimeInput
+  time_gt: _Neo4jTimeInput
+  time_gte: _Neo4jTimeInput
+  date: _Neo4jDateInput
+  date_not: _Neo4jDateInput
+  date_in: [_Neo4jDateInput!]
+  date_not_in: [_Neo4jDateInput!]
+  date_lt: _Neo4jDateInput
+  date_lte: _Neo4jDateInput
+  date_gt: _Neo4jDateInput
+  date_gte: _Neo4jDateInput
+  datetime: _Neo4jDateTimeInput
+  datetime_not: _Neo4jDateTimeInput
+  datetime_in: [_Neo4jDateTimeInput!]
+  datetime_not_in: [_Neo4jDateTimeInput!]
+  datetime_lt: _Neo4jDateTimeInput
+  datetime_lte: _Neo4jDateTimeInput
+  datetime_gt: _Neo4jDateTimeInput
+  datetime_gte: _Neo4jDateTimeInput
+  localtime: _Neo4jLocalTimeInput
+  localtime_not: _Neo4jLocalTimeInput
+  localtime_in: [_Neo4jLocalTimeInput!]
+  localtime_not_in: [_Neo4jLocalTimeInput!]
+  localtime_lt: _Neo4jLocalTimeInput
+  localtime_lte: _Neo4jLocalTimeInput
+  localtime_gt: _Neo4jLocalTimeInput
+  localtime_gte: _Neo4jLocalTimeInput
+  localdatetime: _Neo4jLocalDateTimeInput
+  localdatetime_not: _Neo4jLocalDateTimeInput
+  localdatetime_in: [_Neo4jLocalDateTimeInput!]
+  localdatetime_not_in: [_Neo4jLocalDateTimeInput!]
+  localdatetime_lt: _Neo4jLocalDateTimeInput
+  localdatetime_lte: _Neo4jLocalDateTimeInput
+  localdatetime_gt: _Neo4jLocalDateTimeInput
+  localdatetime_gte: _Neo4jLocalDateTimeInput
+  User: _UserFilter
+}
+
 input _FriendOfInput {
   since: Int
   time: _Neo4jTimeInput
@@ -197,8 +256,8 @@ input _FriendOfInput {
 }
 
 input _GenreFilter {
-  AND: [_GenreFilter]
-  OR: [_GenreFilter]
+  AND: [_GenreFilter!]
+  OR: [_GenreFilter!]
   name: String
   name_not: String
   name_in: [String!]
@@ -229,8 +288,8 @@ enum _GenreOrdering {
 }
 
 input _MovieFilter {
-  AND: [_MovieFilter]
-  OR: [_MovieFilter]
+  AND: [_MovieFilter!]
+  OR: [_MovieFilter!]
   movieId: ID
   movieId_not: ID
   movieId_in: [ID!]
@@ -259,6 +318,14 @@ input _MovieFilter {
   year_lte: Int
   year_gt: Int
   year_gte: Int
+  released: _Neo4jDateTimeInput
+  released_not: _Neo4jDateTimeInput
+  released_in: [_Neo4jDateTimeInput!]
+  released_not_in: [_Neo4jDateTimeInput!]
+  released_lt: _Neo4jDateTimeInput
+  released_lte: _Neo4jDateTimeInput
+  released_gt: _Neo4jDateTimeInput
+  released_gte: _Neo4jDateTimeInput
   plot: String
   plot_not: String
   plot_in: [String!]
@@ -315,6 +382,14 @@ input _MovieFilter {
   filmedIn_not: _StateFilter
   filmedIn_in: [_StateFilter!]
   filmedIn_not_in: [_StateFilter!]
+  ratings: _MovieRatedFilter
+  ratings_not: _MovieRatedFilter
+  ratings_in: [_MovieRatedFilter!]
+  ratings_not_in: [_MovieRatedFilter!]
+  ratings_some: _MovieRatedFilter
+  ratings_none: _MovieRatedFilter
+  ratings_single: _MovieRatedFilter
+  ratings_every: _MovieRatedFilter
 }
 
 input _MovieInput {
@@ -324,6 +399,60 @@ input _MovieInput {
 enum _MovieOrdering {
   title_desc
   title_asc
+}
+
+input _MovieRatedFilter {
+  AND: [_MovieRatedFilter!]
+  OR: [_MovieRatedFilter!]
+  rating: Int
+  rating_not: Int
+  rating_in: [Int!]
+  rating_not_in: [Int!]
+  rating_lt: Int
+  rating_lte: Int
+  rating_gt: Int
+  rating_gte: Int
+  time: _Neo4jTimeInput
+  time_not: _Neo4jTimeInput
+  time_in: [_Neo4jTimeInput!]
+  time_not_in: [_Neo4jTimeInput!]
+  time_lt: _Neo4jTimeInput
+  time_lte: _Neo4jTimeInput
+  time_gt: _Neo4jTimeInput
+  time_gte: _Neo4jTimeInput
+  date: _Neo4jDateInput
+  date_not: _Neo4jDateInput
+  date_in: [_Neo4jDateInput!]
+  date_not_in: [_Neo4jDateInput!]
+  date_lt: _Neo4jDateInput
+  date_lte: _Neo4jDateInput
+  date_gt: _Neo4jDateInput
+  date_gte: _Neo4jDateInput
+  datetime: _Neo4jDateTimeInput
+  datetime_not: _Neo4jDateTimeInput
+  datetime_in: [_Neo4jDateTimeInput!]
+  datetime_not_in: [_Neo4jDateTimeInput!]
+  datetime_lt: _Neo4jDateTimeInput
+  datetime_lte: _Neo4jDateTimeInput
+  datetime_gt: _Neo4jDateTimeInput
+  datetime_gte: _Neo4jDateTimeInput
+  localtime: _Neo4jLocalTimeInput
+  localtime_not: _Neo4jLocalTimeInput
+  localtime_in: [_Neo4jLocalTimeInput!]
+  localtime_not_in: [_Neo4jLocalTimeInput!]
+  localtime_lt: _Neo4jLocalTimeInput
+  localtime_lte: _Neo4jLocalTimeInput
+  localtime_gt: _Neo4jLocalTimeInput
+  localtime_gte: _Neo4jLocalTimeInput
+  localdatetime: _Neo4jLocalDateTimeInput
+  localdatetime_not: _Neo4jLocalDateTimeInput
+  localdatetime_in: [_Neo4jLocalDateTimeInput!]
+  localdatetime_not_in: [_Neo4jLocalDateTimeInput!]
+  localdatetime_lt: _Neo4jLocalDateTimeInput
+  localdatetime_lte: _Neo4jLocalDateTimeInput
+  localdatetime_gt: _Neo4jLocalDateTimeInput
+  localdatetime_gte: _Neo4jLocalDateTimeInput
+  User: _UserFilter
 }
 
 type _MovieRatings {
@@ -516,8 +645,8 @@ type _RemoveUserRatedPayload {
 }
 
 input _StateFilter {
-  AND: [_StateFilter]
-  OR: [_StateFilter]
+  AND: [_StateFilter!]
+  OR: [_StateFilter!]
   name: String
   name_not: String
   name_in: [String!]
@@ -542,8 +671,16 @@ enum _StateOrdering {
 }
 
 input _TemporalNodeFilter {
-  AND: [_TemporalNodeFilter]
-  OR: [_TemporalNodeFilter]
+  AND: [_TemporalNodeFilter!]
+  OR: [_TemporalNodeFilter!]
+  datetime: _Neo4jDateTimeInput
+  datetime_not: _Neo4jDateTimeInput
+  datetime_in: [_Neo4jDateTimeInput!]
+  datetime_not_in: [_Neo4jDateTimeInput!]
+  datetime_lt: _Neo4jDateTimeInput
+  datetime_lte: _Neo4jDateTimeInput
+  datetime_gt: _Neo4jDateTimeInput
+  datetime_gte: _Neo4jDateTimeInput
   name: String
   name_not: String
   name_in: [String!]
@@ -554,6 +691,38 @@ input _TemporalNodeFilter {
   name_not_starts_with: String
   name_ends_with: String
   name_not_ends_with: String
+  time: _Neo4jTimeInput
+  time_not: _Neo4jTimeInput
+  time_in: [_Neo4jTimeInput!]
+  time_not_in: [_Neo4jTimeInput!]
+  time_lt: _Neo4jTimeInput
+  time_lte: _Neo4jTimeInput
+  time_gt: _Neo4jTimeInput
+  time_gte: _Neo4jTimeInput
+  date: _Neo4jDateInput
+  date_not: _Neo4jDateInput
+  date_in: [_Neo4jDateInput!]
+  date_not_in: [_Neo4jDateInput!]
+  date_lt: _Neo4jDateInput
+  date_lte: _Neo4jDateInput
+  date_gt: _Neo4jDateInput
+  date_gte: _Neo4jDateInput
+  localtime: _Neo4jLocalTimeInput
+  localtime_not: _Neo4jLocalTimeInput
+  localtime_in: [_Neo4jLocalTimeInput!]
+  localtime_not_in: [_Neo4jLocalTimeInput!]
+  localtime_lt: _Neo4jLocalTimeInput
+  localtime_lte: _Neo4jLocalTimeInput
+  localtime_gt: _Neo4jLocalTimeInput
+  localtime_gte: _Neo4jLocalTimeInput
+  localdatetime: _Neo4jLocalDateTimeInput
+  localdatetime_not: _Neo4jLocalDateTimeInput
+  localdatetime_in: [_Neo4jLocalDateTimeInput!]
+  localdatetime_not_in: [_Neo4jLocalDateTimeInput!]
+  localdatetime_lt: _Neo4jLocalDateTimeInput
+  localdatetime_lte: _Neo4jLocalDateTimeInput
+  localdatetime_gt: _Neo4jLocalDateTimeInput
+  localdatetime_gte: _Neo4jLocalDateTimeInput
   temporalNodes: _TemporalNodeFilter
   temporalNodes_not: _TemporalNodeFilter
   temporalNodes_in: [_TemporalNodeFilter!]
@@ -588,8 +757,8 @@ enum _TemporalNodeOrdering {
 }
 
 input _UserFilter {
-  AND: [_UserFilter]
-  OR: [_UserFilter]
+  AND: [_UserFilter!]
+  OR: [_UserFilter!]
   userId: ID
   userId_not: ID
   userId_in: [ID!]
@@ -610,6 +779,22 @@ input _UserFilter {
   name_not_starts_with: String
   name_ends_with: String
   name_not_ends_with: String
+  rated: _UserRatedFilter
+  rated_not: _UserRatedFilter
+  rated_in: [_UserRatedFilter!]
+  rated_not_in: [_UserRatedFilter!]
+  rated_some: _UserRatedFilter
+  rated_none: _UserRatedFilter
+  rated_single: _UserRatedFilter
+  rated_every: _UserRatedFilter
+  friends: _FriendOfDirectionsFilter
+  friends_not: _FriendOfDirectionsFilter
+  friends_in: [_FriendOfDirectionsFilter!]
+  friends_not_in: [_FriendOfDirectionsFilter!]
+  friends_some: _FriendOfDirectionsFilter
+  friends_none: _FriendOfDirectionsFilter
+  friends_single: _FriendOfDirectionsFilter
+  friends_every: _FriendOfDirectionsFilter
   favorites: _MovieFilter
   favorites_not: _MovieFilter
   favorites_in: [_MovieFilter!]
@@ -633,8 +818,8 @@ type _UserFriends {
 }
 
 type _UserFriendsDirections {
-  from(since: Int, time: _Neo4jTimeInput, date: _Neo4jDateInput, datetime: _Neo4jDateTimeInput, localtime: _Neo4jLocalTimeInput, localdatetime: _Neo4jLocalDateTimeInput): [_UserFriends]
-  to(since: Int, time: _Neo4jTimeInput, date: _Neo4jDateInput, datetime: _Neo4jDateTimeInput, localtime: _Neo4jLocalTimeInput, localdatetime: _Neo4jLocalDateTimeInput): [_UserFriends]
+  from(since: Int, time: _Neo4jTimeInput, date: _Neo4jDateInput, datetime: _Neo4jDateTimeInput, localtime: _Neo4jLocalTimeInput, localdatetime: _Neo4jLocalDateTimeInput, filter: _FriendOfFilter): [_UserFriends]
+  to(since: Int, time: _Neo4jTimeInput, date: _Neo4jDateInput, datetime: _Neo4jDateTimeInput, localtime: _Neo4jLocalTimeInput, localdatetime: _Neo4jLocalDateTimeInput, filter: _FriendOfFilter): [_UserFriends]
 }
 
 input _UserInput {
@@ -663,6 +848,60 @@ type _UserRated {
   localdatetime: _Neo4jLocalDateTime
   datetimes: [_Neo4jDateTime]
   Movie: Movie
+}
+
+input _UserRatedFilter {
+  AND: [_UserRatedFilter!]
+  OR: [_UserRatedFilter!]
+  rating: Int
+  rating_not: Int
+  rating_in: [Int!]
+  rating_not_in: [Int!]
+  rating_lt: Int
+  rating_lte: Int
+  rating_gt: Int
+  rating_gte: Int
+  time: _Neo4jTimeInput
+  time_not: _Neo4jTimeInput
+  time_in: [_Neo4jTimeInput!]
+  time_not_in: [_Neo4jTimeInput!]
+  time_lt: _Neo4jTimeInput
+  time_lte: _Neo4jTimeInput
+  time_gt: _Neo4jTimeInput
+  time_gte: _Neo4jTimeInput
+  date: _Neo4jDateInput
+  date_not: _Neo4jDateInput
+  date_in: [_Neo4jDateInput!]
+  date_not_in: [_Neo4jDateInput!]
+  date_lt: _Neo4jDateInput
+  date_lte: _Neo4jDateInput
+  date_gt: _Neo4jDateInput
+  date_gte: _Neo4jDateInput
+  datetime: _Neo4jDateTimeInput
+  datetime_not: _Neo4jDateTimeInput
+  datetime_in: [_Neo4jDateTimeInput!]
+  datetime_not_in: [_Neo4jDateTimeInput!]
+  datetime_lt: _Neo4jDateTimeInput
+  datetime_lte: _Neo4jDateTimeInput
+  datetime_gt: _Neo4jDateTimeInput
+  datetime_gte: _Neo4jDateTimeInput
+  localtime: _Neo4jLocalTimeInput
+  localtime_not: _Neo4jLocalTimeInput
+  localtime_in: [_Neo4jLocalTimeInput!]
+  localtime_not_in: [_Neo4jLocalTimeInput!]
+  localtime_lt: _Neo4jLocalTimeInput
+  localtime_lte: _Neo4jLocalTimeInput
+  localtime_gt: _Neo4jLocalTimeInput
+  localtime_gte: _Neo4jLocalTimeInput
+  localdatetime: _Neo4jLocalDateTimeInput
+  localdatetime_not: _Neo4jLocalDateTimeInput
+  localdatetime_in: [_Neo4jLocalDateTimeInput!]
+  localdatetime_not_in: [_Neo4jLocalDateTimeInput!]
+  localdatetime_lt: _Neo4jLocalDateTimeInput
+  localdatetime_lte: _Neo4jLocalDateTimeInput
+  localdatetime_gt: _Neo4jLocalDateTimeInput
+  localdatetime_gte: _Neo4jLocalDateTimeInput
+  Movie: _MovieFilter
 }
 
 type Actor implements Person {
@@ -739,7 +978,7 @@ type Movie {
   scaleRating(scale: Int = 3): Float
   scaleRatingFloat(scale: Float = 1.5): Float
   actorMovies(first: Int, offset: Int, orderBy: [_MovieOrdering]): [Movie]
-  ratings(rating: Int, time: _Neo4jTimeInput, date: _Neo4jDateInput, datetime: _Neo4jDateTimeInput, localtime: _Neo4jLocalTimeInput, localdatetime: _Neo4jLocalDateTimeInput): [_MovieRatings]
+  ratings(rating: Int, time: _Neo4jTimeInput, date: _Neo4jDateInput, datetime: _Neo4jDateTimeInput, localtime: _Neo4jLocalTimeInput, localdatetime: _Neo4jLocalDateTimeInput, filter: _MovieRatedFilter): [_MovieRatings]
   years: [Int]
   titles: [String]
   imdbRatings: [Float]
@@ -875,7 +1114,7 @@ type User implements Person {
   userId: ID!
   name: String
   currentUserId(strArg: String = "Neo4j", strInputArg: strInput): String
-  rated(rating: Int, time: _Neo4jTimeInput, date: _Neo4jDateInput, datetime: _Neo4jDateTimeInput, localtime: _Neo4jLocalTimeInput, localdatetime: _Neo4jLocalDateTimeInput): [_UserRated]
+  rated(rating: Int, time: _Neo4jTimeInput, date: _Neo4jDateInput, datetime: _Neo4jDateTimeInput, localtime: _Neo4jLocalTimeInput, localdatetime: _Neo4jLocalDateTimeInput, filter: _UserRatedFilter): [_UserRated]
   friends: _UserFriendsDirections
   favorites(first: Int, offset: Int, orderBy: [_MovieOrdering], filter: _MovieFilter): [Movie]
   _id: String

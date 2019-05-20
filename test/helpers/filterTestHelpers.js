@@ -15,7 +15,9 @@ export const filterTestRunner = (
       person(object, params, ctx, resolveInfo) {
         const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
         t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
+        // need to turn neo4j Integers (used for temporal params) back to just JSON
+        const deserializedParams = JSON.parse(JSON.stringify(queryParams));
+        t.deepEqual(deserializedParams, expectedCypherParams);
       },
       Company(object, params, ctx, resolveInfo) {
         const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
