@@ -606,6 +606,30 @@ test.cb('Handle @cypher directive on Mutation type', t => {
   });
 });
 
+test.cb(
+  'Handle @cypher directive on Mutation type with nested @cypher directive on field',
+  t => {
+    const graphQLQuery = `mutation someMutation {
+    CreateGenre(name: "Wildlife Documentary") {
+      highestRatedMovie {
+        movieId
+      }
+    }
+}`,
+      expectedCypherQuery = `CALL apoc.cypher.doIt("CREATE (g:Genre) SET g.name = $name RETURN g", {name:$name, first:$first, offset:$offset, cypherParams: $cypherParams}) YIELD value
+    WITH apoc.map.values(value, [keys(value)[0]])[0] AS \`genre\`
+    RETURN \`genre\` {highestRatedMovie: head([ genre_highestRatedMovie IN apoc.cypher.runFirstColumn("MATCH (m:Movie)-[:IN_GENRE]->(this) RETURN m ORDER BY m.imdbRating DESC LIMIT 1", {this: genre, cypherParams: $cypherParams}, true) | genre_highestRatedMovie { .movieId }]) } AS \`genre\``;
+
+    t.plan(2);
+    cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery, {
+      name: 'Wildlife Documentary',
+      first: -1,
+      cypherParams: CYPHER_PARAMS,
+      offset: 0
+    });
+  }
+);
+
 test.cb('Create node mutation', t => {
   const graphQLQuery = `	mutation someMutation {
   	CreateMovie(movieId: "12dd334d5", title:"My Super Awesome Movie", year:2018, plot:"An unending saga", poster:"www.movieposter.com/img.png", imdbRating: 1.0) {
