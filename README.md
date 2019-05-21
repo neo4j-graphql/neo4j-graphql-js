@@ -99,17 +99,9 @@ A package to make it easier to use GraphQL and [Neo4j](https://neo4j.com/) toget
 - No need to write queries for each resolver
 - Exposes the power of the Cypher query language through GraphQL
 
-## Test
+## Contributing
 
-We use the `ava` test runner.
-
-```
-npm install
-npm build
-npm test
-```
-
-The `npm test` script will run unit tests that check GraphQL -> Cypher translation and the schema augmentation features and can be easily run locally without a test environment. Full integration tests can be found in `/test` and are [run on CircleCI](https://circleci.com/gh/neo4j-graphql/neo4j-graphql-js) as part of the CI process.
+See our [detailed contribution guidelines](./CONTRIBUTING.md).
 
 ## Examples
 
