@@ -2,7 +2,7 @@ import test from 'ava';
 import {
   cypherTestRunner,
   augmentedSchemaCypherTestRunner
-} from './helpers/cypherTestHelpers';
+} from '../helpers/cypherTestHelpers';
 
 const CYPHER_PARAMS = {
   userId: 'user-id'

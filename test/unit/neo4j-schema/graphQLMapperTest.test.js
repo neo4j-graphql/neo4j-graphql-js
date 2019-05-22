@@ -1,8 +1,8 @@
 import test from 'ava';
-import schema from '../../dist/neo4j-schema/entities';
-import graphQLMapper from '../../dist/neo4j-schema/graphQLMapper';
-import Neo4jSchemaTree from '../../dist/neo4j-schema/Neo4jSchemaTree';
-import driverFakes from '../helpers/driverFakes';
+import schema from '../../../dist/neo4j-schema/entities';
+import graphQLMapper from '../../../dist/neo4j-schema/graphQLMapper';
+import Neo4jSchemaTree from '../../../dist/neo4j-schema/Neo4jSchemaTree';
+import driverFakes from '../../helpers/driverFakes';
 import assert from 'assert';
 import _ from 'lodash';
 

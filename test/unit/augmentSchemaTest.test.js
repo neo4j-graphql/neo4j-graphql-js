@@ -1,5 +1,5 @@
 import test from 'ava';
-import { augmentedSchema } from './helpers/cypherTestHelpers';
+import { augmentedSchema } from '../helpers/cypherTestHelpers';
 import { printSchema } from 'graphql';
 
 test.cb('Test augmented schema', t => {
