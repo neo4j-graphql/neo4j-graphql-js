@@ -60,6 +60,13 @@ npm run parse-tck
 npm run test-all
 ```
 
+Note that `npm run test-all` will fail on consecutive runs! Some of the
+integration tests create data and get in the way of other tests. Running the
+whole test suite twice will result in some failing tests. There is [an issue
+for it](https://github.com/neo4j-graphql/neo4j-graphql-js/issues/252), check if
+it is still active. Your best option for now is to re-import the data after each
+test run.
+
 ### Local Development
 
 If you include this library inside your project and you want point the
