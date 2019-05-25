@@ -626,7 +626,7 @@ export const translateQuery = ({
     temporalArgs
   );
   const outerSkipLimit = getOuterSkipLimit(first, offset);
-  const orderByValue = computeOrderBy(resolveInfo, selections);
+  const orderByValue = computeOrderBy(resolveInfo, schemaType);
 
   if (queryTypeCypherDirective) {
     return customQuery({
@@ -822,7 +822,7 @@ export const translateMutation = ({
   otherParams
 }) => {
   const outerSkipLimit = getOuterSkipLimit(first, offset);
-  const orderByValue = computeOrderBy(resolveInfo, selections);
+  const orderByValue = computeOrderBy(resolveInfo, schemaType);
   const mutationTypeCypherDirective = getMutationCypherDirective(resolveInfo);
   const params = initializeMutationParams({
     resolveInfo,

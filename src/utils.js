@@ -387,9 +387,7 @@ function orderByStatement(resolveInfo, { orderBy, order }) {
   return ` ${variableName}.${orderBy} ${order === 'asc' ? 'ASC' : 'DESC'} `;
 }
 
-export const computeOrderBy = resolveInfo => {
-  let optimization = { earlyOrderBy: false };
-
+export const computeOrderBy = (resolveInfo, schemaType) => {
   let selection = resolveInfo.operation.selectionSet.selections[0];
   const orderByArgs = argumentValue(
     selection,
@@ -398,15 +396,21 @@ export const computeOrderBy = resolveInfo => {
   );
 
   if (orderByArgs == undefined) {
-    return { cypherPart: '', optimization };
+    return { cypherPart: '', optimization: { earlyOrderBy: false } };
   }
 
   const orderByArray = Array.isArray(orderByArgs) ? orderByArgs : [orderByArgs];
 
+  let optimization = { earlyOrderBy: true };
   let orderByStatements = [];
 
   const orderByStatments = orderByArray.map(orderByVar => {
     const { orderBy, order } = splitOrderByArg(orderByVar);
+    const hasNoCypherDirective = _.isEmpty(
+      cypherDirective(schemaType, orderBy)
+    );
+    optimization.earlyOrderBy =
+      optimization.earlyOrderBy && hasNoCypherDirective;
     orderByStatements.push(orderByStatement(resolveInfo, { orderBy, order }));
   });
 
