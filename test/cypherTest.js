@@ -3868,6 +3868,37 @@ test('Deeply nested orderBy', t => {
   ]);
 });
 
+test('Optimize performance - not requesting attributes with @cypher directive - early ORDER BY', async t => {
+  const graphQLQuery = `{
+    User(orderBy: name_desc) {
+      _id
+      name
+    }
+  }`,
+    expectedCypherQuery = `MATCH (\`user\`:\`User\`) WITH \`user\` ORDER BY user.name DESC RETURN \`user\` {_id: ID(\`user\`), .name } AS \`user\``;
+
+  t.plan(1);
+  return Promise.all([
+    augmentedSchemaCypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery)
+  ]);
+});
+
+test('Optimize performance - attributes with @cypher directive requested - no optimization', async t => {
+  const graphQLQuery = `{
+    User(orderBy: currentUserId_desc) {
+      _id
+      name
+      currentUserId
+    }
+  }`,
+    expectedCypherQuery = `MATCH (\`user\`:\`User\`) RETURN \`user\` {_id: ID(\`user\`), .name ,currentUserId: apoc.cypher.runFirstColumn("RETURN $cypherParams.currentUserId AS cypherParamsUserId", {this: user, cypherParams: $cypherParams, strArg: "Neo4j"}, false)} AS \`user\` ORDER BY user.currentUserId DESC `;
+
+  t.plan(1);
+  return Promise.all([
+    augmentedSchemaCypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery)
+  ]);
+});
+
 test('Query using enum orderBy', t => {
   const graphQLQuery = `query {
     Book(orderBy: [genre_asc]) {
