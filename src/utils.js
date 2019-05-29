@@ -375,31 +375,49 @@ export function computeSkipLimit(selection, variableValues) {
   return `[${offset}..${parseInt(offset) + parseInt(first)}]`;
 }
 
-function orderByStatement(resolveInfo, orderByVar) {
+function splitOrderByArg(orderByVar) {
   const splitIndex = orderByVar.lastIndexOf('_');
   const order = orderByVar.substring(splitIndex + 1);
   const orderBy = orderByVar.substring(0, splitIndex);
+  return { orderBy, order };
+}
+
+function orderByStatement(resolveInfo, { orderBy, order }) {
   const { variableName } = typeIdentifiers(resolveInfo.returnType);
   return ` ${variableName}.${orderBy} ${order === 'asc' ? 'ASC' : 'DESC'} `;
 }
 
-export const computeOrderBy = (resolveInfo, selection) => {
+export const computeOrderBy = (resolveInfo, schemaType) => {
+  let selection = resolveInfo.operation.selectionSet.selections[0];
   const orderByArgs = argumentValue(
-    resolveInfo.operation.selectionSet.selections[0],
+    selection,
     'orderBy',
     resolveInfo.variableValues
   );
 
   if (orderByArgs == undefined) {
-    return '';
+    return { cypherPart: '', optimization: { earlyOrderBy: false } };
   }
 
   const orderByArray = Array.isArray(orderByArgs) ? orderByArgs : [orderByArgs];
-  const orderByStatments = orderByArray.map(orderByVar =>
-    orderByStatement(resolveInfo, orderByVar)
-  );
 
-  return ' ORDER BY' + orderByStatments.join(',');
+  let optimization = { earlyOrderBy: true };
+  let orderByStatements = [];
+
+  const orderByStatments = orderByArray.map(orderByVar => {
+    const { orderBy, order } = splitOrderByArg(orderByVar);
+    const hasNoCypherDirective = _.isEmpty(
+      cypherDirective(schemaType, orderBy)
+    );
+    optimization.earlyOrderBy =
+      optimization.earlyOrderBy && hasNoCypherDirective;
+    orderByStatements.push(orderByStatement(resolveInfo, { orderBy, order }));
+  });
+
+  return {
+    cypherPart: ` ORDER BY${orderByStatements.join(',')}`,
+    optimization
+  };
 };
 
 export const possiblySetFirstId = ({ args, statements, params }) => {

@@ -1346,7 +1346,7 @@ test('orderBy test - descending, top level - augmented schema', t => {
     }
   }
   `,
-    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\` {year:$year}) RETURN \`movie\` { .title ,actors: [(\`movie\`)<-[:\`ACTED_IN\`]-(\`movie_actors\`:\`Actor\`) | movie_actors { .name }][..3] } AS \`movie\` ORDER BY movie.title DESC  LIMIT $first`;
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\` {year:$year}) WITH \`movie\` ORDER BY movie.title DESC RETURN \`movie\` { .title ,actors: [(\`movie\`)<-[:\`ACTED_IN\`]-(\`movie_actors\`:\`Actor\`) | movie_actors { .name }][..3] } AS \`movie\` LIMIT $first`;
 
   t.plan(1);
 
@@ -3860,7 +3860,38 @@ test('Deeply nested orderBy', t => {
     }
   }`,
     expectedCypherQuery =
-      "MATCH (`movie`:`Movie`) RETURN `movie` { .title ,actors: apoc.coll.sortMulti([(`movie`)<-[:`ACTED_IN`]-(`movie_actors`:`Actor`) | movie_actors { .name ,movies: apoc.coll.sortMulti([(`movie_actors`)-[:`ACTED_IN`]->(`movie_actors_movies`:`Movie`) | movie_actors_movies { .title }], ['^title','title']) }], ['name']) } AS `movie` ORDER BY movie.title DESC ";
+      "MATCH (`movie`:`Movie`) WITH `movie` ORDER BY movie.title DESC RETURN `movie` { .title ,actors: apoc.coll.sortMulti([(`movie`)<-[:`ACTED_IN`]-(`movie_actors`:`Actor`) | movie_actors { .name ,movies: apoc.coll.sortMulti([(`movie_actors`)-[:`ACTED_IN`]->(`movie_actors_movies`:`Movie`) | movie_actors_movies { .title }], ['^title','title']) }], ['name']) } AS `movie`";
+
+  t.plan(1);
+  return Promise.all([
+    augmentedSchemaCypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery)
+  ]);
+});
+
+test('Optimize performance - not requesting attributes with @cypher directive - early ORDER BY', async t => {
+  const graphQLQuery = `{
+    User(orderBy: name_desc) {
+      _id
+      name
+    }
+  }`,
+    expectedCypherQuery = `MATCH (\`user\`:\`User\`) WITH \`user\` ORDER BY user.name DESC RETURN \`user\` {_id: ID(\`user\`), .name } AS \`user\``;
+
+  t.plan(1);
+  return Promise.all([
+    augmentedSchemaCypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery)
+  ]);
+});
+
+test('Optimize performance - attributes with @cypher directive requested - no optimization', async t => {
+  const graphQLQuery = `{
+    User(orderBy: currentUserId_desc) {
+      _id
+      name
+      currentUserId
+    }
+  }`,
+    expectedCypherQuery = `MATCH (\`user\`:\`User\`) RETURN \`user\` {_id: ID(\`user\`), .name ,currentUserId: apoc.cypher.runFirstColumn("RETURN $cypherParams.currentUserId AS cypherParamsUserId", {this: user, cypherParams: $cypherParams, strArg: "Neo4j"}, false)} AS \`user\` ORDER BY user.currentUserId DESC `;
 
   t.plan(1);
   return Promise.all([
@@ -3876,7 +3907,7 @@ test('Query using enum orderBy', t => {
     }
   }`,
     expectedCypherQuery =
-      'MATCH (`book`:`Book`) RETURN `book` {_id: ID(`book`), .genre } AS `book` ORDER BY book.genre ASC ';
+      'MATCH (`book`:`Book`) WITH `book` ORDER BY book.genre ASC RETURN `book` {_id: ID(`book`), .genre } AS `book`';
 
   t.plan(1);
   return Promise.all([
@@ -3895,7 +3926,7 @@ test('Query using temporal orderBy', t => {
     }
   }`,
     expectedCypherQuery =
-      'MATCH (`temporalNode`:`TemporalNode`) RETURN `temporalNode` {datetime: { formatted: toString(`temporalNode`.datetime) }} AS `temporalNode` ORDER BY temporalNode.datetime DESC , temporalNode.datetime ASC ';
+      'MATCH (`temporalNode`:`TemporalNode`) WITH `temporalNode` ORDER BY temporalNode.datetime DESC , temporalNode.datetime ASC RETURN `temporalNode` {datetime: { formatted: toString(`temporalNode`.datetime) }} AS `temporalNode`';
 
   t.plan(1);
   return Promise.all([
@@ -3952,7 +3983,7 @@ test('Deeply nested query using temporal orderBy', t => {
     }
   }`,
     expectedCypherQuery =
-      "MATCH (`temporalNode`:`TemporalNode`) RETURN `temporalNode` {_id: ID(`temporalNode`),datetime: { year: `temporalNode`.datetime.year , month: `temporalNode`.datetime.month , day: `temporalNode`.datetime.day , hour: `temporalNode`.datetime.hour , minute: `temporalNode`.datetime.minute , second: `temporalNode`.datetime.second , millisecond: `temporalNode`.datetime.millisecond , microsecond: `temporalNode`.datetime.microsecond , nanosecond: `temporalNode`.datetime.nanosecond , timezone: `temporalNode`.datetime.timezone , formatted: toString(`temporalNode`.datetime) },temporalNodes: [sortedElement IN apoc.coll.sortMulti([(`temporalNode`)-[:`TEMPORAL`]->(`temporalNode_temporalNodes`:`TemporalNode`) | temporalNode_temporalNodes {_id: ID(`temporalNode_temporalNodes`),datetime: `temporalNode_temporalNodes`.datetime,time: `temporalNode_temporalNodes`.time,temporalNodes: [sortedElement IN apoc.coll.sortMulti([(`temporalNode_temporalNodes`)-[:`TEMPORAL`]->(`temporalNode_temporalNodes_temporalNodes`:`TemporalNode`) | temporalNode_temporalNodes_temporalNodes {_id: ID(`temporalNode_temporalNodes_temporalNodes`),datetime: `temporalNode_temporalNodes_temporalNodes`.datetime,time: `temporalNode_temporalNodes_temporalNodes`.time}], ['datetime','time']) | sortedElement { .*,  datetime: {year: sortedElement.datetime.year,formatted: toString(sortedElement.datetime)},time: {hour: sortedElement.time.hour}}][1..3] }], ['^datetime']) | sortedElement { .*,  datetime: {year: sortedElement.datetime.year,month: sortedElement.datetime.month,day: sortedElement.datetime.day,hour: sortedElement.datetime.hour,minute: sortedElement.datetime.minute,second: sortedElement.datetime.second,millisecond: sortedElement.datetime.millisecond,microsecond: sortedElement.datetime.microsecond,nanosecond: sortedElement.datetime.nanosecond,timezone: sortedElement.datetime.timezone,formatted: toString(sortedElement.datetime)},time: {hour: sortedElement.time.hour}}] } AS `temporalNode` ORDER BY temporalNode.datetime DESC ";
+      "MATCH (`temporalNode`:`TemporalNode`) WITH `temporalNode` ORDER BY temporalNode.datetime DESC RETURN `temporalNode` {_id: ID(`temporalNode`),datetime: { year: `temporalNode`.datetime.year , month: `temporalNode`.datetime.month , day: `temporalNode`.datetime.day , hour: `temporalNode`.datetime.hour , minute: `temporalNode`.datetime.minute , second: `temporalNode`.datetime.second , millisecond: `temporalNode`.datetime.millisecond , microsecond: `temporalNode`.datetime.microsecond , nanosecond: `temporalNode`.datetime.nanosecond , timezone: `temporalNode`.datetime.timezone , formatted: toString(`temporalNode`.datetime) },temporalNodes: [sortedElement IN apoc.coll.sortMulti([(`temporalNode`)-[:`TEMPORAL`]->(`temporalNode_temporalNodes`:`TemporalNode`) | temporalNode_temporalNodes {_id: ID(`temporalNode_temporalNodes`),datetime: `temporalNode_temporalNodes`.datetime,time: `temporalNode_temporalNodes`.time,temporalNodes: [sortedElement IN apoc.coll.sortMulti([(`temporalNode_temporalNodes`)-[:`TEMPORAL`]->(`temporalNode_temporalNodes_temporalNodes`:`TemporalNode`) | temporalNode_temporalNodes_temporalNodes {_id: ID(`temporalNode_temporalNodes_temporalNodes`),datetime: `temporalNode_temporalNodes_temporalNodes`.datetime,time: `temporalNode_temporalNodes_temporalNodes`.time}], ['datetime','time']) | sortedElement { .*,  datetime: {year: sortedElement.datetime.year,formatted: toString(sortedElement.datetime)},time: {hour: sortedElement.time.hour}}][1..3] }], ['^datetime']) | sortedElement { .*,  datetime: {year: sortedElement.datetime.year,month: sortedElement.datetime.month,day: sortedElement.datetime.day,hour: sortedElement.datetime.hour,minute: sortedElement.datetime.minute,second: sortedElement.datetime.second,millisecond: sortedElement.datetime.millisecond,microsecond: sortedElement.datetime.microsecond,nanosecond: sortedElement.datetime.nanosecond,timezone: sortedElement.datetime.timezone,formatted: toString(sortedElement.datetime)},time: {hour: sortedElement.time.hour}}] } AS `temporalNode`";
 
   t.plan(1);
   return Promise.all([

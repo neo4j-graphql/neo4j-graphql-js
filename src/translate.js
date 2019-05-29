@@ -626,7 +626,7 @@ export const translateQuery = ({
     temporalArgs
   );
   const outerSkipLimit = getOuterSkipLimit(first, offset);
-  const orderByValue = computeOrderBy(resolveInfo, selections);
+  const orderByValue = computeOrderBy(resolveInfo, schemaType);
 
   if (queryTypeCypherDirective) {
     return customQuery({
@@ -706,6 +706,7 @@ const customQuery = ({
   });
   const isScalarType = isGraphqlScalarType(schemaType);
   const temporalType = isTemporalType(schemaType.name);
+  const { cypherPart: orderByClause } = orderByValue;
   const query = `WITH apoc.cypher.runFirstColumn("${
     cypherQueryArg.value.value
   }", ${argString ||
@@ -713,7 +714,7 @@ const customQuery = ({
     // Don't add subQuery for scalar type payloads
     // FIXME: fix subselection translation for temporal type payload
     !temporalType && !isScalarType
-      ? `{${subQuery}} AS ${safeVariableName}${orderByValue}`
+      ? `{${subQuery}} AS ${safeVariableName}${orderByClause}`
       : ''
   }${outerSkipLimit}`;
   return [query, params];
@@ -795,11 +796,15 @@ const nodeQuery = ({
 
   const predicate = predicateClauses ? `WHERE ${predicateClauses} ` : '';
 
-  let query =
-    `MATCH (${safeVariableName}:${safeLabelName}${
-      argString ? ` ${argString}` : ''
-    }) ${predicate}` +
-    `RETURN ${safeVariableName} {${subQuery}} AS ${safeVariableName}${orderByValue}${outerSkipLimit}`;
+  const { optimization, cypherPart: orderByClause } = orderByValue;
+
+  let query = `MATCH (${safeVariableName}:${safeLabelName}${
+    argString ? ` ${argString}` : ''
+  }) ${predicate}${
+    optimization.earlyOrderBy ? `WITH ${safeVariableName}${orderByClause}` : ''
+  }RETURN ${safeVariableName} {${subQuery}} AS ${safeVariableName}${
+    optimization.earlyOrderBy ? '' : orderByClause
+  }${outerSkipLimit}`;
 
   return [query, params];
 };
@@ -817,7 +822,7 @@ export const translateMutation = ({
   otherParams
 }) => {
   const outerSkipLimit = getOuterSkipLimit(first, offset);
-  const orderByValue = computeOrderBy(resolveInfo, selections);
+  const orderByValue = computeOrderBy(resolveInfo, schemaType);
   const mutationTypeCypherDirective = getMutationCypherDirective(resolveInfo);
   const params = initializeMutationParams({
     resolveInfo,
@@ -918,13 +923,14 @@ const customMutation = ({
   if (cypherParams) {
     params['cypherParams'] = cypherParams;
   }
+  const { cypherPart: orderByClause } = orderByValue;
   const query = `CALL apoc.cypher.doIt("${
     cypherQueryArg.value.value
   }", ${argString}) YIELD value
     WITH apoc.map.values(value, [keys(value)[0]])[0] AS ${safeVariableName}
     RETURN ${safeVariableName} ${
     !temporalType && !isScalarType
-      ? `{${subQuery}} AS ${safeVariableName}${orderByValue}${outerSkipLimit}`
+      ? `{${subQuery}} AS ${safeVariableName}${orderByClause}${outerSkipLimit}`
       : ''
   }`;
   return [query, params];
