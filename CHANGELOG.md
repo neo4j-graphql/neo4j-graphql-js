@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.6.2
+
+- [Improve order by performance](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/247)
+- [Restructure test files](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/253)
+
 ## 2.6.1
 
 - [Temporal and relationship type filters](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/245)
