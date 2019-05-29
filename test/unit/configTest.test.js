@@ -4,8 +4,8 @@ import {
   augmentSchema,
   makeAugmentedSchema,
   augmentTypeDefs
-} from '../dist/index';
-import { typeDefs } from './helpers/configTestHelpers';
+} from '../../dist/index';
+import { typeDefs } from '../helpers/configTestHelpers';
 import { makeExecutableSchema } from 'graphql-tools';
 
 test.cb('Config - makeAugmentedSchema - no queries, no mutations', t => {

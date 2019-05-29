@@ -101,7 +101,7 @@ references:
   run_tests: &run_tests
     run:
       name: Run Tests
-      command: ./node_modules/.bin/nyc ./node_modules/.bin/ava test/*.js test/neo4j-schema/*Test.js
+      command: npm run test-all
 
   env_neo4j34ee: &env_neo4j34ee
       NEO4J_DIST: 'enterprise'
