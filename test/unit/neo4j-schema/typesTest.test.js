@@ -1,5 +1,5 @@
 import test from 'ava';
-import types from '../../dist/neo4j-schema/types';
+import types from '../../../dist/neo4j-schema/types';
 import _ from 'lodash';
 
 test('label2GraphQLType', t => {
