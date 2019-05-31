@@ -96,14 +96,14 @@ export const possiblyAddScopeDirective = ({
         operationType === 'Delete'
       ) {
         return parseDirectiveSdl(
-          `@hasScope(scopes: ["${typeName}: ${operationType}"])`
+          `@hasScope(scopes: ["${typeName}:${operationType}"])`
         );
       }
     }
     if (entityType === 'relation') {
       if (operationType === 'Add') operationType = 'Create';
       else if (operationType === 'Remove') operationType = 'Delete';
-      return `@hasScope(scopes: ["${typeName}: ${operationType}", "${relatedTypeName}: ${operationType}"])`;
+      return `@hasScope(scopes: ["${typeName}:${operationType}", "${relatedTypeName}:${operationType}"])`;
     }
   }
   return undefined;
