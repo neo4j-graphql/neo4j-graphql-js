@@ -1156,6 +1156,73 @@ test('Basic filter', async t => {
     });
 });
 
+
+test.only('Prepare Apollo generated filters test with underscores', async t => {
+  t.plan(1);
+
+  let expected = {
+    data: {
+      UpdateMovie: {
+        __typename: 'Movie',
+        someprefix_title_with_underscores: 'Legends of the Fall',
+      }
+    }
+  };
+
+  await client
+    .mutate({
+      mutation: gql`
+        mutation updateMutation {
+          UpdateMovie(movieId: "266", someprefix_title_with_underscores: "Legends of the Fall") {
+            someprefix_title_with_underscores
+          }
+        }
+      `
+    })
+    .then(data => {
+      t.deepEqual(data.data, expected.data);
+    })
+    .catch(error => {
+      t.fail(error);
+    });
+});
+
+
+test.only('Basic filter using Apollo generated filters underscore test', async t => {
+  t.plan(1);
+
+  let expected = {
+    data: {
+      Movie: [
+        {
+          __typename: 'Movie',
+          title: 'Legends of the Fall',
+        }
+      ]
+    }
+  };
+
+  await client
+    .query({
+      query: gql`
+        {
+          Movie(filter: { someprefix_title_with_underscores_starts_with: "Legends of the" }) {
+            title
+          }
+        }
+      `
+    })
+    .then(data => {
+      t.deepEqual(data.data, expected.data);
+    })
+    .catch(error => {
+      t.fail(error);
+    });
+});
+
+
+
+
 test('Filter with AND', async t => {
   t.plan(1);
 

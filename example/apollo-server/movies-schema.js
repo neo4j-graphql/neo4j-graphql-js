@@ -4,6 +4,7 @@ export const typeDefs = `
 type Movie {
   movieId: ID!
   title: String
+  someprefix_title_with_underscores: String
   year: Int
   dateTime: DateTime
   localDateTime: LocalDateTime

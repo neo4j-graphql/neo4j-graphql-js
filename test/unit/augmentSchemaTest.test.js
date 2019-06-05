@@ -310,6 +310,16 @@ input _MovieFilter {
   title_not_starts_with: String
   title_ends_with: String
   title_not_ends_with: String
+  someprefix_title_with_underscores: String
+  someprefix_title_with_underscores_not: String
+  someprefix_title_with_underscores_in: [String!]
+  someprefix_title_with_underscores_not_in: [String!]
+  someprefix_title_with_underscores_contains: String
+  someprefix_title_with_underscores_not_contains: String
+  someprefix_title_with_underscores_starts_with: String
+  someprefix_title_with_underscores_not_starts_with: String
+  someprefix_title_with_underscores_ends_with: String
+  someprefix_title_with_underscores_not_ends_with: String
   year: Int
   year_not: Int
   year_in: [Int!]
@@ -963,6 +973,7 @@ type Movie {
   _id: String
   movieId: ID!
   title: String
+  someprefix_title_with_underscores: String
   year: Int
   released: _Neo4jDateTime!
   plot: String
@@ -993,8 +1004,8 @@ type Mutation {
   computedTemporal: _Neo4jDateTime
   computedStringList: [String]
   customWithArguments(strArg: String, strInputArg: strInput): String
-  CreateMovie(movieId: ID, title: String, year: Int, released: _Neo4jDateTimeInput!, plot: String, poster: String, imdbRating: Float, avgStars: Float, years: [Int], titles: [String], imdbRatings: [Float], releases: [_Neo4jDateTimeInput]): Movie
-  UpdateMovie(movieId: ID!, title: String, year: Int, released: _Neo4jDateTimeInput, plot: String, poster: String, imdbRating: Float, avgStars: Float, years: [Int], titles: [String], imdbRatings: [Float], releases: [_Neo4jDateTimeInput]): Movie
+  CreateMovie(movieId: ID, title: String, someprefix_title_with_underscores: String, year: Int, released: _Neo4jDateTimeInput!, plot: String, poster: String, imdbRating: Float, avgStars: Float, years: [Int], titles: [String], imdbRatings: [Float], releases: [_Neo4jDateTimeInput]): Movie
+  UpdateMovie(movieId: ID!, title: String, someprefix_title_with_underscores: String, year: Int, released: _Neo4jDateTimeInput, plot: String, poster: String, imdbRating: Float, avgStars: Float, years: [Int], titles: [String], imdbRatings: [Float], releases: [_Neo4jDateTimeInput]): Movie
   DeleteMovie(movieId: ID!): Movie
   AddMovieGenres(from: _MovieInput!, to: _GenreInput!): _AddMovieGenresPayload
   RemoveMovieGenres(from: _MovieInput!, to: _GenreInput!): _RemoveMovieGenresPayload
