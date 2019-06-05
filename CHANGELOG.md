@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.6.3
+
+-[Fix: Improper handling of properties with underscores in filter](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/264)
+
 ## 2.6.2
 
 - [Improve order by performance](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/247)
