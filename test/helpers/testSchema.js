@@ -3,6 +3,7 @@ export const testSchema = `
     _id: String
     movieId: ID!
     title: String @isAuthenticated
+    someprefix_title_with_underscores: String
     year: Int
     released: DateTime!
     plot: String

@@ -1769,11 +1769,45 @@ const translateFilterArgument = ({
 
 const parseFilterArgumentName = fieldName => {
   const fieldNameParts = fieldName.split('_');
+
+  const filterTypes = [
+    '_not',
+    '_in',
+    '_not_in',
+    '_contains',
+    '_not_contains',
+    '_starts_with',
+    '_not_starts_with',
+    '_ends_with',
+    '_not_ends_with',
+    '_lt',
+    '_lte',
+    '_gt',
+    '_gte',
+    '_some',
+    '_none',
+    '_single',
+    '_every',
+  ];
+
   let filterType = '';
+
   if (fieldNameParts.length > 1) {
-    fieldName = fieldNameParts.shift();
-    filterType = fieldNameParts.join('_');
+
+    let regExp = [];
+
+    _.each(filterTypes, f => {
+      regExp.push(f + "$")
+    })
+
+    const regExpJoin = '(' + regExp.join('|') + ')';
+    const preparedFieldAndFilterField = _.replace(fieldName, new RegExp(regExpJoin), '[::filterFieldSeperator::]$1');
+    const [parsedField, parsedFilterField] = preparedFieldAndFilterField.split('[::filterFieldSeperator::]');
+
+    fieldName = !_.isUndefined(parsedField) ? parsedField : fieldName;
+    filterType = !_.isUndefined(parsedFilterField) ? parsedFilterField.substr(1) : ''; // Strip off first underscore
   }
+
   return {
     name: fieldName,
     type: filterType
