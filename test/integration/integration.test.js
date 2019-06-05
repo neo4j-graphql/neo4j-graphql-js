@@ -1157,7 +1157,7 @@ test('Basic filter', async t => {
 });
 
 
-test.only('Prepare Apollo generated filters test with underscores', async t => {
+test.before('Prepare Apollo generated filters test with underscores', async t => {
   t.plan(1);
 
   let expected = {
@@ -1188,7 +1188,7 @@ test.only('Prepare Apollo generated filters test with underscores', async t => {
 });
 
 
-test.only('Basic filter using Apollo generated filters underscore test', async t => {
+test('Basic filter using Apollo generated filters underscore test', async t => {
   t.plan(1);
 
   let expected = {
