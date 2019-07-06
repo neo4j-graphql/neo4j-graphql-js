@@ -412,7 +412,7 @@ const directedNodeTypeFieldOnRelationType = ({
             relationshipVariableName
           )}:${safeLabel(relType)}${queryParams}]-${
             isToField ? '>' : ''
-          }(${safeVar(nestedVariable)}:${
+          }(${safeVar(nestedVariable)}${
             !isInlineFragment ? `:${safeLabel(innerSchemaType.name)}` : ''
           }) ${
             whereClauses.length > 0
@@ -452,7 +452,7 @@ const directedNodeTypeFieldOnRelationType = ({
           isFromField ? '<' : ''
         }-[${safeVar(variableName)}]-${isToField ? '>' : ''}(${safeVar(
           nestedVariable
-        )}:${
+        )}${
           !isInlineFragment ? `:${safeLabel(innerSchemaType.name)}` : ''
         }) | ${nestedVariable} {${
           isInlineFragment
