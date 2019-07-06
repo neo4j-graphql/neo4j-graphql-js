@@ -105,7 +105,6 @@ export const relationFieldOnNodeType = ({
   relType,
   nestedVariable,
   isInlineFragment,
-  interfaceLabel,
   innerSchemaType,
   paramIndex,
   fieldArgs,
@@ -176,13 +175,15 @@ export const relationFieldOnNodeType = ({
         relDirection === 'in' || relDirection === 'IN' ? '<' : ''
       }-[:${safeLabel(relType)}]-${
         relDirection === 'out' || relDirection === 'OUT' ? '>' : ''
-      }(${safeVariableName}:${safeLabel(
-        isInlineFragment ? interfaceLabel : innerSchemaType.name
-      )}${queryParams})${
+      }(${safeVariableName}${
+        !isInlineFragment ? `:${safeLabel(innerSchemaType.name)}` : ''
+      }${queryParams})${
         whereClauses.length > 0 ? ` WHERE ${whereClauses.join(' AND ')}` : ''
       } | ${nestedVariable} {${
         isInlineFragment
-          ? 'FRAGMENT_TYPE: "' + interfaceLabel + '",' + subSelection[0]
+          ? `FRAGMENT_TYPE: labels(${nestedVariable})[0]${
+              subSelection[0] ? `, ${subSelection[0]}` : ''
+            }`
           : subSelection[0]
       }}]${
         orderByParam
@@ -287,7 +288,6 @@ export const nodeTypeFieldOnRelationType = ({
   schemaTypeRelation,
   innerSchemaType,
   isInlineFragment,
-  interfaceLabel,
   paramIndex,
   schemaType,
   filterParams,
@@ -318,7 +318,6 @@ export const nodeTypeFieldOnRelationType = ({
     schemaTypeRelation,
     innerSchemaType,
     isInlineFragment,
-    interfaceLabel,
     paramIndex,
     schemaType,
     filterParams,
@@ -364,7 +363,6 @@ const directedNodeTypeFieldOnRelationType = ({
   schemaTypeRelation,
   innerSchemaType,
   isInlineFragment,
-  interfaceLabel,
   filterParams,
   temporalArgs,
   paramIndex,
@@ -414,15 +412,17 @@ const directedNodeTypeFieldOnRelationType = ({
             relationshipVariableName
           )}:${safeLabel(relType)}${queryParams}]-${
             isToField ? '>' : ''
-          }(${safeVar(nestedVariable)}:${safeLabel(
-            isInlineFragment ? interfaceLabel : fromTypeName
-          )}) ${
+          }(${safeVar(nestedVariable)}:${
+            !isInlineFragment ? `:${safeLabel(innerSchemaType.name)}` : ''
+          }) ${
             whereClauses.length > 0
               ? `WHERE ${whereClauses.join(' AND ')} `
               : ''
           }| ${relationshipVariableName} {${
             isInlineFragment
-              ? 'FRAGMENT_TYPE: "' + interfaceLabel + '",' + subSelection[0]
+              ? `FRAGMENT_TYPE: labels(${nestedVariable})[0]${
+                  subSelection[0] ? `, ${subSelection[0]}` : ''
+                }`
               : subSelection[0]
           }}]${!isArrayType(fieldType) ? ')' : ''}${skipLimit} ${commaIfTail}`,
           ...tailParams
@@ -452,11 +452,13 @@ const directedNodeTypeFieldOnRelationType = ({
           isFromField ? '<' : ''
         }-[${safeVar(variableName)}]-${isToField ? '>' : ''}(${safeVar(
           nestedVariable
-        )}:${safeLabel(
-          isInlineFragment ? interfaceLabel : innerSchemaType.name
-        )}${queryParams}) | ${nestedVariable} {${
+        )}:${
+          !isInlineFragment ? `:${safeLabel(innerSchemaType.name)}` : ''
+        }) | ${nestedVariable} {${
           isInlineFragment
-            ? 'FRAGMENT_TYPE: "' + interfaceLabel + '",' + subSelection[0]
+            ? `FRAGMENT_TYPE: labels(${nestedVariable})[0]${
+                subSelection[0] ? `, ${subSelection[0]}` : ''
+              }`
             : subSelection[0]
         }}]${!isArrayType(fieldType) ? ')' : ''}${skipLimit} ${commaIfTail}`,
         ...tailParams
@@ -1787,25 +1789,32 @@ const parseFilterArgumentName = fieldName => {
     '_some',
     '_none',
     '_single',
-    '_every',
+    '_every'
   ];
 
   let filterType = '';
 
   if (fieldNameParts.length > 1) {
-
     let regExp = [];
 
     _.each(filterTypes, f => {
-      regExp.push(f + "$")
-    })
+      regExp.push(f + '$');
+    });
 
     const regExpJoin = '(' + regExp.join('|') + ')';
-    const preparedFieldAndFilterField = _.replace(fieldName, new RegExp(regExpJoin), '[::filterFieldSeperator::]$1');
-    const [parsedField, parsedFilterField] = preparedFieldAndFilterField.split('[::filterFieldSeperator::]');
+    const preparedFieldAndFilterField = _.replace(
+      fieldName,
+      new RegExp(regExpJoin),
+      '[::filterFieldSeperator::]$1'
+    );
+    const [parsedField, parsedFilterField] = preparedFieldAndFilterField.split(
+      '[::filterFieldSeperator::]'
+    );
 
     fieldName = !_.isUndefined(parsedField) ? parsedField : fieldName;
-    filterType = !_.isUndefined(parsedFilterField) ? parsedFilterField.substr(1) : ''; // Strip off first underscore
+    filterType = !_.isUndefined(parsedFilterField)
+      ? parsedFilterField.substr(1)
+      : ''; // Strip off first underscore
   }
 
   return {

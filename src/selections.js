@@ -12,7 +12,6 @@ import {
   relationDirective,
   getRelationTypeDirective,
   decideNestedVariableName,
-  safeLabel,
   safeVar,
   isTemporalType,
   isTemporalField,
@@ -81,8 +80,10 @@ export function buildCypherSelection({
   };
 
   let fieldName;
-  let isInlineFragment = false;
-  let interfaceLabel;
+  const isInlineFragment =
+    innerSchemaType &&
+    innerSchemaType.astNode &&
+    innerSchemaType.astNode.kind === 'InterfaceTypeDefinition';
   if (headSelection) {
     if (headSelection.kind === 'InlineFragment') {
       // get selections for the fragment and recurse on those
@@ -124,35 +125,6 @@ export function buildCypherSelection({
   const fieldType =
     schemaTypeField && schemaTypeField.type ? schemaTypeField.type : {};
   const innerSchemaType = innerType(fieldType); // for target "type" aka label
-
-  if (
-    innerSchemaType &&
-    innerSchemaType.astNode &&
-    innerSchemaType.astNode.kind === 'InterfaceTypeDefinition'
-  ) {
-    isInlineFragment = true;
-    // FIXME: remove unused variables
-    const interfaceType = schemaType;
-    const interfaceName = innerSchemaType.name;
-
-    const fragments = headSelection.selectionSet.selections.filter(
-      item => item.kind === 'InlineFragment'
-    );
-
-    // FIXME: this will only handle the first inline fragment
-    const fragment = fragments[0];
-
-    interfaceLabel = fragment
-      ? fragment.typeCondition.name.value
-      : interfaceName;
-    const implementationName = fragment
-      ? fragment.typeCondition.name.value
-      : interfaceName;
-
-    const schemaType = resolveInfo.schema._implementations[interfaceName].find(
-      intfc => intfc.name === implementationName
-    );
-  }
 
   const { statement: customCypher } = cypherDirective(schemaType, fieldName);
 
@@ -314,7 +286,6 @@ export function buildCypherSelection({
       relDirection,
       relType,
       isInlineFragment,
-      interfaceLabel,
       innerSchemaType,
       temporalClauses,
       resolveInfo,
@@ -332,7 +303,6 @@ export function buildCypherSelection({
       schemaTypeRelation,
       innerSchemaType,
       isInlineFragment,
-      interfaceLabel,
       paramIndex,
       schemaType,
       filterParams,
