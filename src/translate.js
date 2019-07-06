@@ -413,7 +413,7 @@ const directedNodeTypeFieldOnRelationType = ({
           )}:${safeLabel(relType)}${queryParams}]-${
             isToField ? '>' : ''
           }(${safeVar(nestedVariable)}${
-            !isInlineFragment ? `:${safeLabel(innerSchemaType.name)}` : ''
+            !isInlineFragment ? `:${safeLabel(fromTypeName)}` : ''
           }) ${
             whereClauses.length > 0
               ? `WHERE ${whereClauses.join(' AND ')} `
@@ -454,7 +454,7 @@ const directedNodeTypeFieldOnRelationType = ({
           nestedVariable
         )}${
           !isInlineFragment ? `:${safeLabel(innerSchemaType.name)}` : ''
-        }) | ${nestedVariable} {${
+        }${queryParams}) | ${nestedVariable} {${
           isInlineFragment
             ? `FRAGMENT_TYPE: labels(${nestedVariable})[0]${
                 subSelection[0] ? `, ${subSelection[0]}` : ''
