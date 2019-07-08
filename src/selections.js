@@ -80,10 +80,6 @@ export function buildCypherSelection({
   };
 
   let fieldName;
-  const isInlineFragment =
-    innerSchemaType &&
-    innerSchemaType.astNode &&
-    innerSchemaType.astNode.kind === 'InterfaceTypeDefinition';
   if (headSelection) {
     if (headSelection.kind === 'InlineFragment') {
       // get selections for the fragment and recurse on those
@@ -126,8 +122,11 @@ export function buildCypherSelection({
     schemaTypeField && schemaTypeField.type ? schemaTypeField.type : {};
   const innerSchemaType = innerType(fieldType); // for target "type" aka label
 
+  const isInlineFragment =
+    innerSchemaType &&
+    innerSchemaType.astNode &&
+    innerSchemaType.astNode.kind === 'InterfaceTypeDefinition';
   const { statement: customCypher } = cypherDirective(schemaType, fieldName);
-
   const typeMap = resolveInfo.schema.getTypeMap();
   const schemaTypeAstNode = typeMap[schemaType].astNode;
 
