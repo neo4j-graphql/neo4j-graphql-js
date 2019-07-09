@@ -39,9 +39,7 @@ export function buildCypherSelection({
   parentSelectionInfo = {},
   secondParentSelectionInfo = {}
 }) {
-  if (!selections.length) {
-    return [initial, {}];
-  }
+  if (!selections.length) return [initial, {}];
   selections = removeIgnoredFields(schemaType, selections);
   let selectionFilters = filtersFromSelections(
     selections,
@@ -84,10 +82,13 @@ export function buildCypherSelection({
     if (headSelection.kind === 'InlineFragment') {
       // get selections for the fragment and recurse on those
       const fragmentSelections = headSelection.selectionSet.selections;
+      const fragmentSchemaType = resolveInfo.schema.getType(
+        headSelection.typeCondition.name.value
+      );
       let fragmentTailParams = {
         selections: fragmentSelections,
         variableName,
-        schemaType,
+        schemaType: fragmentSchemaType,
         resolveInfo,
         parentSelectionInfo,
         secondParentSelectionInfo
