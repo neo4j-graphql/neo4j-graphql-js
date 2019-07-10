@@ -29,7 +29,7 @@ import {
 } from './translate';
 
 export function buildCypherSelection({
-  initial,
+  initial = '',
   cypherParams,
   selections,
   variableName,
@@ -77,33 +77,31 @@ export function buildCypherSelection({
     return [subSelection, { ...shallowFilterParams, ...subFilterParams }];
   };
 
-  let fieldName;
-  if (headSelection) {
-    if (headSelection.kind === 'InlineFragment') {
-      // get selections for the fragment and recurse on those
-      const fragmentSelections = headSelection.selectionSet.selections;
-      const fragmentSchemaType = resolveInfo.schema.getType(
-        headSelection.typeCondition.name.value
-      );
-      let fragmentTailParams = {
-        selections: fragmentSelections,
-        variableName,
-        schemaType: fragmentSchemaType,
-        resolveInfo,
-        parentSelectionInfo,
-        secondParentSelectionInfo
-      };
-      return recurse({
-        initial: fragmentSelections.length
-          ? initial
-          : initial.substring(0, initial.lastIndexOf(',')),
-        ...fragmentTailParams
-      });
-    } else {
-      fieldName = headSelection.name.value;
-    }
+  if (selections.find(({ kind }) => kind && kind === 'InlineFragment')) {
+    return selections
+      .filter(({ kind }) => kind && kind === 'InlineFragment')
+      .reduce((query, selection, index) => {
+        const fragmentSelections = selection.selectionSet.selections;
+        const fragmentSchemaType = resolveInfo.schema.getType(
+          selection.typeCondition.name.value
+        );
+        let fragmentTailParams = {
+          selections: fragmentSelections,
+          variableName,
+          schemaType: fragmentSchemaType,
+          resolveInfo,
+          parentSelectionInfo,
+          secondParentSelectionInfo
+        };
+        const result = recurse({
+          initial: index === 0 ? query[0] : query[0] + ',',
+          ...fragmentTailParams
+        });
+        return result;
+      }, initial);
   }
 
+  const fieldName = headSelection.name.value;
   const commaIfTail = tailSelections.length > 0 ? ',' : '';
   const isScalarSchemaType = isGraphqlScalarType(schemaType);
   const schemaTypeField = !isScalarSchemaType

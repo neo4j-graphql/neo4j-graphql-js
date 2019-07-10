@@ -690,13 +690,11 @@ const customQuery = ({
 }) => {
   const safeVariableName = safeVar(variableName);
   const [subQuery, subParams] = buildCypherSelection({
-    initial: '',
     cypherParams,
     selections,
     variableName,
     schemaType,
-    resolveInfo,
-    paramIndex: 1
+    resolveInfo
   });
   const params = { ...nonNullParams, ...subParams };
   if (cypherParams) {
@@ -743,7 +741,6 @@ const nodeQuery = ({
   const safeLabelName = safeLabel(typeName);
   const rootParamIndex = 1;
   const [subQuery, subParams] = buildCypherSelection({
-    initial: '',
     cypherParams,
     selections,
     variableName,
@@ -911,12 +908,10 @@ const customMutation = ({
     return x.name.value === 'statement';
   });
   const [subQuery, subParams] = buildCypherSelection({
-    initial: '',
     selections,
     variableName,
     schemaType,
     resolveInfo,
-    paramIndex: 1,
     cypherParams
   });
   const isScalarType = isGraphqlScalarType(schemaType);
@@ -964,12 +959,10 @@ const nodeCreate = ({
     paramKey: 'params'
   });
   const [subQuery, subParams] = buildCypherSelection({
-    initial: ``,
     selections,
     variableName,
     schemaType,
-    resolveInfo,
-    paramIndex: 1
+    resolveInfo
   });
   params = { ...preparedParams, ...subParams };
   const query = `
@@ -1023,12 +1016,10 @@ const nodeUpdate = ({
     query += `SET ${safeVariableName} += {${paramUpdateStatements.join(',')}} `;
   }
   const [subQuery, subParams] = buildCypherSelection({
-    initial: ``,
     selections,
     variableName,
     schemaType,
-    resolveInfo,
-    paramIndex: 1
+    resolveInfo
   });
   preparedParams.params[primaryKeyArgName] = primaryKeyParam[primaryKeyArgName];
   params = { ...preparedParams, ...subParams };
@@ -1063,12 +1054,10 @@ const nodeDelete = ({
       : ` {${primaryKeyArgName}: $${primaryKeyArgName}})`
   }`;
   const [subQuery, subParams] = buildCypherSelection({
-    initial: ``,
     selections,
     variableName,
     schemaType,
-    resolveInfo,
-    paramIndex: 1
+    resolveInfo
   });
   params = { ...preparedParams, ...subParams };
   const deletionVariableName = safeVar(`${variableName}_toDelete`);
@@ -1172,11 +1161,9 @@ const relationshipCreate = ({
     'to'
   );
   const [subQuery, subParams] = buildCypherSelection({
-    initial: '',
     selections,
     schemaType,
     resolveInfo,
-    paramIndex: 1,
     parentSelectionInfo: {
       rootType: 'relationship',
       from: fromVar,
@@ -1291,12 +1278,10 @@ const relationshipDelete = ({
   );
   // TODO cleaner semantics: remove use of _ prefixes in root variableNames and variableName
   const [subQuery, subParams] = buildCypherSelection({
-    initial: '',
     selections,
     variableName,
     schemaType,
     resolveInfo,
-    paramIndex: 1,
     parentSelectionInfo: {
       rootType: 'relationship',
       from: `_${fromVar}`,
