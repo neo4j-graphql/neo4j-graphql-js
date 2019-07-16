@@ -34,7 +34,27 @@ import {
 } from './auth';
 
 export const augmentedSchema = (typeMap, resolvers, config) => {
+  console.log('/***********/');
+  console.log(
+    JSON.stringify(
+      Object.entries(typeMap).map(([name, { kind }]) => `${name}: ${kind}`),
+      null,
+      2
+    )
+  );
+
   const augmentedTypeMap = augmentTypeMap(typeMap, resolvers, config);
+  console.log('/***********/');
+  console.log(
+    JSON.stringify(
+      Object.entries(augmentedTypeMap).map(
+        ([name, { kind }]) => `${name}: ${kind}`
+      ),
+      null,
+      2
+    )
+  );
+
   const augmentedResolvers = augmentResolvers(
     augmentedTypeMap,
     resolvers,
@@ -1346,7 +1366,7 @@ const addRelationTypeDirectives = typeMap => {
           // replace it if it exists in order to force correct configuration
           astNode.directives[typeDirectiveIndex] = parseDirectiveSdl(`
             @relation(
-              name: \"${relationName}\", 
+              name: \"${relationName}\",
               from: \"${fromTypeName}\",
               to: \"${toTypeName}\"
             )
@@ -1355,7 +1375,7 @@ const addRelationTypeDirectives = typeMap => {
           astNode.directives.push(
             parseDirectiveSdl(`
             @relation(
-              name: \"${relationName}\", 
+              name: \"${relationName}\",
               from: \"${fromTypeName}\",
               to: \"${toTypeName}\"
             )
@@ -1563,7 +1583,7 @@ const temporalTypes = (typeMap, types) => {
         millisecond: Int
         microsecond: Int
         nanosecond: Int
-        timezone: String 
+        timezone: String
         formatted: String
       }
     `).definitions[0];

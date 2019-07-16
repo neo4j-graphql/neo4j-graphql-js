@@ -83,7 +83,20 @@ export const extractTypeMapFromTypeDefs = typeDefs => {
   // into a single string for parse, add validatation
   const astNodes = parse(typeDefs).definitions;
   return astNodes.reduce((acc, t) => {
-    if (t.name) acc[t.name.value] = t;
+    if (t.name) {
+      if (t.name.value === 'State') {
+        console.log(t);
+      }
+      if (!acc[t.name.value]) {
+        acc[t.name.value] = t;
+      }
+      if (
+        t.kind === 'ObjectTypeExtension' &&
+        acc[t.name.value].kind === 'ObjectTypeDefinition'
+      ) {
+        acc[t.name.value].fields.push(...t.fields);
+      }
+    }
     return acc;
   }, {});
 };

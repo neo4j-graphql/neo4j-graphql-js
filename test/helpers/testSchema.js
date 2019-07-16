@@ -243,8 +243,13 @@ export const testSchema = `
     ): [TemporalNode] @relation(name: "TEMPORAL", direction: OUT)
   }
 
+
   type ignoredType {
     ignoredField: String @neo4j_ignore
+  }
+
+  extend type State {
+    lala: String
   }
 
   scalar Time
