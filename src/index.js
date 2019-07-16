@@ -157,14 +157,6 @@ export const makeAugmentedSchema = ({
 
 export const augmentTypeDefs = (typeDefs, config) => {
   let typeMap = extractTypeMapFromTypeDefs(typeDefs);
-  console.log('/***********/');
-  console.log(
-    JSON.stringify(
-      Object.entries(typeMap).map(([name, { kind }]) => `${name}: ${kind}`),
-      null,
-      2
-    )
-  );
   // overwrites any provided declarations of system directives
   typeMap = addDirectiveDeclarations(typeMap, config);
   // adds managed types; tepmoral, spatial, etc.

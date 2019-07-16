@@ -34,15 +34,7 @@ import {
 } from './auth';
 
 export const augmentedSchema = (typeMap, resolvers, config) => {
-  console.log(
-    JSON.stringify(
-      Object.entries(augmentedTypeMap).map(
-        ([name, { kind }]) => `${name}: ${kind}`
-      ),
-      null,
-      2
-    )
-  );
+  const augmentedTypeMap = augmentTypeMap(typeMap, resolvers, config);
 
   const augmentedResolvers = augmentResolvers(
     augmentedTypeMap,
