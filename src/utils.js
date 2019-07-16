@@ -84,9 +84,6 @@ export const extractTypeMapFromTypeDefs = typeDefs => {
   const astNodes = parse(typeDefs).definitions;
   return astNodes.reduce((acc, t) => {
     if (t.name) {
-      if (t.name.value === 'State') {
-        console.log(t);
-      }
       if (!acc[t.name.value]) {
         acc[t.name.value] = t;
       }
@@ -95,6 +92,8 @@ export const extractTypeMapFromTypeDefs = typeDefs => {
         acc[t.name.value].kind === 'ObjectTypeDefinition'
       ) {
         acc[t.name.value].fields.push(...t.fields);
+        acc[t.name.value].directives.push(...t.directives);
+        acc[t.name.value].interfaces.push(...t.interfaces);
       }
     }
     return acc;
