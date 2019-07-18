@@ -98,7 +98,7 @@ export function buildCypherSelection({
           ...fragmentTailParams
         });
         return result;
-      }, initial);
+      }, initial || ['']);
   }
 
   const fieldName = headSelection.name.value;
