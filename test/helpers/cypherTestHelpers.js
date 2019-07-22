@@ -3,9 +3,9 @@ import {
   cypherMutation,
   augmentSchema,
   augmentTypeDefs
-} from '../../dist/index';
-import { printTypeMap, extractTypeMapFromTypeDefs } from '../../dist/utils';
-import { augmentTypeMap } from '../../dist/augment';
+} from '../../src/index';
+import { printTypeMap, extractTypeMapFromTypeDefs } from '../../src/utils';
+import { augmentTypeMap } from '../../src/augment';
 import { graphql } from 'graphql';
 import { makeExecutableSchema } from 'graphql-tools';
 import { testSchema } from './testSchema';
