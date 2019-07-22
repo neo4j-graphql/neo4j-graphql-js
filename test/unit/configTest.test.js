@@ -4,7 +4,7 @@ import {
   augmentSchema,
   makeAugmentedSchema,
   augmentTypeDefs
-} from '../../dist/index';
+} from '../../src/index';
 import { typeDefs } from '../helpers/configTestHelpers';
 import { makeExecutableSchema } from 'graphql-tools';
 

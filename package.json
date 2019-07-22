@@ -12,8 +12,7 @@
     "build-with-sourcemaps": "babel src --presets @babel/preset-env --out-dir dist --source-maps",
     "precommit": "lint-staged",
     "prepublish": "npm run build",
-    "pretest": "npm run build",
-    "test": "nyc --reporter=lcov ava test/unit/ --verbose",
+    "test": "nyc --reporter=lcov ava test/unit/*/*.test.js --verbose",
     "parse-tck": "babel-node test/helpers/tck/parseTck.js",
     "test-tck": "nyc ava --fail-fast test/tck/",
     "report-coverage": "nyc report --reporter=text-lcov > coverage.lcov && codecov",
@@ -45,7 +44,7 @@
     "apollo-link-http": "^1.5.14",
     "apollo-server": "^2.4.8",
     "apollo-server-express": "2.2.6",
-    "ava": "^0.25.0",
+    "ava": "^2.2.0",
     "body-parser": "^1.18.3",
     "express": "^4.16.4",
     "graphql-tag": "^2.10.1",
@@ -63,6 +62,11 @@
     "graphql-auth-directives": "^2.1.0",
     "lodash": "^4.17.11",
     "neo4j-driver": "^1.7.3"
+  },
+  "ava": {
+    "require": [
+      "@babel/register"
+    ]
   },
   "prettier": {
     "singleQuote": true
