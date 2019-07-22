@@ -36,7 +36,8 @@ import {
   innerType,
   relationDirective,
   typeIdentifiers,
-  decideTemporalConstructor
+  decideTemporalConstructor,
+  getAdditionalLabels
 } from './utils';
 import {
   getNamedType,
@@ -643,6 +644,8 @@ export const translateQuery = ({
       nonNullParams
     });
   } else {
+    const additionalLabels = getAdditionalLabels(schemaType, cypherParams);
+
     return nodeQuery({
       resolveInfo,
       cypherParams,
@@ -651,6 +654,7 @@ export const translateQuery = ({
       selections,
       variableName,
       typeName,
+      additionalLabels,
       temporalClauses,
       orderByValue,
       outerSkipLimit,
@@ -728,6 +732,7 @@ const nodeQuery = ({
   selections,
   variableName,
   typeName,
+  additionalLabels = [],
   temporalClauses,
   orderByValue,
   outerSkipLimit,
@@ -738,7 +743,7 @@ const nodeQuery = ({
   _id
 }) => {
   const safeVariableName = safeVar(variableName);
-  const safeLabelName = safeLabel(typeName);
+  const safeLabelName = safeLabel([typeName, ...additionalLabels]);
   const rootParamIndex = 1;
   const [subQuery, subParams] = buildCypherSelection({
     initial: '',
@@ -1787,25 +1792,32 @@ const parseFilterArgumentName = fieldName => {
     '_some',
     '_none',
     '_single',
-    '_every',
+    '_every'
   ];
 
   let filterType = '';
 
   if (fieldNameParts.length > 1) {
-
     let regExp = [];
 
     _.each(filterTypes, f => {
-      regExp.push(f + "$")
-    })
+      regExp.push(f + '$');
+    });
 
     const regExpJoin = '(' + regExp.join('|') + ')';
-    const preparedFieldAndFilterField = _.replace(fieldName, new RegExp(regExpJoin), '[::filterFieldSeperator::]$1');
-    const [parsedField, parsedFilterField] = preparedFieldAndFilterField.split('[::filterFieldSeperator::]');
+    const preparedFieldAndFilterField = _.replace(
+      fieldName,
+      new RegExp(regExpJoin),
+      '[::filterFieldSeperator::]$1'
+    );
+    const [parsedField, parsedFilterField] = preparedFieldAndFilterField.split(
+      '[::filterFieldSeperator::]'
+    );
 
     fieldName = !_.isUndefined(parsedField) ? parsedField : fieldName;
-    filterType = !_.isUndefined(parsedFilterField) ? parsedFilterField.substr(1) : ''; // Strip off first underscore
+    filterType = !_.isUndefined(parsedFilterField)
+      ? parsedFilterField.substr(1)
+      : ''; // Strip off first underscore
   }
 
   return {
