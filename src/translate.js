@@ -828,9 +828,9 @@ export const translateMutation = ({
 }) => {
   const outerSkipLimit = getOuterSkipLimit(first, offset);
   const orderByValue = computeOrderBy(resolveInfo, schemaType);
-  const additionalLabels = getAdditionalLabels(
+  const additionalNodeLabels = getAdditionalLabels(
     schemaType,
-    context.cypherParams
+    getCypherParams(context)
   );
   const mutationTypeCypherDirective = getMutationCypherDirective(resolveInfo);
   const params = initializeMutationParams({
@@ -842,7 +842,6 @@ export const translateMutation = ({
   });
   const mutationInfo = {
     params,
-    additionalLabels,
     selections,
     schemaType,
     resolveInfo
@@ -860,28 +859,33 @@ export const translateMutation = ({
     return nodeCreate({
       ...mutationInfo,
       variableName,
-      typeName
+      typeName,
+      additionalLabels: additionalNodeLabels
     });
   } else if (isUpdateMutation(resolveInfo)) {
     return nodeUpdate({
       ...mutationInfo,
       variableName,
-      typeName
+      typeName,
+      additionalLabels: additionalNodeLabels
     });
   } else if (isDeleteMutation(resolveInfo)) {
     return nodeDelete({
       ...mutationInfo,
       variableName,
-      typeName
+      typeName,
+      additionalLabels: additionalNodeLabels
     });
   } else if (isAddMutation(resolveInfo)) {
     return relationshipCreate({
-      ...mutationInfo
+      ...mutationInfo,
+      context
     });
   } else if (isRemoveMutation(resolveInfo)) {
     return relationshipDelete({
       ...mutationInfo,
-      variableName
+      variableName,
+      context
     });
   } else {
     // throw error - don't know how to handle this type of mutation
@@ -1098,7 +1102,8 @@ const relationshipCreate = ({
   resolveInfo,
   selections,
   schemaType,
-  params
+  params,
+  context
 }) => {
   let mutationMeta, relationshipNameArg, fromTypeArg, toTypeArg;
   try {
@@ -1133,7 +1138,7 @@ const relationshipCreate = ({
   //TODO: need to handle one-to-one and one-to-many
   const args = getMutationArguments(resolveInfo);
   const typeMap = resolveInfo.schema.getTypeMap();
-
+  const cypherParams = getCypherParams(context);
   const fromType = fromTypeArg.value.value;
   const fromVar = `${lowFirstLetter(fromType)}_from`;
   const fromInputArg = args.find(e => e.name.value === 'from').type;
@@ -1166,9 +1171,17 @@ const relationshipCreate = ({
   });
   const schemaTypeName = safeVar(schemaType);
   const fromVariable = safeVar(fromVar);
-  const fromLabel = safeLabel(fromType);
+  const fromAdditionalLabels = getAdditionalLabels(
+    resolveInfo.schema.getType(fromType),
+    cypherParams
+  );
+  const fromLabel = safeLabel([fromType, ...fromAdditionalLabels]);
   const toVariable = safeVar(toVar);
-  const toLabel = safeLabel(toType);
+  const toAdditionalLabels = getAdditionalLabels(
+    resolveInfo.schema.getType(toType),
+    cypherParams
+  );
+  const toLabel = safeLabel([toType, ...toAdditionalLabels]);
   const relationshipVariable = safeVar(lowercased + '_relation');
   const relationshipLabel = safeLabel(relationshipName);
   const fromTemporalClauses = temporalPredicateClauses(
@@ -1225,7 +1238,8 @@ const relationshipDelete = ({
   selections,
   variableName,
   schemaType,
-  params
+  params,
+  context
 }) => {
   let mutationMeta, relationshipNameArg, fromTypeArg, toTypeArg;
   try {
@@ -1260,6 +1274,7 @@ const relationshipDelete = ({
   //TODO: need to handle one-to-one and one-to-many
   const args = getMutationArguments(resolveInfo);
   const typeMap = resolveInfo.schema.getTypeMap();
+  const cypherParams = getCypherParams(context);
 
   const fromType = fromTypeArg.value.value;
   const fromVar = `${lowFirstLetter(fromType)}_from`;
@@ -1282,9 +1297,17 @@ const relationshipDelete = ({
 
   const schemaTypeName = safeVar(schemaType);
   const fromVariable = safeVar(fromVar);
-  const fromLabel = safeLabel(fromType);
+  const fromAdditionalLabels = getAdditionalLabels(
+    resolveInfo.schema.getType(fromType),
+    cypherParams
+  );
+  const fromLabel = safeLabel([fromType, ...fromAdditionalLabels]);
   const toVariable = safeVar(toVar);
-  const toLabel = safeLabel(toType);
+  const toAdditionalLabels = getAdditionalLabels(
+    resolveInfo.schema.getType(toType),
+    cypherParams
+  );
+  const toLabel = safeLabel([toType, ...toAdditionalLabels]);
   const relationshipVariable = safeVar(fromVar + toVar);
   const relationshipLabel = safeLabel(relationshipName);
   const fromRootVariable = safeVar('_' + fromVar);
