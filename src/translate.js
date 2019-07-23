@@ -222,7 +222,8 @@ export const relationTypeFieldOnNodeType = ({
   resolveInfo,
   selectionFilters,
   paramIndex,
-  fieldArgs
+  fieldArgs,
+  cypherParams
 }) => {
   if (innerSchemaTypeRelation.from === innerSchemaTypeRelation.to) {
     return {
@@ -270,8 +271,20 @@ export const relationTypeFieldOnNodeType = ({
         schemaType.name === innerSchemaTypeRelation.from ? '>' : ''
       }(:${safeLabel(
         schemaType.name === innerSchemaTypeRelation.from
-          ? innerSchemaTypeRelation.to
-          : innerSchemaTypeRelation.from
+          ? [
+              innerSchemaTypeRelation.to,
+              ...getAdditionalLabels(
+                resolveInfo.schema.getType(innerSchemaTypeRelation.to),
+                cypherParams
+              )
+            ]
+          : [
+              innerSchemaTypeRelation.from,
+              ...getAdditionalLabels(
+                resolveInfo.schema.getType(innerSchemaTypeRelation.from),
+                cypherParams
+              )
+            ]
       )}) ${
         whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')} ` : ''
       }| ${relationshipVariableName} {${subSelection[0]}}]${
@@ -296,7 +309,8 @@ export const nodeTypeFieldOnRelationType = ({
   parentSelectionInfo,
   resolveInfo,
   selectionFilters,
-  fieldArgs
+  fieldArgs,
+  cypherParams
 }) => {
   if (
     isRootSelection({
@@ -326,7 +340,8 @@ export const nodeTypeFieldOnRelationType = ({
     temporalArgs,
     resolveInfo,
     selectionFilters,
-    fieldArgs
+    fieldArgs,
+    cypherParams
   });
 };
 
@@ -371,7 +386,8 @@ const directedNodeTypeFieldOnRelationType = ({
   paramIndex,
   resolveInfo,
   selectionFilters,
-  fieldArgs
+  fieldArgs,
+  cypherParams
 }) => {
   const relType = schemaTypeRelation.name;
   const fromTypeName = schemaTypeRelation.from;
@@ -416,7 +432,21 @@ const directedNodeTypeFieldOnRelationType = ({
           )}:${safeLabel(relType)}${queryParams}]-${
             isToField ? '>' : ''
           }(${safeVar(nestedVariable)}:${safeLabel(
-            isInlineFragment ? interfaceLabel : fromTypeName
+            isInlineFragment
+              ? [
+                  interfaceLabel,
+                  ...getAdditionalLabels(
+                    resolveInfo.schema.getType(interfaceLabel),
+                    cypherParams
+                  )
+                ]
+              : [
+                  fromTypeName,
+                  ...getAdditionalLabels(
+                    resolveInfo.schema.getType(fromTypeName),
+                    cypherParams
+                  )
+                ]
           )}) ${
             whereClauses.length > 0
               ? `WHERE ${whereClauses.join(' AND ')} `
@@ -449,12 +479,40 @@ const directedNodeTypeFieldOnRelationType = ({
       selection: {
         initial: `${initial}${fieldName}: ${
           !isArrayType(fieldType) ? 'head(' : ''
-        }[(:${safeLabel(isFromField ? toTypeName : fromTypeName)})${
-          isFromField ? '<' : ''
-        }-[${safeVar(variableName)}]-${isToField ? '>' : ''}(${safeVar(
-          nestedVariable
-        )}:${safeLabel(
-          isInlineFragment ? interfaceLabel : innerSchemaType.name
+        }[(:${safeLabel(
+          isFromField
+            ? [
+                toTypeName,
+                ...getAdditionalLabels(
+                  resolveInfo.schema.getType(toTypeName),
+                  cypherParams
+                )
+              ]
+            : [
+                fromTypeName,
+                ...getAdditionalLabels(
+                  resolveInfo.schema.getType(fromTypeName),
+                  cypherParams
+                )
+              ]
+        )})${isFromField ? '<' : ''}-[${safeVar(variableName)}]-${
+          isToField ? '>' : ''
+        }(${safeVar(nestedVariable)}:${safeLabel(
+          isInlineFragment
+            ? [
+                interfaceLabel,
+                ...getAdditionalLabels(
+                  resolveInfo.schema.getType(interfaceLabel),
+                  cypherParams
+                )
+              ]
+            : [
+                innerSchemaType.name,
+                ...getAdditionalLabels(
+                  resolveInfo.schema.getType(innerSchemaType.name),
+                  cypherParams
+                )
+              ]
         )}${queryParams}) | ${nestedVariable} {${
           isInlineFragment
             ? 'FRAGMENT_TYPE: "' + interfaceLabel + '",' + subSelection[0]
@@ -1208,7 +1266,8 @@ const relationshipCreate = ({
       to: toVar,
       variableName: lowercased
     },
-    variableName: schemaType.name === fromType ? `${toVar}` : `${fromVar}`
+    variableName: schemaType.name === fromType ? `${toVar}` : `${fromVar}`,
+    cypherParams: getCypherParams(context)
   });
   params = { ...preparedParams, ...subParams };
   let query = `

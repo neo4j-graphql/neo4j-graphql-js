@@ -340,7 +340,8 @@ export function buildCypherSelection({
       parentSelectionInfo,
       resolveInfo,
       selectionFilters,
-      fieldArgs
+      fieldArgs,
+      cypherParams
     });
     selection = recurse(translation.selection);
     // set subSelection to update field argument params
@@ -357,7 +358,8 @@ export function buildCypherSelection({
       resolveInfo,
       selectionFilters,
       paramIndex,
-      fieldArgs
+      fieldArgs,
+      cypherParams
     });
     selection = recurse(translation.selection);
     // set subSelection to update field argument params
