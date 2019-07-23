@@ -828,6 +828,10 @@ export const translateMutation = ({
 }) => {
   const outerSkipLimit = getOuterSkipLimit(first, offset);
   const orderByValue = computeOrderBy(resolveInfo, schemaType);
+  const additionalLabels = getAdditionalLabels(
+    schemaType,
+    context.cypherParams
+  );
   const mutationTypeCypherDirective = getMutationCypherDirective(resolveInfo);
   const params = initializeMutationParams({
     resolveInfo,
@@ -838,6 +842,7 @@ export const translateMutation = ({
   });
   const mutationInfo = {
     params,
+    additionalLabels,
     selections,
     schemaType,
     resolveInfo
@@ -949,10 +954,11 @@ const nodeCreate = ({
   selections,
   schemaType,
   resolveInfo,
+  additionalLabels,
   params
 }) => {
   const safeVariableName = safeVar(variableName);
-  const safeLabelName = safeLabel(typeName);
+  const safeLabelName = safeLabel([typeName, ...additionalLabels]);
   let statements = [];
   const args = getMutationArguments(resolveInfo);
   statements = possiblySetFirstId({
@@ -988,10 +994,12 @@ const nodeUpdate = ({
   typeName,
   selections,
   schemaType,
+  additionalLabels,
   params
 }) => {
   const safeVariableName = safeVar(variableName);
-  const safeLabelName = safeLabel(typeName);
+  const safeLabelName = safeLabel([typeName, ...additionalLabels]);
+
   const args = getMutationArguments(resolveInfo);
   const primaryKeyArg = args[0];
   const primaryKeyArgName = primaryKeyArg.name.value;
@@ -1045,10 +1053,11 @@ const nodeDelete = ({
   variableName,
   typeName,
   schemaType,
+  additionalLabels,
   params
 }) => {
   const safeVariableName = safeVar(variableName);
-  const safeLabelName = safeLabel(typeName);
+  const safeLabelName = safeLabel([typeName, ...additionalLabels]);
   const args = getMutationArguments(resolveInfo);
   const primaryKeyArg = args[0];
   const primaryKeyArgName = primaryKeyArg.name.value;
