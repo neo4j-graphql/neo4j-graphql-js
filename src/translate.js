@@ -120,7 +120,8 @@ export const relationFieldOnNodeType = ({
   commaIfTail,
   tailParams,
   temporalClauses,
-  resolveInfo
+  resolveInfo,
+  cypherParams
 }) => {
   const safeVariableName = safeVar(nestedVariable);
   const allParams = innerFilterParams(filterParams, temporalArgs);
@@ -175,10 +176,24 @@ export const relationFieldOnNodeType = ({
           : ''
       }[(${safeVar(variableName)})${
         relDirection === 'in' || relDirection === 'IN' ? '<' : ''
-      }-[:${safeLabel(relType)}]-${
+      }-[:${safeLabel([relType])}]-${
         relDirection === 'out' || relDirection === 'OUT' ? '>' : ''
       }(${safeVariableName}:${safeLabel(
-        isInlineFragment ? interfaceLabel : innerSchemaType.name
+        isInlineFragment
+          ? [
+              interfaceLabel,
+              ...getAdditionalLabels(
+                resolveInfo.schema.getType(interfaceLabel),
+                cypherParams
+              )
+            ]
+          : [
+              innerSchemaType.name,
+              ...getAdditionalLabels(
+                resolveInfo.schema.getType(innerSchemaType.name),
+                cypherParams
+              )
+            ]
       )}${queryParams})${
         whereClauses.length > 0 ? ` WHERE ${whereClauses.join(' AND ')}` : ''
       } | ${nestedVariable} {${
@@ -1396,7 +1411,8 @@ const relationshipDelete = ({
       from: `_${fromVar}`,
       to: `_${toVar}`
     },
-    variableName: schemaType.name === fromType ? `_${toVar}` : `_${fromVar}`
+    variableName: schemaType.name === fromType ? `_${toVar}` : `_${fromVar}`,
+    cypherParams: getCypherParams(context)
   });
   params = { ...params, ...subParams };
   let query = `
