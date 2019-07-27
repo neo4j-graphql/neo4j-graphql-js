@@ -58,6 +58,8 @@
     "sinon": "^7.3.1"
   },
   "dependencies": {
+    "@babel/runtime": "^7.5.5",
+    "@babel/runtime-corejs2": "^7.5.5",
     "graphql": "^14.2.1",
     "graphql-auth-directives": "^2.1.0",
     "lodash": "^4.17.11",
