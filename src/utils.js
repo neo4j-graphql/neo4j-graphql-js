@@ -431,6 +431,7 @@ export const possiblySetFirstId = ({ args, statements, params }) => {
 };
 
 export const getQueryArguments = resolveInfo => {
+  if (resolveInfo.fieldName === '_entities') return [];
   return resolveInfo.schema.getQueryType().getFields()[resolveInfo.fieldName]
     .astNode.arguments;
 };
@@ -645,6 +646,7 @@ export const addDirectiveDeclarations = (typeMap, config) => {
 };
 
 export const getQueryCypherDirective = resolveInfo => {
+  if (resolveInfo.fieldName === '_entities') return;
   return resolveInfo.schema
     .getQueryType()
     .getFields()
