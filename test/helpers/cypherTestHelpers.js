@@ -34,160 +34,51 @@ type Mutation {
   }
 `;
 
+  const checkCypherQuery = (object, params, ctx, resolveInfo) => {
+    const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
+    t.is(query, expectedCypherQuery);
+    t.deepEqual(queryParams, expectedCypherParams);
+  };
+
+  const checkCypherMutation = (object, params, ctx, resolveInfo) => {
+    const [query, queryParams] = cypherMutation(params, ctx, resolveInfo);
+    t.is(query, expectedCypherQuery);
+    t.deepEqual(queryParams, expectedCypherParams);
+    t.end();
+  };
+
   const resolvers = {
     Query: {
-      User(object, params, ctx, resolveInfo) {
-        const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
-        t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
-      },
-      Movie(object, params, ctx, resolveInfo) {
-        const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
-        t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
-      },
-      MoviesByYear(object, params, ctx, resolveInfo) {
-        const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
-        t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
-      },
-      MoviesByYears(object, params, ctx, resolveInfo) {
-        const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
-        t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
-      },
-      MovieById(object, params, ctx, resolveInfo) {
-        const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
-        t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
-      },
-      MovieBy_Id(object, params, ctx, resolveInfo) {
-        const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
-        t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
-      },
-      GenresBySubstring(object, params, ctx, resolveInfo) {
-        const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
-        t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
-      },
-      Books(object, params, ctx, resolveInfo) {
-        const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
-        t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
-      },
-      State(object, params, ctx, resolveInfo) {
-        const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
-        t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
-      },
-      computedBoolean(object, params, ctx, resolveInfo) {
-        const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
-        t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
-      },
-      computedInt(object, params, ctx, resolveInfo) {
-        const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
-        t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
-      },
-      computedFloat(object, params, ctx, resolveInfo) {
-        const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
-        t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
-      },
-      currentUserId(object, params, ctx, resolveInfo) {
-        const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
-        t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
-      },
-      computedTemporal(object, params, ctx, resolveInfo) {
-        const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
-        t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
-      },
-      computedObjectWithCypherParams(object, params, ctx, resolveInfo) {
-        const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
-        t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
-      },
-      computedStringList(object, params, ctx, resolveInfo) {
-        const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
-        t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
-      },
-      computedIntList(object, params, ctx, resolveInfo) {
-        const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
-        t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
-      },
-      customWithArguments(object, params, ctx, resolveInfo) {
-        const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
-        t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
-      }
+      User: checkCypherQuery,
+      Movie: checkCypherQuery,
+      MoviesByYear: checkCypherQuery,
+      MoviesByYears: checkCypherQuery,
+      MovieById: checkCypherQuery,
+      MovieBy_Id: checkCypherQuery,
+      GenresBySubstring: checkCypherQuery,
+      Books: checkCypherQuery,
+      State: checkCypherQuery,
+      computedBoolean: checkCypherQuery,
+      computedInt: checkCypherQuery,
+      computedFloat: checkCypherQuery,
+      currentUserId: checkCypherQuery,
+      computedTemporal: checkCypherQuery,
+      computedObjectWithCypherParams: checkCypherQuery,
+      computedStringList: checkCypherQuery,
+      computedIntList: checkCypherQuery,
+      customWithArguments: checkCypherQuery
     },
     Mutation: {
-      CreateGenre(object, params, ctx, resolveInfo) {
-        const [query, queryParams] = cypherMutation(params, ctx, resolveInfo);
-        t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
-        t.end();
-      },
-      CreateMovie(object, params, ctx, resolveInfo) {
-        const [query, queryParams] = cypherMutation(params, ctx, resolveInfo);
-        t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
-        t.end();
-      },
-      CreateState(object, params, ctx, resolveInfo) {
-        const [query, queryParams] = cypherMutation(params, ctx, resolveInfo);
-        t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
-        t.end();
-      },
-      UpdateMovie(object, params, ctx, resolveInfo) {
-        const [query, queryParams] = cypherMutation(params, ctx, resolveInfo);
-        t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
-        t.end();
-      },
-      DeleteMovie(object, params, ctx, resolveInfo) {
-        const [query, queryParams] = cypherMutation(params, ctx, resolveInfo);
-        t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
-        t.end();
-      },
-      currentUserId(object, params, ctx, resolveInfo) {
-        const [query, queryParams] = cypherMutation(params, ctx, resolveInfo);
-        t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
-        t.end();
-      },
-      computedObjectWithCypherParams(object, params, ctx, resolveInfo) {
-        const [query, queryParams] = cypherMutation(params, ctx, resolveInfo);
-        t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
-        t.end();
-      },
-      computedStringList(object, params, ctx, resolveInfo) {
-        const [query, queryParams] = cypherMutation(params, ctx, resolveInfo);
-        t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
-        t.end();
-      },
-      computedTemporal(object, params, ctx, resolveInfo) {
-        const [query, queryParams] = cypherMutation(params, ctx, resolveInfo);
-        t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
-        t.end();
-      },
-      customWithArguments(object, params, ctx, resolveInfo) {
-        const [query, queryParams] = cypherMutation(params, ctx, resolveInfo);
-        t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
-        t.end();
-      }
+      CreateGenre: checkCypherMutation,
+      CreateMovie: checkCypherMutation,
+      CreateState: checkCypherMutation,
+      UpdateMovie: checkCypherMutation,
+      DeleteMovie: checkCypherMutation,
+      currentUserId: checkCypherMutation,
+      computedObjectWithCypherParams: checkCypherMutation,
+      computedStringList: checkCypherMutation,
+      computedTemporal: checkCypherMutation,
+      customWithArguments: checkCypherMutation
     }
   };
 
@@ -243,53 +134,29 @@ export function augmentedSchemaCypherTestRunner(
   graphqlParams,
   expectedCypherQuery
 ) {
+  const checkCypherQuery = (object, params, ctx, resolveInfo) => {
+    const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
+    t.is(query, expectedCypherQuery);
+    t.deepEqual(queryParams, expectedCypherParams);
+  };
+  const checkCypherMutation = (object, params, ctx, resolveInfo) => {
+    const [query, queryParams] = cypherMutation(params, ctx, resolveInfo);
+    t.is(query, expectedCypherQuery);
+    t.deepEqual(queryParams, expectedCypherParams);
+    t.end();
+  };
+
   const resolvers = {
     Query: {
-      User(object, params, ctx, resolveInfo) {
-        let [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
-        t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
-      },
-      Movie(object, params, ctx, resolveInfo) {
-        let [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
-        t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
-      },
-      MoviesByYear(object, params, ctx, resolveInfo) {
-        let [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
-        t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
-      },
-      MoviesByYears(object, params, ctx, resolveInfo) {
-        let [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
-        t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
-      },
-      MovieById(object, params, ctx, resolveInfo) {
-        let [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
-        t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
-      },
-      MovieBy_Id(object, params, ctx, resolveInfo) {
-        let [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
-        t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
-      },
-      GenresBySubstring(object, params, ctx, resolveInfo) {
-        let [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
-        t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
-      },
-      Book(object, params, ctx, resolveInfo) {
-        let [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
-        t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
-      },
-      Books(object, params, ctx, resolveInfo) {
-        let [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
-        t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
-      },
+      User: checkCypherQuery,
+      Movie: checkCypherQuery,
+      MoviesByYear: checkCypherQuery,
+      MoviesByYears: checkCypherQuery,
+      MovieById: checkCypherQuery,
+      MovieBy_Id: checkCypherQuery,
+      GenresBySubstring: checkCypherQuery,
+      Book: checkCypherQuery,
+      Books: checkCypherQuery,
       TemporalNode(object, params, ctx, resolveInfo) {
         // cypherParams is emptied for the test
         // Handle @cypher field on root query type with scalar payload, no args
@@ -299,166 +166,36 @@ export function augmentedSchemaCypherTestRunner(
         t.is(query, expectedCypherQuery);
         t.deepEqual(queryParams, expectedCypherParams);
       },
-      State(object, params, ctx, resolveInfo) {
-        const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
-        t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
-      },
-      computedBoolean(object, params, ctx, resolveInfo) {
-        const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
-        t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
-      },
-      computedInt(object, params, ctx, resolveInfo) {
-        const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
-        t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
-      },
-      computedFloat(object, params, ctx, resolveInfo) {
-        const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
-        t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
-      },
-      currentUserId(object, params, ctx, resolveInfo) {
-        const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
-        t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
-      },
-      computedTemporal(object, params, ctx, resolveInfo) {
-        const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
-        t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
-      },
-      computedObjectWithCypherParams(object, params, ctx, resolveInfo) {
-        const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
-        t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
-      },
-      computedStringList(object, params, ctx, resolveInfo) {
-        const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
-        t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
-      },
-      computedIntList(object, params, ctx, resolveInfo) {
-        const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
-        t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
-      },
-      customWithArguments(object, params, ctx, resolveInfo) {
-        const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
-        t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
-      }
+      State: checkCypherQuery,
+      computedBoolean: checkCypherQuery,
+      computedInt: checkCypherQuery,
+      computedFloat: checkCypherQuery,
+      currentUserId: checkCypherQuery,
+      computedTemporal: checkCypherQuery,
+      computedObjectWithCypherParams: checkCypherQuery,
+      computedStringList: checkCypherQuery,
+      computedIntList: checkCypherQuery,
+      customWithArguments: checkCypherQuery
     },
     Mutation: {
-      CreateMovie(object, params, ctx, resolveInfo) {
-        const [query, queryParams] = cypherMutation(params, ctx, resolveInfo);
-        t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
-        t.end();
-      },
-      CreateState(object, params, ctx, resolveInfo) {
-        const [query, queryParams] = cypherMutation(params, ctx, resolveInfo);
-        t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
-        t.end();
-      },
-      CreateTemporalNode(object, params, ctx, resolveInfo) {
-        const [query, queryParams] = cypherMutation(params, ctx, resolveInfo);
-        t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
-        t.end();
-      },
-      UpdateTemporalNode(object, params, ctx, resolveInfo) {
-        const [query, queryParams] = cypherMutation(params, ctx, resolveInfo);
-        t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
-        t.end();
-      },
-      DeleteTemporalNode(object, params, ctx, resolveInfo) {
-        const [query, queryParams] = cypherMutation(params, ctx, resolveInfo);
-        t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
-        t.end();
-      },
-      AddTemporalNodeTemporalNodes(object, params, ctx, resolveInfo) {
-        const [query, queryParams] = cypherMutation(params, ctx, resolveInfo);
-        t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
-        t.end();
-      },
-      RemoveTemporalNodeTemporalNodes(object, params, ctx, resolveInfo) {
-        const [query, queryParams] = cypherMutation(params, ctx, resolveInfo);
-        t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
-        t.end();
-      },
-      AddMovieGenres(object, params, ctx, resolveInfo) {
-        const [query, queryParams] = cypherMutation(params, ctx, resolveInfo);
-        t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
-        t.end();
-      },
-      RemoveMovieGenres(object, params, ctx, resolveInfo) {
-        const [query, queryParams] = cypherMutation(params, ctx, resolveInfo);
-        t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
-        t.end();
-      },
-      AddUserRated(object, params, ctx, resolveInfo) {
-        const [query, queryParams] = cypherMutation(params, ctx, resolveInfo);
-        t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
-        t.end();
-      },
-      RemoveUserRated(object, params, ctx, resolveInfo) {
-        const [query, queryParams] = cypherMutation(params, ctx, resolveInfo);
-        t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
-        t.end();
-      },
-      AddUserFriends(object, params, ctx, resolveInfo) {
-        const [query, queryParams] = cypherMutation(params, ctx, resolveInfo);
-        t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
-        t.end();
-      },
-      RemoveUserFriends(object, params, ctx, resolveInfo) {
-        const [query, queryParams] = cypherMutation(params, ctx, resolveInfo);
-        t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
-        t.end();
-      },
-      currentUserId(object, params, ctx, resolveInfo) {
-        const [query, queryParams] = cypherMutation(params, ctx, resolveInfo);
-        t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
-        t.end();
-      },
-      computedObjectWithCypherParams(object, params, ctx, resolveInfo) {
-        const [query, queryParams] = cypherMutation(params, ctx, resolveInfo);
-        t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
-        t.end();
-      },
-      computedStringList(object, params, ctx, resolveInfo) {
-        const [query, queryParams] = cypherMutation(params, ctx, resolveInfo);
-        t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
-        t.end();
-      },
-      computedTemporal(object, params, ctx, resolveInfo) {
-        const [query, queryParams] = cypherMutation(params, ctx, resolveInfo);
-        t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
-        t.end();
-      },
-      customWithArguments(object, params, ctx, resolveInfo) {
-        const [query, queryParams] = cypherMutation(params, ctx, resolveInfo);
-        t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
-        t.end();
-      }
+      CreateMovie: checkCypherMutation,
+      CreateState: checkCypherMutation,
+      CreateTemporalNode: checkCypherMutation,
+      UpdateTemporalNode: checkCypherMutation,
+      DeleteTemporalNode: checkCypherMutation,
+      AddTemporalNodeTemporalNodes: checkCypherMutation,
+      RemoveTemporalNodeTemporalNodes: checkCypherMutation,
+      AddMovieGenres: checkCypherMutation,
+      RemoveMovieGenres: checkCypherMutation,
+      AddUserRated: checkCypherMutation,
+      RemoveUserRated: checkCypherMutation,
+      AddUserFriends: checkCypherMutation,
+      RemoveUserFriends: checkCypherMutation,
+      currentUserId: checkCypherMutation,
+      computedObjectWithCypherParams: checkCypherMutation,
+      computedStringList: checkCypherMutation,
+      computedTemporal: checkCypherMutation,
+      customWithArguments: checkCypherMutation
     }
   };
 
