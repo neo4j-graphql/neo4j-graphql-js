@@ -8,6 +8,8 @@ test.cb('Test augmented schema', t => {
 
 directive @relation(name: String, direction: _RelationDirections, from: String, to: String) on FIELD_DEFINITION | OBJECT
 
+directive @additionalLabels(labels: [String]) on OBJECT
+
 directive @MutationMeta(relationship: String, from: String, to: String) on FIELD_DEFINITION
 
 directive @neo4j_ignore on FIELD_DEFINITION

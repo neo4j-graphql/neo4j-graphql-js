@@ -4,8 +4,8 @@ import { createReadStream, createWriteStream } from 'fs';
 import {
   extractTypeMapFromTypeDefs,
   createOperationMap
-} from '../../../dist/utils';
-import { augmentTypeDefs, cypherQuery } from '../../../dist/index';
+} from '../../../src/utils';
+import { augmentTypeDefs, cypherQuery } from '../../../src/index';
 
 export const generateTestFile = async (tckFile, testFile) => {
   const tck = await extractTck(tckFile, testFile);

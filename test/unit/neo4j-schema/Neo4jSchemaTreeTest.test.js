@@ -1,5 +1,5 @@
 import test from 'ava';
-import Neo4jSchemaTree from '../../../dist/neo4j-schema/Neo4jSchemaTree';
+import Neo4jSchemaTree from '../../../src/neo4j-schema/Neo4jSchemaTree';
 import fakes from '../../helpers/driverFakes';
 import _ from 'lodash';
 
