@@ -65,19 +65,19 @@ test('GraphQL query with @cypher directive', async t => {
           actors: [
             {
               __typename: 'Actor',
-              name: ' Tom Skerritt'
-            },
-            {
-              __typename: 'Actor',
-              name: ' Brad Pitt'
-            },
-            {
-              __typename: 'Actor',
-              name: ' Brenda Blethyn'
-            },
-            {
-              __typename: 'Actor',
               name: 'Craig Sheffer'
+            },
+            {
+              __typename: 'Actor',
+              name: 'Tom Skerritt'
+            },
+            {
+              __typename: 'Actor',
+              name: 'Brad Pitt'
+            },
+            {
+              __typename: 'Actor',
+              name: 'Brenda Blethyn'
             }
           ],
           similar: [
@@ -443,11 +443,11 @@ test('Top level orderBy', async t => {
             },
             {
               __typename: 'Actor',
-              name: ' Jenna Dewan Tatum'
+              name: 'Max Minghella'
             },
             {
               __typename: 'Actor',
-              name: ' Justin Long'
+              name: 'Jenna Dewan Tatum'
             }
           ]
         },
@@ -456,15 +456,15 @@ test('Top level orderBy', async t => {
           __typename: 'Movie',
           actors: [
             {
-              name: ' Nick Swardson',
-              __typename: 'Actor'
-            },
-            {
               name: 'Jesse Eisenberg',
               __typename: 'Actor'
             },
             {
-              name: ' Aziz Ansari',
+              name: 'Nick Swardson',
+              __typename: 'Actor'
+            },
+            {
+              name: 'Aziz Ansari',
               __typename: 'Actor'
             }
           ]
@@ -478,11 +478,11 @@ test('Top level orderBy', async t => {
               __typename: 'Actor'
             },
             {
-              name: ' Seth Rogen',
+              name: 'Bryce Dallas Howard',
               __typename: 'Actor'
             },
             {
-              name: ' Anna Kendrick',
+              name: 'Seth Rogen',
               __typename: 'Actor'
             }
           ]
@@ -1156,37 +1156,41 @@ test('Basic filter', async t => {
     });
 });
 
+test.before(
+  'Prepare Apollo generated filters test with underscores',
+  async t => {
+    t.plan(1);
 
-test.before('Prepare Apollo generated filters test with underscores', async t => {
-  t.plan(1);
-
-  let expected = {
-    data: {
-      UpdateMovie: {
-        __typename: 'Movie',
-        someprefix_title_with_underscores: 'Legends of the Fall',
-      }
-    }
-  };
-
-  await client
-    .mutate({
-      mutation: gql`
-        mutation updateMutation {
-          UpdateMovie(movieId: "266", someprefix_title_with_underscores: "Legends of the Fall") {
-            someprefix_title_with_underscores
-          }
+    let expected = {
+      data: {
+        UpdateMovie: {
+          __typename: 'Movie',
+          someprefix_title_with_underscores: 'Legends of the Fall'
         }
-      `
-    })
-    .then(data => {
-      t.deepEqual(data.data, expected.data);
-    })
-    .catch(error => {
-      t.fail(error);
-    });
-});
+      }
+    };
 
+    await client
+      .mutate({
+        mutation: gql`
+          mutation updateMutation {
+            UpdateMovie(
+              movieId: "266"
+              someprefix_title_with_underscores: "Legends of the Fall"
+            ) {
+              someprefix_title_with_underscores
+            }
+          }
+        `
+      })
+      .then(data => {
+        t.deepEqual(data.data, expected.data);
+      })
+      .catch(error => {
+        t.fail(error);
+      });
+  }
+);
 
 test('Basic filter using Apollo generated filters underscore test', async t => {
   t.plan(1);
@@ -1196,7 +1200,7 @@ test('Basic filter using Apollo generated filters underscore test', async t => {
       Movie: [
         {
           __typename: 'Movie',
-          title: 'Legends of the Fall',
+          title: 'Legends of the Fall'
         }
       ]
     }
@@ -1206,7 +1210,11 @@ test('Basic filter using Apollo generated filters underscore test', async t => {
     .query({
       query: gql`
         {
-          Movie(filter: { someprefix_title_with_underscores_starts_with: "Legends of the" }) {
+          Movie(
+            filter: {
+              someprefix_title_with_underscores_starts_with: "Legends of the"
+            }
+          ) {
             title
           }
         }
@@ -1219,9 +1227,6 @@ test('Basic filter using Apollo generated filters underscore test', async t => {
       t.fail(error);
     });
 });
-
-
-
 
 test('Filter with AND', async t => {
   t.plan(1);
@@ -1846,19 +1851,19 @@ test('Nested filter', async t => {
           actors: [
             {
               __typename: 'Actor',
-              name: ' Tom Skerritt'
-            },
-            {
-              __typename: 'Actor',
-              name: ' Brad Pitt'
-            },
-            {
-              __typename: 'Actor',
-              name: ' Brenda Blethyn'
-            },
-            {
-              __typename: 'Actor',
               name: 'Craig Sheffer'
+            },
+            {
+              __typename: 'Actor',
+              name: 'Tom Skerritt'
+            },
+            {
+              __typename: 'Actor',
+              name: 'Brad Pitt'
+            },
+            {
+              __typename: 'Actor',
+              name: 'Brenda Blethyn'
             }
           ]
         }
@@ -1905,19 +1910,19 @@ test('Filter with GraphQL variable', async t => {
           actors: [
             {
               __typename: 'Actor',
-              name: ' Tom Skerritt'
-            },
-            {
-              __typename: 'Actor',
-              name: ' Brad Pitt'
-            },
-            {
-              __typename: 'Actor',
-              name: ' Brenda Blethyn'
-            },
-            {
-              __typename: 'Actor',
               name: 'Craig Sheffer'
+            },
+            {
+              __typename: 'Actor',
+              name: 'Tom Skerritt'
+            },
+            {
+              __typename: 'Actor',
+              name: 'Brad Pitt'
+            },
+            {
+              __typename: 'Actor',
+              name: 'Brenda Blethyn'
             }
           ]
         }
