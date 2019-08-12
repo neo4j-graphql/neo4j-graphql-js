@@ -59,7 +59,7 @@
   "dependencies": {
     "graphql": "^14.2.1",
     "graphql-auth-directives": "^2.1.0",
-    "lodash": "^4.17.11",
+    "lodash": "^4.17.15",
     "neo4j-driver": "^1.7.3"
   },
   "prettier": {
