@@ -441,6 +441,21 @@ export const getMutationArguments = resolveInfo => {
     .astNode.arguments;
 };
 
+export const getAdditionalLabels = (schemaType, cypherParams) => {
+  const labelDirective = getTypeDirective(
+    schemaType.astNode,
+    'additionalLabels'
+  );
+  const { labels: rawLabels } = labelDirective
+    ? parseArgs(labelDirective.arguments)
+    : { labels: [] };
+
+  const parsedLabels = rawLabels.map(label =>
+    _.template(label, { variable: '$cypherParams' })(cypherParams)
+  );
+  return parsedLabels;
+};
+
 // TODO refactor
 export const buildCypherParameters = ({
   args,
@@ -631,6 +646,9 @@ export const addDirectiveDeclarations = (typeMap, config) => {
   typeMap['relation'] = parse(
     `directive @relation(name: String, direction: _RelationDirections, from: String, to: String) on FIELD_DEFINITION | OBJECT`
   ).definitions[0];
+  typeMap['additionalLabels'] = parse(
+    `directive @additionalLabels(labels: [String]) on OBJECT`
+  ).definitions[0];
   // TODO should we change these system directives to having a '_Neo4j' prefix
   typeMap['MutationMeta'] = parse(
     `directive @MutationMeta(relationship: String, from: String, to: String) on FIELD_DEFINITION`
@@ -794,13 +812,19 @@ export const safeVar = i => {
 /**
  * Render safe a label name by enclosing it in backticks and escaping any
  * existing backtick if present.
- * @param {String} l a label name
+ * @param {String | String[]} a label name or an array of labels
  * @returns {String} an escaped label name suitable for cypher concat
  */
 export const safeLabel = l => {
-  const asStr = `${l}`;
-  const escapeInner = asStr.replace(/\`/g, '\\`');
-  return '`' + escapeInner + '`';
+  if (!Array.isArray(l)) {
+    l = [l];
+  }
+  const safeLabels = l.map(label => {
+    const asStr = `${label}`;
+    const escapeInner = asStr.replace(/\`/g, '\\`');
+    return '`' + escapeInner + '`';
+  });
+  return safeLabels.join(':');
 };
 
 export const decideNestedVariableName = ({
