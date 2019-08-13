@@ -18,14 +18,11 @@ import { checkRequestError } from './auth';
 import { translateMutation, translateQuery } from './translate';
 import Neo4jSchemaTree from './neo4j-schema/Neo4jSchemaTree';
 import graphQLMapper from './neo4j-schema/graphQLMapper';
+import Debug from 'debug';
 
-export async function neo4jgraphql(
-  object,
-  params,
-  context,
-  resolveInfo,
-  debug = true
-) {
+const debug = Debug('neo4j');
+
+export async function neo4jgraphql(object, params, context, resolveInfo) {
   // throw error if context.req.error exists
   if (checkRequestError(context)) {
     throw new Error(checkRequestError(context));
@@ -37,10 +34,8 @@ export async function neo4jgraphql(
   const cypherFunction = isMutation(resolveInfo) ? cypherMutation : cypherQuery;
   [query, cypherParams] = cypherFunction(params, context, resolveInfo);
 
-  if (debug) {
-    console.log(query);
-    console.log(JSON.stringify(cypherParams, null, 2));
-  }
+  debug(query);
+  debug(cypherParams);
 
   const session = context.driver.session();
   let result;
@@ -110,8 +105,7 @@ export const augmentSchema = (
   config = {
     query: true,
     mutation: true,
-    temporal: true,
-    debug: true
+    temporal: true
   }
 ) => {
   const typeMap = extractTypeMapFromSchema(schema);
@@ -133,8 +127,7 @@ export const makeAugmentedSchema = ({
   config = {
     query: true,
     mutation: true,
-    temporal: true,
-    debug: true
+    temporal: true
   }
 }) => {
   if (schema) {
