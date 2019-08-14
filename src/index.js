@@ -20,7 +20,7 @@ import Neo4jSchemaTree from './neo4j-schema/Neo4jSchemaTree';
 import graphQLMapper from './neo4j-schema/graphQLMapper';
 import Debug from 'debug';
 
-const debug = Debug('neo4j');
+const debug = Debug('neo4j-graphql-js');
 
 export async function neo4jgraphql(object, params, context, resolveInfo) {
   // throw error if context.req.error exists
