@@ -106,7 +106,6 @@ export const relationFieldOnNodeType = ({
   relType,
   nestedVariable,
   isInlineFragment,
-  interfaceLabel,
   innerSchemaType,
   paramIndex,
   fieldArgs,
@@ -178,23 +177,17 @@ export const relationFieldOnNodeType = ({
         relDirection === 'in' || relDirection === 'IN' ? '<' : ''
       }-[:${safeLabel([relType])}]-${
         relDirection === 'out' || relDirection === 'OUT' ? '>' : ''
-      }(${safeVariableName}:${safeLabel(
-        isInlineFragment
-          ? [
-              interfaceLabel,
-              ...getAdditionalLabels(
-                resolveInfo.schema.getType(interfaceLabel),
-                cypherParams
-              )
-            ]
-          : [
+      }(${safeVariableName}${
+        !isInlineFragment
+          ? `:${safeLabel([
               innerSchemaType.name,
               ...getAdditionalLabels(
                 resolveInfo.schema.getType(innerSchemaType.name),
                 cypherParams
               )
-            ]
-      )}${queryParams})${
+            ])}`
+          : ''
+      }${queryParams})${
         whereClauses.length > 0 ? ` WHERE ${whereClauses.join(' AND ')}` : ''
       } | ${nestedVariable} {${
         isInlineFragment
@@ -318,7 +311,6 @@ export const nodeTypeFieldOnRelationType = ({
   schemaTypeRelation,
   innerSchemaType,
   isInlineFragment,
-  interfaceLabel,
   paramIndex,
   schemaType,
   filterParams,
@@ -350,7 +342,6 @@ export const nodeTypeFieldOnRelationType = ({
     schemaTypeRelation,
     innerSchemaType,
     isInlineFragment,
-    interfaceLabel,
     paramIndex,
     schemaType,
     filterParams,
@@ -397,7 +388,6 @@ const directedNodeTypeFieldOnRelationType = ({
   schemaTypeRelation,
   innerSchemaType,
   isInlineFragment,
-  interfaceLabel,
   filterParams,
   temporalArgs,
   paramIndex,
@@ -448,23 +438,17 @@ const directedNodeTypeFieldOnRelationType = ({
             relationshipVariableName
           )}:${safeLabel(relType)}${queryParams}]-${
             isToField ? '>' : ''
-          }(${safeVar(nestedVariable)}:${safeLabel(
-            isInlineFragment
-              ? [
-                  interfaceLabel,
-                  ...getAdditionalLabels(
-                    resolveInfo.schema.getType(interfaceLabel),
-                    cypherParams
-                  )
-                ]
-              : [
+          }(${safeVar(nestedVariable)}${
+            !isInlineFragment
+              ? `:${safeLabel([
                   fromTypeName,
                   ...getAdditionalLabels(
                     resolveInfo.schema.getType(fromTypeName),
                     cypherParams
                   )
-                ]
-          )}) ${
+                ])}`
+              : ''
+          }) ${
             whereClauses.length > 0
               ? `WHERE ${whereClauses.join(' AND ')} `
               : ''
@@ -516,23 +500,17 @@ const directedNodeTypeFieldOnRelationType = ({
               ]
         )})${isFromField ? '<' : ''}-[${safeVar(variableName)}]-${
           isToField ? '>' : ''
-        }(${safeVar(nestedVariable)}:${safeLabel(
-          isInlineFragment
-            ? [
-                interfaceLabel,
-                ...getAdditionalLabels(
-                  resolveInfo.schema.getType(interfaceLabel),
-                  cypherParams
-                )
-              ]
-            : [
+        }(${safeVar(nestedVariable)}:${
+          !isInlineFragment
+            ? safeLabel([
                 innerSchemaType.name,
                 ...getAdditionalLabels(
                   resolveInfo.schema.getType(innerSchemaType.name),
                   cypherParams
                 )
-              ]
-        )}${queryParams}) | ${nestedVariable} {${
+              ])
+            : ''
+        }${queryParams}) | ${nestedVariable} {${
           isInlineFragment
             ? `FRAGMENT_TYPE: labels(${nestedVariable})[0]${
                 subSelection[0] ? `, ${subSelection[0]}` : ''
@@ -1394,7 +1372,6 @@ const relationshipDelete = ({
   // TODO cleaner semantics: remove use of _ prefixes in root variableNames and variableName
   const [subQuery, subParams] = buildCypherSelection({
     selections,
-    variableName,
     schemaType,
     resolveInfo,
     parentSelectionInfo: {
