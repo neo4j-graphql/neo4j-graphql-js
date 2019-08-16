@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.7.1
+
+- [Fix interface query bug](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/291)
+
 ## 2.7.0
 
 - [Fix: Handle multiple inline fragments](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/270)
