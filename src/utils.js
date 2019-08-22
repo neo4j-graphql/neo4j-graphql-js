@@ -214,6 +214,10 @@ export function isGraphqlScalarType(type) {
   );
 }
 
+export function isGraphqlInterfaceType(type) {
+  return type.constructor.name === 'GraphQLInterfaceType';
+}
+
 export function isArrayType(type) {
   return type ? type.toString().startsWith('[') : false;
 }

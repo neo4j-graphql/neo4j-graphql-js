@@ -33,6 +33,7 @@ import {
   isTemporalType,
   isTemporalInputType,
   isGraphqlScalarType,
+  isGraphqlInterfaceType,
   innerType,
   relationDirective,
   typeIdentifiers,
@@ -764,6 +765,7 @@ const customQuery = ({
     return x.name.value === 'statement';
   });
   const isScalarType = isGraphqlScalarType(schemaType);
+  const isInterfaceType = isGraphqlInterfaceType(schemaType);
   const temporalType = isTemporalType(schemaType.name);
   const { cypherPart: orderByClause } = orderByValue;
   const query = `WITH apoc.cypher.runFirstColumn("${
@@ -773,7 +775,11 @@ const customQuery = ({
     // Don't add subQuery for scalar type payloads
     // FIXME: fix subselection translation for temporal type payload
     !temporalType && !isScalarType
-      ? `{${subQuery}} AS ${safeVariableName}${orderByClause}`
+      ? `{${
+          isInterfaceType
+            ? `FRAGMENT_TYPE: labels(${safeVariableName})[0],`
+            : ''
+        }${subQuery}} AS ${safeVariableName}${orderByClause}`
       : ''
   }${outerSkipLimit}`;
   return [query, params];
@@ -984,6 +990,7 @@ const customMutation = ({
     cypherParams
   });
   const isScalarType = isGraphqlScalarType(schemaType);
+  const isInterfaceType = isGraphqlInterfaceType(schemaType);
   const temporalType = isTemporalType(schemaType.name);
   params = { ...params, ...subParams };
   if (cypherParams) {
@@ -996,7 +1003,11 @@ const customMutation = ({
     WITH apoc.map.values(value, [keys(value)[0]])[0] AS ${safeVariableName}
     RETURN ${safeVariableName} ${
     !temporalType && !isScalarType
-      ? `{${subQuery}} AS ${safeVariableName}${orderByClause}${outerSkipLimit}`
+      ? `{${
+          isInterfaceType
+            ? `FRAGMENT_TYPE: labels(${safeVariableName})[0],`
+            : ''
+        }${subQuery}} AS ${safeVariableName}${orderByClause}${outerSkipLimit}`
       : ''
   }`;
   return [query, params];
