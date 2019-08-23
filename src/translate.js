@@ -74,6 +74,10 @@ export const customCypherField = ({
     variableName = `${variableName}_relation`;
   }
   const fieldIsList = !!fieldType.ofType;
+  const fieldIsInterfaceType =
+    fieldIsList &&
+    fieldType.ofType.astNode &&
+    fieldType.ofType.astNode.kind === 'InterfaceTypeDefinition';
   // similar: [ x IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie}, true) |x {.title}][1..2])
 
   // For @cypher fields with object payload types, customCypherField is
@@ -91,9 +95,9 @@ export const customCypherField = ({
       schemaType,
       resolveInfo,
       cypherFieldParamsIndex
-    )}}, true) | ${nestedVariable} {${subSelection[0]}}]${
-      fieldIsList ? '' : ')'
-    }${skipLimit} ${commaIfTail}`,
+    )}}, true) | ${nestedVariable} {${
+      fieldIsInterfaceType ? `FRAGMENT_TYPE: labels(${nestedVariable})[0],` : ''
+    }${subSelection[0]}}]${fieldIsList ? '' : ')'}${skipLimit} ${commaIfTail}`,
     ...tailParams
   };
 };
