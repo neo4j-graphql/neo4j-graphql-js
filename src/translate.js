@@ -139,7 +139,10 @@ export const relationFieldOnNodeType = ({
   const filterParamKey = `${tailParams.paramIndex}_filter`;
   const fieldArgumentParams = subSelection[1];
   const filterParam = fieldArgumentParams[filterParamKey];
-  if (filterParam) {
+  if (
+    filterParam &&
+    typeof serializedFilterParam[filterParamKey] !== 'undefined'
+  ) {
     subSelection[1][filterParamKey] = serializedFilterParam[filterParamKey];
   }
 
@@ -264,7 +267,10 @@ export const relationTypeFieldOnNodeType = ({
   const filterParamKey = `${tailParams.paramIndex}_filter`;
   const fieldArgumentParams = subSelection[1];
   const filterParam = fieldArgumentParams[filterParamKey];
-  if (filterParam) {
+  if (
+    filterParam &&
+    typeof serializedFilterParam[filterParamKey] !== 'undefined'
+  ) {
     subSelection[1][filterParamKey] = serializedFilterParam[filterParamKey];
   }
 
@@ -426,7 +432,10 @@ const directedNodeTypeFieldOnRelationType = ({
       const filterParamKey = `${tailParams.paramIndex}_filter`;
       const fieldArgumentParams = subSelection[1];
       const filterParam = fieldArgumentParams[filterParamKey];
-      if (filterParam) {
+      if (
+        filterParam &&
+        typeof serializedFilterParam[filterParamKey] !== 'undefined'
+      ) {
         subSelection[1][filterParamKey] = serializedFilterParam[filterParamKey];
       }
       const whereClauses = [...temporalClauses, ...filterPredicates];
