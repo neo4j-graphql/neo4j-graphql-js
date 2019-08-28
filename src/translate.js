@@ -33,6 +33,7 @@ import {
   isTemporalType,
   isTemporalInputType,
   isGraphqlScalarType,
+  isGraphqlInterfaceType,
   innerType,
   relationDirective,
   typeIdentifiers,
@@ -73,6 +74,10 @@ export const customCypherField = ({
     variableName = `${variableName}_relation`;
   }
   const fieldIsList = !!fieldType.ofType;
+  const fieldIsInterfaceType =
+    fieldIsList &&
+    fieldType.ofType.astNode &&
+    fieldType.ofType.astNode.kind === 'InterfaceTypeDefinition';
   // similar: [ x IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie}, true) |x {.title}][1..2])
 
   // For @cypher fields with object payload types, customCypherField is
@@ -90,9 +95,9 @@ export const customCypherField = ({
       schemaType,
       resolveInfo,
       cypherFieldParamsIndex
-    )}}, true) | ${nestedVariable} {${subSelection[0]}}]${
-      fieldIsList ? '' : ')'
-    }${skipLimit} ${commaIfTail}`,
+    )}}, true) | ${nestedVariable} {${
+      fieldIsInterfaceType ? `FRAGMENT_TYPE: labels(${nestedVariable})[0],` : ''
+    }${subSelection[0]}}]${fieldIsList ? '' : ')'}${skipLimit} ${commaIfTail}`,
     ...tailParams
   };
 };
@@ -773,6 +778,7 @@ const customQuery = ({
     return x.name.value === 'statement';
   });
   const isScalarType = isGraphqlScalarType(schemaType);
+  const isInterfaceType = isGraphqlInterfaceType(schemaType);
   const temporalType = isTemporalType(schemaType.name);
   const { cypherPart: orderByClause } = orderByValue;
   const query = `WITH apoc.cypher.runFirstColumn("${
@@ -782,7 +788,11 @@ const customQuery = ({
     // Don't add subQuery for scalar type payloads
     // FIXME: fix subselection translation for temporal type payload
     !temporalType && !isScalarType
-      ? `{${subQuery}} AS ${safeVariableName}${orderByClause}`
+      ? `{${
+          isInterfaceType
+            ? `FRAGMENT_TYPE: labels(${safeVariableName})[0],`
+            : ''
+        }${subQuery}} AS ${safeVariableName}${orderByClause}`
       : ''
   }${outerSkipLimit}`;
   return [query, params];
@@ -993,6 +1003,7 @@ const customMutation = ({
     cypherParams
   });
   const isScalarType = isGraphqlScalarType(schemaType);
+  const isInterfaceType = isGraphqlInterfaceType(schemaType);
   const temporalType = isTemporalType(schemaType.name);
   params = { ...params, ...subParams };
   if (cypherParams) {
@@ -1005,7 +1016,11 @@ const customMutation = ({
     WITH apoc.map.values(value, [keys(value)[0]])[0] AS ${safeVariableName}
     RETURN ${safeVariableName} ${
     !temporalType && !isScalarType
-      ? `{${subQuery}} AS ${safeVariableName}${orderByClause}${outerSkipLimit}`
+      ? `{${
+          isInterfaceType
+            ? `FRAGMENT_TYPE: labels(${safeVariableName})[0],`
+            : ''
+        }${subQuery}} AS ${safeVariableName}${orderByClause}${outerSkipLimit}`
       : ''
   }`;
   return [query, params];
