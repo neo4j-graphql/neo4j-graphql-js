@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.7.2
+
+- [add FRAGMENT_TYPE when customQuery and customMutation resolve interfaces](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/296)
+- [fix: do not assign undefined to x_filter keys](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/281)
+
 ## 2.7.1
 
 - [Fix interface query bug](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/291)
