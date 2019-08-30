@@ -45,6 +45,7 @@ If you want to run integration tests locally, make sure your setup meets the
 following requirements:
 
 - A local Neo4J instance with username `neo4j` and password `letmein`
+- APOC plugin installed (see instructions [here](https://github.com/neo4j-contrib/neo4j-apoc-procedures#installation-with-neo4j-desktop))
 - Your Neo4J instance runs on [this database](https://s3.amazonaws.com/neo4j-sandbox-usecase-datastores/v3_5/recommendations.db.zip)
 
 In order to import the database, you can download the zipped files and extract
