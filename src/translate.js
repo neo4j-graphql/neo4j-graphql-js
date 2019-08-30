@@ -96,7 +96,7 @@ export const customCypherField = ({
       resolveInfo,
       cypherFieldParamsIndex
     )}}, true) | ${nestedVariable} {${
-      fieldIsInterfaceType ? `FRAGMENT_TYPE: labels(${nestedVariable})[0],` : ''
+      fieldIsInterfaceType ? `FRAGMENT_TYPE: [label IN labels(${nestedVariable}) WHERE left(label, 1) <> "_"][0],` : ''
     }${subSelection[0]}}]${fieldIsList ? '' : ')'}${skipLimit} ${commaIfTail}`,
     ...tailParams
   };
@@ -199,7 +199,7 @@ export const relationFieldOnNodeType = ({
         whereClauses.length > 0 ? ` WHERE ${whereClauses.join(' AND ')}` : ''
       } | ${nestedVariable} {${
         isInlineFragment
-          ? `FRAGMENT_TYPE: labels(${nestedVariable})[0]${
+          ? `FRAGMENT_TYPE: [label IN labels(${nestedVariable}) WHERE left(label, 1) <> "_"][0]${
               subSelection[0] ? `, ${subSelection[0]}` : ''
             }`
           : subSelection[0]
@@ -468,7 +468,7 @@ const directedNodeTypeFieldOnRelationType = ({
               : ''
           }| ${relationshipVariableName} {${
             isInlineFragment
-              ? `FRAGMENT_TYPE: labels(${nestedVariable})[0]${
+              ? `FRAGMENT_TYPE: [label IN labels(${nestedVariable}) WHERE left(label, 1) <> "_"][0]${
                   subSelection[0] ? `, ${subSelection[0]}` : ''
                 }`
               : subSelection[0]
@@ -526,7 +526,7 @@ const directedNodeTypeFieldOnRelationType = ({
             : ''
         }${queryParams}) | ${nestedVariable} {${
           isInlineFragment
-            ? `FRAGMENT_TYPE: labels(${nestedVariable})[0]${
+            ? `FRAGMENT_TYPE: [label IN labels(${nestedVariable}) WHERE left(label, 1) <> "_"][0]${
                 subSelection[0] ? `, ${subSelection[0]}` : ''
               }`
             : subSelection[0]
@@ -790,7 +790,7 @@ const customQuery = ({
     !temporalType && !isScalarType
       ? `{${
           isInterfaceType
-            ? `FRAGMENT_TYPE: labels(${safeVariableName})[0],`
+            ? `FRAGMENT_TYPE: [label IN labels(${nestedVariable}) WHERE left(label, 1) <> "_"][0],`
             : ''
         }${subQuery}} AS ${safeVariableName}${orderByClause}`
       : ''
@@ -1018,7 +1018,7 @@ const customMutation = ({
     !temporalType && !isScalarType
       ? `{${
           isInterfaceType
-            ? `FRAGMENT_TYPE: labels(${safeVariableName})[0],`
+            ? `FRAGMENT_TYPE: [label IN labels(${nestedVariable}) WHERE left(label, 1) <> "_"][0],`
             : ''
         }${subQuery}} AS ${safeVariableName}${orderByClause}${outerSkipLimit}`
       : ''
