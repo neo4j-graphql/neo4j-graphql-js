@@ -81,7 +81,9 @@ export function buildCypherSelection({
     return selections
       .filter(({ kind }) => kind && kind === 'InlineFragment')
       .reduce((query, selection, index) => {
-        const fragmentSelections = selection.selectionSet.selections;
+        const fragmentSelections = selections
+          .filter(({ kind }) => kind && kind !== 'InlineFragment')
+          .concat(selection.selectionSet.selections);
         const fragmentSchemaType = resolveInfo.schema.getType(
           selection.typeCondition.name.value
         );
