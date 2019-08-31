@@ -14,7 +14,7 @@ type Movie {
   imdbRating: Float
   ratings: [Rated]
   genres: [Genre] @relation(name: "IN_GENRE", direction: "OUT")
-  similar(first: Int = 3, offset: Int = 0, limit: Int = 5): [Movie] @cypher(statement: "WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o LIMIT {limit}")
+  similar(first: Int = 3, offset: Int = 0, limit: Int = 5): [Movie] @cypher(statement: "WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o ORDER BY o.title LIMIT {limit}")
   mostSimilar: Movie @cypher(statement: "WITH {this} AS this RETURN this")
   degree: Int @cypher(statement: "WITH {this} AS this RETURN SIZE((this)--())")
   actors(first: Int = 3, offset: Int = 0): [Actor] @relation(name: "ACTED_IN", direction:"IN")
