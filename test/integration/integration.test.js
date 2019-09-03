@@ -49,7 +49,7 @@ test('basic GraphQL query', async t => {
       t.deepEqual(data.data, expected.data);
     })
     .catch(error => {
-      t.fail(error);
+      t.fail(error.message);
     });
 });
 
@@ -119,7 +119,7 @@ test('GraphQL query with @cypher directive', async t => {
       t.deepEqual(data.data, expected.data);
     })
     .catch(error => {
-      t.fail(error);
+      t.fail(error.message);
     });
 });
 
@@ -168,7 +168,7 @@ test('Handle @cypher directive on QueryType', async t => {
       t.deepEqual(data.data, expected.data);
     })
     .catch(error => {
-      t.fail(error);
+      t.fail(error.message);
     });
 });
 
@@ -198,7 +198,7 @@ test('Mutation with @cypher directive (not-isolated)', async t => {
       t.deepEqual(data.data, expected.data);
     })
     .catch(error => {
-      t.fail(error);
+      t.fail(error.message);
     });
 });
 
@@ -243,7 +243,7 @@ test('Create node mutation (not-isolated)', async t => {
       t.deepEqual(data.data, expected.data);
     })
     .catch(error => {
-      t.fail(error);
+      t.fail(error.message);
     });
 });
 
@@ -275,7 +275,7 @@ test('Update node mutation', async t => {
       t.deepEqual(data.data, expected.data);
     })
     .catch(error => {
-      t.fail(error);
+      t.fail(error.message);
     });
 });
 
@@ -344,7 +344,7 @@ test.serial('Add relationship mutation (not-isolated)', async t => {
       //t.deepEqual(data.data, expected.data);
     })
     .catch(error => {
-      t.fail(error);
+      t.fail(error.message);
     });
 });
 
@@ -384,7 +384,7 @@ test.serial('Remove relationship mutation (not-isolated)', async t => {
       t.is(data.data.RemoveMovieGenres.from.genres.length, 3);
     })
     .catch(error => {
-      t.fail(error);
+      t.fail(error.message);
     });
 });
 
@@ -405,7 +405,7 @@ test('Delete node mutation', async t => {
       //
     })
     .catch(error => {
-      t.fail(error);
+      t.fail(error.message);
     });
 
   await client
@@ -422,7 +422,7 @@ test('Delete node mutation', async t => {
       t.is(data.data.Movie.length, 0);
     })
     .catch(error => {
-      t.fail(error);
+      t.fail(error.message);
     });
 });
 // TODO: mutation with variables
@@ -508,7 +508,7 @@ test('Top level orderBy', async t => {
       t.deepEqual(data.data, expected.data);
     })
     .catch(error => {
-      t.fail(error);
+      t.fail(error.message);
     });
 });
 
@@ -564,7 +564,7 @@ test('query relationship property data', async t => {
       t.deepEqual(data.data, expected.data);
     })
     .catch(error => {
-      t.fail(error);
+      t.fail(error.message);
     });
 });
 
@@ -604,7 +604,7 @@ test('query using inine fragment', async t => {
       t.deepEqual(data.data.Movie[0].ratings[0], expected);
     })
     .catch(error => {
-      t.fail(error);
+      t.fail(error.message);
     });
 });
 
@@ -657,7 +657,7 @@ test.serial(
         t.deepEqual(data, expected);
       })
       .catch(error => {
-        t.fail(error);
+        t.fail(error.message);
       });
   }
 );
@@ -724,7 +724,7 @@ test.serial(
         t.deepEqual(data, expected);
       })
       .catch(error => {
-        t.fail(error);
+        t.fail(error.message);
       });
   }
 );
@@ -800,7 +800,7 @@ test.serial(
         t.deepEqual(data, expected);
       })
       .catch(error => {
-        t.fail(error);
+        t.fail(error.message);
       });
   }
 );
@@ -882,7 +882,7 @@ test.serial(
         t.deepEqual(data.data, expected.data);
       })
       .catch(error => {
-        t.fail(error);
+        t.fail(error.message);
       });
   }
 );
@@ -920,7 +920,7 @@ test.serial(
         t.deepEqual(data, expected);
       })
       .catch(error => {
-        t.fail(error);
+        t.fail(error.message);
       });
   }
 );
@@ -960,7 +960,7 @@ test.serial(
         t.deepEqual(data.data, expected.data);
       })
       .catch(error => {
-        t.fail(error);
+        t.fail(error.message);
       });
   }
 );
@@ -1000,7 +1000,7 @@ test.serial(
         t.deepEqual(data.data, expected.data);
       })
       .catch(error => {
-        t.fail(error);
+        t.fail(error.message);
       });
   }
 );
@@ -1044,7 +1044,7 @@ test.serial(
         t.deepEqual(data, expected);
       })
       .catch(error => {
-        t.fail(error);
+        t.fail(error.message);
       });
   }
 );
@@ -1095,7 +1095,7 @@ test.serial(
         t.deepEqual(data.data, expected.data);
       })
       .catch(error => {
-        t.fail(error);
+        t.fail(error.message);
       });
   }
 );
@@ -1152,7 +1152,7 @@ test('Basic filter', async t => {
       t.deepEqual(data.data, expected.data);
     })
     .catch(error => {
-      t.fail(error);
+      t.fail(error.message);
     });
 });
 
@@ -1187,7 +1187,7 @@ test.before(
         t.deepEqual(data.data, expected.data);
       })
       .catch(error => {
-        t.fail(error);
+        t.fail(error.message);
       });
   }
 );
@@ -1224,7 +1224,7 @@ test('Basic filter using Apollo generated filters underscore test', async t => {
       t.deepEqual(data.data, expected.data);
     })
     .catch(error => {
-      t.fail(error);
+      t.fail(error.message);
     });
 });
 
@@ -1263,7 +1263,7 @@ test('Filter with AND', async t => {
       t.deepEqual(data.data, expected.data);
     })
     .catch(error => {
-      t.fail(error);
+      t.fail(error.message);
     });
 });
 
@@ -1328,7 +1328,7 @@ test('Filter with OR', async t => {
       t.deepEqual(data.data, expected.data);
     })
     .catch(error => {
-      t.fail(error);
+      t.fail(error.message);
     });
 });
 
@@ -1636,7 +1636,7 @@ test('Filter with nested AND and OR', async t => {
       t.deepEqual(data.data, expected.data);
     })
     .catch(error => {
-      t.fail(error);
+      t.fail(error.message);
     });
 });
 
@@ -1835,7 +1835,7 @@ test('Filter in selection', async t => {
       t.deepEqual(data.data, expected.data);
     })
     .catch(error => {
-      t.fail(error);
+      t.fail(error.message);
     });
 });
 
@@ -1894,7 +1894,7 @@ test('Nested filter', async t => {
       t.deepEqual(data.data, expected.data);
     })
     .catch(error => {
-      t.fail(error);
+      t.fail(error.message);
     });
 });
 
@@ -1957,6 +1957,6 @@ test('Filter with GraphQL variable', async t => {
       t.deepEqual(data.data, expected.data);
     })
     .catch(error => {
-      t.fail(error);
+      t.fail(error.message);
     });
 });
