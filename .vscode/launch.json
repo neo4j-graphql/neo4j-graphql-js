@@ -16,6 +16,14 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run-script", "debug-typedefs"],
       "port": 9229
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "interface errors",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run-script", "debug-interface"],
+      "port": 9229
     }
   ]
 }

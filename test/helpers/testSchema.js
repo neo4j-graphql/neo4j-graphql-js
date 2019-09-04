@@ -1,8 +1,9 @@
 export const testSchema = `
-  type Movie {
+  type Movie @additionalLabels(labels: ["u_<%= $cypherParams.userId %>", "newMovieLabel"])  {
     _id: String
     movieId: ID!
     title: String @isAuthenticated
+    someprefix_title_with_underscores: String
     year: Int
     released: DateTime!
     plot: String

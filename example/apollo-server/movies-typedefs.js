@@ -4,44 +4,43 @@ import { v1 as neo4j } from 'neo4j-driver';
 
 const typeDefs = `
 type Movie {
+  movieId: ID!
   title: String
   year: Int
-  dateTime: DateTime
+  plot: String
+  poster: String
   imdbRating: Float
   ratings: [Rated]
-  genres: [Attribute] @relation(name: "IN_GENRE", direction: "OUT")
-  similar: [Movie] @cypher(
-      statement: """MATCH (this)<-[:RATED]-(:User)-[:RATED]->(s:Movie) 
-                    WITH s, COUNT(*) AS score 
-                    RETURN s ORDER BY score DESC LIMIT {first}""")
+  genres: [Genre] @relation(name: "IN_GENRE", direction: "OUT")
+  actors: [Actor] @relation(name: "ACTED_IN", direction: "IN")
 }
-
-type Genre implements Attribute {
+type Genre {
   name: String
-  count: Int
   movies: [Movie] @relation(name: "IN_GENRE", direction: "IN")
 }
-
-interface Attribute {
+type Actor {
+  id: ID!
   name: String
+  movies: [Movie] @relation(name: "ACTED_IN", direction: "OUT")
 }
-
-type User implements Person {
-  userId: String
+type User {
+  userId: ID!
   name: String
   rated: [Rated]
+  recommendedMovies: [Movie]
+    @cypher(
+      statement: """
+      MATCH (this)-[:RATED]->(:Movie)<-[:RATED]-(:User)-[:RATED]->(rec:Movie)
+      WITH rec, COUNT(*) AS score ORDER BY score DESC LIMIT 10
+      RETURN rec
+      """
+    )
 }
-
-interface Person {
-  userId: String
-  name: String
-}
-
 type Rated @relation(name: "RATED") {
   from: User
   to: Movie
   rating: Float
-  timestamp: Int
+  created: DateTime
 }
 `;
 

@@ -1,5 +1,34 @@
 # Changelog
 
+## 2.7.2
+
+- [add FRAGMENT_TYPE when customQuery and customMutation resolve interfaces](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/296)
+- [fix: do not assign undefined to x_filter keys](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/281)
+
+## 2.7.1
+
+- [Fix interface query bug](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/291)
+
+## 2.7.0
+
+- [Fix: Handle multiple inline fragments](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/270)
+- [Initial support for federated schema](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/283)
+- [Support for multi-tenancy using additional labels](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/282)
+
+## 2.6.3
+
+- [Fix: Improper handling of properties with underscores in filter](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/264)
+
+## 2.6.2
+
+- [Improve order by performance](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/247)
+- [Restructure test files](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/253)
+
+## 2.6.1
+
+- [Temporal and relationship type filters](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/245)
+- [bugfix: custom mutation cypher params not being passed](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/246)
+
 ## 2.6.0
 
 - [Infer GraphQL type definitions from existing Neo4j database](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/223). See [`inferSchema` in API docs.](https://grandstack.io/docs/neo4j-graphql-js-api.html#inferschemadriver-options-promise)

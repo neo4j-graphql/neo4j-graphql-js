@@ -1,5 +1,5 @@
 import test from 'ava';
-import schema from '../../dist/neo4j-schema/entities';
+import schema from '../../../src/neo4j-schema/entities';
 import _ from 'lodash';
 
 let n;

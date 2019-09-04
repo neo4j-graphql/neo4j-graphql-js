@@ -1,6 +1,6 @@
 import { makeExecutableSchema } from 'graphql-tools';
 import { graphql } from 'graphql';
-import { cypherQuery, augmentTypeDefs } from '../../dist/index';
+import { cypherQuery, augmentTypeDefs } from '../../src/index';
 
 export const filterTestRunner = (
   t,

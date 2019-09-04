@@ -12,7 +12,6 @@ import {
   relationDirective,
   getRelationTypeDirective,
   decideNestedVariableName,
-  safeLabel,
   safeVar,
   isTemporalType,
   isTemporalField,
@@ -30,7 +29,7 @@ import {
 } from './translate';
 
 export function buildCypherSelection({
-  initial,
+  initial = '',
   cypherParams,
   selections,
   variableName,
@@ -40,9 +39,7 @@ export function buildCypherSelection({
   parentSelectionInfo = {},
   secondParentSelectionInfo = {}
 }) {
-  if (!selections.length) {
-    return [initial, {}];
-  }
+  if (!selections.length) return [initial, {}];
   selections = removeIgnoredFields(schemaType, selections);
   let selectionFilters = filtersFromSelections(
     selections,
@@ -80,32 +77,33 @@ export function buildCypherSelection({
     return [subSelection, { ...shallowFilterParams, ...subFilterParams }];
   };
 
-  let fieldName;
-  let isInlineFragment = false;
-  let interfaceLabel;
-  if (headSelection) {
-    if (headSelection.kind === 'InlineFragment') {
-      // get selections for the fragment and recurse on those
-      const fragmentSelections = headSelection.selectionSet.selections;
-      let fragmentTailParams = {
-        selections: fragmentSelections,
-        variableName,
-        schemaType,
-        resolveInfo,
-        parentSelectionInfo,
-        secondParentSelectionInfo
-      };
-      return recurse({
-        initial: fragmentSelections.length
-          ? initial
-          : initial.substring(0, initial.lastIndexOf(',')),
-        ...fragmentTailParams
-      });
-    } else {
-      fieldName = headSelection.name.value;
-    }
+  if (selections.find(({ kind }) => kind && kind === 'InlineFragment')) {
+    return selections
+      .filter(({ kind }) => kind && kind === 'InlineFragment')
+      .reduce((query, selection, index) => {
+        const fragmentSelections = selections
+          .filter(({ kind }) => kind && kind !== 'InlineFragment')
+          .concat(selection.selectionSet.selections);
+        const fragmentSchemaType = resolveInfo.schema.getType(
+          selection.typeCondition.name.value
+        );
+        let fragmentTailParams = {
+          selections: fragmentSelections,
+          variableName,
+          schemaType: fragmentSchemaType,
+          resolveInfo,
+          parentSelectionInfo,
+          secondParentSelectionInfo
+        };
+        const result = recurse({
+          initial: index === 0 ? query[0] : query[0] + ',',
+          ...fragmentTailParams
+        });
+        return result;
+      }, initial || ['']);
   }
 
+  const fieldName = headSelection.name.value;
   const commaIfTail = tailSelections.length > 0 ? ',' : '';
   const isScalarSchemaType = isGraphqlScalarType(schemaType);
   const schemaTypeField = !isScalarSchemaType
@@ -125,37 +123,11 @@ export function buildCypherSelection({
     schemaTypeField && schemaTypeField.type ? schemaTypeField.type : {};
   const innerSchemaType = innerType(fieldType); // for target "type" aka label
 
-  if (
+  const isInlineFragment =
     innerSchemaType &&
     innerSchemaType.astNode &&
-    innerSchemaType.astNode.kind === 'InterfaceTypeDefinition'
-  ) {
-    isInlineFragment = true;
-    // FIXME: remove unused variables
-    const interfaceType = schemaType;
-    const interfaceName = innerSchemaType.name;
-
-    const fragments = headSelection.selectionSet.selections.filter(
-      item => item.kind === 'InlineFragment'
-    );
-
-    // FIXME: this will only handle the first inline fragment
-    const fragment = fragments[0];
-
-    interfaceLabel = fragment
-      ? fragment.typeCondition.name.value
-      : interfaceName;
-    const implementationName = fragment
-      ? fragment.typeCondition.name.value
-      : interfaceName;
-
-    const schemaType = resolveInfo.schema._implementations[interfaceName].find(
-      intfc => intfc.name === implementationName
-    );
-  }
-
+    innerSchemaType.astNode.kind === 'InterfaceTypeDefinition';
   const { statement: customCypher } = cypherDirective(schemaType, fieldName);
-
   const typeMap = resolveInfo.schema.getTypeMap();
   const schemaTypeAstNode = typeMap[schemaType].astNode;
 
@@ -314,12 +286,12 @@ export function buildCypherSelection({
       relDirection,
       relType,
       isInlineFragment,
-      interfaceLabel,
       innerSchemaType,
       temporalClauses,
       resolveInfo,
       paramIndex,
-      fieldArgs
+      fieldArgs,
+      cypherParams
     });
     selection = recurse(translation.selection);
     // set subSelection to update field argument params
@@ -332,7 +304,6 @@ export function buildCypherSelection({
       schemaTypeRelation,
       innerSchemaType,
       isInlineFragment,
-      interfaceLabel,
       paramIndex,
       schemaType,
       filterParams,
@@ -340,7 +311,8 @@ export function buildCypherSelection({
       parentSelectionInfo,
       resolveInfo,
       selectionFilters,
-      fieldArgs
+      fieldArgs,
+      cypherParams
     });
     selection = recurse(translation.selection);
     // set subSelection to update field argument params
@@ -357,7 +329,8 @@ export function buildCypherSelection({
       resolveInfo,
       selectionFilters,
       paramIndex,
-      fieldArgs
+      fieldArgs,
+      cypherParams
     });
     selection = recurse(translation.selection);
     // set subSelection to update field argument params

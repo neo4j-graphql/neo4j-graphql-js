@@ -214,6 +214,10 @@ export function isGraphqlScalarType(type) {
   );
 }
 
+export function isGraphqlInterfaceType(type) {
+  return type.constructor.name === 'GraphQLInterfaceType';
+}
+
 export function isArrayType(type) {
   return type ? type.toString().startsWith('[') : false;
 }
@@ -375,31 +379,49 @@ export function computeSkipLimit(selection, variableValues) {
   return `[${offset}..${parseInt(offset) + parseInt(first)}]`;
 }
 
-function orderByStatement(resolveInfo, orderByVar) {
+function splitOrderByArg(orderByVar) {
   const splitIndex = orderByVar.lastIndexOf('_');
   const order = orderByVar.substring(splitIndex + 1);
   const orderBy = orderByVar.substring(0, splitIndex);
+  return { orderBy, order };
+}
+
+function orderByStatement(resolveInfo, { orderBy, order }) {
   const { variableName } = typeIdentifiers(resolveInfo.returnType);
   return ` ${variableName}.${orderBy} ${order === 'asc' ? 'ASC' : 'DESC'} `;
 }
 
-export const computeOrderBy = (resolveInfo, selection) => {
+export const computeOrderBy = (resolveInfo, schemaType) => {
+  let selection = resolveInfo.operation.selectionSet.selections[0];
   const orderByArgs = argumentValue(
-    resolveInfo.operation.selectionSet.selections[0],
+    selection,
     'orderBy',
     resolveInfo.variableValues
   );
 
   if (orderByArgs == undefined) {
-    return '';
+    return { cypherPart: '', optimization: { earlyOrderBy: false } };
   }
 
   const orderByArray = Array.isArray(orderByArgs) ? orderByArgs : [orderByArgs];
-  const orderByStatments = orderByArray.map(orderByVar =>
-    orderByStatement(resolveInfo, orderByVar)
-  );
 
-  return ' ORDER BY' + orderByStatments.join(',');
+  let optimization = { earlyOrderBy: true };
+  let orderByStatements = [];
+
+  const orderByStatments = orderByArray.map(orderByVar => {
+    const { orderBy, order } = splitOrderByArg(orderByVar);
+    const hasNoCypherDirective = _.isEmpty(
+      cypherDirective(schemaType, orderBy)
+    );
+    optimization.earlyOrderBy =
+      optimization.earlyOrderBy && hasNoCypherDirective;
+    orderByStatements.push(orderByStatement(resolveInfo, { orderBy, order }));
+  });
+
+  return {
+    cypherPart: ` ORDER BY${orderByStatements.join(',')}`,
+    optimization
+  };
 };
 
 export const possiblySetFirstId = ({ args, statements, params }) => {
@@ -413,6 +435,7 @@ export const possiblySetFirstId = ({ args, statements, params }) => {
 };
 
 export const getQueryArguments = resolveInfo => {
+  if (resolveInfo.fieldName === '_entities') return [];
   return resolveInfo.schema.getQueryType().getFields()[resolveInfo.fieldName]
     .astNode.arguments;
 };
@@ -420,6 +443,21 @@ export const getQueryArguments = resolveInfo => {
 export const getMutationArguments = resolveInfo => {
   return resolveInfo.schema.getMutationType().getFields()[resolveInfo.fieldName]
     .astNode.arguments;
+};
+
+export const getAdditionalLabels = (schemaType, cypherParams) => {
+  const labelDirective = getTypeDirective(
+    schemaType.astNode,
+    'additionalLabels'
+  );
+  const { labels: rawLabels } = labelDirective
+    ? parseArgs(labelDirective.arguments)
+    : { labels: [] };
+
+  const parsedLabels = rawLabels.map(label =>
+    _.template(label, { variable: '$cypherParams' })(cypherParams)
+  );
+  return parsedLabels;
 };
 
 // TODO refactor
@@ -612,6 +650,9 @@ export const addDirectiveDeclarations = (typeMap, config) => {
   typeMap['relation'] = parse(
     `directive @relation(name: String, direction: _RelationDirections, from: String, to: String) on FIELD_DEFINITION | OBJECT`
   ).definitions[0];
+  typeMap['additionalLabels'] = parse(
+    `directive @additionalLabels(labels: [String]) on OBJECT`
+  ).definitions[0];
   // TODO should we change these system directives to having a '_Neo4j' prefix
   typeMap['MutationMeta'] = parse(
     `directive @MutationMeta(relationship: String, from: String, to: String) on FIELD_DEFINITION`
@@ -627,6 +668,7 @@ export const addDirectiveDeclarations = (typeMap, config) => {
 };
 
 export const getQueryCypherDirective = resolveInfo => {
+  if (resolveInfo.fieldName === '_entities') return;
   return resolveInfo.schema
     .getQueryType()
     .getFields()
@@ -774,13 +816,19 @@ export const safeVar = i => {
 /**
  * Render safe a label name by enclosing it in backticks and escaping any
  * existing backtick if present.
- * @param {String} l a label name
+ * @param {String | String[]} a label name or an array of labels
  * @returns {String} an escaped label name suitable for cypher concat
  */
 export const safeLabel = l => {
-  const asStr = `${l}`;
-  const escapeInner = asStr.replace(/\`/g, '\\`');
-  return '`' + escapeInner + '`';
+  if (!Array.isArray(l)) {
+    l = [l];
+  }
+  const safeLabels = l.map(label => {
+    const asStr = `${label}`;
+    const escapeInner = asStr.replace(/\`/g, '\\`');
+    return '`' + escapeInner + '`';
+  });
+  return safeLabels.join(':');
 };
 
 export const decideNestedVariableName = ({

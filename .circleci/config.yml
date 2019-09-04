@@ -28,7 +28,7 @@ references:
         - ./node_modules/
 
   neo4j_cache_key: &neo4j_cache_key
-    v1-dependency-neo4j-{{ checksum "neo4j-version" }}
+    v2-dependency-neo4j-{{ checksum "neo4j-version" }}
 
   restore_neo4j: &restore_neo4j
     restore_cache:
@@ -85,7 +85,7 @@ references:
   start_graphql: &start_graphql
     run:
       name: Start GraphQL Server
-      command: node -r babel-register ./example/apollo-server/movies-middleware.js
+      command: node -r @babel/register ./example/apollo-server/movies-middleware.js
       background: true
 
   wait_for_graphql: &wait_for_graphql
@@ -101,7 +101,7 @@ references:
   run_tests: &run_tests
     run:
       name: Run Tests
-      command: ./node_modules/.bin/nyc ./node_modules/.bin/ava test/*.js test/neo4j-schema/*Test.js
+      command: npm run test-all
 
   env_neo4j34ee: &env_neo4j34ee
       NEO4J_DIST: 'enterprise'

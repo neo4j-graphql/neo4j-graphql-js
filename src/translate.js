@@ -33,10 +33,12 @@ import {
   isTemporalType,
   isTemporalInputType,
   isGraphqlScalarType,
+  isGraphqlInterfaceType,
   innerType,
   relationDirective,
   typeIdentifiers,
-  decideTemporalConstructor
+  decideTemporalConstructor,
+  getAdditionalLabels
 } from './utils';
 import {
   getNamedType,
@@ -72,6 +74,10 @@ export const customCypherField = ({
     variableName = `${variableName}_relation`;
   }
   const fieldIsList = !!fieldType.ofType;
+  const fieldIsInterfaceType =
+    fieldIsList &&
+    fieldType.ofType.astNode &&
+    fieldType.ofType.astNode.kind === 'InterfaceTypeDefinition';
   // similar: [ x IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie}, true) |x {.title}][1..2])
 
   // For @cypher fields with object payload types, customCypherField is
@@ -89,9 +95,9 @@ export const customCypherField = ({
       schemaType,
       resolveInfo,
       cypherFieldParamsIndex
-    )}}, true) | ${nestedVariable} {${subSelection[0]}}]${
-      fieldIsList ? '' : ')'
-    }${skipLimit} ${commaIfTail}`,
+    )}}, true) | ${nestedVariable} {${
+      fieldIsInterfaceType ? `FRAGMENT_TYPE: labels(${nestedVariable})[0],` : ''
+    }${subSelection[0]}}]${fieldIsList ? '' : ')'}${skipLimit} ${commaIfTail}`,
     ...tailParams
   };
 };
@@ -105,7 +111,6 @@ export const relationFieldOnNodeType = ({
   relType,
   nestedVariable,
   isInlineFragment,
-  interfaceLabel,
   innerSchemaType,
   paramIndex,
   fieldArgs,
@@ -119,7 +124,8 @@ export const relationFieldOnNodeType = ({
   commaIfTail,
   tailParams,
   temporalClauses,
-  resolveInfo
+  resolveInfo,
+  cypherParams
 }) => {
   const safeVariableName = safeVar(nestedVariable);
   const allParams = innerFilterParams(filterParams, temporalArgs);
@@ -138,7 +144,10 @@ export const relationFieldOnNodeType = ({
   const filterParamKey = `${tailParams.paramIndex}_filter`;
   const fieldArgumentParams = subSelection[1];
   const filterParam = fieldArgumentParams[filterParamKey];
-  if (filterParam) {
+  if (
+    filterParam &&
+    typeof serializedFilterParam[filterParamKey] !== 'undefined'
+  ) {
     subSelection[1][filterParamKey] = serializedFilterParam[filterParamKey];
   }
 
@@ -174,15 +183,25 @@ export const relationFieldOnNodeType = ({
           : ''
       }[(${safeVar(variableName)})${
         relDirection === 'in' || relDirection === 'IN' ? '<' : ''
-      }-[:${safeLabel(relType)}]-${
+      }-[:${safeLabel([relType])}]-${
         relDirection === 'out' || relDirection === 'OUT' ? '>' : ''
-      }(${safeVariableName}:${safeLabel(
-        isInlineFragment ? interfaceLabel : innerSchemaType.name
-      )}${queryParams})${
+      }(${safeVariableName}${
+        !isInlineFragment
+          ? `:${safeLabel([
+              innerSchemaType.name,
+              ...getAdditionalLabels(
+                resolveInfo.schema.getType(innerSchemaType.name),
+                cypherParams
+              )
+            ])}`
+          : ''
+      }${queryParams})${
         whereClauses.length > 0 ? ` WHERE ${whereClauses.join(' AND ')}` : ''
       } | ${nestedVariable} {${
         isInlineFragment
-          ? 'FRAGMENT_TYPE: "' + interfaceLabel + '",' + subSelection[0]
+          ? `FRAGMENT_TYPE: labels(${nestedVariable})[0]${
+              subSelection[0] ? `, ${subSelection[0]}` : ''
+            }`
           : subSelection[0]
       }}]${
         orderByParam
@@ -221,7 +240,8 @@ export const relationTypeFieldOnNodeType = ({
   resolveInfo,
   selectionFilters,
   paramIndex,
-  fieldArgs
+  fieldArgs,
+  cypherParams
 }) => {
   if (innerSchemaTypeRelation.from === innerSchemaTypeRelation.to) {
     return {
@@ -252,7 +272,10 @@ export const relationTypeFieldOnNodeType = ({
   const filterParamKey = `${tailParams.paramIndex}_filter`;
   const fieldArgumentParams = subSelection[1];
   const filterParam = fieldArgumentParams[filterParamKey];
-  if (filterParam) {
+  if (
+    filterParam &&
+    typeof serializedFilterParam[filterParamKey] !== 'undefined'
+  ) {
     subSelection[1][filterParamKey] = serializedFilterParam[filterParamKey];
   }
 
@@ -269,8 +292,20 @@ export const relationTypeFieldOnNodeType = ({
         schemaType.name === innerSchemaTypeRelation.from ? '>' : ''
       }(:${safeLabel(
         schemaType.name === innerSchemaTypeRelation.from
-          ? innerSchemaTypeRelation.to
-          : innerSchemaTypeRelation.from
+          ? [
+              innerSchemaTypeRelation.to,
+              ...getAdditionalLabels(
+                resolveInfo.schema.getType(innerSchemaTypeRelation.to),
+                cypherParams
+              )
+            ]
+          : [
+              innerSchemaTypeRelation.from,
+              ...getAdditionalLabels(
+                resolveInfo.schema.getType(innerSchemaTypeRelation.from),
+                cypherParams
+              )
+            ]
       )}) ${
         whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')} ` : ''
       }| ${relationshipVariableName} {${subSelection[0]}}]${
@@ -287,7 +322,6 @@ export const nodeTypeFieldOnRelationType = ({
   schemaTypeRelation,
   innerSchemaType,
   isInlineFragment,
-  interfaceLabel,
   paramIndex,
   schemaType,
   filterParams,
@@ -295,7 +329,8 @@ export const nodeTypeFieldOnRelationType = ({
   parentSelectionInfo,
   resolveInfo,
   selectionFilters,
-  fieldArgs
+  fieldArgs,
+  cypherParams
 }) => {
   if (
     isRootSelection({
@@ -318,14 +353,14 @@ export const nodeTypeFieldOnRelationType = ({
     schemaTypeRelation,
     innerSchemaType,
     isInlineFragment,
-    interfaceLabel,
     paramIndex,
     schemaType,
     filterParams,
     temporalArgs,
     resolveInfo,
     selectionFilters,
-    fieldArgs
+    fieldArgs,
+    cypherParams
   });
 };
 
@@ -364,13 +399,13 @@ const directedNodeTypeFieldOnRelationType = ({
   schemaTypeRelation,
   innerSchemaType,
   isInlineFragment,
-  interfaceLabel,
   filterParams,
   temporalArgs,
   paramIndex,
   resolveInfo,
   selectionFilters,
-  fieldArgs
+  fieldArgs,
+  cypherParams
 }) => {
   const relType = schemaTypeRelation.name;
   const fromTypeName = schemaTypeRelation.from;
@@ -402,7 +437,10 @@ const directedNodeTypeFieldOnRelationType = ({
       const filterParamKey = `${tailParams.paramIndex}_filter`;
       const fieldArgumentParams = subSelection[1];
       const filterParam = fieldArgumentParams[filterParamKey];
-      if (filterParam) {
+      if (
+        filterParam &&
+        typeof serializedFilterParam[filterParamKey] !== 'undefined'
+      ) {
         subSelection[1][filterParamKey] = serializedFilterParam[filterParamKey];
       }
       const whereClauses = [...temporalClauses, ...filterPredicates];
@@ -414,15 +452,25 @@ const directedNodeTypeFieldOnRelationType = ({
             relationshipVariableName
           )}:${safeLabel(relType)}${queryParams}]-${
             isToField ? '>' : ''
-          }(${safeVar(nestedVariable)}:${safeLabel(
-            isInlineFragment ? interfaceLabel : fromTypeName
-          )}) ${
+          }(${safeVar(nestedVariable)}${
+            !isInlineFragment
+              ? `:${safeLabel([
+                  fromTypeName,
+                  ...getAdditionalLabels(
+                    resolveInfo.schema.getType(fromTypeName),
+                    cypherParams
+                  )
+                ])}`
+              : ''
+          }) ${
             whereClauses.length > 0
               ? `WHERE ${whereClauses.join(' AND ')} `
               : ''
           }| ${relationshipVariableName} {${
             isInlineFragment
-              ? 'FRAGMENT_TYPE: "' + interfaceLabel + '",' + subSelection[0]
+              ? `FRAGMENT_TYPE: labels(${nestedVariable})[0]${
+                  subSelection[0] ? `, ${subSelection[0]}` : ''
+                }`
               : subSelection[0]
           }}]${!isArrayType(fieldType) ? ')' : ''}${skipLimit} ${commaIfTail}`,
           ...tailParams
@@ -448,15 +496,39 @@ const directedNodeTypeFieldOnRelationType = ({
       selection: {
         initial: `${initial}${fieldName}: ${
           !isArrayType(fieldType) ? 'head(' : ''
-        }[(:${safeLabel(isFromField ? toTypeName : fromTypeName)})${
-          isFromField ? '<' : ''
-        }-[${safeVar(variableName)}]-${isToField ? '>' : ''}(${safeVar(
-          nestedVariable
-        )}:${safeLabel(
-          isInlineFragment ? interfaceLabel : innerSchemaType.name
-        )}${queryParams}) | ${nestedVariable} {${
+        }[(:${safeLabel(
+          isFromField
+            ? [
+                toTypeName,
+                ...getAdditionalLabels(
+                  resolveInfo.schema.getType(toTypeName),
+                  cypherParams
+                )
+              ]
+            : [
+                fromTypeName,
+                ...getAdditionalLabels(
+                  resolveInfo.schema.getType(fromTypeName),
+                  cypherParams
+                )
+              ]
+        )})${isFromField ? '<' : ''}-[${safeVar(variableName)}]-${
+          isToField ? '>' : ''
+        }(${safeVar(nestedVariable)}:${
+          !isInlineFragment
+            ? safeLabel([
+                innerSchemaType.name,
+                ...getAdditionalLabels(
+                  resolveInfo.schema.getType(innerSchemaType.name),
+                  cypherParams
+                )
+              ])
+            : ''
+        }${queryParams}) | ${nestedVariable} {${
           isInlineFragment
-            ? 'FRAGMENT_TYPE: "' + interfaceLabel + '",' + subSelection[0]
+            ? `FRAGMENT_TYPE: labels(${nestedVariable})[0]${
+                subSelection[0] ? `, ${subSelection[0]}` : ''
+              }`
             : subSelection[0]
         }}]${!isArrayType(fieldType) ? ')' : ''}${skipLimit} ${commaIfTail}`,
         ...tailParams
@@ -626,7 +698,7 @@ export const translateQuery = ({
     temporalArgs
   );
   const outerSkipLimit = getOuterSkipLimit(first, offset);
-  const orderByValue = computeOrderBy(resolveInfo, selections);
+  const orderByValue = computeOrderBy(resolveInfo, schemaType);
 
   if (queryTypeCypherDirective) {
     return customQuery({
@@ -643,6 +715,8 @@ export const translateQuery = ({
       nonNullParams
     });
   } else {
+    const additionalLabels = getAdditionalLabels(schemaType, cypherParams);
+
     return nodeQuery({
       resolveInfo,
       cypherParams,
@@ -651,6 +725,7 @@ export const translateQuery = ({
       selections,
       variableName,
       typeName,
+      additionalLabels,
       temporalClauses,
       orderByValue,
       outerSkipLimit,
@@ -688,13 +763,11 @@ const customQuery = ({
 }) => {
   const safeVariableName = safeVar(variableName);
   const [subQuery, subParams] = buildCypherSelection({
-    initial: '',
     cypherParams,
     selections,
     variableName,
     schemaType,
-    resolveInfo,
-    paramIndex: 1
+    resolveInfo
   });
   const params = { ...nonNullParams, ...subParams };
   if (cypherParams) {
@@ -705,7 +778,9 @@ const customQuery = ({
     return x.name.value === 'statement';
   });
   const isScalarType = isGraphqlScalarType(schemaType);
+  const isInterfaceType = isGraphqlInterfaceType(schemaType);
   const temporalType = isTemporalType(schemaType.name);
+  const { cypherPart: orderByClause } = orderByValue;
   const query = `WITH apoc.cypher.runFirstColumn("${
     cypherQueryArg.value.value
   }", ${argString ||
@@ -713,7 +788,11 @@ const customQuery = ({
     // Don't add subQuery for scalar type payloads
     // FIXME: fix subselection translation for temporal type payload
     !temporalType && !isScalarType
-      ? `{${subQuery}} AS ${safeVariableName}${orderByValue}`
+      ? `{${
+          isInterfaceType
+            ? `FRAGMENT_TYPE: labels(${safeVariableName})[0],`
+            : ''
+        }${subQuery}} AS ${safeVariableName}${orderByClause}`
       : ''
   }${outerSkipLimit}`;
   return [query, params];
@@ -727,6 +806,7 @@ const nodeQuery = ({
   selections,
   variableName,
   typeName,
+  additionalLabels = [],
   temporalClauses,
   orderByValue,
   outerSkipLimit,
@@ -737,10 +817,9 @@ const nodeQuery = ({
   _id
 }) => {
   const safeVariableName = safeVar(variableName);
-  const safeLabelName = safeLabel(typeName);
+  const safeLabelName = safeLabel([typeName, ...additionalLabels]);
   const rootParamIndex = 1;
   const [subQuery, subParams] = buildCypherSelection({
-    initial: '',
     cypherParams,
     selections,
     variableName,
@@ -795,11 +874,15 @@ const nodeQuery = ({
 
   const predicate = predicateClauses ? `WHERE ${predicateClauses} ` : '';
 
-  let query =
-    `MATCH (${safeVariableName}:${safeLabelName}${
-      argString ? ` ${argString}` : ''
-    }) ${predicate}` +
-    `RETURN ${safeVariableName} {${subQuery}} AS ${safeVariableName}${orderByValue}${outerSkipLimit}`;
+  const { optimization, cypherPart: orderByClause } = orderByValue;
+
+  let query = `MATCH (${safeVariableName}:${safeLabelName}${
+    argString ? ` ${argString}` : ''
+  }) ${predicate}${
+    optimization.earlyOrderBy ? `WITH ${safeVariableName}${orderByClause}` : ''
+  }RETURN ${safeVariableName} {${subQuery}} AS ${safeVariableName}${
+    optimization.earlyOrderBy ? '' : orderByClause
+  }${outerSkipLimit}`;
 
   return [query, params];
 };
@@ -817,7 +900,11 @@ export const translateMutation = ({
   otherParams
 }) => {
   const outerSkipLimit = getOuterSkipLimit(first, offset);
-  const orderByValue = computeOrderBy(resolveInfo, selections);
+  const orderByValue = computeOrderBy(resolveInfo, schemaType);
+  const additionalNodeLabels = getAdditionalLabels(
+    schemaType,
+    getCypherParams(context)
+  );
   const mutationTypeCypherDirective = getMutationCypherDirective(resolveInfo);
   const params = initializeMutationParams({
     resolveInfo,
@@ -845,28 +932,33 @@ export const translateMutation = ({
     return nodeCreate({
       ...mutationInfo,
       variableName,
-      typeName
+      typeName,
+      additionalLabels: additionalNodeLabels
     });
   } else if (isUpdateMutation(resolveInfo)) {
     return nodeUpdate({
       ...mutationInfo,
       variableName,
-      typeName
+      typeName,
+      additionalLabels: additionalNodeLabels
     });
   } else if (isDeleteMutation(resolveInfo)) {
     return nodeDelete({
       ...mutationInfo,
       variableName,
-      typeName
+      typeName,
+      additionalLabels: additionalNodeLabels
     });
   } else if (isAddMutation(resolveInfo)) {
     return relationshipCreate({
-      ...mutationInfo
+      ...mutationInfo,
+      context
     });
   } else if (isRemoveMutation(resolveInfo)) {
     return relationshipDelete({
       ...mutationInfo,
-      variableName
+      variableName,
+      context
     });
   } else {
     // throw error - don't know how to handle this type of mutation
@@ -904,26 +996,31 @@ const customMutation = ({
     return x.name.value === 'statement';
   });
   const [subQuery, subParams] = buildCypherSelection({
-    initial: '',
     selections,
     variableName,
     schemaType,
     resolveInfo,
-    paramIndex: 1
+    cypherParams
   });
   const isScalarType = isGraphqlScalarType(schemaType);
+  const isInterfaceType = isGraphqlInterfaceType(schemaType);
   const temporalType = isTemporalType(schemaType.name);
   params = { ...params, ...subParams };
   if (cypherParams) {
     params['cypherParams'] = cypherParams;
   }
+  const { cypherPart: orderByClause } = orderByValue;
   const query = `CALL apoc.cypher.doIt("${
     cypherQueryArg.value.value
   }", ${argString}) YIELD value
     WITH apoc.map.values(value, [keys(value)[0]])[0] AS ${safeVariableName}
     RETURN ${safeVariableName} ${
     !temporalType && !isScalarType
-      ? `{${subQuery}} AS ${safeVariableName}${orderByValue}${outerSkipLimit}`
+      ? `{${
+          isInterfaceType
+            ? `FRAGMENT_TYPE: labels(${safeVariableName})[0],`
+            : ''
+        }${subQuery}} AS ${safeVariableName}${orderByClause}${outerSkipLimit}`
       : ''
   }`;
   return [query, params];
@@ -937,10 +1034,11 @@ const nodeCreate = ({
   selections,
   schemaType,
   resolveInfo,
+  additionalLabels,
   params
 }) => {
   const safeVariableName = safeVar(variableName);
-  const safeLabelName = safeLabel(typeName);
+  const safeLabelName = safeLabel([typeName, ...additionalLabels]);
   let statements = [];
   const args = getMutationArguments(resolveInfo);
   statements = possiblySetFirstId({
@@ -955,12 +1053,10 @@ const nodeCreate = ({
     paramKey: 'params'
   });
   const [subQuery, subParams] = buildCypherSelection({
-    initial: ``,
     selections,
     variableName,
     schemaType,
-    resolveInfo,
-    paramIndex: 1
+    resolveInfo
   });
   params = { ...preparedParams, ...subParams };
   const query = `
@@ -976,10 +1072,12 @@ const nodeUpdate = ({
   typeName,
   selections,
   schemaType,
+  additionalLabels,
   params
 }) => {
   const safeVariableName = safeVar(variableName);
-  const safeLabelName = safeLabel(typeName);
+  const safeLabelName = safeLabel([typeName, ...additionalLabels]);
+
   const args = getMutationArguments(resolveInfo);
   const primaryKeyArg = args[0];
   const primaryKeyArgName = primaryKeyArg.name.value;
@@ -1014,12 +1112,10 @@ const nodeUpdate = ({
     query += `SET ${safeVariableName} += {${paramUpdateStatements.join(',')}} `;
   }
   const [subQuery, subParams] = buildCypherSelection({
-    initial: ``,
     selections,
     variableName,
     schemaType,
-    resolveInfo,
-    paramIndex: 1
+    resolveInfo
   });
   preparedParams.params[primaryKeyArgName] = primaryKeyParam[primaryKeyArgName];
   params = { ...preparedParams, ...subParams };
@@ -1033,10 +1129,11 @@ const nodeDelete = ({
   variableName,
   typeName,
   schemaType,
+  additionalLabels,
   params
 }) => {
   const safeVariableName = safeVar(variableName);
-  const safeLabelName = safeLabel(typeName);
+  const safeLabelName = safeLabel([typeName, ...additionalLabels]);
   const args = getMutationArguments(resolveInfo);
   const primaryKeyArg = args[0];
   const primaryKeyArgName = primaryKeyArg.name.value;
@@ -1054,12 +1151,10 @@ const nodeDelete = ({
       : ` {${primaryKeyArgName}: $${primaryKeyArgName}})`
   }`;
   const [subQuery, subParams] = buildCypherSelection({
-    initial: ``,
     selections,
     variableName,
     schemaType,
-    resolveInfo,
-    paramIndex: 1
+    resolveInfo
   });
   params = { ...preparedParams, ...subParams };
   const deletionVariableName = safeVar(`${variableName}_toDelete`);
@@ -1077,7 +1172,8 @@ const relationshipCreate = ({
   resolveInfo,
   selections,
   schemaType,
-  params
+  params,
+  context
 }) => {
   let mutationMeta, relationshipNameArg, fromTypeArg, toTypeArg;
   try {
@@ -1112,7 +1208,7 @@ const relationshipCreate = ({
   //TODO: need to handle one-to-one and one-to-many
   const args = getMutationArguments(resolveInfo);
   const typeMap = resolveInfo.schema.getTypeMap();
-
+  const cypherParams = getCypherParams(context);
   const fromType = fromTypeArg.value.value;
   const fromVar = `${lowFirstLetter(fromType)}_from`;
   const fromInputArg = args.find(e => e.name.value === 'from').type;
@@ -1145,9 +1241,17 @@ const relationshipCreate = ({
   });
   const schemaTypeName = safeVar(schemaType);
   const fromVariable = safeVar(fromVar);
-  const fromLabel = safeLabel(fromType);
+  const fromAdditionalLabels = getAdditionalLabels(
+    resolveInfo.schema.getType(fromType),
+    cypherParams
+  );
+  const fromLabel = safeLabel([fromType, ...fromAdditionalLabels]);
   const toVariable = safeVar(toVar);
-  const toLabel = safeLabel(toType);
+  const toAdditionalLabels = getAdditionalLabels(
+    resolveInfo.schema.getType(toType),
+    cypherParams
+  );
+  const toLabel = safeLabel([toType, ...toAdditionalLabels]);
   const relationshipVariable = safeVar(lowercased + '_relation');
   const relationshipLabel = safeLabel(relationshipName);
   const fromTemporalClauses = temporalPredicateClauses(
@@ -1163,18 +1267,17 @@ const relationshipCreate = ({
     'to'
   );
   const [subQuery, subParams] = buildCypherSelection({
-    initial: '',
     selections,
     schemaType,
     resolveInfo,
-    paramIndex: 1,
     parentSelectionInfo: {
       rootType: 'relationship',
       from: fromVar,
       to: toVar,
       variableName: lowercased
     },
-    variableName: schemaType.name === fromType ? `${toVar}` : `${fromVar}`
+    variableName: schemaType.name === fromType ? `${toVar}` : `${fromVar}`,
+    cypherParams: getCypherParams(context)
   });
   params = { ...preparedParams, ...subParams };
   let query = `
@@ -1204,7 +1307,8 @@ const relationshipDelete = ({
   selections,
   variableName,
   schemaType,
-  params
+  params,
+  context
 }) => {
   let mutationMeta, relationshipNameArg, fromTypeArg, toTypeArg;
   try {
@@ -1239,6 +1343,7 @@ const relationshipDelete = ({
   //TODO: need to handle one-to-one and one-to-many
   const args = getMutationArguments(resolveInfo);
   const typeMap = resolveInfo.schema.getTypeMap();
+  const cypherParams = getCypherParams(context);
 
   const fromType = fromTypeArg.value.value;
   const fromVar = `${lowFirstLetter(fromType)}_from`;
@@ -1261,9 +1366,17 @@ const relationshipDelete = ({
 
   const schemaTypeName = safeVar(schemaType);
   const fromVariable = safeVar(fromVar);
-  const fromLabel = safeLabel(fromType);
+  const fromAdditionalLabels = getAdditionalLabels(
+    resolveInfo.schema.getType(fromType),
+    cypherParams
+  );
+  const fromLabel = safeLabel([fromType, ...fromAdditionalLabels]);
   const toVariable = safeVar(toVar);
-  const toLabel = safeLabel(toType);
+  const toAdditionalLabels = getAdditionalLabels(
+    resolveInfo.schema.getType(toType),
+    cypherParams
+  );
+  const toLabel = safeLabel([toType, ...toAdditionalLabels]);
   const relationshipVariable = safeVar(fromVar + toVar);
   const relationshipLabel = safeLabel(relationshipName);
   const fromRootVariable = safeVar('_' + fromVar);
@@ -1282,18 +1395,16 @@ const relationshipDelete = ({
   );
   // TODO cleaner semantics: remove use of _ prefixes in root variableNames and variableName
   const [subQuery, subParams] = buildCypherSelection({
-    initial: '',
     selections,
-    variableName,
     schemaType,
     resolveInfo,
-    paramIndex: 1,
     parentSelectionInfo: {
       rootType: 'relationship',
       from: `_${fromVar}`,
       to: `_${toVar}`
     },
-    variableName: schemaType.name === fromType ? `_${toVar}` : `_${fromVar}`
+    variableName: schemaType.name === fromType ? `_${toVar}` : `_${fromVar}`,
+    cypherParams: getCypherParams(context)
   });
   params = { ...params, ...subParams };
   let query = `
@@ -1762,11 +1873,52 @@ const translateFilterArgument = ({
 
 const parseFilterArgumentName = fieldName => {
   const fieldNameParts = fieldName.split('_');
+
+  const filterTypes = [
+    '_not',
+    '_in',
+    '_not_in',
+    '_contains',
+    '_not_contains',
+    '_starts_with',
+    '_not_starts_with',
+    '_ends_with',
+    '_not_ends_with',
+    '_lt',
+    '_lte',
+    '_gt',
+    '_gte',
+    '_some',
+    '_none',
+    '_single',
+    '_every'
+  ];
+
   let filterType = '';
+
   if (fieldNameParts.length > 1) {
-    fieldName = fieldNameParts.shift();
-    filterType = fieldNameParts.join('_');
+    let regExp = [];
+
+    _.each(filterTypes, f => {
+      regExp.push(f + '$');
+    });
+
+    const regExpJoin = '(' + regExp.join('|') + ')';
+    const preparedFieldAndFilterField = _.replace(
+      fieldName,
+      new RegExp(regExpJoin),
+      '[::filterFieldSeperator::]$1'
+    );
+    const [parsedField, parsedFilterField] = preparedFieldAndFilterField.split(
+      '[::filterFieldSeperator::]'
+    );
+
+    fieldName = !_.isUndefined(parsedField) ? parsedField : fieldName;
+    filterType = !_.isUndefined(parsedFilterField)
+      ? parsedFilterField.substr(1)
+      : ''; // Strip off first underscore
   }
+
   return {
     name: fieldName,
     type: filterType
