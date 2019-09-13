@@ -340,7 +340,7 @@ const possiblyAddResolvers = (operationTypeMap, resolvers, config) => {
     operationName = operationTypeMap[t].name.value;
     if (acc[operationName] === undefined) {
       acc[operationName] = function(...args) {
-        return neo4jgraphql(...args);
+        return neo4jgraphql(...args, config.debug);
       };
     }
     return acc;

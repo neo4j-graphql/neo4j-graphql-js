@@ -22,7 +22,13 @@ import Debug from 'debug';
 
 const debug = Debug('neo4j-graphql-js');
 
-export async function neo4jgraphql(object, params, context, resolveInfo) {
+export async function neo4jgraphql(
+  object,
+  params,
+  context,
+  resolveInfo,
+  debugFlag
+) {
   // throw error if context.req.error exists
   if (checkRequestError(context)) {
     throw new Error(checkRequestError(context));
@@ -32,7 +38,21 @@ export async function neo4jgraphql(object, params, context, resolveInfo) {
   let cypherParams;
 
   const cypherFunction = isMutation(resolveInfo) ? cypherMutation : cypherQuery;
-  [query, cypherParams] = cypherFunction(params, context, resolveInfo);
+  [query, cypherParams] = cypherFunction(
+    params,
+    context,
+    resolveInfo,
+    debugFlag
+  );
+
+  if (debugFlag) {
+    console.log(`
+Deprecation Warning: Remove \`debug\` parameter and use an environment variable
+instead: \`DEBUG=neo4j-graphql-js\`.
+    `);
+    console.log(query);
+    console.log(JSON.stringify(cypherParams, null, 2));
+  }
 
   debug(query);
   debug(cypherParams);
