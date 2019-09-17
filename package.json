@@ -60,6 +60,7 @@
   "dependencies": {
     "@babel/runtime": "^7.5.5",
     "@babel/runtime-corejs2": "^7.5.5",
+    "debug": "^4.1.1",
     "graphql": "^14.2.1",
     "graphql-auth-directives": "^2.1.0",
     "lodash": "^4.17.15",

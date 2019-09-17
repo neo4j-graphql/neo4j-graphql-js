@@ -18,13 +18,16 @@ import { checkRequestError } from './auth';
 import { translateMutation, translateQuery } from './translate';
 import Neo4jSchemaTree from './neo4j-schema/Neo4jSchemaTree';
 import graphQLMapper from './neo4j-schema/graphQLMapper';
+import Debug from 'debug';
+
+const debug = Debug('neo4j-graphql-js');
 
 export async function neo4jgraphql(
   object,
   params,
   context,
   resolveInfo,
-  debug = true
+  debugFlag
 ) {
   // throw error if context.req.error exists
   if (checkRequestError(context)) {
@@ -35,12 +38,24 @@ export async function neo4jgraphql(
   let cypherParams;
 
   const cypherFunction = isMutation(resolveInfo) ? cypherMutation : cypherQuery;
-  [query, cypherParams] = cypherFunction(params, context, resolveInfo);
+  [query, cypherParams] = cypherFunction(
+    params,
+    context,
+    resolveInfo,
+    debugFlag
+  );
 
-  if (debug) {
+  if (debugFlag) {
+    console.log(`
+Deprecation Warning: Remove \`debug\` parameter and use an environment variable
+instead: \`DEBUG=neo4j-graphql-js\`.
+    `);
     console.log(query);
     console.log(JSON.stringify(cypherParams, null, 2));
   }
+
+  debug('%s', query);
+  debug('%o', cypherParams);
 
   const session = context.driver.session();
   let result;
@@ -110,8 +125,7 @@ export const augmentSchema = (
   config = {
     query: true,
     mutation: true,
-    temporal: true,
-    debug: true
+    temporal: true
   }
 ) => {
   const typeMap = extractTypeMapFromSchema(schema);
@@ -133,8 +147,7 @@ export const makeAugmentedSchema = ({
   config = {
     query: true,
     mutation: true,
-    temporal: true,
-    debug: true
+    temporal: true
   }
 }) => {
   if (schema) {
