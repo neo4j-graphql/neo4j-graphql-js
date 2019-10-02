@@ -110,3 +110,31 @@ See [/examples](https://github.com/neo4j-graphql/neo4j-graphql-js/tree/master/ex
 ## [Documentation](http://grandstack.io/docs/neo4j-graphql-js.html)
 
 Full docs can be found on [GRANDstack.io/docs](http://grandstack.io/docs/neo4j-graphql-js.html)
+
+## Debugging and Tuning
+
+You can log out the generated cypher statements with an environment variable:
+
+```
+DEBUG=neo4j-graphql-js node yourcode.js
+```
+
+This helps to debug and optimize your database statements. E.g. visit your Neo4J
+browser console at http://localhost:7474/browser/ and paste the following:
+
+```
+:params :params { offset: 0, first: 12, filter: {}, cypherParams: { currentUserId: '42' } }
+```
+
+and now profile the generated query:
+
+```
+EXPLAIN MATCH (`post`:`Post`) WITH `post` ORDER BY post.createdAt DESC RETURN `post` { .id , .title } AS `post`
+```
+
+You can learn more by typing:
+
+```
+:help EXPLAIN
+:help params
+```
