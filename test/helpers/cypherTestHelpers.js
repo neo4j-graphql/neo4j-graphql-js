@@ -4,9 +4,7 @@ import {
   augmentTypeDefs,
   makeAugmentedSchema
 } from '../../src/index';
-import {
-  printSchemaDocument
-} from '../../src/augment/augment';
+import { printSchemaDocument } from '../../src/augment/augment';
 import { graphql } from 'graphql';
 import { makeExecutableSchema } from 'graphql-tools';
 import { testSchema } from './testSchema';
@@ -106,9 +104,9 @@ type Mutation {
 }
 
 // Optimization to prevent schema augmentation from running for every test
-const cypherTestTypeDefs = printSchemaDocument({ 
+const cypherTestTypeDefs = printSchemaDocument({
   schema: makeAugmentedSchema({
-    typeDefs: testSchema, 
+    typeDefs: testSchema,
     resolvers: {
       // These custom field resolvers exist only for generating
       // @neo4j_ignore directives used in a few tests
