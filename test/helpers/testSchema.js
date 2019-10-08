@@ -105,7 +105,7 @@ export const testSchema = `
     favorites: [Movie] @relation(name: "FAVORITED", direction: "OUT")
   }
 
-  type FriendOf {
+  type FriendOf @relation {
     from: User
     currentUserId: String
       @cypher(
@@ -121,7 +121,7 @@ export const testSchema = `
     to: User
   }
 
-  type Rated {
+  type Rated @relation {
     from: User
     currentUserId(strArg: String): String
       @cypher(
