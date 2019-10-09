@@ -15,11 +15,11 @@ const extractTck = fileName => {
       const rs = createReadStream(fileName, { encoding: 'utf8' });
       rs.on('data', lines => {
         // split into array of lines
-        lines = lines.split('\r\n');
+        lines = lines.split('\n');
         // extract array elements for typeDefs
         const typeDefs = extractBlock('schema', lines);
         resolve({
-          typeDefs: typeDefs.join('\r\n  '),
+          typeDefs: typeDefs.join('\n  '),
           tests: extractTestBlocks(lines)
         });
       });
@@ -98,10 +98,10 @@ const buildTestDeclarations = (tck, extractionLimit) => {
   filterTestRunner(t, typeDefs, graphQLQuery, ${JSON.stringify(
     test.params
   )}, expectedCypherQuery, ${JSON.stringify(test.expectedCypherParams)});
-});\r\n`);
+});\n`);
       return acc;
     }, [])
-    .join('\r\n');
+    .join('\n');
 };
 
 const makeTestDataSchema = tck => {
@@ -122,14 +122,14 @@ const buildTestData = (schema, tck) => {
   return extractedTckTestData.reduce((acc, testBlocks) => {
     const testName = testBlocks.test;
     // graphql
-    let testGraphql = testBlocks.graphql.join('\r\n');
+    let testGraphql = testBlocks.graphql.join('\n');
     // validation and formatting through parse -> print
     testGraphql = parse(testGraphql);
     testGraphql = print(testGraphql);
     // graphql variables
     let testParams = {};
     if (testBlocks.params) {
-      testParams = testBlocks.params.join('\r\n');
+      testParams = testBlocks.params.join('\n');
       testParams = JSON.parse(testParams);
     }
     const testCypher = testBlocks.cypher.join(' ');
