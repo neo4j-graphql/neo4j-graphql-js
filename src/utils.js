@@ -1,5 +1,4 @@
-import { print, parse } from 'graphql';
-import { possiblyAddDirectiveDeclarations } from './auth';
+import { parse } from 'graphql';
 import { v1 as neo4j } from 'neo4j-driver';
 import _ from 'lodash';
 import filter from 'lodash/filter';
@@ -42,50 +41,11 @@ export function parseArgs(args, variableValues) {
   }, {});
 }
 
-export const parseFieldSdl = sdl => {
-  return sdl ? parse(`type Type { ${sdl} }`).definitions[0].fields[0] : {};
-};
-
-export const parseInputFieldSdl = sdl => {
-  return sdl ? parse(`input Type { ${sdl} }`).definitions[0].fields : {};
-};
-
-export const buildInputValueDefinitions = fields => {
-  let arr = [];
-  if (Array.isArray(fields)) {
-    fields = fields.join('\n');
-    arr = fields ? parse(`type Type { ${fields} }`).definitions[0].fields : [];
-    arr = arr.map(e => ({
-      kind: 'InputValueDefinition',
-      name: e.name,
-      type: e.type
-    }));
-  }
-  return arr;
-};
-
 export const parseDirectiveSdl = sdl => {
   return sdl
     ? parse(`type Type { field: String ${sdl} }`).definitions[0].fields[0]
         .directives[0]
     : {};
-};
-
-export const printTypeMap = typeMap => {
-  return print({
-    kind: 'Document',
-    definitions: Object.values(typeMap)
-  });
-};
-
-export const extractTypeMapFromTypeDefs = typeDefs => {
-  // TODO accept alternative typeDefs formats (arr of strings, ast, etc.)
-  // into a single string for parse, add validatation
-  const astNodes = parse(typeDefs).definitions;
-  return astNodes.reduce((acc, t) => {
-    if (t.name) acc[t.name.value] = t;
-    return acc;
-  }, {});
 };
 
 export function extractSelections(selections, fragments) {
@@ -224,36 +184,6 @@ export function isArrayType(type) {
 
 export const isRelationTypeDirectedField = fieldName => {
   return fieldName === 'from' || fieldName === 'to';
-};
-
-export const isKind = (type, kind) => type && type.kind && type.kind === kind;
-
-export const _isListType = (type, isList = false) => {
-  if (!isKind(type, 'NamedType')) {
-    if (isKind(type, 'ListType')) isList = true;
-    return _isListType(type.type, isList);
-  }
-  return isList;
-};
-
-export const isNonNullType = (type, isRequired = false, parent = {}) => {
-  if (!isKind(type, 'NamedType')) {
-    return isNonNullType(type.type, isRequired, type);
-  }
-  if (isKind(parent, 'NonNullType')) {
-    isRequired = true;
-  }
-  return isRequired;
-};
-
-export const isBasicScalar = name => {
-  return (
-    name === 'ID' ||
-    name === 'String' ||
-    name === 'Float' ||
-    name === 'Int' ||
-    name === 'Boolean'
-  );
 };
 
 export const isNodeType = astNode => {
@@ -618,55 +548,6 @@ export const getFieldDirective = (field, directive) => {
   );
 };
 
-export const getRelationDirection = relationDirective => {
-  let direction = {};
-  try {
-    direction = relationDirective.arguments.filter(
-      a => a.name.value === 'direction'
-    )[0];
-    return direction.value.value;
-  } catch (e) {
-    // FIXME: should we ignore this error to define default behavior?
-    throw new Error('No direction argument specified on @relation directive');
-  }
-};
-
-export const getRelationName = relationDirective => {
-  let name = {};
-  try {
-    name = relationDirective.arguments.filter(a => a.name.value === 'name')[0];
-    return name.value.value;
-  } catch (e) {
-    // FIXME: should we ignore this error to define default behavior?
-    throw new Error('No name argument specified on @relation directive');
-  }
-};
-
-export const addDirectiveDeclarations = (typeMap, config) => {
-  // overwrites any provided directive declarations for system directive names
-  typeMap['cypher'] = parse(
-    `directive @cypher(statement: String) on FIELD_DEFINITION`
-  ).definitions[0];
-  typeMap['relation'] = parse(
-    `directive @relation(name: String, direction: _RelationDirections, from: String, to: String) on FIELD_DEFINITION | OBJECT`
-  ).definitions[0];
-  typeMap['additionalLabels'] = parse(
-    `directive @additionalLabels(labels: [String]) on OBJECT`
-  ).definitions[0];
-  // TODO should we change these system directives to having a '_Neo4j' prefix
-  typeMap['MutationMeta'] = parse(
-    `directive @MutationMeta(relationship: String, from: String, to: String) on FIELD_DEFINITION`
-  ).definitions[0];
-  typeMap['neo4j_ignore'] = parse(
-    `directive @neo4j_ignore on FIELD_DEFINITION`
-  ).definitions[0];
-  typeMap['_RelationDirections'] = parse(
-    `enum _RelationDirections { IN OUT }`
-  ).definitions[0];
-  typeMap = possiblyAddDirectiveDeclarations(typeMap, config);
-  return typeMap;
-};
-
 export const getQueryCypherDirective = resolveInfo => {
   if (resolveInfo.fieldName === '_entities') return;
   return resolveInfo.schema
@@ -709,33 +590,6 @@ export const getRelationTypeDirective = relationshipType => {
         to: directive.arguments.find(e => e.name.value === 'to').value.value
       }
     : undefined;
-};
-
-export const getRelationMutationPayloadFieldsFromAst = relatedAstNode => {
-  let isList = false;
-  let fieldName = '';
-  return relatedAstNode.fields
-    .reduce((acc, t) => {
-      fieldName = t.name.value;
-      if (fieldName !== 'to' && fieldName !== 'from') {
-        isList = _isListType(t);
-        // Use name directly in order to prevent requiring required fields on the payload type
-        acc.push(
-          `${fieldName}: ${isList ? '[' : ''}${_getNamedType(t).name.value}${
-            isList ? `]` : ''
-          }${print(t.directives)}`
-        );
-      }
-      return acc;
-    }, [])
-    .join('\n');
-};
-
-export const _getNamedType = type => {
-  if (type.kind !== 'NamedType') {
-    return _getNamedType(type.type);
-  }
-  return type;
 };
 
 const firstNonNullAndIdField = fields => {
@@ -789,14 +643,6 @@ export const getPrimaryKey = astNode => {
     pk = firstField(fields);
   }
   return pk;
-};
-
-export const createOperationMap = type => {
-  const fields = type ? type.fields : [];
-  return fields.reduce((acc, t) => {
-    acc[t.name.value] = t;
-    return acc;
-  }, {});
 };
 
 /**
@@ -1079,93 +925,6 @@ export const temporalPredicateClauses = (
   }, []);
 };
 
-// An ignored type is a type without at least 1 non-ignored field
-export const excludeIgnoredTypes = (typeMap, config = {}) => {
-  const queryExclusionMap = {};
-  const mutationExclusionMap = {};
-  // If .query is an object and .exclude is provided, use it, else use new arr
-  let excludedQueries = getExcludedTypes(config, 'query');
-  let excludedMutations = getExcludedTypes(config, 'mutation');
-  // Add any ignored types to exclusion arrays
-  Object.keys(typeMap).forEach(name => {
-    if (
-      typeMap[name].fields &&
-      !typeMap[name].fields.find(
-        field => !getFieldDirective(field, 'neo4j_ignore')
-      )
-    ) {
-      // All fields are ignored, so exclude the type
-      excludedQueries.push(name);
-      excludedMutations.push(name);
-    }
-  });
-  // As long as the API is still allowed, convert the exclusion arrays
-  // to a boolean map for quicker reference later
-  if (config.query !== false) {
-    excludedQueries.forEach(e => {
-      queryExclusionMap[e] = true;
-    });
-    config.query = { exclude: queryExclusionMap };
-  }
-  if (config.mutation !== false) {
-    excludedMutations.forEach(e => {
-      mutationExclusionMap[e] = true;
-    });
-    config.mutation = { exclude: mutationExclusionMap };
-  }
-  return config;
-};
-
-export const getExcludedTypes = (config, rootType) => {
-  return config &&
-    rootType &&
-    config[rootType] &&
-    typeof config[rootType] === 'object' &&
-    config[rootType].exclude
-    ? config[rootType].exclude
-    : [];
-};
-
-export const possiblyAddIgnoreDirective = (
-  astNode,
-  typeMap,
-  resolvers,
-  config
-) => {
-  const fields = astNode && astNode.fields ? astNode.fields : [];
-  let valueTypeName = '';
-  return fields.map(field => {
-    // for any field of any type, if a custom resolver is provided
-    // but there is no @ignore directive
-    valueTypeName = _getNamedType(field).name.value;
-    if (
-      // has a custom resolver but not a directive
-      getCustomFieldResolver(astNode, field, resolvers) &&
-      !getFieldDirective(field, 'neo4j_ignore') &&
-      // fields that behave in ways specific to the neo4j mapping do not recieve ignore
-      // directives and can instead have their data post-processed by a custom field resolver
-      !getFieldDirective(field, 'relation') &&
-      !getFieldDirective(field, 'cypher') &&
-      !getTypeDirective(typeMap[valueTypeName], 'relation') &&
-      !isTemporalType(valueTypeName)
-    ) {
-      // possibly initialize directives
-      if (!field.directives) field.directives = [];
-      // add the ignore directive for use in runtime translation
-      field.directives.push(parseDirectiveSdl(`@neo4j_ignore`));
-    }
-    return field;
-  });
-};
-
-export const getCustomFieldResolver = (astNode, field, resolvers) => {
-  const typeResolver =
-    astNode && astNode.name && astNode.name.value
-      ? resolvers[astNode.name.value]
-      : undefined;
-  return typeResolver ? typeResolver[field.name.value] : undefined;
-};
-
 export const removeIgnoredFields = (schemaType, selections) => {
   if (!isGraphqlScalarType(schemaType) && selections && selections.length) {
     let schemaTypeField = '';
@@ -1184,4 +943,11 @@ export const removeIgnoredFields = (schemaType, selections) => {
     });
   }
   return selections;
+};
+
+const _getNamedType = type => {
+  if (type.kind !== 'NamedType') {
+    return _getNamedType(type.type);
+  }
+  return type;
 };
