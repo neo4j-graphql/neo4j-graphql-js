@@ -1,24 +1,25 @@
+import { parse, print } from 'graphql';
+import Neo4jSchemaTree from './neo4j-schema/Neo4jSchemaTree';
+import graphQLMapper from './neo4j-schema/graphQLMapper';
+import { checkRequestError } from './auth';
+import { translateMutation, translateQuery } from './translate';
+import Debug from 'debug';
 import {
   extractQueryResult,
   isMutation,
   typeIdentifiers,
-  extractTypeMapFromTypeDefs,
-  addDirectiveDeclarations,
-  printTypeMap,
   getPayloadSelections
 } from './utils';
 import {
-  extractTypeMapFromSchema,
-  extractResolversFromSchema,
   augmentedSchema,
   makeAugmentedExecutableSchema,
-  addTemporalTypes
-} from './augment';
-import { checkRequestError } from './auth';
-import { translateMutation, translateQuery } from './translate';
-import Neo4jSchemaTree from './neo4j-schema/Neo4jSchemaTree';
-import graphQLMapper from './neo4j-schema/graphQLMapper';
-import Debug from 'debug';
+  augmentTypes,
+  mapDefinitions,
+  mergeDefinitionMaps
+} from './augment/augment';
+import { transformNeo4jTypes } from './augment/types/types';
+import { buildDocument } from './augment/ast';
+import { augmentDirectiveDefinitions } from './augment/directives';
 
 const debug = Debug('neo4j-graphql-js');
 
@@ -120,6 +121,53 @@ export function cypherMutation(
   });
 }
 
+export const augmentTypeDefs = (typeDefs, config = {}) => {
+  config.query = false;
+  config.mutation = false;
+  const definitions = parse(typeDefs).definitions;
+  let generatedTypeMap = {};
+  let [
+    typeDefinitionMap,
+    typeExtensionDefinitionMap,
+    directiveDefinitionMap,
+    operationTypeMap
+  ] = mapDefinitions({
+    definitions,
+    config
+  });
+  [
+    typeExtensionDefinitionMap,
+    generatedTypeMap,
+    operationTypeMap
+  ] = augmentTypes({
+    typeDefinitionMap,
+    typeExtensionDefinitionMap,
+    generatedTypeMap,
+    operationTypeMap,
+    config
+  });
+  [typeDefinitionMap, directiveDefinitionMap] = augmentDirectiveDefinitions({
+    typeDefinitionMap: generatedTypeMap,
+    directiveDefinitionMap,
+    config
+  });
+  const mergedDefinitions = mergeDefinitionMaps({
+    generatedTypeMap,
+    typeExtensionDefinitionMap,
+    operationTypeMap,
+    directiveDefinitionMap
+  });
+  const transformedDefinitions = transformNeo4jTypes({
+    definitions: mergedDefinitions,
+    config
+  });
+  const documentAST = buildDocument({
+    definitions: transformedDefinitions
+  });
+  typeDefs = print(documentAST);
+  return typeDefs;
+};
+
 export const augmentSchema = (
   schema,
   config = {
@@ -128,9 +176,7 @@ export const augmentSchema = (
     temporal: true
   }
 ) => {
-  const typeMap = extractTypeMapFromSchema(schema);
-  const resolvers = extractResolversFromSchema(schema);
-  return augmentedSchema(typeMap, resolvers, config);
+  return augmentedSchema(schema, config);
 };
 
 export const makeAugmentedSchema = ({
@@ -151,7 +197,7 @@ export const makeAugmentedSchema = ({
   }
 }) => {
   if (schema) {
-    return augmentSchema(schema, config);
+    return augmentedSchema(schema, config);
   }
   if (!typeDefs) throw new Error('Must provide typeDefs');
   return makeAugmentedExecutableSchema({
@@ -166,15 +212,6 @@ export const makeAugmentedSchema = ({
     inheritResolversFromInterfaces,
     config
   });
-};
-
-export const augmentTypeDefs = (typeDefs, config) => {
-  let typeMap = extractTypeMapFromTypeDefs(typeDefs);
-  // overwrites any provided declarations of system directives
-  typeMap = addDirectiveDeclarations(typeMap, config);
-  // adds managed types; tepmoral, spatial, etc.
-  typeMap = addTemporalTypes(typeMap, config);
-  return printTypeMap(typeMap);
 };
 
 /**
