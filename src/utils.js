@@ -1086,6 +1086,10 @@ export const excludeIgnoredTypes = (typeMap, config = {}) => {
   // If .query is an object and .exclude is provided, use it, else use new arr
   let excludedQueries = getExcludedTypes(config, 'query');
   let excludedMutations = getExcludedTypes(config, 'mutation');
+
+  // Exclude `type Subscription`, to prevent it from being misinterpreted as a query type
+  excludedQueries.push('Subscription');
+
   // Add any ignored types to exclusion arrays
   Object.keys(typeMap).forEach(name => {
     if (
