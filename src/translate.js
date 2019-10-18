@@ -1294,7 +1294,7 @@ const relationshipCreate = ({
       ? `) WHERE ${toTemporalClauses.join(' AND ')} `
       : ` {${toParam}: $to.${toParam}})`
   }
-      CREATE (${fromVariable})-[${relationshipVariable}:${relationshipLabel}${
+      MERGE (${fromVariable})-[${relationshipVariable}:${relationshipLabel}${
     paramStatements.length > 0 ? ` {${paramStatements.join(',')}}` : ''
   }]->(${toVariable})
       RETURN ${relationshipVariable} { ${subQuery} } AS ${schemaTypeName};
