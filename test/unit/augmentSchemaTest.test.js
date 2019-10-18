@@ -1,6 +1,7 @@
 import test from 'ava';
 import { augmentedSchema } from '../helpers/cypherTestHelpers';
 import { printSchema } from 'graphql';
+import { printTypeMap } from '../../src/utils';
 
 test.cb('Test augmented schema', t => {
   let schema = augmentedSchema();
@@ -69,6 +70,11 @@ enum _ActorOrdering {
 type _AddActorMoviesPayload {
   from: Actor
   to: Movie
+}
+
+type _AddCasedTypeStatePayload {
+  from: CasedType
+  to: State
 }
 
 type _AddGenreMoviesPayload {
@@ -158,6 +164,36 @@ input _BookInput {
 enum _BookOrdering {
   genre_asc
   genre_desc
+  _id_asc
+  _id_desc
+}
+
+input _CasedTypeFilter {
+  AND: [_CasedTypeFilter!]
+  OR: [_CasedTypeFilter!]
+  name: String
+  name_not: String
+  name_in: [String!]
+  name_not_in: [String!]
+  name_contains: String
+  name_not_contains: String
+  name_starts_with: String
+  name_not_starts_with: String
+  name_ends_with: String
+  name_not_ends_with: String
+  state: _StateFilter
+  state_not: _StateFilter
+  state_in: [_StateFilter!]
+  state_not_in: [_StateFilter!]
+}
+
+input _CasedTypeInput {
+  name: String!
+}
+
+enum _CasedTypeOrdering {
+  name_asc
+  name_desc
   _id_asc
   _id_desc
 }
@@ -611,6 +647,11 @@ type _RemoveActorMoviesPayload {
   to: Movie
 }
 
+type _RemoveCasedTypeStatePayload {
+  from: CasedType
+  to: State
+}
+
 type _RemoveGenreMoviesPayload {
   from: Movie
   to: Genre
@@ -934,6 +975,12 @@ enum BookGenre {
   Math
 }
 
+type CasedType {
+  name: String
+  state(filter: _StateFilter): State
+  _id: String
+}
+
 type currentUserId {
   userId: String
   _id: String
@@ -1041,6 +1088,10 @@ type Mutation {
   DeleteBook(genre: BookGenre!): Book
   CreatecurrentUserId(userId: String): currentUserId
   DeletecurrentUserId(userId: String!): currentUserId
+  CreateCasedType(name: String): CasedType
+  DeleteCasedType(name: String!): CasedType
+  AddCasedTypeState(from: _CasedTypeInput!, to: _StateInput!): _AddCasedTypeStatePayload
+  RemoveCasedTypeState(from: _CasedTypeInput!, to: _StateInput!): _RemoveCasedTypeStatePayload
   CreateTemporalNode(datetime: _Neo4jDateTimeInput, name: String, time: _Neo4jTimeInput, date: _Neo4jDateInput, localtime: _Neo4jLocalTimeInput, localdatetime: _Neo4jLocalDateTimeInput, localdatetimes: [_Neo4jLocalDateTimeInput]): TemporalNode
   UpdateTemporalNode(datetime: _Neo4jDateTimeInput!, name: String, time: _Neo4jTimeInput, date: _Neo4jDateInput, localtime: _Neo4jLocalTimeInput, localdatetime: _Neo4jLocalDateTimeInput, localdatetimes: [_Neo4jLocalDateTimeInput]): TemporalNode
   DeleteTemporalNode(datetime: _Neo4jDateTimeInput!): TemporalNode
@@ -1072,6 +1123,7 @@ type Query {
   computedTemporal: _Neo4jDateTime
   computedObjectWithCypherParams: currentUserId
   customWithArguments(strArg: String, strInputArg: strInput): String
+  CasedType(first: Int, offset: Int, orderBy: [_CasedTypeOrdering], filter: _CasedTypeFilter): [CasedType]
   Genre(_id: String, name: String, first: Int, offset: Int, orderBy: [_GenreOrdering], filter: _GenreFilter): [Genre]
   Actor(userId: ID, name: String, _id: String, first: Int, offset: Int, orderBy: [_ActorOrdering], filter: _ActorFilter): [Actor]
   Book(genre: BookGenre, _id: String, first: Int, offset: Int, orderBy: [_BookOrdering], filter: _BookFilter): [Book]
