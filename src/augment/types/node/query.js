@@ -28,96 +28,22 @@ import {
   buildQueryOrderingEnumType
 } from '../../input-values';
 
+/**
+ * An enum describing which arguments are implemented for
+ * node type fields in the Query API
+ */
 const NodeQueryArgument = {
   ...PagingArgument,
   ...OrderingArgument,
   ...FilteringArgument
 };
 
-export const augmentNodeTypeFieldInput = ({
-  typeName,
-  definition,
-  fieldName,
-  fieldArguments,
-  fieldDirectives,
-  outputType,
-  config,
-  relationshipDirective,
-  outputTypeWrappers,
-  nodeInputTypeMap
-}) => {
-  fieldArguments = augmentNodeQueryArguments({
-    definition,
-    fieldArguments,
-    fieldDirectives,
-    outputType,
-    outputTypeWrappers,
-    config
-  });
-  nodeInputTypeMap = augmentNodeQueryArgumentTypes({
-    typeName,
-    definition,
-    fieldName,
-    outputType,
-    outputTypeWrappers,
-    relationshipDirective,
-    nodeInputTypeMap,
-    config
-  });
-  return [fieldArguments, nodeInputTypeMap];
-};
-
-const augmentNodeQueryArguments = ({
-  definition,
-  fieldArguments,
-  fieldDirectives,
-  outputType,
-  outputTypeWrappers,
-  config
-}) => {
-  const queryTypeNameLower = OperationType.QUERY.toLowerCase();
-  if (
-    !isMutationTypeDefinition({ definition }) &&
-    !isSubscriptionTypeDefinition({ definition }) &&
-    shouldAugmentType(config, queryTypeNameLower, outputType)
-  ) {
-    fieldArguments = buildQueryFieldArguments({
-      augmentationMap: NodeQueryArgument,
-      fieldArguments,
-      fieldDirectives,
-      outputType,
-      outputTypeWrappers
-    });
-  }
-  return fieldArguments;
-};
-
-const augmentNodeQueryArgumentTypes = ({
-  typeName,
-  definition,
-  fieldName,
-  outputType,
-  outputTypeWrappers,
-  relationshipDirective,
-  nodeInputTypeMap,
-  config
-}) => {
-  if (relationshipDirective && !isQueryTypeDefinition({ definition })) {
-    nodeInputTypeMap[FilteringArgument.FILTER].fields.push(
-      ...buildRelationshipFilters({
-        typeName,
-        fieldName,
-        outputType: `_${outputType}Filter`,
-        relatedType: outputType,
-        outputTypeWrappers,
-        config
-      })
-    );
-  }
-  return nodeInputTypeMap;
-};
-
-export const buildNodeQueryAPI = ({
+/**
+ * Given the results of augmentNodeTypeFields, builds or augments
+ * the AST definition of the Query operation field and any
+ * generated input or output types required for translation
+ */
+export const augmentNodeQueryAPI = ({
   typeName,
   propertyInputValues,
   nodeInputTypeMap,
@@ -126,9 +52,8 @@ export const buildNodeQueryAPI = ({
   operationTypeMap,
   config
 }) => {
-  const queryTypeName = OperationType.QUERY;
-  const queryTypeNameLower = queryTypeName.toLowerCase();
-  const queryType = operationTypeMap[queryTypeName];
+  const queryType = operationTypeMap[OperationType.QUERY];
+  const queryTypeNameLower = OperationType.QUERY.toLowerCase();
   if (shouldAugmentType(config, queryTypeNameLower, typeName)) {
     if (queryType) {
       operationTypeMap = buildNodeQueryField({
@@ -154,6 +79,116 @@ export const buildNodeQueryAPI = ({
   return [operationTypeMap, generatedTypeMap];
 };
 
+/**
+ * Given a node type field, builds the input value definitions
+ * for its Query arguments, along with those needed for input
+ * types generated to support the same Query API for the given
+ * field of the given node type
+ */
+export const augmentNodeTypeFieldInput = ({
+  typeName,
+  definition,
+  fieldName,
+  fieldArguments,
+  fieldDirectives,
+  outputType,
+  config,
+  relationshipDirective,
+  outputTypeWrappers,
+  nodeInputTypeMap,
+  operationTypeMap
+}) => {
+  fieldArguments = augmentNodeTypeFieldArguments({
+    definition,
+    fieldArguments,
+    fieldDirectives,
+    outputType,
+    outputTypeWrappers,
+    operationTypeMap,
+    config
+  });
+  nodeInputTypeMap = augmentNodeQueryArgumentTypes({
+    typeName,
+    definition,
+    fieldName,
+    outputType,
+    outputTypeWrappers,
+    relationshipDirective,
+    nodeInputTypeMap,
+    operationTypeMap,
+    config
+  });
+  return [fieldArguments, nodeInputTypeMap];
+};
+
+/**
+ * Builds the AST for the input value definitions used for
+ * node type Query field arguments
+ */
+const augmentNodeTypeFieldArguments = ({
+  definition,
+  fieldArguments,
+  fieldDirectives,
+  outputType,
+  outputTypeWrappers,
+  operationTypeMap,
+  config
+}) => {
+  const queryTypeNameLower = OperationType.QUERY.toLowerCase();
+  if (
+    !isMutationTypeDefinition({ definition, operationTypeMap }) &&
+    !isSubscriptionTypeDefinition({ definition, operationTypeMap }) &&
+    shouldAugmentType(config, queryTypeNameLower, outputType)
+  ) {
+    fieldArguments = buildQueryFieldArguments({
+      argumentMap: NodeQueryArgument,
+      fieldArguments,
+      fieldDirectives,
+      outputType,
+      outputTypeWrappers
+    });
+  }
+  return fieldArguments;
+};
+
+/**
+ * Given information about a field on a node type, builds the AST
+ * for associated input value definitions used by input types
+ * generated for the Query API
+ */
+const augmentNodeQueryArgumentTypes = ({
+  typeName,
+  definition,
+  fieldName,
+  outputType,
+  outputTypeWrappers,
+  relationshipDirective,
+  nodeInputTypeMap,
+  operationTypeMap,
+  config
+}) => {
+  if (
+    relationshipDirective &&
+    !isQueryTypeDefinition({ definition, operationTypeMap })
+  ) {
+    nodeInputTypeMap[FilteringArgument.FILTER].fields.push(
+      ...buildRelationshipFilters({
+        typeName,
+        fieldName,
+        outputType: `_${outputType}Filter`,
+        relatedType: outputType,
+        outputTypeWrappers,
+        config
+      })
+    );
+  }
+  return nodeInputTypeMap;
+};
+
+/**
+ * Builds the AST for the Query type field definition for
+ * a given node type
+ */
 const buildNodeQueryField = ({
   typeName,
   queryType,
@@ -192,6 +227,10 @@ const buildNodeQueryField = ({
   return operationTypeMap;
 };
 
+/**
+ * Builds the AST for input value definitions used for the
+ * arguments of the Query type field for a given node type
+ */
 const buildNodeQueryArguments = ({ typeName, propertyInputValues }) => {
   // Do not persist type wrappers
   propertyInputValues = propertyInputValues.map(arg =>
@@ -213,7 +252,7 @@ const buildNodeQueryArguments = ({ typeName, propertyInputValues }) => {
     );
   }
   propertyInputValues = buildQueryFieldArguments({
-    augmentationMap: NodeQueryArgument,
+    argumentMap: NodeQueryArgument,
     fieldArguments: propertyInputValues,
     outputType: typeName,
     outputTypeWrappers: {
@@ -223,6 +262,10 @@ const buildNodeQueryArguments = ({ typeName, propertyInputValues }) => {
   return propertyInputValues;
 };
 
+/**
+ * Builds the AST for directive instances on the Query type
+ * field for a given node type
+ */
 const buildNodeQueryDirectives = ({ typeName, config }) => {
   const directives = [];
   if (useAuthDirective(config, DirectiveDefinition.HAS_SCOPE)) {
