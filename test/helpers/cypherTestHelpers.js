@@ -167,6 +167,7 @@ export function augmentedSchemaCypherTestRunner(
         t.deepEqual(queryParams, expectedCypherParams);
       },
       State: checkCypherQuery,
+      CasedType: checkCypherQuery,
       computedBoolean: checkCypherQuery,
       computedInt: checkCypherQuery,
       computedFloat: checkCypherQuery,

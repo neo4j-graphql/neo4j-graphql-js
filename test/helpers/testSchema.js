@@ -202,6 +202,7 @@ export const testSchema = `
       @cypher(statement: "RETURN { userId: $cypherParams.currentUserId }")
     customWithArguments(strArg: String, strInputArg: strInput): String
       @cypher(statement: "RETURN $strInputArg.strArg")
+    CasedType: [CasedType]
   }
 
   type Mutation {
@@ -261,5 +262,10 @@ export const testSchema = `
     reader
     user
     admin
+  }
+
+  type CasedType {
+    name: String
+    state: State @relation(name: "FILMED_IN", direction: "OUT")
   }
 `;
