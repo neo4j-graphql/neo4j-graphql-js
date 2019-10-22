@@ -5,7 +5,7 @@ export const testSchema = /* GraphQL */ `
     ) {
     _id: String
     movieId: ID!
-    title: String @isAuthenticated
+    title: String
     someprefix_title_with_underscores: String
     year: Int
     released: DateTime!
@@ -205,6 +205,7 @@ export const testSchema = /* GraphQL */ `
       @cypher(statement: "RETURN { userId: $cypherParams.currentUserId }")
     customWithArguments(strArg: String, strInputArg: strInput): String
       @cypher(statement: "RETURN $strInputArg.strArg")
+    CasedType: [CasedType]
   }
 
   type MutationB {
@@ -265,6 +266,11 @@ export const testSchema = /* GraphQL */ `
     reader
     user
     admin
+  }
+
+  type CasedType {
+    name: String
+    state: State @relation(name: "FILMED_IN", direction: "OUT")
   }
 
   type SubscriptionC {
