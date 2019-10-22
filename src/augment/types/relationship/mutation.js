@@ -1,4 +1,3 @@
-import _ from 'lodash';
 import { RelationshipDirectionField } from './relationship';
 import { buildNodeOutputFields } from './query';
 import { shouldAugmentRelationshipField } from '../../augment';
@@ -22,11 +21,21 @@ import {
   buildInputObjectType
 } from '../../ast';
 
+/**
+ * An enum describing the names of relationship mutations,
+ * for node and relationship type fields (field and type
+ * relation directive)
+ */
 export const RelationshipMutation = {
   CREATE: 'Add',
   DELETE: 'Remove'
 };
 
+/**
+ * Given the results of augmentRelationshipTypeFields, builds or
+ * augments the AST definitions of the Mutation operation fields
+ * and any generated input or output types required for translation
+ */
 export const augmentRelationshipMutationAPI = ({
   typeName,
   fieldName,
@@ -84,6 +93,11 @@ export const augmentRelationshipMutationAPI = ({
   return [typeDefinitionMap, generatedTypeMap, operationTypeMap];
 };
 
+/**
+ * Builds the AST for the input value definitions used as
+ * field arguments on relationship mutations for selecting
+ * the related nodes
+ */
 const buildNodeSelectionArguments = ({ fromType, toType }) => {
   return [
     buildInputValue({
@@ -111,6 +125,10 @@ const buildNodeSelectionArguments = ({ fromType, toType }) => {
   ];
 };
 
+/**
+ * Builds the AST definitions decided and configured in
+ * augmentRelationshipMutationAPI
+ */
 const buildRelationshipMutationAPI = ({
   mutationAction,
   mutationName,
@@ -155,6 +173,10 @@ const buildRelationshipMutationAPI = ({
   return [operationTypeMap, generatedTypeMap];
 };
 
+/**
+ * Builds the AST definition for a Mutation operation field
+ * of a given RelationshipMutation name
+ */
 const buildRelationshipMutationField = ({
   mutationAction,
   mutationName,
@@ -200,6 +222,12 @@ const buildRelationshipMutationField = ({
   return operationTypeMap;
 };
 
+/**
+ * Given the use of a relationship type field, builds the AST
+ * for the input value definition of the 'data' argument for its 'Add'
+ * relationship mutation field, which inputs a generated input object
+ * type for providing relationship properties
+ */
 const buildRelationshipPropertyInputArgument = ({ outputType }) => {
   return buildInputValue({
     name: buildName({ name: 'data' }),
@@ -212,6 +240,11 @@ const buildRelationshipPropertyInputArgument = ({ outputType }) => {
   });
 };
 
+/**
+ * Builds the AST for the relationship type property input
+ * object definition, used as the type of the 'data' input value
+ * definition built by buildRelationshipPropertyInputArgument
+ */
 const buildRelationshipMutationPropertyInputType = ({
   mutationAction,
   outputType,
@@ -243,6 +276,10 @@ const buildRelationshipMutationPropertyInputType = ({
   return generatedTypeMap;
 };
 
+/**
+ * Builds the AST for the input value definitions used as arguments on
+ * generated relationship Mutation fields of RelationshipMutation names
+ */
 const buildRelationshipMutationArguments = ({
   mutationAction,
   fromType,
@@ -264,6 +301,11 @@ const buildRelationshipMutationArguments = ({
   return fieldArguments;
 };
 
+/**
+ * Builds the AST definitions for directive instances used by
+ * generated relationship Mutation fields of RelationshipMutation
+ * names
+ */
 const buildRelationshipMutationDirectives = ({
   mutationAction,
   relationshipName,
@@ -316,6 +358,10 @@ const buildRelationshipMutationDirectives = ({
   return directives;
 };
 
+/**
+ * Builds the AST for the object type definition used for the
+ * output type of relationship type Mutation fields
+ */
 const buildRelationshipMutationOutputType = ({
   mutationAction,
   mutationOutputType,
@@ -336,8 +382,7 @@ const buildRelationshipMutationOutputType = ({
     });
     let fields = buildNodeOutputFields({ fromType, toType });
     if (mutationAction === RelationshipMutation.CREATE) {
-      // console.log("mutationOutputType: ", mutationOutputType);
-      // TODO temporary block on cypher field arguments
+      // TODO temporary block on cypher field arguments - needs translation test
       const mutationOutputFields = propertyOutputFields.map(field => {
         if (isCypherField({ directives: field.directives })) {
           return {
@@ -357,6 +402,9 @@ const buildRelationshipMutationOutputType = ({
   return generatedTypeMap;
 };
 
+/**
+ * Builds the full name value for a relationship mutation field
+ */
 const buildRelationshipMutationName = ({
   mutationAction,
   typeName,
