@@ -1,7 +1,25 @@
 import { Kind } from 'graphql';
 import { Neo4jDataType, isNeo4jPropertyType } from './types/types';
 
-const Neo4jSystemIDField = `_id`;
+/**
+ * The name of the Neo4j system ID field
+ * See: https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id
+ */
+export const Neo4jSystemIDField = `_id`;
+
+/**
+ * Given the kind or type of a field, this predicate function identifies which
+ * Neo4j property type, if any, it represents
+ * See: https://neo4j.com/docs/cypher-manual/current/syntax/values/#property-types
+ */
+export const isPropertyTypeField = ({ kind, type }) =>
+  isIntegerField({ type }) ||
+  isFloatField({ type }) ||
+  isStringField({ kind, type }) ||
+  isBooleanField({ type }) ||
+  isCustomScalarField({ kind }) ||
+  isTemporalField({ type }) ||
+  isNeo4jPropertyType({ type });
 
 export const isIntegerField = ({ type }) =>
   Neo4jDataType.PROPERTY[type] === 'Integer';
@@ -24,15 +42,9 @@ export const isNeo4jIDField = ({ name }) => name === Neo4jSystemIDField;
 export const isCustomScalarField = ({ kind }) =>
   kind === Kind.SCALAR_TYPE_DEFINITION;
 
-export const isPropertyTypeField = ({ kind, type }) =>
-  isIntegerField({ type }) ||
-  isFloatField({ type }) ||
-  isStringField({ kind, type }) ||
-  isBooleanField({ type }) ||
-  isCustomScalarField({ kind }) ||
-  isTemporalField({ type }) ||
-  isNeo4jPropertyType({ type });
-
+/**
+ * An Enum used for referring to the unique combinations of GraphQL type wrappers
+ */
 export const TypeWrappers = {
   NAME: 'name',
   NON_NULL_NAMED_TYPE: 'isNonNullNamedType',
@@ -40,15 +52,35 @@ export const TypeWrappers = {
   NON_NULL_LIST_TYPE: 'isNonNullListType'
 };
 
+/**
+ * Predicate function identifying whether a GraphQL NamedType
+ * contained in a type was wrapped with a NonNullType wrapper
+ */
 export const isNonNullNamedTypeField = ({ wrappers = {} }) =>
   wrappers[TypeWrappers.NON_NULL_NAMED_TYPE];
 
+/**
+ * Predicate function identifying whether a type was wrapped
+ * with a GraphQL ListType wrapper
+ */
 export const isListTypeField = ({ wrappers = {} }) =>
   wrappers[TypeWrappers.LIST_TYPE];
 
+/**
+ * Predicate function identifying whether a GraphQL ListType
+ * contained in a type was wrapped with a NonNullType wrapper
+ */
 export const isNonNullListTypeField = ({ wrappers = {} }) =>
   wrappers[TypeWrappers.NON_NULL_LIST_TYPE];
 
+/**
+ * A helper function that reduces the type wrappers of a given type
+ * to unique cases described by the TypeWrappers enum. This enables the use
+ * of simplified predicate functions for identifying type wrapper conditions,
+ * as well as enables a configurable generative process for wrapping types,
+ * using buildNamedType.
+ * See: https://graphql.github.io/graphql-spec/June2018/#sec-Wrapping-Types
+ */
 export const unwrapNamedType = ({ type = {}, unwrappedType = {} }) => {
   // Initialize wrappers for this type
   unwrappedType.wrappers = {
@@ -68,7 +100,6 @@ export const unwrapNamedType = ({ type = {}, unwrappedType = {} }) => {
   }
   // Making decisions on the way back up:
   // Cases: (1) Name, (2) [Name], (3) [Name!], (4) Name!, (5) [Name]!, (6) [Name!]!
-  // See: https://graphql.github.io/graphql-spec/June2018/#sec-Wrapping-Types
   if (type.kind === Kind.NAMED_TYPE && type.name) {
     if (type.name.kind === Kind.NAME) {
       // (1) Name - name of unwrapped type
@@ -92,9 +123,18 @@ export const unwrapNamedType = ({ type = {}, unwrappedType = {} }) => {
   return unwrappedType;
 };
 
+/**
+ * A getter for a field definition of a given name, contained
+ * in a given array of field definitions
+ */
 export const getFieldDefinition = ({ fields = [], name = '' }) =>
   fields.find(field => field.name && field.name.value === name);
 
+/**
+ * A getter for the type name of a field of a given name,
+ * finding the field, unwrapping its type, and returning
+ * the value of its NamedType
+ */
 export const getFieldType = ({ fields = [], name = '' }) => {
   let typeName = '';
   const field = getFieldDefinition({
@@ -107,6 +147,11 @@ export const getFieldType = ({ fields = [], name = '' }) => {
   return typeName;
 };
 
+/**
+ * Transformation helper for conversion of a given string to
+ * snake case, used in generating default relationship names
+ * ex: fooBar -> FOO_BAR
+ */
 export const toSnakeCase = name => {
   return Object.keys(name)
     .reduce((acc, t) => {
