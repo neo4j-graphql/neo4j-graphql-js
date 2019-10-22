@@ -16,13 +16,21 @@ import { shouldAugmentType } from '../../augment';
 import { OperationType } from '../../types/types';
 import { TypeWrappers, getFieldDefinition, isNeo4jIDField } from '../../fields';
 
+/**
+ * An enum describing the names of node type mutations
+ */
 export const NodeMutation = {
   CREATE: 'Create',
   UPDATE: 'Update',
-  DELETE: 'Delete',
-  MERGE: 'Merge'
+  DELETE: 'Delete'
+  // MERGE: 'Merge'
 };
 
+/**
+ * Given the results of augmentNodeTypeFields, builds or augments
+ * the AST definitions of the Mutation operation fields and any
+ * generated input or output types required for translation
+ */
 export const augmentNodeMutationAPI = ({
   definition,
   typeName,
@@ -54,6 +62,11 @@ export const augmentNodeMutationAPI = ({
   return [operationTypeMap, generatedTypeMap];
 };
 
+/**
+ * Given the results of augmentNodeTypeFields, builds the AST
+ * definition for a Mutation operation field of a given
+ * NodeMutation name
+ */
 const buildNodeMutationField = ({
   mutationType,
   mutationAction,
@@ -103,23 +116,10 @@ const buildNodeMutationField = ({
   return operationTypeMap;
 };
 
-const buildNodeMutationDirectives = ({ mutationAction, typeName, config }) => {
-  const directives = [];
-  if (useAuthDirective(config, DirectiveDefinition.HAS_SCOPE)) {
-    directives.push(
-      buildAuthScopeDirective({
-        scopes: [
-          {
-            typeName,
-            mutation: mutationAction
-          }
-        ]
-      })
-    );
-  }
-  return directives;
-};
-
+/**
+ * Builds the AST for the input value definitions used as arguments
+ * on generated node Mutation fields of NodeMutation names
+ */
 const buildNodeMutationArguments = ({
   operationName = '',
   primaryKey,
@@ -206,4 +206,25 @@ const buildNodeMutationArguments = ({
       type: buildNamedType(arg.type)
     })
   );
+};
+
+/**
+ * Builds the AST definitions for directive instances used by
+ * generated node Mutation fields of NodeMutation names
+ */
+const buildNodeMutationDirectives = ({ mutationAction, typeName, config }) => {
+  const directives = [];
+  if (useAuthDirective(config, DirectiveDefinition.HAS_SCOPE)) {
+    directives.push(
+      buildAuthScopeDirective({
+        scopes: [
+          {
+            typeName,
+            mutation: mutationAction
+          }
+        ]
+      })
+    );
+  }
+  return directives;
 };
