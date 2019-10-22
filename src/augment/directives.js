@@ -11,6 +11,10 @@ import {
   buildName
 } from './ast';
 
+/**
+ * An enum describing the names of directive definitions and instances
+ * used by this integration
+ */
 export const DirectiveDefinition = {
   CYPHER: 'cypher',
   RELATION: 'relation',
@@ -22,20 +26,38 @@ export const DirectiveDefinition = {
   ADDITIONAL_LABELS: 'additionalLabels'
 };
 
+// The name of Role type used in authorization logic
 const ROLE_TYPE = 'Role';
 
+/**
+ * Enum for the names of directed fields on relationship types
+ */
+const RelationshipDirectionField = {
+  FROM: 'from',
+  TO: 'to'
+};
+
+/**
+ * A predicate function for cypher directive fields
+ */
 export const isCypherField = ({ directives = [] }) =>
   getDirective({
     directives,
     name: DirectiveDefinition.CYPHER
   });
 
+/**
+ * A predicate function for neo4j_ignore directive fields
+ */
 export const isIgnoredField = ({ directives = [] }) =>
   getDirective({
     directives,
     name: DirectiveDefinition.NEO4J_IGNORE
   });
 
+/**
+ * The main export for augmenting directive definitions
+ */
 export const augmentDirectiveDefinitions = ({
   typeDefinitionMap = {},
   directiveDefinitionMap = {},
@@ -84,11 +106,9 @@ export const augmentDirectiveDefinitions = ({
   return [typeDefinitionMap, directiveDefinitionMap];
 };
 
-const RelationshipDirectionField = {
-  FROM: 'from',
-  TO: 'to'
-};
-
+/**
+ * Builds a relation directive for generated relationship output types
+ */
 export const buildRelationDirective = ({
   relationshipName,
   fromType,
@@ -121,6 +141,9 @@ export const buildRelationDirective = ({
     ]
   });
 
+/**
+ * Builds a MutationMeta directive for translating relationship mutations
+ */
 export const buildMutationMetaDirective = ({
   relationshipName,
   fromType,
@@ -153,6 +176,9 @@ export const buildMutationMetaDirective = ({
     ]
   });
 
+/**
+ * Builds the hasScope directive used in API authorization logic
+ */
 export const buildAuthScopeDirective = ({ scopes = [] }) =>
   buildDirective({
     name: buildName({ name: DirectiveDefinition.HAS_SCOPE }),
@@ -170,6 +196,10 @@ export const buildAuthScopeDirective = ({ scopes = [] }) =>
     ]
   });
 
+/**
+ * A map of the AST configurations for directive definitions
+ * used in API authorization logic
+ */
 const AuthDirectiveDefinitionMap = {
   [DirectiveDefinition.IS_AUTHENTICATED]: ({ config }) => {
     if (useAuthDirective(config, DirectiveDefinition.IS_AUTHENTICATED)) {
@@ -235,7 +265,9 @@ const AuthDirectiveDefinitionMap = {
   }
 };
 
-// Map of AST configs for ASTNodeBuilder
+/**
+ * Map of AST configs for ASTNodeBuilder
+ */
 const directiveDefinitionBuilderMap = {
   [DirectiveDefinition.CYPHER]: ({ config }) => {
     return {
@@ -284,23 +316,21 @@ const directiveDefinitionBuilderMap = {
     };
   },
   [DirectiveDefinition.ADDITIONAL_LABELS]: ({ config }) => {
-    if (useAuthDirective(config, DirectiveDefinition.ADDITIONAL_LABELS)) {
-      return {
-        name: DirectiveDefinition.ADDITIONAL_LABELS,
-        args: [
-          {
-            name: 'labels',
-            type: {
-              name: GraphQLString,
-              wrappers: {
-                [TypeWrappers.LIST_TYPE]: true
-              }
+    return {
+      name: DirectiveDefinition.ADDITIONAL_LABELS,
+      args: [
+        {
+          name: 'labels',
+          type: {
+            name: GraphQLString,
+            wrappers: {
+              [TypeWrappers.LIST_TYPE]: true
             }
           }
-        ],
-        locations: [DirectiveLocation.OBJECT]
-      };
-    }
+        }
+      ],
+      locations: [DirectiveLocation.OBJECT]
+    };
   },
   [DirectiveDefinition.MUTATION_META]: ({ config }) => {
     return {
@@ -336,6 +366,9 @@ const directiveDefinitionBuilderMap = {
   }
 };
 
+/**
+ * Predicate function for deciding whether to a given directive
+ */
 export const useAuthDirective = (config, authDirective) => {
   if (config && typeof config === 'object') {
     return (
@@ -348,6 +381,9 @@ export const useAuthDirective = (config, authDirective) => {
   return false;
 };
 
+/**
+ * Gets the direction argument of the relation field directive
+ */
 export const getRelationDirection = relationDirective => {
   let direction = {};
   try {
@@ -361,6 +397,9 @@ export const getRelationDirection = relationDirective => {
   }
 };
 
+/**
+ * Gets the name argument of a relation directive
+ */
 export const getRelationName = relationDirective => {
   let name = {};
   try {
@@ -372,10 +411,16 @@ export const getRelationName = relationDirective => {
   }
 };
 
+/**
+ * Gets a directive instance of a given name
+ */
 export const getDirective = ({ directives, name }) => {
   return directives.find(directive => directive.name.value === name);
 };
 
+/**
+ * Gets an argument of a directive
+ */
 export const getDirectiveArgument = ({ directive, name }) => {
   let value = '';
   const arg = directive.arguments.find(
