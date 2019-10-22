@@ -1,11 +1,10 @@
 import {
   cypherQuery,
   cypherMutation,
-  augmentSchema,
-  augmentTypeDefs
+  augmentTypeDefs,
+  makeAugmentedSchema
 } from '../../src/index';
-import { printTypeMap, extractTypeMapFromTypeDefs } from '../../src/utils';
-import { augmentTypeMap } from '../../src/augment';
+import { printSchemaDocument } from '../../src/augment/augment';
 import { graphql } from 'graphql';
 import { makeExecutableSchema } from 'graphql-tools';
 import { testSchema } from './testSchema';
@@ -20,7 +19,7 @@ export function cypherTestRunner(
   const testMovieSchema =
     testSchema +
     `
-type Mutation {
+type MutationB {
     CreateGenre(name: String): Genre @cypher(statement: "CREATE (g:Genre) SET g.name = $name RETURN g")
     CreateMovie(movieId: ID, title: String, year: Int, plot: String, poster: String, imdbRating: Float): Movie
     CreateState(name: String!): State
@@ -48,7 +47,7 @@ type Mutation {
   };
 
   const resolvers = {
-    Query: {
+    QueryA: {
       User: checkCypherQuery,
       Movie: checkCypherQuery,
       MoviesByYear: checkCypherQuery,
@@ -68,7 +67,7 @@ type Mutation {
       computedIntList: checkCypherQuery,
       customWithArguments: checkCypherQuery
     },
-    Mutation: {
+    MutationB: {
       CreateGenre: checkCypherMutation,
       CreateMovie: checkCypherMutation,
       CreateState: checkCypherMutation,
@@ -81,9 +80,9 @@ type Mutation {
       customWithArguments: checkCypherMutation
     }
   };
-
+  let augmentedTypeDefs = augmentTypeDefs(testMovieSchema, { auth: true });
   const schema = makeExecutableSchema({
-    typeDefs: augmentTypeDefs(testMovieSchema, { auth: true }),
+    typeDefs: augmentedTypeDefs,
     resolvers,
     resolverValidationOptions: {
       requireResolversForResolveType: false
@@ -105,28 +104,28 @@ type Mutation {
 }
 
 // Optimization to prevent schema augmentation from running for every test
-const typeMap = extractTypeMapFromTypeDefs(testSchema);
-const augmentedTypeMap = augmentTypeMap(
-  typeMap,
-  {
-    // These custom field resolvers exist only for generating
-    // @neo4j_ignore directives used in a few tests
-    Movie: {
-      customField(object, params, ctx, resolveInfo) {
-        return '';
+const cypherTestTypeDefs = printSchemaDocument({
+  schema: makeAugmentedSchema({
+    typeDefs: testSchema,
+    resolvers: {
+      // These custom field resolvers exist only for generating
+      // @neo4j_ignore directives used in a few tests
+      Movie: {
+        customField(object, params, ctx, resolveInfo) {
+          return '';
+        }
+      },
+      State: {
+        customField(object, params, ctx, resolveInfo) {
+          return '';
+        }
       }
     },
-    State: {
-      customField(object, params, ctx, resolveInfo) {
-        return '';
-      }
+    config: {
+      auth: true
     }
-  },
-  {
-    auth: true
-  }
-);
-const augmentedSchemaCypherTestRunnerTypeDefs = printTypeMap(augmentedTypeMap);
+  })
+});
 
 export function augmentedSchemaCypherTestRunner(
   t,
@@ -147,7 +146,7 @@ export function augmentedSchemaCypherTestRunner(
   };
 
   const resolvers = {
-    Query: {
+    QueryA: {
       User: checkCypherQuery,
       Movie: checkCypherQuery,
       MoviesByYear: checkCypherQuery,
@@ -178,7 +177,7 @@ export function augmentedSchemaCypherTestRunner(
       computedIntList: checkCypherQuery,
       customWithArguments: checkCypherQuery
     },
-    Mutation: {
+    MutationB: {
       CreateMovie: checkCypherMutation,
       CreateState: checkCypherMutation,
       CreateTemporalNode: checkCypherMutation,
@@ -201,7 +200,7 @@ export function augmentedSchemaCypherTestRunner(
   };
 
   const augmentedSchema = makeExecutableSchema({
-    typeDefs: augmentedSchemaCypherTestRunnerTypeDefs,
+    typeDefs: cypherTestTypeDefs,
     resolvers,
     resolverValidationOptions: {
       requireResolversForResolveType: false
@@ -219,30 +218,4 @@ export function augmentedSchemaCypherTestRunner(
     },
     graphqlParams
   );
-}
-
-const augmentedSchemaTypeDefs = augmentTypeDefs(testSchema, {
-  auth: true
-});
-
-export function augmentedSchema() {
-  const schema = makeExecutableSchema({
-    typeDefs: augmentedSchemaTypeDefs,
-    resolvers: {
-      Movie: {
-        customField(object, params, ctx, resolveInfo) {
-          return '';
-        }
-      },
-      State: {
-        customField(object, params, ctx, resolveInfo) {
-          return '';
-        }
-      }
-    },
-    resolverValidationOptions: {
-      requireResolversForResolveType: false
-    }
-  });
-  return augmentSchema(schema);
 }

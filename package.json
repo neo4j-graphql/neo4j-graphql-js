@@ -14,7 +14,7 @@
     "prepublish": "npm run build",
     "test": "nyc --reporter=lcov ava test/unit/**.test.js --verbose",
     "parse-tck": "babel-node test/helpers/tck/parseTck.js",
-    "test-tck": "nyc ava --fail-fast test/tck/*.test.js",
+    "test-tck": "nyc ava --fail-fast test/unit/filterTests.test.js",
     "report-coverage": "nyc report --reporter=text-lcov > coverage.lcov && codecov",
     "test-all": "nyc ava --verbose",
     "test-isolated": "nyc ava test/**/*.test.js --verbose --match='!*not-isolated*'",

@@ -534,10 +534,13 @@ test('cypher subquery preserves case through filters', t => {
         }
       }
     }`,
-    expectedCypherQuery = "MATCH (`casedType`:`CasedType`) WHERE (EXISTS((`casedType`)-[:FILMED_IN]->(:State)) AND ALL(`state` IN [(`casedType`)-[:FILMED_IN]->(`_state`:State) | `_state`] WHERE (`state`.name = $filter.state.name))) RETURN `casedType` { .name ,state: head([(`casedType`)-[:`FILMED_IN`]->(`casedType_state`:`State`) | casedType_state { .name }]) } AS `casedType`";
+    expectedCypherQuery =
+      'MATCH (`casedType`:`CasedType`) WHERE (EXISTS((`casedType`)-[:FILMED_IN]->(:State)) AND ALL(`state` IN [(`casedType`)-[:FILMED_IN]->(`_state`:State) | `_state`] WHERE (`state`.name = $filter.state.name))) RETURN `casedType` { .name ,state: head([(`casedType`)-[:`FILMED_IN`]->(`casedType_state`:`State`) | casedType_state { .name }]) } AS `casedType`';
 
   t.plan(1);
-  return Promise.all([ augmentedSchemaCypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery) ]);
+  return Promise.all([
+    augmentedSchemaCypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery)
+  ]);
 });
 
 test('Cypher subquery filters with paging', t => {

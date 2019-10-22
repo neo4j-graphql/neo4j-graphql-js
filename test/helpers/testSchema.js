@@ -1,5 +1,8 @@
-export const testSchema = `
-  type Movie @additionalLabels(labels: ["u_<%= $cypherParams.userId %>", "newMovieLabel"])  {
+export const testSchema = /* GraphQL */ `
+  type Movie
+    @additionalLabels(
+      labels: ["u_<%= $cypherParams.userId %>", "newMovieLabel"]
+    ) {
     _id: String
     movieId: ID!
     title: String @isAuthenticated
@@ -105,7 +108,7 @@ export const testSchema = `
     favorites: [Movie] @relation(name: "FAVORITED", direction: "OUT")
   }
 
-  type FriendOf {
+  type FriendOf @relation {
     from: User
     currentUserId: String
       @cypher(
@@ -121,7 +124,7 @@ export const testSchema = `
     to: User
   }
 
-  type Rated {
+  type Rated @relation {
     from: User
     currentUserId(strArg: String): String
       @cypher(
@@ -158,7 +161,7 @@ export const testSchema = `
     name_asc
   }
 
-  type Query {
+  type QueryA {
     Movie(
       _id: String
       movieId: ID
@@ -205,7 +208,7 @@ export const testSchema = `
     CasedType: [CasedType]
   }
 
-  type Mutation {
+  type MutationB {
     currentUserId: String
       @cypher(statement: "RETURN $cypherParams.currentUserId")
     computedObjectWithCypherParams: currentUserId
@@ -220,6 +223,7 @@ export const testSchema = `
       )
     customWithArguments(strArg: String, strInputArg: strInput): String
       @cypher(statement: "RETURN $strInputArg.strArg")
+    testPublish: Boolean @neo4j_ignore
   }
 
   type currentUserId {
@@ -267,5 +271,15 @@ export const testSchema = `
   type CasedType {
     name: String
     state: State @relation(name: "FILMED_IN", direction: "OUT")
+  }
+
+  type SubscriptionC {
+    testSubscribe: Boolean
+  }
+
+  schema {
+    query: QueryA
+    mutation: MutationB
+    subscription: SubscriptionC
   }
 `;
