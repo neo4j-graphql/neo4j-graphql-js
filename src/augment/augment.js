@@ -6,18 +6,28 @@ import {
   isTypeExtensionNode
 } from 'graphql';
 import { makeExecutableSchema } from 'graphql-tools';
-import { buildDocument } from './ast';
 import {
+  buildDocument,
+  buildOperationType,
+  buildSchemaDefinition,
+  buildName,
+  buildNamedType,
+  buildObjectType
+} from './ast';
+import {
+  OperationType,
   isNodeType,
-  buildNeo4jTypes,
-  transformNeo4jTypes,
-  initializeOperationTypes
+  augmentTypes,
+  transformNeo4jTypes
 } from './types/types';
-import { augmentNodeType } from './types/node/node';
+import { unwrapNamedType } from './fields';
 import { augmentDirectiveDefinitions } from './directives';
 import { extractResolversFromSchema, augmentResolvers } from './resolvers';
 import { addAuthDirectiveImplementations } from '../auth';
 
+/**
+ * The main export for augmenting an SDL document
+ */
 export const makeAugmentedExecutableSchema = ({
   typeDefs,
   resolvers,
@@ -77,6 +87,7 @@ export const makeAugmentedExecutableSchema = ({
   });
   const augmentedResolvers = augmentResolvers(
     generatedTypeMap,
+    operationTypeMap,
     resolvers,
     config
   );
@@ -94,6 +105,9 @@ export const makeAugmentedExecutableSchema = ({
   });
 };
 
+/**
+ * The main export for augmnetation a schema
+ */
 export const augmentedSchema = (schema, config) => {
   const definitions = extractSchemaDefinitions({ schema });
   let [
@@ -144,6 +158,7 @@ export const augmentedSchema = (schema, config) => {
   const resolvers = extractResolversFromSchema(schema);
   const augmentedResolvers = augmentResolvers(
     generatedTypeMap,
+    operationTypeMap,
     resolvers,
     config
   );
@@ -157,74 +172,48 @@ export const augmentedSchema = (schema, config) => {
   });
 };
 
-export const augmentTypes = ({
-  typeDefinitionMap,
-  typeExtensionDefinitionMap,
-  generatedTypeMap,
-  operationTypeMap = {},
-  config = {}
-}) => {
-  Object.entries({
-    ...typeDefinitionMap,
-    ...operationTypeMap
-  }).forEach(([typeName, definition]) => {
-    if (isNodeType({ definition })) {
-      [definition, generatedTypeMap, operationTypeMap] = augmentNodeType({
-        typeName,
-        definition,
-        typeDefinitionMap,
-        generatedTypeMap,
-        operationTypeMap,
-        config
-      });
-      generatedTypeMap[typeName] = definition;
-    } else {
-      generatedTypeMap[typeName] = definition;
-    }
-    return definition;
-  });
-  generatedTypeMap = buildNeo4jTypes({
-    generatedTypeMap,
-    config
-  });
-  return [typeExtensionDefinitionMap, generatedTypeMap, operationTypeMap];
-};
-
+/**
+ * Builds separate type definition maps for use in augmentation
+ */
 export const mapDefinitions = ({ definitions = [], config = {} }) => {
   const typeExtensionDefinitionMap = {};
   const directiveDefinitionMap = {};
   let typeDefinitionMap = {};
-  let operationTypeMap = {};
-  // TODO Use to get operation type names
-  // let schemaDefinitionNode = {};
+  let schemaDefinitionNode = undefined;
   definitions.forEach(def => {
-    const name = def.name.value;
     if (def.kind === Kind.SCHEMA_DEFINITION) {
-      // schemaDefinitionNode = def;
-      typeDefinitionMap[name] = def;
+      schemaDefinitionNode = def;
+      typeDefinitionMap[`schema`] = def;
     } else if (isTypeDefinitionNode(def)) {
+      const name = def.name.value;
       typeDefinitionMap[name] = def;
     } else if (isTypeExtensionNode(def)) {
+      const name = def.name.value;
       if (!typeExtensionDefinitionMap[name]) {
         typeExtensionDefinitionMap[name] = [];
       }
       typeExtensionDefinitionMap[name].push(def);
     } else if (def.kind === Kind.DIRECTIVE_DEFINITION) {
+      const name = def.name.value;
       directiveDefinitionMap[name] = def;
     }
   });
-  [typeDefinitionMap, operationTypeMap] = initializeOperationTypes({
+  const [typeMap, operationTypeMap] = initializeOperationTypes({
     typeDefinitionMap,
+    schemaDefinitionNode,
     config
   });
   return [
-    typeDefinitionMap,
+    typeMap,
     typeExtensionDefinitionMap,
     directiveDefinitionMap,
     operationTypeMap
   ];
 };
 
+/**
+ * Merges back together all type definition maps used in augmentation
+ */
 export const mergeDefinitionMaps = ({
   generatedTypeMap = {},
   typeExtensionDefinitionMap = {},
@@ -249,8 +238,173 @@ export const mergeDefinitionMaps = ({
   });
 };
 
-export const extractSchemaDefinitions = ({ schema = {} }) =>
-  Object.values({
+/**
+ * Given a type name, checks whether it is excluded from
+ * the Query or Mutation API
+ */
+export const shouldAugmentType = (config, operationTypeName, typeName) => {
+  return typeof config[operationTypeName] === 'boolean'
+    ? config[operationTypeName]
+    : // here .exclude should be an object,
+    // set at the end of excludeIgnoredTypes
+    typeName
+    ? !getExcludedTypes(config, operationTypeName).some(
+        excludedType => excludedType === typeName
+      )
+    : false;
+};
+
+/**
+ * Given the type names of the nodes of a relationship, checks
+ * whether the relationship is excluded from the API by way of
+ * both related nodes being excluded
+ */
+export const shouldAugmentRelationshipField = (
+  config,
+  operationTypeName,
+  fromName,
+  toName
+) => {
+  return (
+    shouldAugmentType(config, operationTypeName, fromName) &&
+    shouldAugmentType(config, operationTypeName, toName)
+  );
+};
+
+/**
+ * Prints the AST of a GraphQL SDL Document containing definitions
+ * extracted from a given schema, along with no loss of directives and a
+ * regenerated schema type
+ */
+export const printSchemaDocument = ({ schema }) => {
+  return print(
+    buildDocument({
+      definitions: extractSchemaDefinitions({ schema })
+    })
+  );
+};
+
+/**
+ * Builds any operation types that do not exist but should
+ */
+const initializeOperationTypes = ({
+  typeDefinitionMap,
+  schemaDefinitionNode,
+  config = {}
+}) => {
+  let queryTypeName = OperationType.QUERY;
+  let mutationTypeName = OperationType.MUTATION;
+  let subscriptionTypeName = OperationType.SUBSCRIPTION;
+  if (schemaDefinitionNode) {
+    const operationTypes = schemaDefinitionNode.operationTypes;
+    operationTypes.forEach(definition => {
+      const operation = definition.operation;
+      const unwrappedType = unwrapNamedType({ type: definition.type });
+      if (operation === queryTypeName.toLowerCase()) {
+        queryTypeName = unwrappedType.name;
+      } else if (operation === mutationTypeName.toLowerCase()) {
+        mutationTypeName = unwrappedType.name;
+      } else if (operation === subscriptionTypeName.toLowerCase()) {
+        subscriptionTypeName = unwrappedType.name;
+      }
+    });
+  }
+  typeDefinitionMap = initializeOperationType({
+    typeName: queryTypeName,
+    typeDefinitionMap,
+    config
+  });
+  typeDefinitionMap = initializeOperationType({
+    typeName: mutationTypeName,
+    typeDefinitionMap,
+    config
+  });
+  typeDefinitionMap = initializeOperationType({
+    typeName: subscriptionTypeName,
+    typeDefinitionMap,
+    config
+  });
+  return buildAugmentationTypeMaps({
+    typeDefinitionMap,
+    queryTypeName,
+    mutationTypeName,
+    subscriptionTypeName
+  });
+};
+
+/**
+ * Builds an operation type if it does not exist but should
+ */
+const initializeOperationType = ({
+  typeName = '',
+  typeDefinitionMap = {},
+  config = {}
+}) => {
+  const typeNameLower = typeName.toLowerCase();
+  const types = Object.keys(typeDefinitionMap);
+  let operationType = typeDefinitionMap[typeName];
+  if (
+    hasNonExcludedNodeType(types, typeDefinitionMap, typeNameLower, config) &&
+    !operationType &&
+    config[typeNameLower]
+  ) {
+    operationType = buildObjectType({
+      name: buildName({ name: typeName })
+    });
+  }
+  if (operationType) typeDefinitionMap[typeName] = operationType;
+  return typeDefinitionMap;
+};
+
+/**
+ * Ensures that an operation type is only generated if an operation
+ * field would be generated - should be able to factor out
+ */
+const hasNonExcludedNodeType = (types, typeMap, rootType, config) => {
+  return types.find(e => {
+    const type = typeMap[e];
+    const typeName = type.name ? type.name.value : '';
+    if (typeName) {
+      return (
+        isNodeType({ definition: type }) &&
+        shouldAugmentType(config, rootType, typeName)
+      );
+    }
+  });
+};
+
+/**
+ * Builds a typeDefinitionMap that excludes operation types, instead placing them
+ * within an operationTypeMap
+ */
+const buildAugmentationTypeMaps = ({
+  typeDefinitionMap = {},
+  queryTypeName,
+  mutationTypeName,
+  subscriptionTypeName
+}) => {
+  return Object.entries(typeDefinitionMap).reduce(
+    ([augmentationTypeMap, operationTypeMap], [typeName, definition]) => {
+      if (typeName === queryTypeName) {
+        operationTypeMap[OperationType.QUERY] = definition;
+      } else if (typeName === mutationTypeName) {
+        operationTypeMap[OperationType.MUTATION] = definition;
+      } else if (typeName === subscriptionTypeName) {
+        operationTypeMap[OperationType.SUBSCRIPTION] = definition;
+      } else {
+        augmentationTypeMap[typeName] = definition;
+      }
+      return [augmentationTypeMap, operationTypeMap];
+    },
+    [{}, {}]
+  );
+};
+
+/**
+ * Extracts type definitions from a schema and regenerates the schema type
+ */
+const extractSchemaDefinitions = ({ schema = {} }) => {
+  let definitions = Object.values({
     ...schema.getDirectives(),
     ...schema.getTypeMap()
   }).reduce((astNodes, definition) => {
@@ -264,35 +418,44 @@ export const extractSchemaDefinitions = ({ schema = {} }) =>
     }
     return astNodes;
   }, []);
-
-export const printSchemaDocument = ({ schema }) =>
-  print(
-    buildDocument({
-      definitions: extractSchemaDefinitions({ schema })
-    })
-  );
-
-export const shouldAugmentType = (config, operationTypeName, typeName) => {
-  return typeof config[operationTypeName] === 'boolean'
-    ? config[operationTypeName]
-    : // here .exclude should be an object,
-    // set at the end of excludeIgnoredTypes
-    typeName
-    ? !getExcludedTypes(config, operationTypeName).some(
-        excludedType => excludedType === typeName
-      )
-    : false;
+  definitions = regenerateSchemaType({ schema, definitions });
+  return definitions;
 };
 
-export const shouldAugmentRelationshipField = (
-  config,
-  operationTypeName,
-  fromName,
-  toName
-) =>
-  shouldAugmentType(config, operationTypeName, fromName) &&
-  shouldAugmentType(config, operationTypeName, toName);
+/**
+ * Regenerates the schema type definition using any existing operation types
+ */
+const regenerateSchemaType = ({ schema = {}, definitions = [] }) => {
+  const operationTypes = [];
+  Object.values(OperationType).forEach(name => {
+    let operationType = undefined;
+    if (name === OperationType.QUERY) operationType = schema.getQueryType();
+    else if (name === OperationType.MUTATION)
+      operationType = schema.getMutationType();
+    else if (name === OperationType.SUBSCRIPTION)
+      operationType = schema.getSubscriptionType();
+    if (operationType) {
+      operationTypes.push(
+        buildOperationType({
+          operation: name.toLowerCase(),
+          type: buildNamedType({ name: operationType.name })
+        })
+      );
+    }
+  });
+  if (operationTypes.length) {
+    definitions.push(
+      buildSchemaDefinition({
+        operationTypes
+      })
+    );
+  }
+  return definitions;
+};
 
+/**
+ * Getter for an array of type names excludes from an operation type
+ */
 const getExcludedTypes = (config, operationTypeName) => {
   return config &&
     operationTypeName &&
