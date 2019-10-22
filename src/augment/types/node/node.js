@@ -1,11 +1,12 @@
 import { GraphQLString } from 'graphql';
-import { buildNodeQueryAPI, augmentNodeTypeFieldInput } from './query';
+import { augmentNodeQueryAPI, augmentNodeTypeFieldInput } from './query';
 import { augmentNodeMutationAPI } from './mutation';
 import { augmentRelationshipTypeField } from '../relationship/relationship';
 import { augmentRelationshipMutationAPI } from '../relationship/mutation';
 import { shouldAugmentType } from '../../augment';
 import {
   TypeWrappers,
+  Neo4jSystemIDField,
   unwrapNamedType,
   isPropertyTypeField
 } from '../../fields';
@@ -39,6 +40,10 @@ import {
 } from '../../types/types';
 import { getPrimaryKey } from '../../../utils';
 
+/**
+ * The main export for the augmentation process of a GraphQL
+ * type definition representing a Neo4j node entity
+ */
 export const augmentNodeType = ({
   typeName,
   definition,
@@ -61,7 +66,10 @@ export const augmentNodeType = ({
       operationTypeMap,
       config
     });
-    if (!isOperationTypeDefinition({ definition }) && !isIgnoredType) {
+    if (
+      !isOperationTypeDefinition({ definition, operationTypeMap }) &&
+      !isIgnoredType
+    ) {
       [
         propertyOutputFields,
         typeDefinitionMap,
@@ -84,6 +92,11 @@ export const augmentNodeType = ({
   return [definition, generatedTypeMap, operationTypeMap];
 };
 
+/**
+ * Iterates through all field definitions of a node type, deciding whether
+ * to generate the corresponding field or input value definitions that compose
+ * the output and input types used in the Query and Mutation API
+ */
 const augmentNodeTypeFields = ({
   typeName,
   definition,
@@ -195,18 +208,21 @@ const augmentNodeTypeFields = ({
     });
     return outputFields;
   }, []);
-  if (!isOperationTypeDefinition({ definition }) && !isIgnoredType) {
+  if (
+    !isOperationTypeDefinition({ definition, operationTypeMap }) &&
+    !isIgnoredType
+  ) {
     const queryTypeName = OperationType.QUERY;
     const queryTypeNameLower = queryTypeName.toLowerCase();
     if (shouldAugmentType(config, queryTypeNameLower, typeName)) {
       const neo4jInternalIDConfig = {
-        name: '_id',
+        name: Neo4jSystemIDField,
         type: {
           name: GraphQLString.name
         }
       };
       const systemIDIndex = propertyOutputFields.findIndex(
-        e => e.name.value === '_id'
+        e => e.name.value === Neo4jSystemIDField
       );
       const systemIDField = buildField({
         name: buildName({ name: neo4jInternalIDConfig.name }),
@@ -234,6 +250,10 @@ const augmentNodeTypeFields = ({
   ];
 };
 
+/**
+ * Builds the Query API field arguments and relationship field mutation
+ * API for a node type field
+ */
 const augmentNodeTypeField = ({
   typeName,
   definition,
@@ -259,9 +279,13 @@ const augmentNodeTypeField = ({
     config,
     relationshipDirective,
     outputTypeWrappers,
-    nodeInputTypeMap
+    nodeInputTypeMap,
+    operationTypeMap
   });
-  if (relationshipDirective && !isQueryTypeDefinition({ definition })) {
+  if (
+    relationshipDirective &&
+    !isQueryTypeDefinition({ definition, operationTypeMap })
+  ) {
     const relationshipName = getRelationName(relationshipDirective);
     const relationshipDirection = getRelationDirection(relationshipDirective);
     // Assume direction OUT
@@ -298,6 +322,10 @@ const augmentNodeTypeField = ({
   ];
 };
 
+/**
+ * Uses the results of augmentNodeTypeFields to build the AST definitions
+ * used to in supporting the Query and Mutation API of a node type
+ */
 const augmentNodeTypeAPI = ({
   definition,
   typeName,
@@ -317,7 +345,7 @@ const augmentNodeTypeAPI = ({
     operationTypeMap,
     config
   });
-  [operationTypeMap, generatedTypeMap] = buildNodeQueryAPI({
+  [operationTypeMap, generatedTypeMap] = augmentNodeQueryAPI({
     typeName,
     propertyInputValues,
     nodeInputTypeMap,
@@ -341,6 +369,12 @@ const augmentNodeTypeAPI = ({
   ];
 };
 
+/**
+ * Builds the AST definition of the node input object type used
+ * by relationship mutations for selecting the nodes of the
+ * relationship
+ */
+
 const buildNodeSelectionInputType = ({
   definition,
   typeName,
@@ -348,7 +382,7 @@ const buildNodeSelectionInputType = ({
   generatedTypeMap,
   config
 }) => {
-  const mutationTypeName = OperationType.QUERY;
+  const mutationTypeName = OperationType.MUTATION;
   const mutationTypeNameLower = mutationTypeName.toLowerCase();
   if (shouldAugmentType(config, mutationTypeNameLower, typeName)) {
     const primaryKey = getPrimaryKey(definition);
