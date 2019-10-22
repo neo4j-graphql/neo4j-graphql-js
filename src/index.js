@@ -13,11 +13,10 @@ import {
 import {
   augmentedSchema,
   makeAugmentedExecutableSchema,
-  augmentTypes,
   mapDefinitions,
   mergeDefinitionMaps
 } from './augment/augment';
-import { transformNeo4jTypes } from './augment/types/types';
+import { augmentTypes, transformNeo4jTypes } from './augment/types/types';
 import { buildDocument } from './augment/ast';
 import { augmentDirectiveDefinitions } from './augment/directives';
 
