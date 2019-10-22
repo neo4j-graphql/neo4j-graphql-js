@@ -1,5 +1,8 @@
-export const testSchema = `
-  type Movie @additionalLabels(labels: ["u_<%= $cypherParams.userId %>", "newMovieLabel"])  {
+export const testSchema = /* GraphQL */ `
+  type Movie
+    @additionalLabels(
+      labels: ["u_<%= $cypherParams.userId %>", "newMovieLabel"]
+    ) {
     _id: String
     movieId: ID!
     title: String @isAuthenticated
@@ -158,7 +161,7 @@ export const testSchema = `
     name_asc
   }
 
-  type Query {
+  type QueryA {
     Movie(
       _id: String
       movieId: ID
@@ -204,7 +207,7 @@ export const testSchema = `
       @cypher(statement: "RETURN $strInputArg.strArg")
   }
 
-  type Mutation {
+  type MutationB {
     currentUserId: String
       @cypher(statement: "RETURN $cypherParams.currentUserId")
     computedObjectWithCypherParams: currentUserId
@@ -219,6 +222,7 @@ export const testSchema = `
       )
     customWithArguments(strArg: String, strInputArg: strInput): String
       @cypher(statement: "RETURN $strInputArg.strArg")
+    testPublish: Boolean @neo4j_ignore
   }
 
   type currentUserId {
@@ -261,5 +265,15 @@ export const testSchema = `
     reader
     user
     admin
+  }
+
+  type SubscriptionC {
+    testSubscribe: Boolean
+  }
+
+  schema {
+    query: QueryA
+    mutation: MutationB
+    subscription: SubscriptionC
   }
 `;
