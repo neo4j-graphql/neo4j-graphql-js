@@ -17,22 +17,40 @@ import {
   isFloatField,
   isStringField,
   isBooleanField,
-  isTemporalField
+  isTemporalField,
+  getFieldDefinition
 } from './fields';
 
+/**
+ * An enum describing the names of the input value definitions
+ * used for the field argument AST for data result pagination
+ */
 export const PagingArgument = {
   FIRST: 'first',
   OFFSET: 'offset'
 };
 
+/**
+ * An enum describing the names of the input value definitions
+ * used for the field argument AST for data result ordering
+ */
 export const OrderingArgument = {
   ORDER_BY: 'orderBy'
 };
 
+/**
+ * An enum describing the names of the input value definitions
+ * used for the field argument AST for data selection filtering
+ */
 export const FilteringArgument = {
   FILTER: 'filter'
 };
 
+/**
+ * Builds the AST definitions for input values that compose the
+ * input object types used by Query API field arguments,
+ * e.g., pagination, ordering, filtering, etc.
+ */
 export const augmentInputTypePropertyFields = ({
   inputTypeMap = {},
   fieldName,
@@ -65,19 +83,26 @@ export const augmentInputTypePropertyFields = ({
   return inputTypeMap;
 };
 
+/**
+ * Given an argumentMap of expected Query API field arguments,
+ * builds their AST definitions
+ */
 export const buildQueryFieldArguments = ({
-  augmentationMap = {},
+  argumentMap = {},
   fieldArguments,
   fieldDirectives,
   outputType,
   outputTypeWrappers
 }) => {
-  Object.values(augmentationMap).forEach(name => {
+  Object.values(argumentMap).forEach(name => {
     if (isListTypeField({ wrappers: outputTypeWrappers })) {
       if (name === PagingArgument.FIRST) {
         // Result Arguments
         if (
-          !fieldArguments.some(arg => arg.name.value === PagingArgument.FIRST)
+          !getFieldDefinition({
+            fields: fieldArguments,
+            name: PagingArgument.FIRST
+          })
         ) {
           fieldArguments.push(
             buildQueryPagingArgument({
@@ -88,7 +113,10 @@ export const buildQueryFieldArguments = ({
       } else if (name === PagingArgument.OFFSET) {
         // Result Arguments
         if (
-          !fieldArguments.some(arg => arg.name.value === PagingArgument.OFFSET)
+          !getFieldDefinition({
+            fields: fieldArguments,
+            name: PagingArgument.OFFSET
+          })
         ) {
           fieldArguments.push(
             buildQueryPagingArgument({
@@ -119,6 +147,10 @@ export const buildQueryFieldArguments = ({
   return fieldArguments;
 };
 
+/**
+ * Builds the AST definition for pagination field arguments
+ * used in the Query API
+ */
 const buildQueryPagingArgument = ({ name = '' }) => {
   let arg = {};
   // Prevent overwrite
@@ -141,6 +173,9 @@ const buildQueryPagingArgument = ({ name = '' }) => {
   return arg;
 };
 
+/**
+ * Builds the AST definition for ordering field arguments
+ */
 const buildQueryOrderingArgument = ({ typeName }) =>
   buildInputValue({
     name: buildName({ name: OrderingArgument.ORDER_BY }),
@@ -152,6 +187,10 @@ const buildQueryOrderingArgument = ({ typeName }) =>
     })
   });
 
+/**
+ * Builds the AST definition for an enum type used as the
+ * type of an ordering field argument
+ */
 export const buildQueryOrderingEnumType = ({
   nodeInputTypeMap,
   typeDefinitionMap,
@@ -170,6 +209,10 @@ export const buildQueryOrderingEnumType = ({
   return generatedTypeMap;
 };
 
+/**
+ * Builds the AST definitions for the values of an enum
+ * definitions used by an ordering field argument
+ */
 export const buildPropertyOrderingValues = ({ fieldName }) => [
   buildEnumValue({
     name: buildName({ name: `${fieldName}_asc` })
@@ -179,6 +222,10 @@ export const buildPropertyOrderingValues = ({ fieldName }) => [
   })
 ];
 
+/**
+ * Builds the AST definition for the input value definition
+ * used for a filtering field argument
+ */
 const buildQueryFilteringArgument = ({ typeName }) =>
   buildInputValue({
     name: buildName({ name: FilteringArgument.FILTER }),
@@ -187,6 +234,10 @@ const buildQueryFilteringArgument = ({ typeName }) =>
     })
   });
 
+/**
+ * Builds the AST definition for an input object type used
+ * as the type of a filtering field argument
+ */
 export const buildQueryFilteringInputType = ({
   typeName,
   inputTypeMap,
@@ -197,30 +248,7 @@ export const buildQueryFilteringInputType = ({
   if (inputType) {
     const inputTypeName = inputType.name;
     inputType.name = buildName({ name: inputTypeName });
-    inputType.fields.unshift(
-      ...[
-        buildInputValue({
-          name: buildName({ name: 'AND' }),
-          type: buildNamedType({
-            name: typeName,
-            wrappers: {
-              [TypeWrappers.NON_NULL_NAMED_TYPE]: true,
-              [TypeWrappers.LIST_TYPE]: true
-            }
-          })
-        }),
-        buildInputValue({
-          name: buildName({ name: 'OR' }),
-          type: buildNamedType({
-            name: typeName,
-            wrappers: {
-              [TypeWrappers.NON_NULL_NAMED_TYPE]: true,
-              [TypeWrappers.LIST_TYPE]: true
-            }
-          })
-        })
-      ]
-    );
+    inputType.fields.unshift(...buildLogicalFilterInputValues({ typeName }));
     if (!typeDefinitionMap[inputTypeName]) {
       generatedTypeMap[inputTypeName] = buildInputObjectType(inputType);
     }
@@ -228,6 +256,43 @@ export const buildQueryFilteringInputType = ({
   return generatedTypeMap;
 };
 
+// An enum containing the semantics of logical filtering arguments
+const LogicalFilteringArgument = {
+  AND: 'AND',
+  OR: 'OR'
+};
+
+/**
+ * Builds the AST definitions for logical filtering arguments
+ */
+const buildLogicalFilterInputValues = ({ typeName = '' }) => {
+  return [
+    buildInputValue({
+      name: buildName({ name: LogicalFilteringArgument.AND }),
+      type: buildNamedType({
+        name: typeName,
+        wrappers: {
+          [TypeWrappers.NON_NULL_NAMED_TYPE]: true,
+          [TypeWrappers.LIST_TYPE]: true
+        }
+      })
+    }),
+    buildInputValue({
+      name: buildName({ name: LogicalFilteringArgument.OR }),
+      type: buildNamedType({
+        name: typeName,
+        wrappers: {
+          [TypeWrappers.NON_NULL_NAMED_TYPE]: true,
+          [TypeWrappers.LIST_TYPE]: true
+        }
+      })
+    })
+  ];
+};
+
+/**
+ * Builds the AST definitions for filtering Neo4j property type fields
+ */
 const buildPropertyFilters = ({
   fieldName = '',
   outputType = '',
@@ -299,6 +364,10 @@ const buildPropertyFilters = ({
   return filters;
 };
 
+/**
+ * Builds the input value definitions that compose input object types
+ * used by filtering arguments
+ */
 export const buildFilters = ({ fieldName, fieldConfig, filterTypes = [] }) => [
   buildInputValue({
     name: buildName({ name: fieldConfig.name }),
