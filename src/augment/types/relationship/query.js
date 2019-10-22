@@ -22,12 +22,21 @@ import {
   buildInputValue
 } from '../../ast';
 
+/**
+ * An enum describing which arguments are implemented for
+ * relationship type fields in the Query API
+ */
 const RelationshipQueryArgument = {
   // ...PagingArgument,
   // ...OrderingArgument,
   ...FilteringArgument
 };
 
+/**
+ * Given the results of augmentRelationshipTypeFields, builds or
+ * augments the AST definition of the Query operation field and
+ * any generated input or output types required for translation
+ */
 export const augmentRelationshipQueryAPI = ({
   typeName,
   definition,
@@ -44,7 +53,8 @@ export const augmentRelationshipQueryAPI = ({
   config,
   relationshipName,
   fieldType,
-  propertyOutputFields
+  propertyOutputFields,
+  operationTypeMap
 }) => {
   const queryTypeNameLower = OperationType.QUERY.toLowerCase();
   if (
@@ -64,7 +74,7 @@ export const augmentRelationshipQueryAPI = ({
         outputType
       )
     ) {
-      [fieldType, generatedTypeMap] = augmentRelationshipTypeFieldOutput({
+      [fieldType, generatedTypeMap] = transformRelationshipTypeFieldOutput({
         typeName,
         relatedType,
         fieldArguments,
@@ -97,11 +107,11 @@ export const augmentRelationshipQueryAPI = ({
         nodeInputTypeMap,
         relationshipInputTypeMap,
         outputTypeWrappers,
+        operationTypeMap,
         config
       });
     }
   }
-
   return [
     fieldType,
     fieldArguments,
@@ -111,6 +121,12 @@ export const augmentRelationshipQueryAPI = ({
   ];
 };
 
+/**
+ * Given a relationship type field, builds the input value
+ * definitions for its Query arguments, along with those needed
+ * for input types generated to support the same Query API
+ * for the given field of the given relationship type
+ */
 const augmentRelationshipTypeFieldInput = ({
   typeName,
   definition,
@@ -125,6 +141,7 @@ const augmentRelationshipTypeFieldInput = ({
   nodeInputTypeMap,
   relationshipInputTypeMap,
   outputTypeWrappers,
+  operationTypeMap,
   config
 }) => {
   const nodeFilteringFields = nodeInputTypeMap[FilteringArgument.FILTER].fields;
@@ -156,12 +173,65 @@ const augmentRelationshipTypeFieldInput = ({
     outputTypeWrappers,
     typeDefinitionMap,
     generatedTypeMap,
+    operationTypeMap,
     relationshipInputTypeMap
   });
   return [fieldArguments, generatedTypeMap, nodeInputTypeMap];
 };
 
-const augmentRelationshipTypeFieldOutput = ({
+/**
+ * Builds the AST for the input value definitions used for
+ * relationship type Query field arguments
+ */
+const augmentRelationshipTypeFieldArguments = ({
+  fieldArguments,
+  typeName,
+  definition,
+  fromType,
+  toType,
+  outputType,
+  relatedType,
+  relationshipFilterTypeName,
+  outputTypeWrappers,
+  typeDefinitionMap,
+  generatedTypeMap,
+  operationTypeMap,
+  relationshipInputTypeMap
+}) => {
+  if (
+    !isMutationTypeDefinition({ definition, operationTypeMap }) &&
+    !isSubscriptionTypeDefinition({ definition, operationTypeMap })
+  ) {
+    if (fromType !== toType) {
+      fieldArguments = buildQueryFieldArguments({
+        argumentMap: RelationshipQueryArgument,
+        fieldArguments,
+        outputType: `${typeName}${outputType}`,
+        outputTypeWrappers
+      });
+    } else {
+      fieldArguments = [];
+    }
+  }
+  generatedTypeMap = buildRelationshipSelectionArgumentInputTypes({
+    fromType,
+    toType,
+    relatedType,
+    relationshipFilterTypeName,
+    generatedTypeMap,
+    relationshipInputTypeMap,
+    typeDefinitionMap
+  });
+  return [fieldArguments, generatedTypeMap];
+};
+
+/**
+ * Builds the AST for object type definitions used for transforming
+ * a relationship type field on a node type - will likely not be
+ * necessary once we allow for dynamically named fields for the
+ * 'from' and 'to' node type reference fields on relationship types
+ */
+const transformRelationshipTypeFieldOutput = ({
   typeName,
   relatedType,
   fieldArguments,
@@ -203,47 +273,10 @@ const augmentRelationshipTypeFieldOutput = ({
   return [fieldType, generatedTypeMap];
 };
 
-const augmentRelationshipTypeFieldArguments = ({
-  fieldArguments,
-  typeName,
-  definition,
-  fromType,
-  toType,
-  outputType,
-  relatedType,
-  relationshipFilterTypeName,
-  outputTypeWrappers,
-  typeDefinitionMap,
-  generatedTypeMap,
-  relationshipInputTypeMap
-}) => {
-  if (
-    !isMutationTypeDefinition({ definition }) &&
-    !isSubscriptionTypeDefinition({ definition })
-  ) {
-    if (fromType !== toType) {
-      fieldArguments = buildQueryFieldArguments({
-        augmentationMap: RelationshipQueryArgument,
-        fieldArguments,
-        outputType: `${typeName}${outputType}`,
-        outputTypeWrappers
-      });
-    } else {
-      fieldArguments = [];
-    }
-  }
-  generatedTypeMap = buildRelationshipSelectionArgumentInputTypes({
-    fromType,
-    toType,
-    relatedType,
-    relationshipFilterTypeName,
-    generatedTypeMap,
-    relationshipInputTypeMap,
-    typeDefinitionMap
-  });
-  return [fieldArguments, generatedTypeMap];
-};
-
+/**
+ * Builds the AST definitions that compose the Query filtering input type
+ * values for a given relationship field
+ */
 export const buildRelationshipFilters = ({
   typeName,
   fieldName,
@@ -297,6 +330,11 @@ export const buildRelationshipFilters = ({
   return filters;
 };
 
+/**
+ * Builds the AST definitions for the incoming and outgoing node type
+ * fields of the output object types generated for querying relationship
+ * type fields
+ */
 export const buildNodeOutputFields = ({
   fromType,
   toType,
@@ -327,6 +365,10 @@ export const buildNodeOutputFields = ({
   ];
 };
 
+/**
+ * Builds the AST definitions for the object types generated
+ * for querying relationship type fields on node types
+ */
 const buildRelationshipFieldOutputTypes = ({
   outputType,
   fromType,
@@ -346,7 +388,7 @@ const buildRelationshipFieldOutputTypes = ({
   });
   if (fromType === toType) {
     fieldArguments = buildQueryFieldArguments({
-      augmentationMap: RelationshipQueryArgument,
+      argumentMap: RelationshipQueryArgument,
       fieldArguments,
       outputType,
       outputTypeWrappers
@@ -381,6 +423,11 @@ const buildRelationshipFieldOutputTypes = ({
   return generatedTypeMap;
 };
 
+/**
+ * Given information about a field on a relationship type, builds
+ * the AST for associated input value definitions used by input
+ * types generated for the Query API
+ */
 const buildRelationshipSelectionArgumentInputTypes = ({
   fromType,
   toType,
@@ -422,6 +469,11 @@ const buildRelationshipSelectionArgumentInputTypes = ({
   return generatedTypeMap;
 };
 
+/**
+ * Builds the AST definitions for the input values of the
+ * incoming and outgoing nodes, used as relationship mutation
+ * field arguments for selecting the related nodes
+ */
 const buildNodeInputFields = ({ fromType, toType }) => {
   return [
     buildInputValue({
@@ -443,6 +495,11 @@ const buildNodeInputFields = ({ fromType, toType }) => {
   ];
 };
 
+/**
+ * Given the name of a type, and the names of the node types
+ * of a relationship type, decides which type it is related to
+ * (possibly itself)
+ */
 const decideRelatedType = ({ typeName, fromType, toType }) => {
   let relatedType = toType;
   if (fromType !== toType) {
@@ -455,6 +512,10 @@ const decideRelatedType = ({ typeName, fromType, toType }) => {
   return relatedType;
 };
 
+/**
+ * Validates that a given relationship type field on a node type
+ * has that node type as its 'from' or 'to' node type field
+ */
 const validateRelationTypeDirectedFields = (
   typeName,
   fieldName,
