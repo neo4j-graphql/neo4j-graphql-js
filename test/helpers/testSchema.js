@@ -5,7 +5,7 @@ export const testSchema = /* GraphQL */ `
     ) {
     _id: String
     movieId: ID!
-    title: String
+    title: String @isAuthenticated
     someprefix_title_with_underscores: String
     year: Int
     released: DateTime!
