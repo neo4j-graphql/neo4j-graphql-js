@@ -1,28 +1,43 @@
 import { Kind } from 'graphql';
 import { TypeWrappers } from './fields';
 
+/**
+ * Builds the AST definition for a Name
+ */
 export const buildName = ({ name = '' }) => ({
   kind: Kind.NAME,
   value: name
 });
 
+/**
+ * Builds the AST definition for a Document
+ */
 export const buildDocument = ({ definitions = [] }) => ({
   kind: Kind.DOCUMENT,
   definitions
 });
 
+/**
+ * Builds the AST definition for a Directive Argument
+ */
 export const buildDirectiveArgument = ({ name = '', value }) => ({
   kind: Kind.ARGUMENT,
   name,
   value
 });
 
+/**
+ * Builds the AST definition for a Directive instance
+ */
 export const buildDirective = ({ name = '', args = [] }) => ({
   kind: Kind.DIRECTIVE,
   name,
   arguments: args
 });
 
+/**
+ * Builds the AST definition for a type
+ */
 export const buildNamedType = ({ name = '', wrappers = {} }) => {
   let type = {
     kind: Kind.NAMED_TYPE,
@@ -49,6 +64,27 @@ export const buildNamedType = ({ name = '', wrappers = {} }) => {
   return type;
 };
 
+/**
+ * Builds the AST definition for a schema type
+ */
+export const buildSchemaDefinition = ({ operationTypes = [] }) => ({
+  kind: Kind.SCHEMA_DEFINITION,
+  operationTypes
+});
+
+/**
+ * Builds the AST definition for an operation type on
+ * the schema type
+ */
+export const buildOperationType = ({ operation = '', type = {} }) => ({
+  kind: Kind.OPERATION_TYPE_DEFINITION,
+  operation,
+  type
+});
+
+/**
+ * Builds the AST definition for an Object type
+ */
 export const buildObjectType = ({
   name = '',
   fields = [],
@@ -62,6 +98,9 @@ export const buildObjectType = ({
   description
 });
 
+/**
+ * Builds the AST definition for a Field
+ */
 export const buildField = ({
   name = '',
   type = {},
@@ -77,6 +116,10 @@ export const buildField = ({
   description
 });
 
+/**
+ * Builds the AST definition for an Input Value,
+ * used for both field arguments and input object types
+ */
 export const buildInputValue = ({
   name = '',
   type = {},
@@ -94,6 +137,9 @@ export const buildInputValue = ({
   };
 };
 
+/**
+ * Builds the AST definition for an Enum type
+ */
 export const buildEnumType = ({ name = '', values = [], description }) => ({
   kind: Kind.ENUM_TYPE_DEFINITION,
   name,
@@ -101,12 +147,18 @@ export const buildEnumType = ({ name = '', values = [], description }) => ({
   description
 });
 
+/**
+ * Builds the AST definition for an Enum type value
+ */
 export const buildEnumValue = ({ name = '', description }) => ({
   kind: Kind.ENUM_VALUE_DEFINITION,
   name,
   description
 });
 
+/**
+ * Builds the AST definition for an Input Object type
+ */
 export const buildInputObjectType = ({
   name = '',
   fields = [],
@@ -120,6 +172,9 @@ export const buildInputObjectType = ({
   description
 });
 
+/**
+ * Builds the AST definition for a Directive definition
+ */
 export const buildDirectiveDefinition = ({
   name = '',
   args = [],
