@@ -19,11 +19,16 @@ import {
 } from '../../directives';
 import { isOperationTypeDefinition } from '../../types/types';
 
+// An enum for the semantics of the directed fields of a relationship type
 export const RelationshipDirectionField = {
   FROM: 'from',
   TO: 'to'
 };
 
+/**
+ * The main export for the augmentation process of a GraphQL
+ * type definition representing a Neo4j relationship entity
+ */
 export const augmentRelationshipTypeField = ({
   typeName,
   definition,
@@ -40,7 +45,7 @@ export const augmentRelationshipTypeField = ({
   config,
   outputTypeWrappers
 }) => {
-  if (!isOperationTypeDefinition({ definition })) {
+  if (!isOperationTypeDefinition({ definition, operationTypeMap })) {
     if (!isCypherField({ directives: fieldDirectives })) {
       const relationshipTypeDirective = getDirective({
         directives: outputDefinition.directives,
@@ -90,7 +95,8 @@ export const augmentRelationshipTypeField = ({
         config,
         relationshipName,
         fieldType,
-        propertyOutputFields
+        propertyOutputFields,
+        operationTypeMap
       });
       [
         typeDefinitionMap,
@@ -122,6 +128,11 @@ export const augmentRelationshipTypeField = ({
   ];
 };
 
+/**
+ * Iterates through all field definitions of a relationship type, deciding whether
+ * to generate the corresponding field or input value definitions that compose
+ * the output and input types used in the Query and Mutation API
+ */
 const augmentRelationshipTypeFields = ({
   typeName,
   outputType,
@@ -192,6 +203,10 @@ const augmentRelationshipTypeFields = ({
   ];
 };
 
+/**
+ * Generates a default value for the name argument
+ * of the relation type directive, if none is provided
+ */
 const decideDefaultRelationshipName = ({
   relationshipTypeDirective,
   outputType,
