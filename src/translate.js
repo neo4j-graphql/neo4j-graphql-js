@@ -2524,13 +2524,13 @@ const buildRelatedTypeListComprehension = ({
   if (rootIsRelationType) {
     relationVariable = variableName;
   }
-  const thisTypeVariable = safeVar(lowFirstLetter(thisType));
+  const safeVariableName = safeVar(variableName);
   // prevents related node variable from
   // conflicting with parent variables
   const relatedTypeVariable = safeVar(`_${relatedType.toLowerCase()}`);
   // builds a path pattern within a list comprehension
   // that extracts related nodes
-  return `[(${thisTypeVariable})${relationDirection === 'IN' ? '<' : ''}-[${
+  return `[(${safeVariableName})${relationDirection === 'IN' ? '<' : ''}-[${
     isRelationType
       ? safeVar(`_${relationVariable}`)
       : isRelationTypeNode
