@@ -165,7 +165,9 @@ message: ${message}
 const buildTestDataResolvers = augmentedTypeDefs => {
   const definitions = parse(augmentedTypeDefs).definitions;
   const resolvers = {};
-  const queryType = definitions.find(definition => definition.name && definition.name.value === 'Query');
+  const queryType = definitions.find(
+    definition => definition.name && definition.name.value === 'Query'
+  );
   if (queryType) {
     const queryMap = queryType.fields.reduce((acc, t) => {
       acc[t.name.value] = t;
@@ -173,7 +175,9 @@ const buildTestDataResolvers = augmentedTypeDefs => {
     }, {});
     resolvers['Query'] = buildResolvers(queryMap);
   }
-  const mutationType = definitions.find(definition => definition.name && definition.name.value === 'Mutation');
+  const mutationType = definitions.find(
+    definition => definition.name && definition.name.value === 'Mutation'
+  );
   if (mutationType) {
     const mutationMap = mutationType.fields.reduce((acc, t) => {
       acc[t.name.value] = t;

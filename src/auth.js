@@ -57,4 +57,3 @@ const getRoleType = typeMap => {
   }
   return roleType;
 };
-
