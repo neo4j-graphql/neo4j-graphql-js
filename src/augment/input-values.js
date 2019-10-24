@@ -97,7 +97,7 @@ export const buildQueryFieldArguments = ({
   Object.values(argumentMap).forEach(name => {
     if (isListTypeField({ wrappers: outputTypeWrappers })) {
       if (name === PagingArgument.FIRST) {
-        // Result Arguments
+        // Does not overwrite
         if (
           !getFieldDefinition({
             fields: fieldArguments,
@@ -111,7 +111,7 @@ export const buildQueryFieldArguments = ({
           );
         }
       } else if (name === PagingArgument.OFFSET) {
-        // Result Arguments
+        // Does not overwrite
         if (
           !getFieldDefinition({
             fields: fieldArguments,
@@ -125,22 +125,48 @@ export const buildQueryFieldArguments = ({
           );
         }
       } else if (name === OrderingArgument.ORDER_BY) {
-        // Overwrite
-        fieldArguments.push(
-          buildQueryOrderingArgument({
-            typeName: outputType
-          })
+        const argumentIndex = fieldArguments.findIndex(
+          arg => arg.name.value === OrderingArgument.ORDER_BY
         );
+        // Does overwrite
+        if (argumentIndex === -1) {
+          fieldArguments.push(
+            buildQueryOrderingArgument({
+              typeName: outputType
+            })
+          );
+        } else {
+          fieldArguments.splice(
+            argumentIndex,
+            1,
+            buildQueryOrderingArgument({
+              typeName: outputType
+            })
+          );
+        }
       }
     }
-    // Overwrite
     if (name === FilteringArgument.FILTER) {
       if (!isCypherField({ directives: fieldDirectives })) {
-        fieldArguments.push(
-          buildQueryFilteringArgument({
-            typeName: outputType
-          })
+        const argumentIndex = fieldArguments.findIndex(
+          arg => arg.name.value === FilteringArgument.FILTER
         );
+        // Does overwrite
+        if (argumentIndex === -1) {
+          fieldArguments.push(
+            buildQueryFilteringArgument({
+              typeName: outputType
+            })
+          );
+        } else {
+          fieldArguments.splice(
+            argumentIndex,
+            1,
+            buildQueryFilteringArgument({
+              typeName: outputType
+            })
+          );
+        }
       }
     }
   });
