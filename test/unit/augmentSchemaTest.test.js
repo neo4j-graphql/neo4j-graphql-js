@@ -51,7 +51,6 @@ test.cb('Test augmented schema', t => {
         imdbRating: Float
         first: Int
         offset: Int
-        orderBy: _MovieOrdering
         orderBy: [_MovieOrdering]
         filter: _MovieFilter
       ): [Movie]
@@ -135,8 +134,6 @@ test.cb('Test augmented schema', t => {
         offset: Int
         orderBy: [_GenreOrdering]
         filter: _GenreFilter
-        orderBy: [_GenreOrdering]
-        filter: _GenreFilter
       ): [Genre] @hasScope(scopes: ["Genre: Read"])
       Actor(
         userId: ID
@@ -146,16 +143,12 @@ test.cb('Test augmented schema', t => {
         offset: Int
         orderBy: [_ActorOrdering]
         filter: _ActorFilter
-        orderBy: [_ActorOrdering]
-        filter: _ActorFilter
       ): [Actor] @hasScope(scopes: ["Actor: Read"])
       Book(
         genre: BookGenre
         _id: String
         first: Int
         offset: Int
-        orderBy: [_BookOrdering]
-        filter: _BookFilter
         orderBy: [_BookOrdering]
         filter: _BookFilter
       ): [Book] @hasScope(scopes: ["Book: Read"])
@@ -171,8 +164,6 @@ test.cb('Test augmented schema', t => {
         _id: String
         first: Int
         offset: Int
-        orderBy: [_TemporalNodeOrdering]
-        filter: _TemporalNodeFilter
         orderBy: [_TemporalNodeOrdering]
         filter: _TemporalNodeFilter
       ): [TemporalNode] @hasScope(scopes: ["TemporalNode: Read"])
