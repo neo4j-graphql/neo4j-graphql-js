@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.8.0
+
+- [Schema augmentation refactor](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/322)
+- [Carry non-fragment fields into the result for a fragment](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/299)
+- [Integration test updates](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/300)
+- [Fix for incorrect behavior in filters](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/330)
+- [Fix bug where Camel/Pascal cased variables were broken in filters](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/325)
+
 ## 2.7.2
 
 - [add FRAGMENT_TYPE when customQuery and customMutation resolve interfaces](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/296)
