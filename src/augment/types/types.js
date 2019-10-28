@@ -16,19 +16,27 @@ import {
   buildName,
   buildNamedType,
   buildObjectType,
-  buildInputObjectType
+  buildInputObjectType,
+  buildInputValue,
+  buildField
 } from '../ast';
-import { TemporalType, buildTemporalTypes } from './temporal';
 import {
-  isTemporalField,
+  TemporalType,
+  augmentTemporalTypes,
+  Neo4jTime,
+  Neo4jTimeField,
+  Neo4jDate
+} from './temporal';
+import { SpatialType, Neo4jPoint, augmentSpatialTypes } from './spatial';
+import {
+  isNeo4jTypeField,
   unwrapNamedType,
-  getFieldDefinition
+  getFieldDefinition,
+  isTemporalField
 } from '../fields';
+
 import { augmentNodeType } from './node/node';
 import { RelationshipDirectionField } from '../types/relationship/relationship';
-
-// The prefix added to the name of any type representing a managed Neo4j data type
-export const Neo4jTypeName = `_Neo4j`;
 
 /**
  * An enum describing Neo4j entity types, used in type predicate functions
@@ -47,6 +55,17 @@ export const OperationType = {
   SUBSCRIPTION: 'Subscription'
 };
 
+// The prefix added to the name of any type representing a managed Neo4j data type
+export const Neo4jTypeName = `_Neo4j`;
+
+/**
+ * An enum describing the names of fields computed and added to the input
+ * and output type definitions representing non-scalar Neo4j property types
+ */
+const Neo4jTypeFormatted = {
+  FORMATTED: 'formatted'
+};
+
 /**
  * A map of the semantics of the GraphQL type system to Neo4j data types
  */
@@ -63,7 +82,8 @@ export const Neo4jDataType = {
     [TemporalType.DATE]: 'Temporal',
     [TemporalType.DATETIME]: 'Temporal',
     [TemporalType.LOCALTIME]: 'Temporal',
-    [TemporalType.LOCALDATETIME]: 'Temporal'
+    [TemporalType.LOCALDATETIME]: 'Temporal',
+    [SpatialType.POINT]: 'Spatial'
   },
   STRUCTURAL: {
     [Kind.OBJECT_TYPE_DEFINITION]: Neo4jStructuralType
@@ -152,7 +172,8 @@ export const isSubscriptionTypeDefinition = ({
  * A predicate function for identifying a GraphQL type definition representing
  * complex Neo4j property types (Temporal, Spatial) managed by the translation process
  */
-export const isNeo4jPropertyType = ({ type }) => isNeo4jTemporalType({ type });
+export const isNeo4jPropertyType = ({ type }) =>
+  isNeo4jTemporalType({ type }) || isNeo4jPointType({ type });
 
 /**
  * A predicate function for identifying a GraphQL type definition representing
@@ -161,6 +182,13 @@ export const isNeo4jPropertyType = ({ type }) => isNeo4jTemporalType({ type });
  */
 export const isNeo4jTemporalType = ({ type }) =>
   Object.values(TemporalType).some(name => type === `${Neo4jTypeName}${name}`);
+
+/**
+ * A predicate function for identifying a GraphQL type definition representing
+ * a Neo4j Spatial type (Point)
+ */
+export const isNeo4jPointType = ({ type }) =>
+  Object.values(SpatialType).some(name => type === `${Neo4jTypeName}${name}`);
 
 /**
  * A predicate function for identifying which Neo4j entity type, if any, a given
@@ -231,7 +259,7 @@ export const augmentTypes = ({
     }
     return definition;
   });
-  generatedTypeMap = buildNeo4jTypes({
+  generatedTypeMap = augmentNeo4jTypes({
     generatedTypeMap,
     config
   });
@@ -240,10 +268,14 @@ export const augmentTypes = ({
 
 /**
  * Builds the GraphQL AST type definitions that represent complex Neo4j
- * property types (Temporal, Spatial) managed by the translation process
+ * property types (Temporal, Spatial) picked by the translation process
  */
-const buildNeo4jTypes = ({ generatedTypeMap, config }) => {
-  generatedTypeMap = buildTemporalTypes({
+const augmentNeo4jTypes = ({ generatedTypeMap, config }) => {
+  generatedTypeMap = augmentTemporalTypes({
+    typeMap: generatedTypeMap,
+    config
+  });
+  generatedTypeMap = augmentSpatialTypes({
     typeMap: generatedTypeMap,
     config
   });
@@ -251,26 +283,89 @@ const buildNeo4jTypes = ({ generatedTypeMap, config }) => {
 };
 
 /**
- * Builds a GraphQL Object type and Input Object type representing
- * the input and output schema for a complex Neo4j property type,
- * ex: _Neo4jTime, _Neo4jTimeInput, etc.
+ * Builds the AST definitions for the object and input object
+ * types used for non-scalar Neo4j property types (Temporal, Spatial)
  */
-export const buildNeo4jType = ({
-  inputTypeName,
-  inputFields,
-  objectTypeName,
-  outputFields,
-  typeMap
+export const buildNeo4jTypes = ({
+  typeMap = {},
+  neo4jTypes = {},
+  config = {}
 }) => {
-  typeMap[objectTypeName] = buildObjectType({
-    name: buildName({ name: objectTypeName }),
-    fields: outputFields
-  });
-  typeMap[inputTypeName] = buildInputObjectType({
-    name: buildName({ name: inputTypeName }),
-    fields: inputFields
+  Object.values(neo4jTypes).forEach(typeName => {
+    const typeNameLower = typeName.toLowerCase();
+    if (config[typeNameLower] === true) {
+      const fields = buildNeo4jTypeFields({ typeName });
+      let inputFields = [];
+      let outputFields = [];
+      fields.forEach(([fieldName, fieldType]) => {
+        const fieldNameLower = fieldName.toLowerCase();
+        const fieldConfig = {
+          name: buildName({ name: fieldNameLower }),
+          type: buildNamedType({
+            name: fieldType
+          })
+        };
+        inputFields.push(buildInputValue(fieldConfig));
+        outputFields.push(buildField(fieldConfig));
+      });
+      const formattedFieldConfig = {
+        name: buildName({
+          name: Neo4jTypeFormatted.FORMATTED
+        }),
+        type: buildNamedType({
+          name: GraphQLString.name
+        })
+      };
+      if (isTemporalField({ type: typeName })) {
+        inputFields.push(buildInputValue(formattedFieldConfig));
+        outputFields.push(buildField(formattedFieldConfig));
+      }
+      const objectTypeName = `${Neo4jTypeName}${typeName}`;
+      const inputTypeName = `${objectTypeName}Input`;
+      typeMap[objectTypeName] = buildObjectType({
+        name: buildName({ name: objectTypeName }),
+        fields: outputFields
+      });
+      typeMap[inputTypeName] = buildInputObjectType({
+        name: buildName({ name: inputTypeName }),
+        fields: inputFields
+      });
+    }
   });
   return typeMap;
+};
+
+/**
+ * Builds the configuration objects for the field and input value
+ * definitions used by a given Neo4j type, built into AST by
+ * buildNeo4jTypes, then used in buildNeo4jType
+ */
+const buildNeo4jTypeFields = ({ typeName = '' }) => {
+  let fields = [];
+  if (typeName === TemporalType.DATE) {
+    fields = Object.entries(Neo4jDate);
+  } else if (typeName === TemporalType.TIME) {
+    fields = Object.entries(Neo4jTime);
+  } else if (typeName === TemporalType.LOCALTIME) {
+    fields = Object.entries({
+      ...Neo4jTime
+    }).filter(([name]) => name !== Neo4jTimeField.TIMEZONE);
+  } else if (typeName === TemporalType.DATETIME) {
+    fields = Object.entries({
+      ...Neo4jDate,
+      ...Neo4jTime
+    });
+  } else if (typeName === TemporalType.LOCALDATETIME) {
+    fields = Object.entries({
+      ...Neo4jDate,
+      ...Neo4jTime
+    }).filter(([name]) => name !== Neo4jTimeField.TIMEZONE);
+  } else if (typeName === SpatialType.POINT) {
+    fields = Object.entries({
+      ...Neo4jPoint
+    });
+  }
+  return fields;
 };
 
 /**
@@ -287,9 +382,9 @@ export const transformNeo4jTypes = ({ definitions = [], config }) => {
         const type = field.type;
         const unwrappedType = unwrapNamedType({ type });
         const typeName = unwrappedType.name;
-        if (isTemporalField({ type: typeName })) {
+        if (isNeo4jTypeField({ type: typeName })) {
           const typeNameLower = typeName.toLowerCase();
-          if (config.temporal[typeNameLower]) {
+          if (config.temporal[typeNameLower] || config.spatial[typeNameLower]) {
             unwrappedType.name = `${Neo4jTypeName}${typeName}${inputTypeSuffix}`;
           }
         } else if (isNeo4jPropertyType({ type: typeName })) {
@@ -305,9 +400,9 @@ export const transformNeo4jTypes = ({ definitions = [], config }) => {
         const type = field.type;
         const unwrappedType = unwrapNamedType({ type });
         const typeName = unwrappedType.name;
-        if (isTemporalField({ type: typeName })) {
+        if (isNeo4jTypeField({ type: typeName })) {
           const typeNameLower = typeName.toLowerCase();
-          if (config.temporal[typeNameLower]) {
+          if (config.temporal[typeNameLower] || config.spatial[typeNameLower]) {
             unwrappedType.name = `${Neo4jTypeName}${typeName}`;
           }
         }

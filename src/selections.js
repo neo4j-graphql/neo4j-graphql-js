@@ -14,9 +14,10 @@ import {
   decideNestedVariableName,
   safeVar,
   isTemporalType,
-  isTemporalField,
-  getTemporalArguments,
-  temporalPredicateClauses,
+  isSpatialType,
+  isNeo4jTypeField,
+  getNeo4jTypeArguments,
+  neo4jTypePredicateClauses,
   removeIgnoredFields
 } from './utils';
 import {
@@ -25,7 +26,8 @@ import {
   relationTypeFieldOnNodeType,
   nodeTypeFieldOnRelationType,
   temporalType,
-  temporalField
+  spatialType,
+  neo4jTypeField
 } from './translate';
 
 export function buildCypherSelection({
@@ -157,9 +159,9 @@ export function buildCypherSelection({
         )}}, false)${commaIfTail}`,
         ...tailParams
       });
-    } else if (isTemporalField(schemaType, fieldName)) {
+    } else if (isNeo4jTypeField(schemaType, fieldName)) {
       return recurse(
-        temporalField({
+        neo4jTypeField({
           initial,
           fieldName,
           variableName,
@@ -229,9 +231,10 @@ export function buildCypherSelection({
     !isScalarSchemaType && schemaTypeField && schemaTypeField.args
       ? schemaTypeField.args.map(e => e.astNode)
       : [];
-  const temporalArgs = getTemporalArguments(fieldArgs);
+
+  const neo4jTypeArgs = getNeo4jTypeArguments(fieldArgs);
   const queryParams = paramsToString(
-    innerFilterParams(filterParams, temporalArgs)
+    innerFilterParams(filterParams, neo4jTypeArgs)
   );
   const fieldInfo = {
     initial,
@@ -241,7 +244,7 @@ export function buildCypherSelection({
     nestedVariable,
     queryParams,
     filterParams,
-    temporalArgs,
+    neo4jTypeArgs,
     subSelection,
     skipLimit,
     commaIfTail,
@@ -270,12 +273,21 @@ export function buildCypherSelection({
         ...fieldInfo
       })
     );
+  } else if (isSpatialType(innerSchemaType.name)) {
+    selection = recurse(
+      spatialType({
+        schemaType,
+        schemaTypeRelation,
+        parentSelectionInfo,
+        ...fieldInfo
+      })
+    );
   } else if (relType && relDirection) {
     // Object type field with relation directive
-    const temporalClauses = temporalPredicateClauses(
+    const neo4jTypeClauses = neo4jTypePredicateClauses(
       filterParams,
       nestedVariable,
-      temporalArgs
+      neo4jTypeArgs
     );
     // translate field, arguments and argument params
     const translation = relationFieldOnNodeType({
@@ -287,7 +299,7 @@ export function buildCypherSelection({
       relType,
       isInlineFragment,
       innerSchemaType,
-      temporalClauses,
+      neo4jTypeClauses,
       resolveInfo,
       paramIndex,
       fieldArgs,
@@ -307,7 +319,7 @@ export function buildCypherSelection({
       paramIndex,
       schemaType,
       filterParams,
-      temporalArgs,
+      neo4jTypeArgs,
       parentSelectionInfo,
       resolveInfo,
       selectionFilters,
@@ -325,7 +337,7 @@ export function buildCypherSelection({
       schemaType,
       innerSchemaType,
       filterParams,
-      temporalArgs,
+      neo4jTypeArgs,
       resolveInfo,
       selectionFilters,
       paramIndex,

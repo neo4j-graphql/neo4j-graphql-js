@@ -172,7 +172,8 @@ export const augmentSchema = (
   config = {
     query: true,
     mutation: true,
-    temporal: true
+    temporal: true,
+    spatial: true
   }
 ) => {
   return augmentedSchema(schema, config);
@@ -192,7 +193,8 @@ export const makeAugmentedSchema = ({
   config = {
     query: true,
     mutation: true,
-    temporal: true
+    temporal: true,
+    spatial: true
   }
 }) => {
   if (schema) {

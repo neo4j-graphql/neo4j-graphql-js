@@ -257,12 +257,12 @@ export function getFilterParams(filters, index) {
 
 export function innerFilterParams(
   filters,
-  temporalArgs,
+  neo4jTypeArgs,
   paramKey,
   cypherDirective
 ) {
-  const temporalArgNames = temporalArgs
-    ? temporalArgs.reduce((acc, t) => {
+  const temporalArgNames = neo4jTypeArgs
+    ? neo4jTypeArgs.reduce((acc, t) => {
         acc.push(t.name.value);
         return acc;
       }, [])
@@ -406,16 +406,19 @@ export const buildCypherParameters = ({
       const fieldAst = args.find(arg => arg.name.value === paramName);
       if (fieldAst) {
         const fieldType = _getNamedType(fieldAst.type);
-        if (isTemporalInputType(fieldType.name.value)) {
+        const fieldTypeName = fieldType.name.value;
+        if (isNeo4jTypeInput(fieldTypeName)) {
           const formatted = param.formatted;
-          const temporalFunction = getTemporalCypherConstructor(fieldAst);
-          if (temporalFunction) {
+          const neo4jTypeConstructor = decideNeo4jTypeConstructor(
+            fieldTypeName
+          );
+          if (neo4jTypeConstructor) {
             // Prefer only using formatted, if provided
             if (formatted) {
               if (paramKey) params[paramKey][paramName] = formatted;
               else params[paramName] = formatted;
               acc.push(
-                `${paramName}: ${temporalFunction}($${
+                `${paramName}: ${neo4jTypeConstructor}($${
                   paramKey ? `${paramKey}.` : ''
                 }${paramName})`
               );
@@ -448,7 +451,7 @@ export const buildCypherParameters = ({
                 acc.push(
                   `${paramName}: [value IN $${
                     paramKey ? `${paramKey}.` : ''
-                  }${paramName} | ${temporalFunction}(value)]`
+                  }${paramName} | ${neo4jTypeConstructor}(value)]`
                 );
               } else {
                 temporalParam = paramKey
@@ -471,7 +474,7 @@ export const buildCypherParameters = ({
                   });
                 }
                 acc.push(
-                  `${paramName}: ${temporalFunction}($${
+                  `${paramName}: ${neo4jTypeConstructor}($${
                     paramKey ? `${paramKey}.` : ''
                   }${paramName})`
                 );
@@ -805,6 +808,45 @@ export const splitSelectionParameters = (
   return [primaryKeyParam, updateParams];
 };
 
+export const isNeo4jTypeField = (schemaType, fieldName) =>
+  isTemporalField(schemaType, fieldName) ||
+  isSpatialField(schemaType, fieldName);
+
+export const isNeo4jType = name => isTemporalType(name) || isSpatialType(name);
+
+export const isNeo4jTypeInput = name =>
+  isTemporalInputType(name) || isSpatialInputType(name);
+
+export const isSpatialType = name => name === '_Neo4jPoint';
+
+export const isSpatialField = (schemaType, name) => {
+  const type = schemaType ? schemaType.name : '';
+  return (
+    isSpatialType(type) &&
+    (name === 'x' ||
+      name === 'y' ||
+      name === 'z' ||
+      name === 'longitude' ||
+      name === 'latitude' ||
+      name === 'height' ||
+      name === 'crs' ||
+      name === 'srid' ||
+      name === 'formatted')
+  );
+};
+
+export const isSpatialInputType = name => name === '_Neo4jPointInput';
+
+export const isTemporalType = name => {
+  return (
+    name === '_Neo4jTime' ||
+    name === '_Neo4jDate' ||
+    name === '_Neo4jDateTime' ||
+    name === '_Neo4jLocalTime' ||
+    name === '_Neo4jLocalDateTime'
+  );
+};
+
 export const isTemporalField = (schemaType, name) => {
   const type = schemaType ? schemaType.name : '';
   return (
@@ -823,22 +865,17 @@ export const isTemporalField = (schemaType, name) => {
   );
 };
 
-export const isTemporalType = name => {
+export const isTemporalInputType = name => {
   return (
-    name === '_Neo4jTime' ||
-    name === '_Neo4jDate' ||
-    name === '_Neo4jDateTime' ||
-    name === '_Neo4jLocalTime' ||
-    name === '_Neo4jLocalDateTime'
+    name === '_Neo4jTimeInput' ||
+    name === '_Neo4jDateInput' ||
+    name === '_Neo4jDateTimeInput' ||
+    name === '_Neo4jLocalTimeInput' ||
+    name === '_Neo4jLocalDateTimeInput'
   );
 };
 
-export const getTemporalCypherConstructor = fieldAst => {
-  const type = fieldAst ? _getNamedType(fieldAst.type).name.value : '';
-  return decideTemporalConstructor(type);
-};
-
-export const decideTemporalConstructor = typeName => {
+export const decideNeo4jTypeConstructor = typeName => {
   switch (typeName) {
     case '_Neo4jTimeInput':
       return 'time';
@@ -850,55 +887,35 @@ export const decideTemporalConstructor = typeName => {
       return 'localtime';
     case '_Neo4jLocalDateTimeInput':
       return 'localdatetime';
+    case '_Neo4jPointInput':
+      return 'point';
     default:
       return '';
   }
 };
 
-export const getTemporalArguments = args => {
-  return args
-    ? args.reduce((acc, t) => {
-        if (!t) {
-          return acc;
-        }
-        const fieldType = _getNamedType(t.type).name.value;
-        if (isTemporalInputType(fieldType)) acc.push(t);
-        return acc;
-      }, [])
-    : [];
-};
-
-export const isTemporalInputType = name => {
-  return (
-    name === '_Neo4jTimeInput' ||
-    name === '_Neo4jDateInput' ||
-    name === '_Neo4jDateTimeInput' ||
-    name === '_Neo4jLocalTimeInput' ||
-    name === '_Neo4jLocalDateTimeInput'
-  );
-};
-
-export const temporalPredicateClauses = (
+export const neo4jTypePredicateClauses = (
   filters,
   variableName,
-  temporalArgs,
+  fieldArguments,
   parentParam
 ) => {
-  return temporalArgs.reduce((acc, t) => {
+  return fieldArguments.reduce((acc, t) => {
     // For every temporal argument
     const argName = t.name.value;
-    let temporalParam = filters[argName];
-    if (temporalParam) {
+    let neo4jTypeParam = filters[argName];
+    if (neo4jTypeParam) {
       // If a parameter value has been provided for it check whether
       // the provided param value is in an indexed object for a nested argument
-      const paramIndex = temporalParam.index;
-      const paramValue = temporalParam.value;
+      const paramIndex = neo4jTypeParam.index;
+      const paramValue = neo4jTypeParam.value;
       // If it is, set and use its .value
-      if (paramValue) temporalParam = paramValue;
-      if (temporalParam['formatted']) {
+      if (paramValue) neo4jTypeParam = paramValue;
+      if (neo4jTypeParam['formatted']) {
         // Only the dedicated 'formatted' arg is used if it is provided
+        const type = t ? _getNamedType(t.type).name.value : '';
         acc.push(
-          `${variableName}.${argName} = ${getTemporalCypherConstructor(t)}($${
+          `${variableName}.${argName} = ${decideNeo4jTypeConstructor(type)}($${
             // use index if provided, for nested arguments
             typeof paramIndex === 'undefined'
               ? `${parentParam ? `${parentParam}.` : ''}${argName}.formatted`
@@ -908,7 +925,7 @@ export const temporalPredicateClauses = (
           })`
         );
       } else {
-        Object.keys(temporalParam).forEach(e => {
+        Object.keys(neo4jTypeParam).forEach(e => {
           acc.push(
             `${variableName}.${argName}.${e} = $${
               typeof paramIndex === 'undefined'
@@ -923,6 +940,19 @@ export const temporalPredicateClauses = (
     }
     return acc;
   }, []);
+};
+
+export const getNeo4jTypeArguments = args => {
+  return args
+    ? args.reduce((acc, t) => {
+        if (!t) {
+          return acc;
+        }
+        const fieldType = _getNamedType(t.type).name.value;
+        if (isNeo4jTypeInput(fieldType)) acc.push(t);
+        return acc;
+      }, [])
+    : [];
 };
 
 export const removeIgnoredFields = (schemaType, selections) => {

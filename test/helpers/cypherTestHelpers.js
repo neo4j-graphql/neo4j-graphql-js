@@ -29,6 +29,7 @@ type MutationB {
     computedObjectWithCypherParams: currentUserId @cypher(statement: "RETURN { userId: $cypherParams.currentUserId }")
     computedStringList: [String] @cypher(statement: "UNWIND ['hello', 'world'] AS stringList RETURN stringList")
     computedTemporal: DateTime @cypher(statement: "WITH datetime() AS now RETURN { year: now.year, month: now.month , day: now.day , hour: now.hour , minute: now.minute , second: now.second , millisecond: now.millisecond , microsecond: now.microsecond , nanosecond: now.nanosecond , timezone: now.timezone , formatted: toString(now) }")
+    computedSpatial: Point @cypher(statement: "WITH point({ x: 10, y: 20, z: 15 }) AS instance RETURN { x: instance.x, y: instance.y, z: instance.z, crs: instance.crs }")
     customWithArguments(strArg: String, strInputArg: strInput): String @cypher(statement: "RETURN $strInputArg.strArg")
   }
 `;
@@ -62,6 +63,7 @@ type MutationB {
       computedFloat: checkCypherQuery,
       currentUserId: checkCypherQuery,
       computedTemporal: checkCypherQuery,
+      computedSpatial: checkCypherQuery,
       computedObjectWithCypherParams: checkCypherQuery,
       computedStringList: checkCypherQuery,
       computedIntList: checkCypherQuery,
@@ -77,6 +79,7 @@ type MutationB {
       computedObjectWithCypherParams: checkCypherMutation,
       computedStringList: checkCypherMutation,
       computedTemporal: checkCypherMutation,
+      computedSpatial: checkCypherMutation,
       customWithArguments: checkCypherMutation
     }
   };
@@ -165,6 +168,7 @@ export function augmentedSchemaCypherTestRunner(
         t.is(query, expectedCypherQuery);
         t.deepEqual(queryParams, expectedCypherParams);
       },
+      SpatialNode: checkCypherQuery,
       State: checkCypherQuery,
       CasedType: checkCypherQuery,
       computedBoolean: checkCypherQuery,
@@ -172,6 +176,7 @@ export function augmentedSchemaCypherTestRunner(
       computedFloat: checkCypherQuery,
       currentUserId: checkCypherQuery,
       computedTemporal: checkCypherQuery,
+      computedSpatial: checkCypherQuery,
       computedObjectWithCypherParams: checkCypherQuery,
       computedStringList: checkCypherQuery,
       computedIntList: checkCypherQuery,
@@ -185,6 +190,11 @@ export function augmentedSchemaCypherTestRunner(
       DeleteTemporalNode: checkCypherMutation,
       AddTemporalNodeTemporalNodes: checkCypherMutation,
       RemoveTemporalNodeTemporalNodes: checkCypherMutation,
+      CreateSpatialNode: checkCypherMutation,
+      UpdateSpatialNode: checkCypherMutation,
+      DeleteSpatialNode: checkCypherMutation,
+      AddSpatialNodeSpatialNodes: checkCypherMutation,
+      RemoveSpatialNodeSpatialNodes: checkCypherMutation,
       AddMovieGenres: checkCypherMutation,
       RemoveMovieGenres: checkCypherMutation,
       AddUserRated: checkCypherMutation,
@@ -195,6 +205,7 @@ export function augmentedSchemaCypherTestRunner(
       computedObjectWithCypherParams: checkCypherMutation,
       computedStringList: checkCypherMutation,
       computedTemporal: checkCypherMutation,
+      computedSpatial: checkCypherMutation,
       customWithArguments: checkCypherMutation
     }
   };

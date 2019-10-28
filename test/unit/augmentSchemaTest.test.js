@@ -49,6 +49,7 @@ test.cb('Test augmented schema', t => {
         plot: String
         poster: String
         imdbRating: Float
+        location: _Neo4jPointInput
         first: Int
         offset: Int
         orderBy: [_MovieOrdering]
@@ -117,6 +118,10 @@ test.cb('Test augmented schema', t => {
         @cypher(
           statement: "WITH datetime() AS now RETURN { year: now.year, month: now.month , day: now.day , hour: now.hour , minute: now.minute , second: now.second , millisecond: now.millisecond , microsecond: now.microsecond , nanosecond: now.nanosecond , timezone: now.timezone , formatted: toString(now) }"
         )
+      computedSpatial: _Neo4jPoint
+        @cypher(
+          statement: "WITH point({ x: 10, y: 20, z: 15 }) AS instance RETURN { x: instance.x, y: instance.y, z: instance.z, crs: instance.crs }"
+        )
       computedObjectWithCypherParams: currentUserId
         @cypher(statement: "RETURN { userId: $cypherParams.currentUserId }")
       customWithArguments(strArg: String, strInputArg: strInput): String
@@ -167,6 +172,15 @@ test.cb('Test augmented schema', t => {
         orderBy: [_TemporalNodeOrdering]
         filter: _TemporalNodeFilter
       ): [TemporalNode] @hasScope(scopes: ["TemporalNode: Read"])
+      SpatialNode(
+        pointKey: _Neo4jPointInput
+        point: _Neo4jPointInput
+        _id: String
+        first: Int
+        offset: Int
+        orderBy: [_SpatialNodeOrdering]
+        filter: _SpatialNodeFilter
+      ): [SpatialNode] @hasScope(scopes: ["SpatialNode: Read"])
     }
 
     input _Neo4jDateTimeInput {
@@ -672,6 +686,8 @@ test.cb('Test augmented schema', t => {
       avgStars: Float
       filmedIn(filter: _StateFilter): State
         @relation(name: "FILMED_IN", direction: "OUT")
+      location: _Neo4jPoint
+      locations: [_Neo4jPoint]
       scaleRating(scale: Int = 3): Float
         @cypher(statement: "WITH $this AS this RETURN $scale * this.imdbRating")
       scaleRatingFloat(scale: Float = 1.5): Float
@@ -687,6 +703,7 @@ test.cb('Test augmented schema', t => {
         datetime: _Neo4jDateTimeInput
         localtime: _Neo4jLocalTimeInput
         localdatetime: _Neo4jLocalDateTimeInput
+        location: _Neo4jPointInput
         filter: _MovieRatedFilter
       ): [_MovieRatings]
       years: [Int]
@@ -779,6 +796,7 @@ test.cb('Test augmented schema', t => {
       localtime: _Neo4jLocalTime
       localdatetime: _Neo4jLocalDateTime
       datetimes: [_Neo4jDateTime]
+      location: _Neo4jPoint
       User: User
     }
 
@@ -837,6 +855,7 @@ test.cb('Test augmented schema', t => {
         datetime: _Neo4jDateTimeInput
         localtime: _Neo4jLocalTimeInput
         localdatetime: _Neo4jLocalDateTimeInput
+        location: _Neo4jPointInput
         filter: _UserRatedFilter
       ): [_UserRated]
       friends: _UserFriendsDirections
@@ -866,6 +885,7 @@ test.cb('Test augmented schema', t => {
       localtime: _Neo4jLocalTime
       localdatetime: _Neo4jLocalDateTime
       datetimes: [_Neo4jDateTime]
+      location: _Neo4jPoint
       Movie: Movie
     }
 
@@ -878,6 +898,7 @@ test.cb('Test augmented schema', t => {
         datetime: _Neo4jDateTimeInput
         localtime: _Neo4jLocalTimeInput
         localdatetime: _Neo4jLocalDateTimeInput
+        location: _Neo4jPointInput
         filter: _FriendOfFilter
       ): [_UserFriends]
       to(
@@ -887,6 +908,7 @@ test.cb('Test augmented schema', t => {
         datetime: _Neo4jDateTimeInput
         localtime: _Neo4jLocalTimeInput
         localdatetime: _Neo4jLocalDateTimeInput
+        location: _Neo4jPointInput
         filter: _FriendOfFilter
       ): [_UserFriends]
     }
@@ -903,6 +925,7 @@ test.cb('Test augmented schema', t => {
       datetimes: [_Neo4jDateTime]
       localtime: _Neo4jLocalTime
       localdatetime: _Neo4jLocalDateTime
+      location: _Neo4jPoint
       User: User
     }
 
@@ -1104,6 +1127,10 @@ test.cb('Test augmented schema', t => {
         @cypher(
           statement: "WITH datetime() AS now RETURN { year: now.year, month: now.month , day: now.day , hour: now.hour , minute: now.minute , second: now.second , millisecond: now.millisecond , microsecond: now.microsecond , nanosecond: now.nanosecond , timezone: now.timezone , formatted: toString(now) }"
         )
+      computedSpatial: _Neo4jPoint
+        @cypher(
+          statement: "WITH point({ x: 10, y: 20, z: 15 }) AS instance RETURN { x: instance.x, y: instance.y, z: instance.z, crs: instance.crs }"
+        )
       computedStringList: [String]
         @cypher(
           statement: "UNWIND ['hello', 'world'] AS stringList RETURN stringList"
@@ -1167,6 +1194,8 @@ test.cb('Test augmented schema', t => {
         poster: String
         imdbRating: Float
         avgStars: Float
+        location: _Neo4jPointInput
+        locations: [_Neo4jPointInput]
         years: [Int]
         titles: [String]
         imdbRatings: [Float]
@@ -1182,6 +1211,8 @@ test.cb('Test augmented schema', t => {
         poster: String
         imdbRating: Float
         avgStars: Float
+        location: _Neo4jPointInput
+        locations: [_Neo4jPointInput]
         years: [Int]
         titles: [String]
         imdbRatings: [Float]
@@ -1306,6 +1337,35 @@ test.cb('Test augmented schema', t => {
       ): TemporalNode @hasScope(scopes: ["TemporalNode: Update"])
       DeleteTemporalNode(datetime: _Neo4jDateTimeInput!): TemporalNode
         @hasScope(scopes: ["TemporalNode: Delete"])
+      AddSpatialNodeSpatialNodes(
+        from: _SpatialNodeInput!
+        to: _SpatialNodeInput!
+      ): _AddSpatialNodeSpatialNodesPayload
+        @MutationMeta(
+          relationship: "SPATIAL"
+          from: "SpatialNode"
+          to: "SpatialNode"
+        )
+      RemoveSpatialNodeSpatialNodes(
+        from: _SpatialNodeInput!
+        to: _SpatialNodeInput!
+      ): _RemoveSpatialNodeSpatialNodesPayload
+        @MutationMeta(
+          relationship: "SPATIAL"
+          from: "SpatialNode"
+          to: "SpatialNode"
+        )
+        @hasScope(scopes: ["SpatialNode: Delete", "SpatialNode: Delete"])
+      CreateSpatialNode(
+        pointKey: _Neo4jPointInput
+        point: _Neo4jPointInput
+      ): SpatialNode @hasScope(scopes: ["SpatialNode: Create"])
+      UpdateSpatialNode(
+        pointKey: _Neo4jPointInput!
+        point: _Neo4jPointInput
+      ): SpatialNode @hasScope(scopes: ["SpatialNode: Update"])
+      DeleteSpatialNode(pointKey: _Neo4jPointInput!): SpatialNode
+        @hasScope(scopes: ["SpatialNode: Delete"])
       AddCasedTypeState(
         from: _CasedTypeInput!
         to: _StateInput!
@@ -1388,6 +1448,7 @@ test.cb('Test augmented schema', t => {
       localtime: _Neo4jLocalTimeInput
       localdatetime: _Neo4jLocalDateTimeInput
       datetimes: [_Neo4jDateTimeInput]
+      location: _Neo4jPointInput
     }
 
     type _AddMovieRatingsPayload
@@ -1406,6 +1467,7 @@ test.cb('Test augmented schema', t => {
       localtime: _Neo4jLocalTime
       localdatetime: _Neo4jLocalDateTime
       datetimes: [_Neo4jDateTime]
+      location: _Neo4jPoint
     }
 
     type _RemoveMovieRatingsPayload
@@ -1454,6 +1516,7 @@ test.cb('Test augmented schema', t => {
       localtime: _Neo4jLocalTime
       localdatetime: _Neo4jLocalDateTime
       datetimes: [_Neo4jDateTime]
+      location: _Neo4jPoint
     }
 
     type _RemoveUserRatedPayload
@@ -1470,6 +1533,7 @@ test.cb('Test augmented schema', t => {
       datetimes: [_Neo4jDateTimeInput]
       localtime: _Neo4jLocalTimeInput
       localdatetime: _Neo4jLocalDateTimeInput
+      location: _Neo4jPointInput
     }
 
     type _AddUserFriendsPayload
@@ -1487,6 +1551,7 @@ test.cb('Test augmented schema', t => {
       datetimes: [_Neo4jDateTime]
       localtime: _Neo4jLocalTime
       localdatetime: _Neo4jLocalDateTime
+      location: _Neo4jPoint
     }
 
     type _RemoveUserFriendsPayload
@@ -1556,6 +1621,7 @@ test.cb('Test augmented schema', t => {
       datetimes: [_Neo4jDateTime]
       localtime: _Neo4jLocalTime
       localdatetime: _Neo4jLocalDateTime
+      location: _Neo4jPoint
       to: User
     }
 
@@ -1573,6 +1639,7 @@ test.cb('Test augmented schema', t => {
       localtime: _Neo4jLocalTime
       localdatetime: _Neo4jLocalDateTime
       datetimes: [_Neo4jDateTime]
+      location: _Neo4jPoint
       to: Movie
     }
 
@@ -1624,6 +1691,28 @@ test.cb('Test augmented schema', t => {
       reader
       user
       admin
+    }
+
+    type _Neo4jPoint {
+      x: Int
+      y: Int
+      z: Int
+      longitude: Int
+      latitude: Int
+      height: Int
+      crs: String
+      srid: Int
+    }
+
+    input _Neo4jPointInput {
+      x: Int
+      y: Int
+      z: Int
+      longitude: Int
+      latitude: Int
+      height: Int
+      crs: String
+      srid: Int
     }
 
     enum _RelationDirections {
