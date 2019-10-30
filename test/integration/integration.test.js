@@ -1131,11 +1131,7 @@ test.serial(
           mutation {
             CreateMovie(
               title: "Bob Loblaw 4"
-              location: {
-                longitude: 10,
-                latitude: 20,
-                height: 30
-              }
+              location: { longitude: 10, latitude: 20, height: 30 }
             ) {
               title
               location {
@@ -1181,12 +1177,9 @@ test.serial(
         mutation: gql`
           mutation createWithSpatialFields(
             $title: String
-            $locationInput: _Neo4jPointInput 
+            $locationInput: _Neo4jPointInput
           ) {
-            CreateMovie(
-              title: $title,
-              location: $locationInput
-            ) {
+            CreateMovie(title: $title, location: $locationInput) {
               title
               location {
                 longitude
@@ -1224,12 +1217,12 @@ test.serial(
             __typename: 'Movie',
             location: {
               __typename: '_Neo4jPoint',
-              crs: "wgs-84-3d",
+              crs: 'wgs-84-3d',
               height: 60,
               latitude: 40,
               longitude: 50
             },
-            title: "Bob Loblaw 5"
+            title: 'Bob Loblaw 5'
           }
         ]
       }
@@ -1271,7 +1264,7 @@ test.serial(
           __typename: 'SpatialNode',
           pointKey: {
             __typename: '_Neo4jPoint',
-            crs: "wgs-84-3d",
+            crs: 'wgs-84-3d',
             latitude: 20,
             longitude: 10,
             height: 30
@@ -1318,10 +1311,10 @@ test.serial(
             __typename: 'SpatialNode',
             pointKey: {
               __typename: '_Neo4jPoint',
-              crs: "wgs-84-3d",
+              crs: 'wgs-84-3d',
               latitude: 20,
               longitude: 10,
-              height: 30  
+              height: 30
             }
           }
         ]

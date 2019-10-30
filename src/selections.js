@@ -271,8 +271,7 @@ export function buildCypherSelection({
         ...fieldInfo
       })
     );
-  }
-  else if (relType && relDirection) {
+  } else if (relType && relDirection) {
     // Object type field with relation directive
     const neo4jTypeClauses = neo4jTypePredicateClauses(
       filterParams,
