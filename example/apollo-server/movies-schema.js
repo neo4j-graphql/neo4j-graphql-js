@@ -20,6 +20,8 @@ type Movie {
   actors(first: Int = 3, offset: Int = 0): [Actor] @relation(name: "ACTED_IN", direction:"IN")
   avgStars: Float
   filmedIn: State @relation(name: "FILMED_IN", direction: "OUT")
+  location: Point
+  locations: [Point]
   scaleRating(scale: Int = 3): Float @cypher(statement: "WITH $this AS this RETURN $scale * this.imdbRating")
   scaleRatingFloat(scale: Float = 1.5): Float @cypher(statement: "WITH $this AS this RETURN $scale * this.imdbRating")
 }
@@ -66,6 +68,13 @@ enum BookGenre {
 
 type OnlyDate {
   date: Date
+}
+
+type SpatialNode {
+  pointKey: Point
+  point: Point
+  spatialNodes(pointKey: Point): [SpatialNode]
+    @relation(name: "SPATIAL", direction: OUT)
 }
 
 type Book {
