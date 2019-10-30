@@ -13,8 +13,7 @@ import {
   getRelationTypeDirective,
   decideNestedVariableName,
   safeVar,
-  isTemporalType,
-  isSpatialType,
+  isNeo4jType,
   isNeo4jTypeField,
   getNeo4jTypeArguments,
   neo4jTypePredicateClauses,
@@ -25,8 +24,7 @@ import {
   relationFieldOnNodeType,
   relationTypeFieldOnNodeType,
   nodeTypeFieldOnRelationType,
-  temporalType,
-  spatialType,
+  neo4jType,
   neo4jTypeField
 } from './translate';
 
@@ -264,25 +262,17 @@ export function buildCypherSelection({
         resolveInfo
       })
     );
-  } else if (isTemporalType(innerSchemaType.name)) {
+  } else if (isNeo4jType(innerSchemaType.name)) {
     selection = recurse(
-      temporalType({
+      neo4jType({
         schemaType,
         schemaTypeRelation,
         parentSelectionInfo,
         ...fieldInfo
       })
     );
-  } else if (isSpatialType(innerSchemaType.name)) {
-    selection = recurse(
-      spatialType({
-        schemaType,
-        schemaTypeRelation,
-        parentSelectionInfo,
-        ...fieldInfo
-      })
-    );
-  } else if (relType && relDirection) {
+  }
+  else if (relType && relDirection) {
     // Object type field with relation directive
     const neo4jTypeClauses = neo4jTypePredicateClauses(
       filterParams,

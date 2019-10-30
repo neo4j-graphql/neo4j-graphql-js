@@ -65,11 +65,6 @@ const decideSpatialConfig = ({ config }) => {
       defaultConfig.point = false;
     }
   } else if (typeof providedConfig === 'object') {
-    Object.keys(defaultConfig).forEach(e => {
-      if (providedConfig[e] === undefined) {
-        providedConfig[e] = defaultConfig[e];
-      }
-    });
     defaultConfig = providedConfig;
   }
   return defaultConfig;

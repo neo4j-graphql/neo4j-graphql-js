@@ -1755,6 +1755,11 @@ test('Create node with spatial properties', t => {
         x: 10,
         y: 20,
         z: 30
+      },
+      point: {
+        longitude: 40,
+        latitude: 50,
+        height: 60
       }
     ) {
       pointKey {
@@ -1763,11 +1768,17 @@ test('Create node with spatial properties', t => {
         z
         crs
       }
+      point {
+        longitude
+        latitude
+        height
+        crs
+      }
     }
   }`,
     expectedCypherQuery = `
-    CREATE (\`spatialNode\`:\`SpatialNode\` {pointKey: point($params.pointKey)})
-    RETURN \`spatialNode\` {pointKey: { x: \`spatialNode\`.pointKey.x , y: \`spatialNode\`.pointKey.y , z: \`spatialNode\`.pointKey.z , crs: \`spatialNode\`.pointKey.crs }} AS \`spatialNode\`
+    CREATE (\`spatialNode\`:\`SpatialNode\` {pointKey: point($params.pointKey),point: point($params.point)})
+    RETURN \`spatialNode\` {pointKey: { x: \`spatialNode\`.pointKey.x , y: \`spatialNode\`.pointKey.y , z: \`spatialNode\`.pointKey.z , crs: \`spatialNode\`.pointKey.crs },point: { longitude: \`spatialNode\`.point.longitude , latitude: \`spatialNode\`.point.latitude , height: \`spatialNode\`.point.height , crs: \`spatialNode\`.point.crs }} AS \`spatialNode\`
   `;
 
   t.plan(1);
@@ -1903,6 +1914,9 @@ test('Query node with spatial properties using spatial arguments', t => {
     SpatialNode(
       pointKey: {
         x: 10
+      },
+      point: {
+        longitude: 40
       }
     ) {
       pointKey {
@@ -1911,9 +1925,15 @@ test('Query node with spatial properties using spatial arguments', t => {
         z
         crs
       }
+      point {
+        longitude
+        latitude
+        height
+        crs
+      }
     }
   }`,
-    expectedCypherQuery = `MATCH (\`spatialNode\`:\`SpatialNode\`) WHERE \`spatialNode\`.pointKey.x = $pointKey.x RETURN \`spatialNode\` {pointKey: { x: \`spatialNode\`.pointKey.x , y: \`spatialNode\`.pointKey.y , z: \`spatialNode\`.pointKey.z , crs: \`spatialNode\`.pointKey.crs }} AS \`spatialNode\``;
+    expectedCypherQuery = `MATCH (\`spatialNode\`:\`SpatialNode\`) WHERE \`spatialNode\`.pointKey.x = $pointKey.x AND \`spatialNode\`.point.longitude = $point.longitude RETURN \`spatialNode\` {pointKey: { x: \`spatialNode\`.pointKey.x , y: \`spatialNode\`.pointKey.y , z: \`spatialNode\`.pointKey.z , crs: \`spatialNode\`.pointKey.crs },point: { longitude: \`spatialNode\`.point.longitude , latitude: \`spatialNode\`.point.latitude , height: \`spatialNode\`.point.height , crs: \`spatialNode\`.point.crs }} AS \`spatialNode\``;
 
   t.plan(1);
 

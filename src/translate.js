@@ -600,7 +600,7 @@ export const neo4jTypeField = ({
   };
 };
 
-export const temporalType = ({
+export const neo4jType = ({
   initial,
   fieldName,
   subSelection,
@@ -650,57 +650,6 @@ export const temporalType = ({
           }})${commaIfTail}`
         : temporalOrderingFieldExists(parentSchemaType, parentFilterParams)
         ? `${safeVariableName}.${fieldName}${commaIfTail}`
-        : `{${subSelection[0]}}${commaIfTail}`
-    }`,
-    ...tailParams
-  };
-};
-
-export const spatialType = ({
-  initial,
-  fieldName,
-  subSelection,
-  commaIfTail,
-  tailParams,
-  variableName,
-  nestedVariable,
-  fieldType,
-  schemaType,
-  schemaTypeRelation,
-  parentSelectionInfo
-}) => {
-  const parentVariableName = parentSelectionInfo.variableName;
-  const relationshipVariableSuffix = `relation`;
-  let fieldIsArray = isArrayType(fieldType);
-  if (!isNodeType(schemaType.astNode)) {
-    if (
-      isRelationTypePayload(schemaType) &&
-      schemaTypeRelation.from === schemaTypeRelation.to
-    ) {
-      variableName = `${nestedVariable}_${relationshipVariableSuffix}`;
-    } else {
-      if (fieldIsArray) {
-        if (
-          isRootSelection({
-            selectionInfo: parentSelectionInfo,
-            rootType: 'relationship'
-          })
-        ) {
-          variableName = `${parentVariableName}_${relationshipVariableSuffix}`;
-        } else {
-          variableName = `${variableName}_${relationshipVariableSuffix}`;
-        }
-      } else {
-        variableName = `${nestedVariable}_${relationshipVariableSuffix}`;
-      }
-    }
-  }
-  return {
-    initial: `${initial}${fieldName}: ${
-      fieldIsArray
-        ? `reduce(a = [], INSTANCE IN ${variableName}.${fieldName} | a + {${
-            subSelection[0]
-          }})${commaIfTail}`
         : `{${subSelection[0]}}${commaIfTail}`
     }`,
     ...tailParams
