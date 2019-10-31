@@ -32,6 +32,7 @@ import {
 } from '../../ast';
 import {
   OperationType,
+  isInterfaceTypeDefinition,
   isNodeType,
   isRelationshipType,
   isObjectTypeDefinition,
@@ -52,7 +53,10 @@ export const augmentNodeType = ({
   operationTypeMap,
   config
 }) => {
-  if (isObjectTypeDefinition({ definition })) {
+  if (
+    isObjectTypeDefinition({ definition }) ||
+    isInterfaceTypeDefinition({ definition })
+  ) {
     let [
       nodeInputTypeMap,
       propertyOutputFields,
@@ -214,7 +218,10 @@ const augmentNodeTypeFields = ({
   ) {
     const queryTypeName = OperationType.QUERY;
     const queryTypeNameLower = queryTypeName.toLowerCase();
-    if (shouldAugmentType(config, queryTypeNameLower, typeName)) {
+    if (
+      shouldAugmentType(config, queryTypeNameLower, typeName) &&
+      !isInterfaceTypeDefinition({ definition })
+    ) {
       const neo4jInternalIDConfig = {
         name: Neo4jSystemIDField,
         type: {
