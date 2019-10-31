@@ -875,12 +875,15 @@ const nodeQuery = ({
   const predicate = predicateClauses ? `WHERE ${predicateClauses} ` : '';
 
   const { optimization, cypherPart: orderByClause } = orderByValue;
+  const fragmentTypeValue = isGraphqlInterfaceType(schemaType)
+    ? `FRAGMENT_TYPE: labels(${safeVariableName})[0],`
+    : '';
 
   let query = `MATCH (${safeVariableName}:${safeLabelName}${
     argString ? ` ${argString}` : ''
   }) ${predicate}${
     optimization.earlyOrderBy ? `WITH ${safeVariableName}${orderByClause}` : ''
-  }RETURN ${safeVariableName} {${subQuery}} AS ${safeVariableName}${
+  }RETURN ${safeVariableName} {${fragmentTypeValue}${subQuery}} AS ${safeVariableName}${
     optimization.earlyOrderBy ? '' : orderByClause
   }${outerSkipLimit}`;
 

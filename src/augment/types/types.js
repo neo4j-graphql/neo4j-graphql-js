@@ -66,7 +66,8 @@ export const Neo4jDataType = {
     [TemporalType.LOCALDATETIME]: 'Temporal'
   },
   STRUCTURAL: {
-    [Kind.OBJECT_TYPE_DEFINITION]: Neo4jStructuralType
+    [Kind.OBJECT_TYPE_DEFINITION]: Neo4jStructuralType,
+    [Kind.INTERFACE_TYPE_DEFINITION]: Neo4jStructuralType
   }
 };
 
