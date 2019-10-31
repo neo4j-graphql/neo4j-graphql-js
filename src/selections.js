@@ -13,10 +13,10 @@ import {
   getRelationTypeDirective,
   decideNestedVariableName,
   safeVar,
-  isTemporalType,
-  isTemporalField,
-  getTemporalArguments,
-  temporalPredicateClauses,
+  isNeo4jType,
+  isNeo4jTypeField,
+  getNeo4jTypeArguments,
+  neo4jTypePredicateClauses,
   removeIgnoredFields
 } from './utils';
 import {
@@ -24,8 +24,8 @@ import {
   relationFieldOnNodeType,
   relationTypeFieldOnNodeType,
   nodeTypeFieldOnRelationType,
-  temporalType,
-  temporalField
+  neo4jType,
+  neo4jTypeField
 } from './translate';
 
 export function buildCypherSelection({
@@ -157,9 +157,9 @@ export function buildCypherSelection({
         )}}, false)${commaIfTail}`,
         ...tailParams
       });
-    } else if (isTemporalField(schemaType, fieldName)) {
+    } else if (isNeo4jTypeField(schemaType, fieldName)) {
       return recurse(
-        temporalField({
+        neo4jTypeField({
           initial,
           fieldName,
           variableName,
@@ -229,9 +229,10 @@ export function buildCypherSelection({
     !isScalarSchemaType && schemaTypeField && schemaTypeField.args
       ? schemaTypeField.args.map(e => e.astNode)
       : [];
-  const temporalArgs = getTemporalArguments(fieldArgs);
+
+  const neo4jTypeArgs = getNeo4jTypeArguments(fieldArgs);
   const queryParams = paramsToString(
-    innerFilterParams(filterParams, temporalArgs)
+    innerFilterParams(filterParams, neo4jTypeArgs)
   );
   const fieldInfo = {
     initial,
@@ -241,7 +242,7 @@ export function buildCypherSelection({
     nestedVariable,
     queryParams,
     filterParams,
-    temporalArgs,
+    neo4jTypeArgs,
     subSelection,
     skipLimit,
     commaIfTail,
@@ -261,9 +262,9 @@ export function buildCypherSelection({
         resolveInfo
       })
     );
-  } else if (isTemporalType(innerSchemaType.name)) {
+  } else if (isNeo4jType(innerSchemaType.name)) {
     selection = recurse(
-      temporalType({
+      neo4jType({
         schemaType,
         schemaTypeRelation,
         parentSelectionInfo,
@@ -272,10 +273,10 @@ export function buildCypherSelection({
     );
   } else if (relType && relDirection) {
     // Object type field with relation directive
-    const temporalClauses = temporalPredicateClauses(
+    const neo4jTypeClauses = neo4jTypePredicateClauses(
       filterParams,
       nestedVariable,
-      temporalArgs
+      neo4jTypeArgs
     );
     // translate field, arguments and argument params
     const translation = relationFieldOnNodeType({
@@ -287,7 +288,7 @@ export function buildCypherSelection({
       relType,
       isInlineFragment,
       innerSchemaType,
-      temporalClauses,
+      neo4jTypeClauses,
       resolveInfo,
       paramIndex,
       fieldArgs,
@@ -307,7 +308,7 @@ export function buildCypherSelection({
       paramIndex,
       schemaType,
       filterParams,
-      temporalArgs,
+      neo4jTypeArgs,
       parentSelectionInfo,
       resolveInfo,
       selectionFilters,
@@ -325,7 +326,7 @@ export function buildCypherSelection({
       schemaType,
       innerSchemaType,
       filterParams,
-      temporalArgs,
+      neo4jTypeArgs,
       resolveInfo,
       selectionFilters,
       paramIndex,

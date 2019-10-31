@@ -19,6 +19,7 @@ export const isPropertyTypeField = ({ kind, type }) =>
   isBooleanField({ type }) ||
   isCustomScalarField({ kind }) ||
   isTemporalField({ type }) ||
+  isSpatialField({ type }) ||
   isNeo4jPropertyType({ type });
 
 export const isIntegerField = ({ type }) =>
@@ -34,8 +35,14 @@ export const isStringField = ({ kind, type }) =>
 export const isBooleanField = ({ type }) =>
   Neo4jDataType.PROPERTY[type] === 'Boolean';
 
+export const isNeo4jTypeField = ({ type }) =>
+  isTemporalField({ type }) || isSpatialField({ type });
+
 export const isTemporalField = ({ type }) =>
   Neo4jDataType.PROPERTY[type] === 'Temporal';
+
+export const isSpatialField = ({ type }) =>
+  Neo4jDataType.PROPERTY[type] === 'Spatial';
 
 export const isNeo4jIDField = ({ name }) => name === Neo4jSystemIDField;
 

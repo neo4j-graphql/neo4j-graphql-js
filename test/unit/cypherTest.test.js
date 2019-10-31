@@ -1748,6 +1748,50 @@ test('Create node with temporal properties', t => {
   );
 });
 
+test('Create node with spatial properties', t => {
+  const graphQLQuery = `mutation {
+    CreateSpatialNode(
+      pointKey: {
+        x: 10,
+        y: 20,
+        z: 30
+      },
+      point: {
+        longitude: 40,
+        latitude: 50,
+        height: 60
+      }
+    ) {
+      pointKey {
+        x
+        y
+        z
+        crs
+      }
+      point {
+        longitude
+        latitude
+        height
+        crs
+      }
+    }
+  }`,
+    expectedCypherQuery = `
+    CREATE (\`spatialNode\`:\`SpatialNode\` {pointKey: point($params.pointKey),point: point($params.point)})
+    RETURN \`spatialNode\` {pointKey: { x: \`spatialNode\`.pointKey.x , y: \`spatialNode\`.pointKey.y , z: \`spatialNode\`.pointKey.z , crs: \`spatialNode\`.pointKey.crs },point: { longitude: \`spatialNode\`.point.longitude , latitude: \`spatialNode\`.point.latitude , height: \`spatialNode\`.point.height , crs: \`spatialNode\`.point.crs }} AS \`spatialNode\`
+  `;
+
+  t.plan(1);
+
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {},
+    expectedCypherQuery,
+    {}
+  );
+});
+
 test('Query node with temporal properties using temporal arguments', t => {
   const graphQLQuery = `query {
     TemporalNode(
@@ -1853,6 +1897,43 @@ test('Query node with temporal properties using temporal arguments', t => {
     }
   }`,
     expectedCypherQuery = `MATCH (\`temporalNode\`:\`TemporalNode\`) WHERE \`temporalNode\`.datetime.year = $datetime.year AND \`temporalNode\`.datetime.month = $datetime.month AND \`temporalNode\`.datetime.day = $datetime.day AND \`temporalNode\`.datetime.hour = $datetime.hour AND \`temporalNode\`.datetime.minute = $datetime.minute AND \`temporalNode\`.datetime.second = $datetime.second AND \`temporalNode\`.datetime.millisecond = $datetime.millisecond AND \`temporalNode\`.datetime.microsecond = $datetime.microsecond AND \`temporalNode\`.datetime.nanosecond = $datetime.nanosecond AND \`temporalNode\`.datetime.timezone = $datetime.timezone AND \`temporalNode\`.time = time($time.formatted) AND \`temporalNode\`.date.year = $date.year AND \`temporalNode\`.date.month = $date.month AND \`temporalNode\`.date.day = $date.day AND \`temporalNode\`.localtime.hour = $localtime.hour AND \`temporalNode\`.localtime.minute = $localtime.minute AND \`temporalNode\`.localtime.second = $localtime.second AND \`temporalNode\`.localtime.millisecond = $localtime.millisecond AND \`temporalNode\`.localtime.microsecond = $localtime.microsecond AND \`temporalNode\`.localtime.nanosecond = $localtime.nanosecond AND \`temporalNode\`.localdatetime = localdatetime($localdatetime.formatted) RETURN \`temporalNode\` {_id: ID(\`temporalNode\`),time: { hour: \`temporalNode\`.time.hour , minute: \`temporalNode\`.time.minute , second: \`temporalNode\`.time.second , millisecond: \`temporalNode\`.time.millisecond , microsecond: \`temporalNode\`.time.microsecond , nanosecond: \`temporalNode\`.time.nanosecond , timezone: \`temporalNode\`.time.timezone , formatted: toString(\`temporalNode\`.time) },date: { year: \`temporalNode\`.date.year , month: \`temporalNode\`.date.month , day: \`temporalNode\`.date.day , formatted: toString(\`temporalNode\`.date) },datetime: { year: \`temporalNode\`.datetime.year , month: \`temporalNode\`.datetime.month , day: \`temporalNode\`.datetime.day , hour: \`temporalNode\`.datetime.hour , minute: \`temporalNode\`.datetime.minute , second: \`temporalNode\`.datetime.second , millisecond: \`temporalNode\`.datetime.millisecond , microsecond: \`temporalNode\`.datetime.microsecond , nanosecond: \`temporalNode\`.datetime.nanosecond , timezone: \`temporalNode\`.datetime.timezone , formatted: toString(\`temporalNode\`.datetime) },localtime: { hour: \`temporalNode\`.localtime.hour , minute: \`temporalNode\`.localtime.minute , second: \`temporalNode\`.localtime.second , millisecond: \`temporalNode\`.localtime.millisecond , microsecond: \`temporalNode\`.localtime.microsecond , nanosecond: \`temporalNode\`.localtime.nanosecond , formatted: toString(\`temporalNode\`.localtime) },localdatetime: { year: \`temporalNode\`.localdatetime.year , month: \`temporalNode\`.localdatetime.month , day: \`temporalNode\`.localdatetime.day , hour: \`temporalNode\`.localdatetime.hour , minute: \`temporalNode\`.localdatetime.minute , second: \`temporalNode\`.localdatetime.second , millisecond: \`temporalNode\`.localdatetime.millisecond , microsecond: \`temporalNode\`.localdatetime.microsecond , nanosecond: \`temporalNode\`.localdatetime.nanosecond , formatted: toString(\`temporalNode\`.localdatetime) }} AS \`temporalNode\``;
+
+  t.plan(1);
+
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {},
+    expectedCypherQuery,
+    {}
+  );
+});
+
+test('Query node with spatial properties using spatial arguments', t => {
+  const graphQLQuery = `query {
+    SpatialNode(
+      pointKey: {
+        x: 10
+      },
+      point: {
+        longitude: 40
+      }
+    ) {
+      pointKey {
+        x
+        y
+        z
+        crs
+      }
+      point {
+        longitude
+        latitude
+        height
+        crs
+      }
+    }
+  }`,
+    expectedCypherQuery = `MATCH (\`spatialNode\`:\`SpatialNode\`) WHERE \`spatialNode\`.pointKey.x = $pointKey.x AND \`spatialNode\`.point.longitude = $point.longitude RETURN \`spatialNode\` {pointKey: { x: \`spatialNode\`.pointKey.x , y: \`spatialNode\`.pointKey.y , z: \`spatialNode\`.pointKey.z , crs: \`spatialNode\`.pointKey.crs },point: { longitude: \`spatialNode\`.point.longitude , latitude: \`spatialNode\`.point.latitude , height: \`spatialNode\`.point.height , crs: \`spatialNode\`.point.crs }} AS \`spatialNode\``;
 
   t.plan(1);
 
@@ -2025,6 +2106,44 @@ test('Nested Query with temporal property arguments', t => {
   );
 });
 
+test('Nested Query with spatial property arguments', t => {
+  const graphQLQuery = `query {
+    SpatialNode(
+      pointKey: {
+        x: 50
+      }
+    ) {
+      pointKey {
+        x
+        y
+        z
+      }
+      spatialNodes(
+        pointKey: {
+          y: 20
+        }
+      ) {
+        pointKey {
+          x
+          y
+          z
+        }
+      }
+    }
+  }`,
+    expectedCypherQuery = `MATCH (\`spatialNode\`:\`SpatialNode\`) WHERE \`spatialNode\`.pointKey.x = $pointKey.x RETURN \`spatialNode\` {pointKey: { x: \`spatialNode\`.pointKey.x , y: \`spatialNode\`.pointKey.y , z: \`spatialNode\`.pointKey.z },spatialNodes: [(\`spatialNode\`)-[:\`SPATIAL\`]->(\`spatialNode_spatialNodes\`:\`SpatialNode\`) WHERE spatialNode_spatialNodes.pointKey.y = $1_pointKey.y | spatialNode_spatialNodes {pointKey: { x: \`spatialNode_spatialNodes\`.pointKey.x , y: \`spatialNode_spatialNodes\`.pointKey.y , z: \`spatialNode_spatialNodes\`.pointKey.z }}] } AS \`spatialNode\``;
+
+  t.plan(1);
+
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {},
+    expectedCypherQuery,
+    {}
+  );
+});
+
 test('Update temporal and non-temporal properties on node using temporal property node selection', t => {
   const graphQLQuery = `mutation {
     UpdateTemporalNode(
@@ -2113,6 +2232,39 @@ test('Update temporal and non-temporal properties on node using temporal propert
   );
 });
 
+test('Update node spatial property using spatial property node selection', t => {
+  const graphQLQuery = `mutation {
+    UpdateSpatialNode(
+      pointKey: {
+        y: 60
+      }
+      point: {
+        x: 100,
+        y: 200,
+        z: 300
+      }
+    ) {
+      point {
+        x
+        y
+        z
+      }
+    }
+  }`,
+    expectedCypherQuery = `MATCH (\`spatialNode\`:\`SpatialNode\`) WHERE \`spatialNode\`.pointKey.y = $params.pointKey.y  
+  SET \`spatialNode\` += {point: point($params.point)} RETURN \`spatialNode\` {point: { x: \`spatialNode\`.point.x , y: \`spatialNode\`.point.y , z: \`spatialNode\`.point.z }} AS \`spatialNode\``;
+
+  t.plan(1);
+
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {},
+    expectedCypherQuery,
+    {}
+  );
+});
+
 test('Update temporal list property on node using temporal property node selection', t => {
   const graphQLQuery = `mutation {
     UpdateTemporalNode(
@@ -2154,7 +2306,7 @@ test('Update temporal list property on node using temporal property node selecti
     }
   }`,
     expectedCypherQuery = `MATCH (\`temporalNode\`:\`TemporalNode\`) WHERE \`temporalNode\`.datetime.year = $params.datetime.year AND \`temporalNode\`.datetime.month = $params.datetime.month AND \`temporalNode\`.datetime.day = $params.datetime.day AND \`temporalNode\`.datetime.hour = $params.datetime.hour AND \`temporalNode\`.datetime.minute = $params.datetime.minute AND \`temporalNode\`.datetime.second = $params.datetime.second AND \`temporalNode\`.datetime.millisecond = $params.datetime.millisecond AND \`temporalNode\`.datetime.microsecond = $params.datetime.microsecond AND \`temporalNode\`.datetime.nanosecond = $params.datetime.nanosecond AND \`temporalNode\`.datetime.timezone = $params.datetime.timezone  
-  SET \`temporalNode\` += {localdatetimes: [value IN $params.localdatetimes | localdatetime(value)]} RETURN \`temporalNode\` {_id: ID(\`temporalNode\`), .name ,localdatetimes: reduce(a = [], TEMPORAL_INSTANCE IN temporalNode.localdatetimes | a + { year: TEMPORAL_INSTANCE.year , month: TEMPORAL_INSTANCE.month , day: TEMPORAL_INSTANCE.day , hour: TEMPORAL_INSTANCE.hour , minute: TEMPORAL_INSTANCE.minute , second: TEMPORAL_INSTANCE.second , millisecond: TEMPORAL_INSTANCE.millisecond , microsecond: TEMPORAL_INSTANCE.microsecond , nanosecond: TEMPORAL_INSTANCE.nanosecond , formatted: toString(TEMPORAL_INSTANCE) })} AS \`temporalNode\``;
+  SET \`temporalNode\` += {localdatetimes: [value IN $params.localdatetimes | localdatetime(value)]} RETURN \`temporalNode\` {_id: ID(\`temporalNode\`), .name ,localdatetimes: reduce(a = [], INSTANCE IN temporalNode.localdatetimes | a + { year: INSTANCE.year , month: INSTANCE.month , day: INSTANCE.day , hour: INSTANCE.hour , minute: INSTANCE.minute , second: INSTANCE.second , millisecond: INSTANCE.millisecond , microsecond: INSTANCE.microsecond , nanosecond: INSTANCE.nanosecond , formatted: toString(INSTANCE) })} AS \`temporalNode\``;
 
   t.plan(1);
 
@@ -2241,6 +2393,37 @@ test('Delete node using temporal property node selection', t => {
 WITH \`temporalNode\` AS \`temporalNode_toDelete\`, \`temporalNode\` {_id: ID(\`temporalNode\`), .name ,time: { hour: \`temporalNode\`.time.hour , minute: \`temporalNode\`.time.minute , second: \`temporalNode\`.time.second , millisecond: \`temporalNode\`.time.millisecond , microsecond: \`temporalNode\`.time.microsecond , nanosecond: \`temporalNode\`.time.nanosecond , timezone: \`temporalNode\`.time.timezone , formatted: toString(\`temporalNode\`.time) },date: { year: \`temporalNode\`.date.year , month: \`temporalNode\`.date.month , day: \`temporalNode\`.date.day , formatted: toString(\`temporalNode\`.date) },datetime: { year: \`temporalNode\`.datetime.year , month: \`temporalNode\`.datetime.month , day: \`temporalNode\`.datetime.day , hour: \`temporalNode\`.datetime.hour , minute: \`temporalNode\`.datetime.minute , second: \`temporalNode\`.datetime.second , millisecond: \`temporalNode\`.datetime.millisecond , microsecond: \`temporalNode\`.datetime.microsecond , nanosecond: \`temporalNode\`.datetime.nanosecond , timezone: \`temporalNode\`.datetime.timezone , formatted: toString(\`temporalNode\`.datetime) },localtime: { hour: \`temporalNode\`.localtime.hour , minute: \`temporalNode\`.localtime.minute , second: \`temporalNode\`.localtime.second , millisecond: \`temporalNode\`.localtime.millisecond , microsecond: \`temporalNode\`.localtime.microsecond , nanosecond: \`temporalNode\`.localtime.nanosecond , formatted: toString(\`temporalNode\`.localtime) },localdatetime: { year: \`temporalNode\`.localdatetime.year , month: \`temporalNode\`.localdatetime.month , day: \`temporalNode\`.localdatetime.day , hour: \`temporalNode\`.localdatetime.hour , minute: \`temporalNode\`.localdatetime.minute , second: \`temporalNode\`.localdatetime.second , millisecond: \`temporalNode\`.localdatetime.millisecond , microsecond: \`temporalNode\`.localdatetime.microsecond , nanosecond: \`temporalNode\`.localdatetime.nanosecond , formatted: toString(\`temporalNode\`.localdatetime) }} AS \`temporalNode\`
 DETACH DELETE \`temporalNode_toDelete\`
 RETURN \`temporalNode\``;
+
+  t.plan(1);
+
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {},
+    expectedCypherQuery,
+    {}
+  );
+});
+
+test('Delete node using spatial property node selection', t => {
+  const graphQLQuery = `mutation {
+    DeleteSpatialNode(
+      pointKey: {
+        x: 50      
+      }
+    ) {
+      _id
+      pointKey {
+        x
+        y
+        z
+      }
+    }
+  }`,
+    expectedCypherQuery = `MATCH (\`spatialNode\`:\`SpatialNode\`) WHERE \`spatialNode\`.pointKey.x = $pointKey.x
+WITH \`spatialNode\` AS \`spatialNode_toDelete\`, \`spatialNode\` {_id: ID(\`spatialNode\`),pointKey: { x: \`spatialNode\`.pointKey.x , y: \`spatialNode\`.pointKey.y , z: \`spatialNode\`.pointKey.z }} AS \`spatialNode\`
+DETACH DELETE \`spatialNode_toDelete\`
+RETURN \`spatialNode\``;
 
   t.plan(1);
 
@@ -2398,6 +2581,42 @@ test('Add relationship mutation using temporal property node selection', t => {
       MATCH (\`temporalNode_to\`:\`TemporalNode\`) WHERE \`temporalNode_to\`.datetime.year = $to.datetime.year AND \`temporalNode_to\`.datetime.month = $to.datetime.month AND \`temporalNode_to\`.datetime.day = $to.datetime.day AND \`temporalNode_to\`.datetime.hour = $to.datetime.hour AND \`temporalNode_to\`.datetime.minute = $to.datetime.minute AND \`temporalNode_to\`.datetime.second = $to.datetime.second AND \`temporalNode_to\`.datetime.millisecond = $to.datetime.millisecond AND \`temporalNode_to\`.datetime.microsecond = $to.datetime.microsecond AND \`temporalNode_to\`.datetime.nanosecond = $to.datetime.nanosecond AND \`temporalNode_to\`.datetime.timezone = $to.datetime.timezone 
       CREATE (\`temporalNode_from\`)-[\`temporal_relation\`:\`TEMPORAL\`]->(\`temporalNode_to\`)
       RETURN \`temporal_relation\` { from: \`temporalNode_from\` {_id: ID(\`temporalNode_from\`),time: { hour: \`temporalNode_from\`.time.hour , minute: \`temporalNode_from\`.time.minute , second: \`temporalNode_from\`.time.second , millisecond: \`temporalNode_from\`.time.millisecond , microsecond: \`temporalNode_from\`.time.microsecond , nanosecond: \`temporalNode_from\`.time.nanosecond , timezone: \`temporalNode_from\`.time.timezone , formatted: toString(\`temporalNode_from\`.time) },date: { year: \`temporalNode_from\`.date.year , month: \`temporalNode_from\`.date.month , day: \`temporalNode_from\`.date.day , formatted: toString(\`temporalNode_from\`.date) },datetime: { year: \`temporalNode_from\`.datetime.year , month: \`temporalNode_from\`.datetime.month , day: \`temporalNode_from\`.datetime.day , hour: \`temporalNode_from\`.datetime.hour , minute: \`temporalNode_from\`.datetime.minute , second: \`temporalNode_from\`.datetime.second , millisecond: \`temporalNode_from\`.datetime.millisecond , microsecond: \`temporalNode_from\`.datetime.microsecond , nanosecond: \`temporalNode_from\`.datetime.nanosecond , timezone: \`temporalNode_from\`.datetime.timezone , formatted: toString(\`temporalNode_from\`.datetime) },localtime: { hour: \`temporalNode_from\`.localtime.hour , minute: \`temporalNode_from\`.localtime.minute , second: \`temporalNode_from\`.localtime.second , millisecond: \`temporalNode_from\`.localtime.millisecond , microsecond: \`temporalNode_from\`.localtime.microsecond , nanosecond: \`temporalNode_from\`.localtime.nanosecond , formatted: toString(\`temporalNode_from\`.localtime) },localdatetime: { year: \`temporalNode_from\`.localdatetime.year , month: \`temporalNode_from\`.localdatetime.month , day: \`temporalNode_from\`.localdatetime.day , hour: \`temporalNode_from\`.localdatetime.hour , minute: \`temporalNode_from\`.localdatetime.minute , second: \`temporalNode_from\`.localdatetime.second , millisecond: \`temporalNode_from\`.localdatetime.millisecond , microsecond: \`temporalNode_from\`.localdatetime.microsecond , nanosecond: \`temporalNode_from\`.localdatetime.nanosecond , formatted: toString(\`temporalNode_from\`.localdatetime) }} ,to: \`temporalNode_to\` {_id: ID(\`temporalNode_to\`),time: { hour: \`temporalNode_to\`.time.hour , minute: \`temporalNode_to\`.time.minute , second: \`temporalNode_to\`.time.second , millisecond: \`temporalNode_to\`.time.millisecond , microsecond: \`temporalNode_to\`.time.microsecond , nanosecond: \`temporalNode_to\`.time.nanosecond , timezone: \`temporalNode_to\`.time.timezone , formatted: toString(\`temporalNode_to\`.time) },date: { year: \`temporalNode_to\`.date.year , month: \`temporalNode_to\`.date.month , day: \`temporalNode_to\`.date.day , formatted: toString(\`temporalNode_to\`.date) },datetime: { year: \`temporalNode_to\`.datetime.year , month: \`temporalNode_to\`.datetime.month , day: \`temporalNode_to\`.datetime.day , hour: \`temporalNode_to\`.datetime.hour , minute: \`temporalNode_to\`.datetime.minute , second: \`temporalNode_to\`.datetime.second , millisecond: \`temporalNode_to\`.datetime.millisecond , microsecond: \`temporalNode_to\`.datetime.microsecond , nanosecond: \`temporalNode_to\`.datetime.nanosecond , timezone: \`temporalNode_to\`.datetime.timezone , formatted: toString(\`temporalNode_to\`.datetime) },localtime: { hour: \`temporalNode_to\`.localtime.hour , minute: \`temporalNode_to\`.localtime.minute , second: \`temporalNode_to\`.localtime.second , millisecond: \`temporalNode_to\`.localtime.millisecond , microsecond: \`temporalNode_to\`.localtime.microsecond , nanosecond: \`temporalNode_to\`.localtime.nanosecond , formatted: toString(\`temporalNode_to\`.localtime) },localdatetime: { year: \`temporalNode_to\`.localdatetime.year , month: \`temporalNode_to\`.localdatetime.month , day: \`temporalNode_to\`.localdatetime.day , hour: \`temporalNode_to\`.localdatetime.hour , minute: \`temporalNode_to\`.localdatetime.minute , second: \`temporalNode_to\`.localdatetime.second , millisecond: \`temporalNode_to\`.localdatetime.millisecond , microsecond: \`temporalNode_to\`.localdatetime.microsecond , nanosecond: \`temporalNode_to\`.localdatetime.nanosecond , formatted: toString(\`temporalNode_to\`.localdatetime) }}  } AS \`_AddTemporalNodeTemporalNodesPayload\`;
+    `;
+
+  t.plan(1);
+
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {},
+    expectedCypherQuery,
+    {}
+  );
+});
+
+test('Add relationship mutation using spatial property node selection', t => {
+  const graphQLQuery = `mutation {
+    AddSpatialNodeSpatialNodes(
+      from: { pointKey: { x: 50 } }
+      to: { pointKey: { y: 20 } }
+    ) {
+      from {
+        pointKey {
+          x
+        }
+      }
+      to {
+        pointKey {
+          y
+        }
+      }
+    }
+  }`,
+    expectedCypherQuery = `
+      MATCH (\`spatialNode_from\`:\`SpatialNode\`) WHERE \`spatialNode_from\`.pointKey.x = $from.pointKey.x 
+      MATCH (\`spatialNode_to\`:\`SpatialNode\`) WHERE \`spatialNode_to\`.pointKey.y = $to.pointKey.y 
+      CREATE (\`spatialNode_from\`)-[\`spatial_relation\`:\`SPATIAL\`]->(\`spatialNode_to\`)
+      RETURN \`spatial_relation\` { from: \`spatialNode_from\` {pointKey: { x: \`spatialNode_from\`.pointKey.x }} ,to: \`spatialNode_to\` {pointKey: { y: \`spatialNode_to\`.pointKey.y }}  } AS \`_AddSpatialNodeSpatialNodesPayload\`;
     `;
 
   t.plan(1);
@@ -2571,6 +2790,44 @@ test('Remove relationship mutation using temporal property node selection', t =>
   );
 });
 
+test('Remove relationship mutation using spatial property node selection', t => {
+  const graphQLQuery = `mutation {
+    RemoveSpatialNodeSpatialNodes(
+      from: { pointKey: { x: 50 } }
+      to: { pointKey: { y: 20 } }
+    ) {
+      from {
+        pointKey {
+          x
+        }
+      }
+      to {
+        pointKey {
+          y
+        }
+      }
+    }
+  }`,
+    expectedCypherQuery = `
+      MATCH (\`spatialNode_from\`:\`SpatialNode\`) WHERE \`spatialNode_from\`.pointKey.x = $from.pointKey.x 
+      MATCH (\`spatialNode_to\`:\`SpatialNode\`) WHERE \`spatialNode_to\`.pointKey.y = $to.pointKey.y 
+      OPTIONAL MATCH (\`spatialNode_from\`)-[\`spatialNode_fromspatialNode_to\`:\`SPATIAL\`]->(\`spatialNode_to\`)
+      DELETE \`spatialNode_fromspatialNode_to\`
+      WITH COUNT(*) AS scope, \`spatialNode_from\` AS \`_spatialNode_from\`, \`spatialNode_to\` AS \`_spatialNode_to\`
+      RETURN {from: \`_spatialNode_from\` {pointKey: { x: \`_spatialNode_from\`.pointKey.x }} ,to: \`_spatialNode_to\` {pointKey: { y: \`_spatialNode_to\`.pointKey.y }} } AS \`_RemoveSpatialNodeSpatialNodesPayload\`;
+    `;
+
+  t.plan(1);
+
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {},
+    expectedCypherQuery,
+    {}
+  );
+});
+
 test('Query relationship with temporal properties', t => {
   const graphQLQuery = `query {
     Movie {
@@ -2589,6 +2846,32 @@ test('Query relationship with temporal properties', t => {
     }
   }`,
     expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) RETURN \`movie\` {_id: ID(\`movie\`), .title ,ratings: [(\`movie\`)<-[\`movie_ratings_relation\`:\`RATED\`]-(:\`User\`) | movie_ratings_relation { .rating ,datetime: { year: \`movie_ratings_relation\`.datetime.year },User: head([(:\`Movie\`${ADDITIONAL_MOVIE_LABELS})<-[\`movie_ratings_relation\`]-(\`movie_ratings_User\`:\`User\`) | movie_ratings_User {_id: ID(\`movie_ratings_User\`), .name }]) }] } AS \`movie\``;
+
+  t.plan(1);
+
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {},
+    expectedCypherQuery,
+    {}
+  );
+});
+
+test('Query relationship with spatial properties', t => {
+  const graphQLQuery = `query {
+    User {
+      rated {
+        location {
+          x
+          y
+          z
+          srid
+        }
+      }
+    }
+  }`,
+    expectedCypherQuery = `MATCH (\`user\`:\`User\`) RETURN \`user\` {rated: [(\`user\`)-[\`user_rated_relation\`:\`RATED\`]->(:\`Movie\`:\`u_user-id\`:\`newMovieLabel\`) | user_rated_relation {location: { x: \`user_rated_relation\`.location.x , y: \`user_rated_relation\`.location.y , z: \`user_rated_relation\`.location.z , srid: \`user_rated_relation\`.location.srid }}] } AS \`user\``;
 
   t.plan(1);
 
@@ -2751,6 +3034,55 @@ test('Add relationship mutation with temporal properties', t => {
   );
 });
 
+test('Add relationship mutation with spatial properties', t => {
+  const graphQLQuery = `mutation {
+    AddUserRated(
+      from: {
+        userId: "6973aff4-3113-45b0-9ce4-9879f0077b46"
+      },
+      to: {
+        movieId: "6f565c2a-cf1b-4969-951e-d0adade1e48c"
+      },
+      data: {
+        rating: 10,
+        location: {
+          x: 10,
+          y: 20,
+          z: 30
+        }
+      }
+    ) {
+      location {
+        x
+        y
+        z
+      }
+      from {
+        _id
+      }
+      to {
+        _id
+      }
+    }
+  }`,
+    expectedCypherQuery = `
+      MATCH (\`user_from\`:\`User\` {userId: $from.userId})
+      MATCH (\`movie_to\`:\`Movie\`:\`u_user-id\`:\`newMovieLabel\` {movieId: $to.movieId})
+      CREATE (\`user_from\`)-[\`rated_relation\`:\`RATED\` {rating:$data.rating,location: point($data.location)}]->(\`movie_to\`)
+      RETURN \`rated_relation\` { location: { x: \`rated_relation\`.location.x , y: \`rated_relation\`.location.y , z: \`rated_relation\`.location.z },from: \`user_from\` {_id: ID(\`user_from\`)} ,to: \`movie_to\` {_id: ID(\`movie_to\`)}  } AS \`_AddUserRatedPayload\`;
+    `;
+
+  t.plan(1);
+
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {},
+    expectedCypherQuery,
+    {}
+  );
+});
+
 test('Add relationship mutation with list properties', t => {
   const graphQLQuery = `mutation {
     AddUserRated(
@@ -2817,7 +3149,7 @@ test('Add relationship mutation with list properties', t => {
       MATCH (\`user_from\`:\`User\` {userId: $from.userId})
       MATCH (\`movie_to\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {movieId: $to.movieId})
       CREATE (\`user_from\`)-[\`rated_relation\`:\`RATED\` {ratings:$data.ratings,datetimes: [value IN $data.datetimes | datetime(value)]}]->(\`movie_to\`)
-      RETURN \`rated_relation\` {  .ratings ,datetimes: reduce(a = [], TEMPORAL_INSTANCE IN rated_relation.datetimes | a + { year: TEMPORAL_INSTANCE.year , month: TEMPORAL_INSTANCE.month , day: TEMPORAL_INSTANCE.day , hour: TEMPORAL_INSTANCE.hour , minute: TEMPORAL_INSTANCE.minute , second: TEMPORAL_INSTANCE.second , millisecond: TEMPORAL_INSTANCE.millisecond , microsecond: TEMPORAL_INSTANCE.microsecond , nanosecond: TEMPORAL_INSTANCE.nanosecond , timezone: TEMPORAL_INSTANCE.timezone , formatted: toString(TEMPORAL_INSTANCE) }),from: \`user_from\` {_id: ID(\`user_from\`), .userId , .name ,rated: [(\`user_from\`)-[\`user_from_rated_relation\`:\`RATED\`]->(:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) | user_from_rated_relation {datetime: { year: \`user_from_rated_relation\`.datetime.year }}] } ,to: \`movie_to\` {_id: ID(\`movie_to\`), .movieId , .title ,ratings: [(\`movie_to\`)<-[\`movie_to_ratings_relation\`:\`RATED\`]-(:\`User\`) | movie_to_ratings_relation {datetime: { year: \`movie_to_ratings_relation\`.datetime.year }}] }  } AS \`_AddUserRatedPayload\`;
+      RETURN \`rated_relation\` {  .ratings ,datetimes: reduce(a = [], INSTANCE IN rated_relation.datetimes | a + { year: INSTANCE.year , month: INSTANCE.month , day: INSTANCE.day , hour: INSTANCE.hour , minute: INSTANCE.minute , second: INSTANCE.second , millisecond: INSTANCE.millisecond , microsecond: INSTANCE.microsecond , nanosecond: INSTANCE.nanosecond , timezone: INSTANCE.timezone , formatted: toString(INSTANCE) }),from: \`user_from\` {_id: ID(\`user_from\`), .userId , .name ,rated: [(\`user_from\`)-[\`user_from_rated_relation\`:\`RATED\`]->(:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) | user_from_rated_relation {datetime: { year: \`user_from_rated_relation\`.datetime.year }}] } ,to: \`movie_to\` {_id: ID(\`movie_to\`), .movieId , .title ,ratings: [(\`movie_to\`)<-[\`movie_to_ratings_relation\`:\`RATED\`]-(:\`User\`) | movie_to_ratings_relation {datetime: { year: \`movie_to_ratings_relation\`.datetime.year }}] }  } AS \`_AddUserRatedPayload\`;
     `;
 
   t.plan(1);
@@ -3029,7 +3361,7 @@ test('Add reflexive relationship mutation with temporal properties', t => {
       MATCH (\`user_from\`:\`User\` {userId: $from.userId})
       MATCH (\`user_to\`:\`User\` {userId: $to.userId})
       CREATE (\`user_from\`)-[\`friend_of_relation\`:\`FRIEND_OF\` {since:$data.since,time: time($data.time),date: date($data.date),datetime: datetime($data.datetime),datetimes: [value IN $data.datetimes | datetime(value)],localtime: localtime($data.localtime),localdatetime: localdatetime($data.localdatetime)}]->(\`user_to\`)
-      RETURN \`friend_of_relation\` { from: \`user_from\` {_id: ID(\`user_from\`), .userId , .name ,friends: {from: [(\`user_from\`)<-[\`user_from_from_relation\`:\`FRIEND_OF\`]-(\`user_from_from\`:\`User\`) | user_from_from_relation { .since ,User: user_from_from {_id: ID(\`user_from_from\`), .name ,friends: {from: [(\`user_from_from\`)<-[\`user_from_from_from_relation\`:\`FRIEND_OF\`]-(\`user_from_from_from\`:\`User\`) | user_from_from_from_relation { .since ,User: user_from_from_from {_id: ID(\`user_from_from_from\`), .name } }] ,to: [(\`user_from_from\`)-[\`user_from_from_to_relation\`:\`FRIEND_OF\`]->(\`user_from_from_to\`:\`User\`) | user_from_from_to_relation { .since ,User: user_from_from_to {_id: ID(\`user_from_from_to\`), .name } }] } } }] ,to: [(\`user_from\`)-[\`user_from_to_relation\`:\`FRIEND_OF\`]->(\`user_from_to\`:\`User\`) | user_from_to_relation { .since ,datetime: { year: \`user_from_to_relation\`.datetime.year },User: user_from_to {_id: ID(\`user_from_to\`), .name } }] } } ,to: \`user_to\` {_id: ID(\`user_to\`), .name ,friends: {from: [(\`user_to\`)<-[\`user_to_from_relation\`:\`FRIEND_OF\`]-(\`user_to_from\`:\`User\`) | user_to_from_relation { .since ,User: user_to_from {_id: ID(\`user_to_from\`), .name } }] ,to: [(\`user_to\`)-[\`user_to_to_relation\`:\`FRIEND_OF\`]->(\`user_to_to\`:\`User\`) | user_to_to_relation { .since ,User: user_to_to {_id: ID(\`user_to_to\`), .name } }] } } , .since ,time: { hour: \`friend_of_relation\`.time.hour , minute: \`friend_of_relation\`.time.minute , second: \`friend_of_relation\`.time.second , millisecond: \`friend_of_relation\`.time.millisecond , microsecond: \`friend_of_relation\`.time.microsecond , nanosecond: \`friend_of_relation\`.time.nanosecond , timezone: \`friend_of_relation\`.time.timezone , formatted: toString(\`friend_of_relation\`.time) },date: { year: \`friend_of_relation\`.date.year , month: \`friend_of_relation\`.date.month , day: \`friend_of_relation\`.date.day , formatted: toString(\`friend_of_relation\`.date) },datetime: { year: \`friend_of_relation\`.datetime.year , month: \`friend_of_relation\`.datetime.month , day: \`friend_of_relation\`.datetime.day , hour: \`friend_of_relation\`.datetime.hour , minute: \`friend_of_relation\`.datetime.minute , second: \`friend_of_relation\`.datetime.second , millisecond: \`friend_of_relation\`.datetime.millisecond , microsecond: \`friend_of_relation\`.datetime.microsecond , nanosecond: \`friend_of_relation\`.datetime.nanosecond , timezone: \`friend_of_relation\`.datetime.timezone , formatted: toString(\`friend_of_relation\`.datetime) },datetimes: reduce(a = [], TEMPORAL_INSTANCE IN friend_of_relation.datetimes | a + { year: TEMPORAL_INSTANCE.year , month: TEMPORAL_INSTANCE.month , day: TEMPORAL_INSTANCE.day , hour: TEMPORAL_INSTANCE.hour , minute: TEMPORAL_INSTANCE.minute , second: TEMPORAL_INSTANCE.second , millisecond: TEMPORAL_INSTANCE.millisecond , microsecond: TEMPORAL_INSTANCE.microsecond , nanosecond: TEMPORAL_INSTANCE.nanosecond , timezone: TEMPORAL_INSTANCE.timezone , formatted: toString(TEMPORAL_INSTANCE) }),localtime: { hour: \`friend_of_relation\`.localtime.hour , minute: \`friend_of_relation\`.localtime.minute , second: \`friend_of_relation\`.localtime.second , millisecond: \`friend_of_relation\`.localtime.millisecond , microsecond: \`friend_of_relation\`.localtime.microsecond , nanosecond: \`friend_of_relation\`.localtime.nanosecond , formatted: toString(\`friend_of_relation\`.localtime) },localdatetime: { year: \`friend_of_relation\`.localdatetime.year , month: \`friend_of_relation\`.localdatetime.month , day: \`friend_of_relation\`.localdatetime.day , hour: \`friend_of_relation\`.localdatetime.hour , minute: \`friend_of_relation\`.localdatetime.minute , second: \`friend_of_relation\`.localdatetime.second , millisecond: \`friend_of_relation\`.localdatetime.millisecond , microsecond: \`friend_of_relation\`.localdatetime.microsecond , nanosecond: \`friend_of_relation\`.localdatetime.nanosecond , formatted: toString(\`friend_of_relation\`.localdatetime) } } AS \`_AddUserFriendsPayload\`;
+      RETURN \`friend_of_relation\` { from: \`user_from\` {_id: ID(\`user_from\`), .userId , .name ,friends: {from: [(\`user_from\`)<-[\`user_from_from_relation\`:\`FRIEND_OF\`]-(\`user_from_from\`:\`User\`) | user_from_from_relation { .since ,User: user_from_from {_id: ID(\`user_from_from\`), .name ,friends: {from: [(\`user_from_from\`)<-[\`user_from_from_from_relation\`:\`FRIEND_OF\`]-(\`user_from_from_from\`:\`User\`) | user_from_from_from_relation { .since ,User: user_from_from_from {_id: ID(\`user_from_from_from\`), .name } }] ,to: [(\`user_from_from\`)-[\`user_from_from_to_relation\`:\`FRIEND_OF\`]->(\`user_from_from_to\`:\`User\`) | user_from_from_to_relation { .since ,User: user_from_from_to {_id: ID(\`user_from_from_to\`), .name } }] } } }] ,to: [(\`user_from\`)-[\`user_from_to_relation\`:\`FRIEND_OF\`]->(\`user_from_to\`:\`User\`) | user_from_to_relation { .since ,datetime: { year: \`user_from_to_relation\`.datetime.year },User: user_from_to {_id: ID(\`user_from_to\`), .name } }] } } ,to: \`user_to\` {_id: ID(\`user_to\`), .name ,friends: {from: [(\`user_to\`)<-[\`user_to_from_relation\`:\`FRIEND_OF\`]-(\`user_to_from\`:\`User\`) | user_to_from_relation { .since ,User: user_to_from {_id: ID(\`user_to_from\`), .name } }] ,to: [(\`user_to\`)-[\`user_to_to_relation\`:\`FRIEND_OF\`]->(\`user_to_to\`:\`User\`) | user_to_to_relation { .since ,User: user_to_to {_id: ID(\`user_to_to\`), .name } }] } } , .since ,time: { hour: \`friend_of_relation\`.time.hour , minute: \`friend_of_relation\`.time.minute , second: \`friend_of_relation\`.time.second , millisecond: \`friend_of_relation\`.time.millisecond , microsecond: \`friend_of_relation\`.time.microsecond , nanosecond: \`friend_of_relation\`.time.nanosecond , timezone: \`friend_of_relation\`.time.timezone , formatted: toString(\`friend_of_relation\`.time) },date: { year: \`friend_of_relation\`.date.year , month: \`friend_of_relation\`.date.month , day: \`friend_of_relation\`.date.day , formatted: toString(\`friend_of_relation\`.date) },datetime: { year: \`friend_of_relation\`.datetime.year , month: \`friend_of_relation\`.datetime.month , day: \`friend_of_relation\`.datetime.day , hour: \`friend_of_relation\`.datetime.hour , minute: \`friend_of_relation\`.datetime.minute , second: \`friend_of_relation\`.datetime.second , millisecond: \`friend_of_relation\`.datetime.millisecond , microsecond: \`friend_of_relation\`.datetime.microsecond , nanosecond: \`friend_of_relation\`.datetime.nanosecond , timezone: \`friend_of_relation\`.datetime.timezone , formatted: toString(\`friend_of_relation\`.datetime) },datetimes: reduce(a = [], INSTANCE IN friend_of_relation.datetimes | a + { year: INSTANCE.year , month: INSTANCE.month , day: INSTANCE.day , hour: INSTANCE.hour , minute: INSTANCE.minute , second: INSTANCE.second , millisecond: INSTANCE.millisecond , microsecond: INSTANCE.microsecond , nanosecond: INSTANCE.nanosecond , timezone: INSTANCE.timezone , formatted: toString(INSTANCE) }),localtime: { hour: \`friend_of_relation\`.localtime.hour , minute: \`friend_of_relation\`.localtime.minute , second: \`friend_of_relation\`.localtime.second , millisecond: \`friend_of_relation\`.localtime.millisecond , microsecond: \`friend_of_relation\`.localtime.microsecond , nanosecond: \`friend_of_relation\`.localtime.nanosecond , formatted: toString(\`friend_of_relation\`.localtime) },localdatetime: { year: \`friend_of_relation\`.localdatetime.year , month: \`friend_of_relation\`.localdatetime.month , day: \`friend_of_relation\`.localdatetime.day , hour: \`friend_of_relation\`.localdatetime.hour , minute: \`friend_of_relation\`.localdatetime.minute , second: \`friend_of_relation\`.localdatetime.second , millisecond: \`friend_of_relation\`.localdatetime.millisecond , microsecond: \`friend_of_relation\`.localdatetime.microsecond , nanosecond: \`friend_of_relation\`.localdatetime.nanosecond , formatted: toString(\`friend_of_relation\`.localdatetime) } } AS \`_AddUserFriendsPayload\`;
     `;
 
   t.plan(1);
@@ -3324,7 +3656,7 @@ test('Query nested temporal properties on reflexive relationship using temporal 
       }
     }
   }`,
-    expectedCypherQuery = `MATCH (\`user\`:\`User\`) RETURN \`user\` { .userId , .name ,friends: {from: [(\`user\`)<-[\`user_from_relation\`:\`FRIEND_OF\`]-(\`user_from\`:\`User\`) WHERE user_from_relation.time = time($1_time.formatted) AND user_from_relation.date.year = $1_date.year AND user_from_relation.date.month = $1_date.month AND user_from_relation.date.day = $1_date.day AND user_from_relation.datetime.year = $1_datetime.year AND user_from_relation.datetime.month = $1_datetime.month AND user_from_relation.datetime.day = $1_datetime.day AND user_from_relation.datetime.hour = $1_datetime.hour AND user_from_relation.datetime.minute = $1_datetime.minute AND user_from_relation.datetime.second = $1_datetime.second AND user_from_relation.datetime.millisecond = $1_datetime.millisecond AND user_from_relation.datetime.microsecond = $1_datetime.microsecond AND user_from_relation.datetime.nanosecond = $1_datetime.nanosecond AND user_from_relation.datetime.timezone = $1_datetime.timezone AND user_from_relation.localtime.hour = $1_localtime.hour AND user_from_relation.localtime.minute = $1_localtime.minute AND user_from_relation.localtime.second = $1_localtime.second AND user_from_relation.localtime.millisecond = $1_localtime.millisecond AND user_from_relation.localtime.microsecond = $1_localtime.microsecond AND user_from_relation.localtime.nanosecond = $1_localtime.nanosecond AND user_from_relation.localdatetime.year = $1_localdatetime.year AND user_from_relation.localdatetime.month = $1_localdatetime.month AND user_from_relation.localdatetime.day = $1_localdatetime.day AND user_from_relation.localdatetime.hour = $1_localdatetime.hour AND user_from_relation.localdatetime.minute = $1_localdatetime.minute AND user_from_relation.localdatetime.second = $1_localdatetime.second AND user_from_relation.localdatetime.millisecond = $1_localdatetime.millisecond AND user_from_relation.localdatetime.microsecond = $1_localdatetime.microsecond AND user_from_relation.localdatetime.nanosecond = $1_localdatetime.nanosecond | user_from_relation { .since ,time: { hour: \`user_from_relation\`.time.hour , minute: \`user_from_relation\`.time.minute , second: \`user_from_relation\`.time.second , millisecond: \`user_from_relation\`.time.millisecond , microsecond: \`user_from_relation\`.time.microsecond , nanosecond: \`user_from_relation\`.time.nanosecond , timezone: \`user_from_relation\`.time.timezone , formatted: toString(\`user_from_relation\`.time) },date: { year: \`user_from_relation\`.date.year , month: \`user_from_relation\`.date.month , day: \`user_from_relation\`.date.day , formatted: toString(\`user_from_relation\`.date) },datetime: { year: \`user_from_relation\`.datetime.year , month: \`user_from_relation\`.datetime.month , day: \`user_from_relation\`.datetime.day , hour: \`user_from_relation\`.datetime.hour , minute: \`user_from_relation\`.datetime.minute , second: \`user_from_relation\`.datetime.second , millisecond: \`user_from_relation\`.datetime.millisecond , microsecond: \`user_from_relation\`.datetime.microsecond , nanosecond: \`user_from_relation\`.datetime.nanosecond , timezone: \`user_from_relation\`.datetime.timezone , formatted: toString(\`user_from_relation\`.datetime) },datetimes: reduce(a = [], TEMPORAL_INSTANCE IN user_from_relation.datetimes | a + { year: TEMPORAL_INSTANCE.year , month: TEMPORAL_INSTANCE.month , day: TEMPORAL_INSTANCE.day , hour: TEMPORAL_INSTANCE.hour , minute: TEMPORAL_INSTANCE.minute , second: TEMPORAL_INSTANCE.second , millisecond: TEMPORAL_INSTANCE.millisecond , microsecond: TEMPORAL_INSTANCE.microsecond , nanosecond: TEMPORAL_INSTANCE.nanosecond , timezone: TEMPORAL_INSTANCE.timezone , formatted: toString(TEMPORAL_INSTANCE) }),localtime: { hour: \`user_from_relation\`.localtime.hour , minute: \`user_from_relation\`.localtime.minute , second: \`user_from_relation\`.localtime.second , millisecond: \`user_from_relation\`.localtime.millisecond , microsecond: \`user_from_relation\`.localtime.microsecond , nanosecond: \`user_from_relation\`.localtime.nanosecond , formatted: toString(\`user_from_relation\`.localtime) },localdatetime: { year: \`user_from_relation\`.localdatetime.year , month: \`user_from_relation\`.localdatetime.month , day: \`user_from_relation\`.localdatetime.day , hour: \`user_from_relation\`.localdatetime.hour , minute: \`user_from_relation\`.localdatetime.minute , second: \`user_from_relation\`.localdatetime.second , millisecond: \`user_from_relation\`.localdatetime.millisecond , microsecond: \`user_from_relation\`.localdatetime.microsecond , nanosecond: \`user_from_relation\`.localdatetime.nanosecond , formatted: toString(\`user_from_relation\`.localdatetime) },User: user_from {_id: ID(\`user_from\`), .userId ,rated: [(\`user_from\`)-[\`user_from_rated_relation\`:\`RATED\`]->(:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) | user_from_rated_relation {datetime: { year: \`user_from_rated_relation\`.datetime.year }}] } }] ,to: [(\`user\`)-[\`user_to_relation\`:\`FRIEND_OF\`]->(\`user_to\`:\`User\`) WHERE user_to_relation.time = time($3_time.formatted) AND user_to_relation.date.year = $3_date.year AND user_to_relation.date.month = $3_date.month AND user_to_relation.date.day = $3_date.day AND user_to_relation.datetime.year = $3_datetime.year AND user_to_relation.datetime.month = $3_datetime.month AND user_to_relation.datetime.day = $3_datetime.day AND user_to_relation.datetime.hour = $3_datetime.hour AND user_to_relation.datetime.minute = $3_datetime.minute AND user_to_relation.datetime.second = $3_datetime.second AND user_to_relation.datetime.millisecond = $3_datetime.millisecond AND user_to_relation.datetime.microsecond = $3_datetime.microsecond AND user_to_relation.datetime.nanosecond = $3_datetime.nanosecond AND user_to_relation.datetime.timezone = $3_datetime.timezone AND user_to_relation.localtime.hour = $3_localtime.hour AND user_to_relation.localtime.minute = $3_localtime.minute AND user_to_relation.localtime.second = $3_localtime.second AND user_to_relation.localtime.millisecond = $3_localtime.millisecond AND user_to_relation.localtime.microsecond = $3_localtime.microsecond AND user_to_relation.localtime.nanosecond = $3_localtime.nanosecond AND user_to_relation.localdatetime.year = $3_localdatetime.year AND user_to_relation.localdatetime.month = $3_localdatetime.month AND user_to_relation.localdatetime.day = $3_localdatetime.day AND user_to_relation.localdatetime.hour = $3_localdatetime.hour AND user_to_relation.localdatetime.minute = $3_localdatetime.minute AND user_to_relation.localdatetime.second = $3_localdatetime.second AND user_to_relation.localdatetime.millisecond = $3_localdatetime.millisecond AND user_to_relation.localdatetime.microsecond = $3_localdatetime.microsecond AND user_to_relation.localdatetime.nanosecond = $3_localdatetime.nanosecond | user_to_relation { .since ,time: { hour: \`user_to_relation\`.time.hour , minute: \`user_to_relation\`.time.minute , second: \`user_to_relation\`.time.second , millisecond: \`user_to_relation\`.time.millisecond , microsecond: \`user_to_relation\`.time.microsecond , nanosecond: \`user_to_relation\`.time.nanosecond , timezone: \`user_to_relation\`.time.timezone , formatted: toString(\`user_to_relation\`.time) },date: { year: \`user_to_relation\`.date.year , month: \`user_to_relation\`.date.month , day: \`user_to_relation\`.date.day , formatted: toString(\`user_to_relation\`.date) },datetime: { year: \`user_to_relation\`.datetime.year , month: \`user_to_relation\`.datetime.month , day: \`user_to_relation\`.datetime.day , hour: \`user_to_relation\`.datetime.hour , minute: \`user_to_relation\`.datetime.minute , second: \`user_to_relation\`.datetime.second , millisecond: \`user_to_relation\`.datetime.millisecond , microsecond: \`user_to_relation\`.datetime.microsecond , nanosecond: \`user_to_relation\`.datetime.nanosecond , timezone: \`user_to_relation\`.datetime.timezone , formatted: toString(\`user_to_relation\`.datetime) },localtime: { hour: \`user_to_relation\`.localtime.hour , minute: \`user_to_relation\`.localtime.minute , second: \`user_to_relation\`.localtime.second , millisecond: \`user_to_relation\`.localtime.millisecond , microsecond: \`user_to_relation\`.localtime.microsecond , nanosecond: \`user_to_relation\`.localtime.nanosecond , formatted: toString(\`user_to_relation\`.localtime) },localdatetime: { year: \`user_to_relation\`.localdatetime.year , month: \`user_to_relation\`.localdatetime.month , day: \`user_to_relation\`.localdatetime.day , hour: \`user_to_relation\`.localdatetime.hour , minute: \`user_to_relation\`.localdatetime.minute , second: \`user_to_relation\`.localdatetime.second , millisecond: \`user_to_relation\`.localdatetime.millisecond , microsecond: \`user_to_relation\`.localdatetime.microsecond , nanosecond: \`user_to_relation\`.localdatetime.nanosecond , formatted: toString(\`user_to_relation\`.localdatetime) },User: user_to {_id: ID(\`user_to\`), .userId ,rated: [(\`user_to\`)-[\`user_to_rated_relation\`:\`RATED\`]->(:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) | user_to_rated_relation {datetime: { year: \`user_to_rated_relation\`.datetime.year }}] } }] } } AS \`user\``;
+    expectedCypherQuery = `MATCH (\`user\`:\`User\`) RETURN \`user\` { .userId , .name ,friends: {from: [(\`user\`)<-[\`user_from_relation\`:\`FRIEND_OF\`]-(\`user_from\`:\`User\`) WHERE user_from_relation.time = time($1_time.formatted) AND user_from_relation.date.year = $1_date.year AND user_from_relation.date.month = $1_date.month AND user_from_relation.date.day = $1_date.day AND user_from_relation.datetime.year = $1_datetime.year AND user_from_relation.datetime.month = $1_datetime.month AND user_from_relation.datetime.day = $1_datetime.day AND user_from_relation.datetime.hour = $1_datetime.hour AND user_from_relation.datetime.minute = $1_datetime.minute AND user_from_relation.datetime.second = $1_datetime.second AND user_from_relation.datetime.millisecond = $1_datetime.millisecond AND user_from_relation.datetime.microsecond = $1_datetime.microsecond AND user_from_relation.datetime.nanosecond = $1_datetime.nanosecond AND user_from_relation.datetime.timezone = $1_datetime.timezone AND user_from_relation.localtime.hour = $1_localtime.hour AND user_from_relation.localtime.minute = $1_localtime.minute AND user_from_relation.localtime.second = $1_localtime.second AND user_from_relation.localtime.millisecond = $1_localtime.millisecond AND user_from_relation.localtime.microsecond = $1_localtime.microsecond AND user_from_relation.localtime.nanosecond = $1_localtime.nanosecond AND user_from_relation.localdatetime.year = $1_localdatetime.year AND user_from_relation.localdatetime.month = $1_localdatetime.month AND user_from_relation.localdatetime.day = $1_localdatetime.day AND user_from_relation.localdatetime.hour = $1_localdatetime.hour AND user_from_relation.localdatetime.minute = $1_localdatetime.minute AND user_from_relation.localdatetime.second = $1_localdatetime.second AND user_from_relation.localdatetime.millisecond = $1_localdatetime.millisecond AND user_from_relation.localdatetime.microsecond = $1_localdatetime.microsecond AND user_from_relation.localdatetime.nanosecond = $1_localdatetime.nanosecond | user_from_relation { .since ,time: { hour: \`user_from_relation\`.time.hour , minute: \`user_from_relation\`.time.minute , second: \`user_from_relation\`.time.second , millisecond: \`user_from_relation\`.time.millisecond , microsecond: \`user_from_relation\`.time.microsecond , nanosecond: \`user_from_relation\`.time.nanosecond , timezone: \`user_from_relation\`.time.timezone , formatted: toString(\`user_from_relation\`.time) },date: { year: \`user_from_relation\`.date.year , month: \`user_from_relation\`.date.month , day: \`user_from_relation\`.date.day , formatted: toString(\`user_from_relation\`.date) },datetime: { year: \`user_from_relation\`.datetime.year , month: \`user_from_relation\`.datetime.month , day: \`user_from_relation\`.datetime.day , hour: \`user_from_relation\`.datetime.hour , minute: \`user_from_relation\`.datetime.minute , second: \`user_from_relation\`.datetime.second , millisecond: \`user_from_relation\`.datetime.millisecond , microsecond: \`user_from_relation\`.datetime.microsecond , nanosecond: \`user_from_relation\`.datetime.nanosecond , timezone: \`user_from_relation\`.datetime.timezone , formatted: toString(\`user_from_relation\`.datetime) },datetimes: reduce(a = [], INSTANCE IN user_from_relation.datetimes | a + { year: INSTANCE.year , month: INSTANCE.month , day: INSTANCE.day , hour: INSTANCE.hour , minute: INSTANCE.minute , second: INSTANCE.second , millisecond: INSTANCE.millisecond , microsecond: INSTANCE.microsecond , nanosecond: INSTANCE.nanosecond , timezone: INSTANCE.timezone , formatted: toString(INSTANCE) }),localtime: { hour: \`user_from_relation\`.localtime.hour , minute: \`user_from_relation\`.localtime.minute , second: \`user_from_relation\`.localtime.second , millisecond: \`user_from_relation\`.localtime.millisecond , microsecond: \`user_from_relation\`.localtime.microsecond , nanosecond: \`user_from_relation\`.localtime.nanosecond , formatted: toString(\`user_from_relation\`.localtime) },localdatetime: { year: \`user_from_relation\`.localdatetime.year , month: \`user_from_relation\`.localdatetime.month , day: \`user_from_relation\`.localdatetime.day , hour: \`user_from_relation\`.localdatetime.hour , minute: \`user_from_relation\`.localdatetime.minute , second: \`user_from_relation\`.localdatetime.second , millisecond: \`user_from_relation\`.localdatetime.millisecond , microsecond: \`user_from_relation\`.localdatetime.microsecond , nanosecond: \`user_from_relation\`.localdatetime.nanosecond , formatted: toString(\`user_from_relation\`.localdatetime) },User: user_from {_id: ID(\`user_from\`), .userId ,rated: [(\`user_from\`)-[\`user_from_rated_relation\`:\`RATED\`]->(:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) | user_from_rated_relation {datetime: { year: \`user_from_rated_relation\`.datetime.year }}] } }] ,to: [(\`user\`)-[\`user_to_relation\`:\`FRIEND_OF\`]->(\`user_to\`:\`User\`) WHERE user_to_relation.time = time($3_time.formatted) AND user_to_relation.date.year = $3_date.year AND user_to_relation.date.month = $3_date.month AND user_to_relation.date.day = $3_date.day AND user_to_relation.datetime.year = $3_datetime.year AND user_to_relation.datetime.month = $3_datetime.month AND user_to_relation.datetime.day = $3_datetime.day AND user_to_relation.datetime.hour = $3_datetime.hour AND user_to_relation.datetime.minute = $3_datetime.minute AND user_to_relation.datetime.second = $3_datetime.second AND user_to_relation.datetime.millisecond = $3_datetime.millisecond AND user_to_relation.datetime.microsecond = $3_datetime.microsecond AND user_to_relation.datetime.nanosecond = $3_datetime.nanosecond AND user_to_relation.datetime.timezone = $3_datetime.timezone AND user_to_relation.localtime.hour = $3_localtime.hour AND user_to_relation.localtime.minute = $3_localtime.minute AND user_to_relation.localtime.second = $3_localtime.second AND user_to_relation.localtime.millisecond = $3_localtime.millisecond AND user_to_relation.localtime.microsecond = $3_localtime.microsecond AND user_to_relation.localtime.nanosecond = $3_localtime.nanosecond AND user_to_relation.localdatetime.year = $3_localdatetime.year AND user_to_relation.localdatetime.month = $3_localdatetime.month AND user_to_relation.localdatetime.day = $3_localdatetime.day AND user_to_relation.localdatetime.hour = $3_localdatetime.hour AND user_to_relation.localdatetime.minute = $3_localdatetime.minute AND user_to_relation.localdatetime.second = $3_localdatetime.second AND user_to_relation.localdatetime.millisecond = $3_localdatetime.millisecond AND user_to_relation.localdatetime.microsecond = $3_localdatetime.microsecond AND user_to_relation.localdatetime.nanosecond = $3_localdatetime.nanosecond | user_to_relation { .since ,time: { hour: \`user_to_relation\`.time.hour , minute: \`user_to_relation\`.time.minute , second: \`user_to_relation\`.time.second , millisecond: \`user_to_relation\`.time.millisecond , microsecond: \`user_to_relation\`.time.microsecond , nanosecond: \`user_to_relation\`.time.nanosecond , timezone: \`user_to_relation\`.time.timezone , formatted: toString(\`user_to_relation\`.time) },date: { year: \`user_to_relation\`.date.year , month: \`user_to_relation\`.date.month , day: \`user_to_relation\`.date.day , formatted: toString(\`user_to_relation\`.date) },datetime: { year: \`user_to_relation\`.datetime.year , month: \`user_to_relation\`.datetime.month , day: \`user_to_relation\`.datetime.day , hour: \`user_to_relation\`.datetime.hour , minute: \`user_to_relation\`.datetime.minute , second: \`user_to_relation\`.datetime.second , millisecond: \`user_to_relation\`.datetime.millisecond , microsecond: \`user_to_relation\`.datetime.microsecond , nanosecond: \`user_to_relation\`.datetime.nanosecond , timezone: \`user_to_relation\`.datetime.timezone , formatted: toString(\`user_to_relation\`.datetime) },localtime: { hour: \`user_to_relation\`.localtime.hour , minute: \`user_to_relation\`.localtime.minute , second: \`user_to_relation\`.localtime.second , millisecond: \`user_to_relation\`.localtime.millisecond , microsecond: \`user_to_relation\`.localtime.microsecond , nanosecond: \`user_to_relation\`.localtime.nanosecond , formatted: toString(\`user_to_relation\`.localtime) },localdatetime: { year: \`user_to_relation\`.localdatetime.year , month: \`user_to_relation\`.localdatetime.month , day: \`user_to_relation\`.localdatetime.day , hour: \`user_to_relation\`.localdatetime.hour , minute: \`user_to_relation\`.localdatetime.minute , second: \`user_to_relation\`.localdatetime.second , millisecond: \`user_to_relation\`.localdatetime.millisecond , microsecond: \`user_to_relation\`.localdatetime.microsecond , nanosecond: \`user_to_relation\`.localdatetime.nanosecond , formatted: toString(\`user_to_relation\`.localdatetime) },User: user_to {_id: ID(\`user_to\`), .userId ,rated: [(\`user_to\`)-[\`user_to_rated_relation\`:\`RATED\`]->(:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) | user_to_rated_relation {datetime: { year: \`user_to_rated_relation\`.datetime.year }}] } }] } } AS \`user\``;
 
   t.plan(1);
   return augmentedSchemaCypherTestRunner(
@@ -3659,7 +3991,7 @@ test('Query nested list properties on relationship', t => {
       }
     }
   }`,
-    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) RETURN \`movie\` {_id: ID(\`movie\`), .title ,ratings: [(\`movie\`)<-[\`movie_ratings_relation\`:\`RATED\`]-(:\`User\`) | movie_ratings_relation { .rating , .ratings ,time: { hour: \`movie_ratings_relation\`.time.hour , minute: \`movie_ratings_relation\`.time.minute , second: \`movie_ratings_relation\`.time.second , millisecond: \`movie_ratings_relation\`.time.millisecond , microsecond: \`movie_ratings_relation\`.time.microsecond , nanosecond: \`movie_ratings_relation\`.time.nanosecond , timezone: \`movie_ratings_relation\`.time.timezone , formatted: toString(\`movie_ratings_relation\`.time) },date: { year: \`movie_ratings_relation\`.date.year , month: \`movie_ratings_relation\`.date.month , day: \`movie_ratings_relation\`.date.day , formatted: toString(\`movie_ratings_relation\`.date) },datetime: { year: \`movie_ratings_relation\`.datetime.year , month: \`movie_ratings_relation\`.datetime.month , day: \`movie_ratings_relation\`.datetime.day , hour: \`movie_ratings_relation\`.datetime.hour , minute: \`movie_ratings_relation\`.datetime.minute , second: \`movie_ratings_relation\`.datetime.second , millisecond: \`movie_ratings_relation\`.datetime.millisecond , microsecond: \`movie_ratings_relation\`.datetime.microsecond , nanosecond: \`movie_ratings_relation\`.datetime.nanosecond , timezone: \`movie_ratings_relation\`.datetime.timezone , formatted: toString(\`movie_ratings_relation\`.datetime) },datetimes: reduce(a = [], TEMPORAL_INSTANCE IN movie_ratings_relation.datetimes | a + { year: TEMPORAL_INSTANCE.year , month: TEMPORAL_INSTANCE.month , day: TEMPORAL_INSTANCE.day , hour: TEMPORAL_INSTANCE.hour , minute: TEMPORAL_INSTANCE.minute , second: TEMPORAL_INSTANCE.second , millisecond: TEMPORAL_INSTANCE.millisecond , microsecond: TEMPORAL_INSTANCE.microsecond , nanosecond: TEMPORAL_INSTANCE.nanosecond , timezone: TEMPORAL_INSTANCE.timezone , formatted: toString(TEMPORAL_INSTANCE) }),localtime: { hour: \`movie_ratings_relation\`.localtime.hour , minute: \`movie_ratings_relation\`.localtime.minute , second: \`movie_ratings_relation\`.localtime.second , millisecond: \`movie_ratings_relation\`.localtime.millisecond , microsecond: \`movie_ratings_relation\`.localtime.microsecond , nanosecond: \`movie_ratings_relation\`.localtime.nanosecond , formatted: toString(\`movie_ratings_relation\`.localtime) },localdatetime: { year: \`movie_ratings_relation\`.localdatetime.year , month: \`movie_ratings_relation\`.localdatetime.month , day: \`movie_ratings_relation\`.localdatetime.day , hour: \`movie_ratings_relation\`.localdatetime.hour , minute: \`movie_ratings_relation\`.localdatetime.minute , second: \`movie_ratings_relation\`.localdatetime.second , millisecond: \`movie_ratings_relation\`.localdatetime.millisecond , microsecond: \`movie_ratings_relation\`.localdatetime.microsecond , nanosecond: \`movie_ratings_relation\`.localdatetime.nanosecond , formatted: toString(\`movie_ratings_relation\`.localdatetime) },User: head([(:\`Movie\`${ADDITIONAL_MOVIE_LABELS})<-[\`movie_ratings_relation\`]-(\`movie_ratings_User\`:\`User\`) | movie_ratings_User {_id: ID(\`movie_ratings_User\`), .name ,rated: [(\`movie_ratings_User\`)-[\`movie_ratings_User_rated_relation\`:\`RATED\`]->(:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) | movie_ratings_User_rated_relation { .rating ,time: { hour: \`movie_ratings_User_rated_relation\`.time.hour , minute: \`movie_ratings_User_rated_relation\`.time.minute , second: \`movie_ratings_User_rated_relation\`.time.second , millisecond: \`movie_ratings_User_rated_relation\`.time.millisecond , microsecond: \`movie_ratings_User_rated_relation\`.time.microsecond , nanosecond: \`movie_ratings_User_rated_relation\`.time.nanosecond , timezone: \`movie_ratings_User_rated_relation\`.time.timezone , formatted: toString(\`movie_ratings_User_rated_relation\`.time) },date: { year: \`movie_ratings_User_rated_relation\`.date.year , month: \`movie_ratings_User_rated_relation\`.date.month , day: \`movie_ratings_User_rated_relation\`.date.day , formatted: toString(\`movie_ratings_User_rated_relation\`.date) },datetime: { year: \`movie_ratings_User_rated_relation\`.datetime.year , month: \`movie_ratings_User_rated_relation\`.datetime.month , day: \`movie_ratings_User_rated_relation\`.datetime.day , hour: \`movie_ratings_User_rated_relation\`.datetime.hour , minute: \`movie_ratings_User_rated_relation\`.datetime.minute , second: \`movie_ratings_User_rated_relation\`.datetime.second , millisecond: \`movie_ratings_User_rated_relation\`.datetime.millisecond , microsecond: \`movie_ratings_User_rated_relation\`.datetime.microsecond , nanosecond: \`movie_ratings_User_rated_relation\`.datetime.nanosecond , timezone: \`movie_ratings_User_rated_relation\`.datetime.timezone , formatted: toString(\`movie_ratings_User_rated_relation\`.datetime) },datetimes: reduce(a = [], TEMPORAL_INSTANCE IN movie_ratings_User_rated_relation.datetimes | a + { year: TEMPORAL_INSTANCE.year , month: TEMPORAL_INSTANCE.month , day: TEMPORAL_INSTANCE.day , hour: TEMPORAL_INSTANCE.hour , minute: TEMPORAL_INSTANCE.minute , second: TEMPORAL_INSTANCE.second , millisecond: TEMPORAL_INSTANCE.millisecond , microsecond: TEMPORAL_INSTANCE.microsecond , nanosecond: TEMPORAL_INSTANCE.nanosecond , timezone: TEMPORAL_INSTANCE.timezone , formatted: toString(TEMPORAL_INSTANCE) }),localtime: { hour: \`movie_ratings_User_rated_relation\`.localtime.hour , minute: \`movie_ratings_User_rated_relation\`.localtime.minute , second: \`movie_ratings_User_rated_relation\`.localtime.second , millisecond: \`movie_ratings_User_rated_relation\`.localtime.millisecond , microsecond: \`movie_ratings_User_rated_relation\`.localtime.microsecond , nanosecond: \`movie_ratings_User_rated_relation\`.localtime.nanosecond , formatted: toString(\`movie_ratings_User_rated_relation\`.localtime) },localdatetime: { year: \`movie_ratings_User_rated_relation\`.localdatetime.year , month: \`movie_ratings_User_rated_relation\`.localdatetime.month , day: \`movie_ratings_User_rated_relation\`.localdatetime.day , hour: \`movie_ratings_User_rated_relation\`.localdatetime.hour , minute: \`movie_ratings_User_rated_relation\`.localdatetime.minute , second: \`movie_ratings_User_rated_relation\`.localdatetime.second , millisecond: \`movie_ratings_User_rated_relation\`.localdatetime.millisecond , microsecond: \`movie_ratings_User_rated_relation\`.localdatetime.microsecond , nanosecond: \`movie_ratings_User_rated_relation\`.localdatetime.nanosecond , formatted: toString(\`movie_ratings_User_rated_relation\`.localdatetime) }}] }]) }] } AS \`movie\``;
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) RETURN \`movie\` {_id: ID(\`movie\`), .title ,ratings: [(\`movie\`)<-[\`movie_ratings_relation\`:\`RATED\`]-(:\`User\`) | movie_ratings_relation { .rating , .ratings ,time: { hour: \`movie_ratings_relation\`.time.hour , minute: \`movie_ratings_relation\`.time.minute , second: \`movie_ratings_relation\`.time.second , millisecond: \`movie_ratings_relation\`.time.millisecond , microsecond: \`movie_ratings_relation\`.time.microsecond , nanosecond: \`movie_ratings_relation\`.time.nanosecond , timezone: \`movie_ratings_relation\`.time.timezone , formatted: toString(\`movie_ratings_relation\`.time) },date: { year: \`movie_ratings_relation\`.date.year , month: \`movie_ratings_relation\`.date.month , day: \`movie_ratings_relation\`.date.day , formatted: toString(\`movie_ratings_relation\`.date) },datetime: { year: \`movie_ratings_relation\`.datetime.year , month: \`movie_ratings_relation\`.datetime.month , day: \`movie_ratings_relation\`.datetime.day , hour: \`movie_ratings_relation\`.datetime.hour , minute: \`movie_ratings_relation\`.datetime.minute , second: \`movie_ratings_relation\`.datetime.second , millisecond: \`movie_ratings_relation\`.datetime.millisecond , microsecond: \`movie_ratings_relation\`.datetime.microsecond , nanosecond: \`movie_ratings_relation\`.datetime.nanosecond , timezone: \`movie_ratings_relation\`.datetime.timezone , formatted: toString(\`movie_ratings_relation\`.datetime) },datetimes: reduce(a = [], INSTANCE IN movie_ratings_relation.datetimes | a + { year: INSTANCE.year , month: INSTANCE.month , day: INSTANCE.day , hour: INSTANCE.hour , minute: INSTANCE.minute , second: INSTANCE.second , millisecond: INSTANCE.millisecond , microsecond: INSTANCE.microsecond , nanosecond: INSTANCE.nanosecond , timezone: INSTANCE.timezone , formatted: toString(INSTANCE) }),localtime: { hour: \`movie_ratings_relation\`.localtime.hour , minute: \`movie_ratings_relation\`.localtime.minute , second: \`movie_ratings_relation\`.localtime.second , millisecond: \`movie_ratings_relation\`.localtime.millisecond , microsecond: \`movie_ratings_relation\`.localtime.microsecond , nanosecond: \`movie_ratings_relation\`.localtime.nanosecond , formatted: toString(\`movie_ratings_relation\`.localtime) },localdatetime: { year: \`movie_ratings_relation\`.localdatetime.year , month: \`movie_ratings_relation\`.localdatetime.month , day: \`movie_ratings_relation\`.localdatetime.day , hour: \`movie_ratings_relation\`.localdatetime.hour , minute: \`movie_ratings_relation\`.localdatetime.minute , second: \`movie_ratings_relation\`.localdatetime.second , millisecond: \`movie_ratings_relation\`.localdatetime.millisecond , microsecond: \`movie_ratings_relation\`.localdatetime.microsecond , nanosecond: \`movie_ratings_relation\`.localdatetime.nanosecond , formatted: toString(\`movie_ratings_relation\`.localdatetime) },User: head([(:\`Movie\`${ADDITIONAL_MOVIE_LABELS})<-[\`movie_ratings_relation\`]-(\`movie_ratings_User\`:\`User\`) | movie_ratings_User {_id: ID(\`movie_ratings_User\`), .name ,rated: [(\`movie_ratings_User\`)-[\`movie_ratings_User_rated_relation\`:\`RATED\`]->(:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) | movie_ratings_User_rated_relation { .rating ,time: { hour: \`movie_ratings_User_rated_relation\`.time.hour , minute: \`movie_ratings_User_rated_relation\`.time.minute , second: \`movie_ratings_User_rated_relation\`.time.second , millisecond: \`movie_ratings_User_rated_relation\`.time.millisecond , microsecond: \`movie_ratings_User_rated_relation\`.time.microsecond , nanosecond: \`movie_ratings_User_rated_relation\`.time.nanosecond , timezone: \`movie_ratings_User_rated_relation\`.time.timezone , formatted: toString(\`movie_ratings_User_rated_relation\`.time) },date: { year: \`movie_ratings_User_rated_relation\`.date.year , month: \`movie_ratings_User_rated_relation\`.date.month , day: \`movie_ratings_User_rated_relation\`.date.day , formatted: toString(\`movie_ratings_User_rated_relation\`.date) },datetime: { year: \`movie_ratings_User_rated_relation\`.datetime.year , month: \`movie_ratings_User_rated_relation\`.datetime.month , day: \`movie_ratings_User_rated_relation\`.datetime.day , hour: \`movie_ratings_User_rated_relation\`.datetime.hour , minute: \`movie_ratings_User_rated_relation\`.datetime.minute , second: \`movie_ratings_User_rated_relation\`.datetime.second , millisecond: \`movie_ratings_User_rated_relation\`.datetime.millisecond , microsecond: \`movie_ratings_User_rated_relation\`.datetime.microsecond , nanosecond: \`movie_ratings_User_rated_relation\`.datetime.nanosecond , timezone: \`movie_ratings_User_rated_relation\`.datetime.timezone , formatted: toString(\`movie_ratings_User_rated_relation\`.datetime) },datetimes: reduce(a = [], INSTANCE IN movie_ratings_User_rated_relation.datetimes | a + { year: INSTANCE.year , month: INSTANCE.month , day: INSTANCE.day , hour: INSTANCE.hour , minute: INSTANCE.minute , second: INSTANCE.second , millisecond: INSTANCE.millisecond , microsecond: INSTANCE.microsecond , nanosecond: INSTANCE.nanosecond , timezone: INSTANCE.timezone , formatted: toString(INSTANCE) }),localtime: { hour: \`movie_ratings_User_rated_relation\`.localtime.hour , minute: \`movie_ratings_User_rated_relation\`.localtime.minute , second: \`movie_ratings_User_rated_relation\`.localtime.second , millisecond: \`movie_ratings_User_rated_relation\`.localtime.millisecond , microsecond: \`movie_ratings_User_rated_relation\`.localtime.microsecond , nanosecond: \`movie_ratings_User_rated_relation\`.localtime.nanosecond , formatted: toString(\`movie_ratings_User_rated_relation\`.localtime) },localdatetime: { year: \`movie_ratings_User_rated_relation\`.localdatetime.year , month: \`movie_ratings_User_rated_relation\`.localdatetime.month , day: \`movie_ratings_User_rated_relation\`.localdatetime.day , hour: \`movie_ratings_User_rated_relation\`.localdatetime.hour , minute: \`movie_ratings_User_rated_relation\`.localdatetime.minute , second: \`movie_ratings_User_rated_relation\`.localdatetime.second , millisecond: \`movie_ratings_User_rated_relation\`.localdatetime.millisecond , microsecond: \`movie_ratings_User_rated_relation\`.localdatetime.microsecond , nanosecond: \`movie_ratings_User_rated_relation\`.localdatetime.nanosecond , formatted: toString(\`movie_ratings_User_rated_relation\`.localdatetime) }}] }]) }] } AS \`movie\``;
 
   t.plan(1);
   return augmentedSchemaCypherTestRunner(
@@ -3715,6 +4047,18 @@ test('Create node with list arguments', t => {
           formatted: "2020-11-23T10:30:01.002003004-08:00[America/Los_Angeles]"
         }
       ]
+      locations: [
+        {
+          x: 10,
+          y: 20,
+          z: 30
+        },
+        {
+          x: 30,
+          y: 20,
+          z: 10
+        }
+      ]
     ) {
       movieId
       title
@@ -3729,11 +4073,16 @@ test('Create node with list arguments', t => {
         second
         formatted
       }
+      locations {
+        x
+        y
+        z
+      }
     }
   }`,
     expectedCypherQuery = `
-    CREATE (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {movieId: apoc.create.uuid(),title:$params.title,released: datetime($params.released),years:$params.years,titles:$params.titles,imdbRatings:$params.imdbRatings,releases: [value IN $params.releases | datetime(value)]})
-    RETURN \`movie\` { .movieId , .title , .titles , .imdbRatings , .years ,releases: reduce(a = [], TEMPORAL_INSTANCE IN movie.releases | a + { year: TEMPORAL_INSTANCE.year , month: TEMPORAL_INSTANCE.month , day: TEMPORAL_INSTANCE.day , hour: TEMPORAL_INSTANCE.hour , second: TEMPORAL_INSTANCE.second , formatted: toString(TEMPORAL_INSTANCE) })} AS \`movie\`
+    CREATE (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {movieId: apoc.create.uuid(),title:$params.title,released: datetime($params.released),locations: [value IN $params.locations | point(value)],years:$params.years,titles:$params.titles,imdbRatings:$params.imdbRatings,releases: [value IN $params.releases | datetime(value)]})
+    RETURN \`movie\` { .movieId , .title , .titles , .imdbRatings , .years ,releases: reduce(a = [], INSTANCE IN movie.releases | a + { year: INSTANCE.year , month: INSTANCE.month , day: INSTANCE.day , hour: INSTANCE.hour , second: INSTANCE.second , formatted: toString(INSTANCE) }),locations: reduce(a = [], INSTANCE IN movie.locations | a + { x: INSTANCE.x , y: INSTANCE.y , z: INSTANCE.z })} AS \`movie\`
   `;
 
   t.plan(1);
@@ -4180,7 +4529,7 @@ test('Handle @cypher query with Int list payload', t => {
   ]);
 });
 
-test('Handle @cypher query with Temporal payload', t => {
+test('Handle @cypher query with temporal payload', t => {
   const graphQLQuery = `query {
     computedTemporal {
       year
@@ -4197,6 +4546,28 @@ test('Handle @cypher query with Temporal payload', t => {
     }
   }`,
     expectedCypherQuery = `WITH apoc.cypher.runFirstColumn("WITH datetime() AS now RETURN { year: now.year, month: now.month , day: now.day , hour: now.hour , minute: now.minute , second: now.second , millisecond: now.millisecond , microsecond: now.microsecond , nanosecond: now.nanosecond , timezone: now.timezone , formatted: toString(now) }", {offset:$offset, first:$first, cypherParams: $cypherParams}, True) AS x UNWIND x AS \`_Neo4jDateTime\` RETURN \`_Neo4jDateTime\` `;
+
+  t.plan(3);
+  return Promise.all([
+    cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery, {
+      first: -1,
+      cypherParams: CYPHER_PARAMS,
+      offset: 0
+    }),
+    augmentedSchemaCypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery)
+  ]);
+});
+
+test('Handle @cypher query with spatial payload', t => {
+  const graphQLQuery = `query {
+    computedSpatial {
+      x
+      y
+      z
+      crs
+    }
+  }`,
+    expectedCypherQuery = `WITH apoc.cypher.runFirstColumn("WITH point({ x: 10, y: 20, z: 15 }) AS instance RETURN { x: instance.x, y: instance.y, z: instance.z, crs: instance.crs }", {offset:$offset, first:$first, cypherParams: $cypherParams}, True) AS x UNWIND x AS \`_Neo4jPoint\` RETURN \`_Neo4jPoint\` `;
 
   t.plan(3);
   return Promise.all([
@@ -4268,7 +4639,7 @@ test('Handle @cypher mutation with String list payload', t => {
   ]);
 });
 
-test('Handle @cypher mutation with Temporal payload', t => {
+test('Handle @cypher mutation with temporal payload', t => {
   const graphQLQuery = `mutation {
     computedTemporal {
       year
@@ -4287,6 +4658,30 @@ test('Handle @cypher mutation with Temporal payload', t => {
     expectedCypherQuery = `CALL apoc.cypher.doIt("WITH datetime() AS now RETURN { year: now.year, month: now.month , day: now.day , hour: now.hour , minute: now.minute , second: now.second , millisecond: now.millisecond , microsecond: now.microsecond , nanosecond: now.nanosecond , timezone: now.timezone , formatted: toString(now) }", {first:$first, offset:$offset, cypherParams: $cypherParams}) YIELD value
     WITH apoc.map.values(value, [keys(value)[0]])[0] AS \`_Neo4jDateTime\`
     RETURN \`_Neo4jDateTime\` `;
+
+  t.plan(3);
+  return Promise.all([
+    cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery, {
+      first: -1,
+      cypherParams: CYPHER_PARAMS,
+      offset: 0
+    }),
+    augmentedSchemaCypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery)
+  ]);
+});
+
+test('Handle @cypher mutation with spatial payload', t => {
+  const graphQLQuery = `mutation {
+    computedSpatial {
+      x
+      y
+      z
+      crs
+    }
+  }`,
+    expectedCypherQuery = `CALL apoc.cypher.doIt("WITH point({ x: 10, y: 20, z: 15 }) AS instance RETURN { x: instance.x, y: instance.y, z: instance.z, crs: instance.crs }", {first:$first, offset:$offset, cypherParams: $cypherParams}) YIELD value
+    WITH apoc.map.values(value, [keys(value)[0]])[0] AS \`_Neo4jPoint\`
+    RETURN \`_Neo4jPoint\` `;
 
   t.plan(3);
   return Promise.all([
