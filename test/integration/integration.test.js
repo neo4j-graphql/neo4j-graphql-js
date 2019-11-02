@@ -608,6 +608,136 @@ test('query using inine fragment', async t => {
     });
 });
 
+test('should be able to query node by its interface type', async t => {
+  t.plan(1);
+
+  let id = null;
+  await client
+    .mutate({
+      mutation: gql`
+        mutation {
+          CreateUser(name: "John Petrucci") {
+            userId
+          }
+        }
+      `
+    })
+    .then(data => {
+      id = data.data.CreateUser.userId;
+    });
+
+  let expected = {
+    data: {
+      Person: [
+        {
+          name: 'John Petrucci',
+          userId: id,
+          __typename: 'User'
+        }
+      ]
+    }
+  };
+
+  await client
+    .query({
+      variables: { id },
+      query: gql`
+        query QueryByInterface($id: ID) {
+          Person(userId: $id) {
+            name
+            userId
+          }
+        }
+      `
+    })
+    .then(data => {
+      t.deepEqual(data.data, expected.data);
+    })
+    .catch(error => {
+      t.fail(error.message);
+    })
+    .finally(async () => {
+      await client.mutate({
+        variables: { id },
+        mutation: gql`
+          mutation Cleanup($id: ID!) {
+            DeleteUser(userId: $id) {
+              userId
+            }
+          }
+        `
+      });
+    });
+});
+
+test('should be able to query node by its interface type (with fragments)', async t => {
+  t.plan(1);
+
+  let id = null;
+  await client
+    .mutate({
+      mutation: gql`
+        mutation {
+          CreateUser(name: "John Petrucci") {
+            userId
+          }
+        }
+      `
+    })
+    .then(data => {
+      id = data.data.CreateUser.userId;
+    });
+
+  let expected = {
+    data: {
+      Person: [
+        {
+          name: 'John Petrucci',
+          userId: id,
+          rated: [],
+          __typename: 'User'
+        }
+      ]
+    }
+  };
+
+  await client
+    .query({
+      variables: { id },
+      query: gql`
+        query QueryByInterface($id: ID) {
+          Person(userId: $id) {
+            name
+            userId
+            ... on User {
+              rated {
+                timestamp
+              }
+            }
+          }
+        }
+      `
+    })
+    .then(data => {
+      t.deepEqual(data.data, expected.data);
+    })
+    .catch(error => {
+      t.fail(error.message);
+    })
+    .finally(async () => {
+      await client.mutate({
+        variables: { id },
+        mutation: gql`
+          mutation Cleanup($id: ID!) {
+            DeleteUser(userId: $id) {
+              userId
+            }
+          }
+        `
+      });
+    });
+});
+
 /*
  * Temporal type tests
  */
