@@ -908,6 +908,10 @@ export const translateMutation = ({
     schemaType,
     getCypherParams(context)
   );
+  const interfaceLabels =
+    typeof schemaType.getInterfaces === 'function'
+      ? schemaType.getInterfaces().map(i => i.name)
+      : [];
   const mutationTypeCypherDirective = getMutationCypherDirective(resolveInfo);
   const params = initializeMutationParams({
     resolveInfo,
@@ -936,7 +940,7 @@ export const translateMutation = ({
       ...mutationInfo,
       variableName,
       typeName,
-      additionalLabels: additionalNodeLabels
+      additionalLabels: additionalNodeLabels.concat(interfaceLabels)
     });
   } else if (isUpdateMutation(resolveInfo)) {
     return nodeUpdate({
