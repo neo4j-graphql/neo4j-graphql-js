@@ -1,4 +1,4 @@
-import { parse } from 'graphql';
+import { isObjectType, parse } from 'graphql';
 import { v1 as neo4j } from 'neo4j-driver';
 import _ from 'lodash';
 import filter from 'lodash/filter';
@@ -950,4 +950,11 @@ const _getNamedType = type => {
     return _getNamedType(type.type);
   }
   return type;
+};
+
+export const getDerivedTypeNames = (schema, interfaceName) => {
+  return Object.values(schema.getTypeMap())
+    .filter(t => isObjectType(t))
+    .filter(t => t.getInterfaces().some(i => i.name === interfaceName))
+    .map(t => t.name);
 };
