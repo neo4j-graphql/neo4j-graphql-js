@@ -13,7 +13,7 @@ import {
 } from '../../directives';
 import { getPrimaryKey } from '../../../utils';
 import { shouldAugmentType } from '../../augment';
-import { OperationType } from '../../types/types';
+import { OperationType, isInterfaceTypeDefinition } from '../../types/types';
 import { TypeWrappers, getFieldDefinition, isNeo4jIDField } from '../../fields';
 
 /**
@@ -45,6 +45,7 @@ export const augmentNodeMutationAPI = ({
   const mutationTypeNameLower = mutationTypeName.toLowerCase();
   if (
     mutationType &&
+    !isInterfaceTypeDefinition({ definition }) &&
     shouldAugmentType(config, mutationTypeNameLower, typeName)
   ) {
     Object.values(NodeMutation).forEach(mutationAction => {
