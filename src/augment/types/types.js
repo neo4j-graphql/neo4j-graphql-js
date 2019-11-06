@@ -13,6 +13,8 @@ import {
   getDirective
 } from '../directives';
 import {
+  buildOperationType,
+  buildSchemaDefinition,
   buildName,
   buildNamedType,
   buildObjectType,
@@ -35,7 +37,7 @@ import {
   isTemporalField
 } from '../fields';
 
-import { augmentNodeType } from './node/node';
+import { augmentNodeType, augmentNodeTypeFields } from './node/node';
 import { RelationshipDirectionField } from '../types/relationship/relationship';
 
 /**
@@ -245,7 +247,17 @@ export const augmentTypes = ({
     ...typeDefinitionMap,
     ...operationTypeMap
   }).forEach(([typeName, definition]) => {
-    if (isNodeType({ definition })) {
+    if (isOperationTypeDefinition({ definition, operationTypeMap })) {
+      // Overwrite existing operation map entry with augmented type
+      operationTypeMap[typeName] = augmentOperationType({
+        typeName,
+        definition,
+        typeDefinitionMap,
+        generatedTypeMap,
+        operationTypeMap,
+        config
+      });
+    } else if (isNodeType({ definition })) {
       [definition, generatedTypeMap, operationTypeMap] = augmentNodeType({
         typeName,
         definition,
@@ -254,8 +266,10 @@ export const augmentTypes = ({
         operationTypeMap,
         config
       });
+      // Add augmented type to generated type map
       generatedTypeMap[typeName] = definition;
     } else {
+      // Persist any other type definition
       generatedTypeMap[typeName] = definition;
     }
     return definition;
@@ -412,4 +426,238 @@ export const transformNeo4jTypes = ({ definitions = [], config }) => {
       return field;
     }
   });
+};
+
+/**
+ * Builds any operation types that do not exist but should
+ */
+export const initializeOperationTypes = ({
+  typeDefinitionMap,
+  schemaTypeDefinition,
+  config = {}
+}) => {
+  let queryTypeName = OperationType.QUERY;
+  let mutationTypeName = OperationType.MUTATION;
+  let subscriptionTypeName = OperationType.SUBSCRIPTION;
+  [
+    queryTypeName,
+    mutationTypeName,
+    subscriptionTypeName
+  ] = getSchemaTypeOperationNames({
+    schemaTypeDefinition,
+    queryTypeName,
+    mutationTypeName,
+    subscriptionTypeName
+  });
+  // Build default operation type definitions if none are provided,
+  // only kept if at least 1 field is added for generated API
+  let operationTypeMap = {};
+  typeDefinitionMap = initializeOperationType({
+    typeName: queryTypeName,
+    typeDefinitionMap,
+    config
+  });
+  typeDefinitionMap = initializeOperationType({
+    typeName: mutationTypeName,
+    typeDefinitionMap,
+    config
+  });
+  typeDefinitionMap = initializeOperationType({
+    typeName: subscriptionTypeName,
+    typeDefinitionMap,
+    config
+  });
+  // Separate operation types out from other type definitions
+  [typeDefinitionMap, operationTypeMap] = buildAugmentationTypeMaps({
+    queryTypeName,
+    mutationTypeName,
+    subscriptionTypeName,
+    typeDefinitionMap
+  });
+  return [typeDefinitionMap, operationTypeMap];
+};
+
+/**
+ * Given a schema type, extracts possibly custom operation type names
+ */
+const getSchemaTypeOperationNames = ({
+  schemaTypeDefinition,
+  queryTypeName,
+  mutationTypeName,
+  subscriptionTypeName
+}) => {
+  // Get operation type names, which may be non-default
+  if (schemaTypeDefinition) {
+    const operationTypes = schemaTypeDefinition.operationTypes;
+    operationTypes.forEach(definition => {
+      const operation = definition.operation;
+      const unwrappedType = unwrapNamedType({ type: definition.type });
+      if (operation === queryTypeName.toLowerCase()) {
+        queryTypeName = unwrappedType.name;
+      } else if (operation === mutationTypeName.toLowerCase()) {
+        mutationTypeName = unwrappedType.name;
+      } else if (operation === subscriptionTypeName.toLowerCase()) {
+        subscriptionTypeName = unwrappedType.name;
+      }
+    });
+  }
+  return [queryTypeName, mutationTypeName, subscriptionTypeName];
+};
+
+/**
+ * Builds an operation type if it does not exist but should
+ */
+const initializeOperationType = ({
+  typeName = '',
+  typeDefinitionMap = {},
+  config = {}
+}) => {
+  const typeNameLower = typeName.toLowerCase();
+  let operationType = typeDefinitionMap[typeName];
+  if (!operationType && config[typeNameLower]) {
+    operationType = buildObjectType({
+      name: buildName({ name: typeName })
+    });
+  }
+  if (operationType) typeDefinitionMap[typeName] = operationType;
+  return typeDefinitionMap;
+};
+
+/**
+ * Builds a typeDefinitionMap that excludes operation types, instead placing them
+ * within an operationTypeMap
+ */
+const buildAugmentationTypeMaps = ({
+  queryTypeName,
+  mutationTypeName,
+  subscriptionTypeName,
+  typeDefinitionMap = {}
+}) => {
+  return Object.entries(typeDefinitionMap).reduce(
+    ([typeMap, operationTypeMap], [typeName, definition]) => {
+      if (typeName === queryTypeName) {
+        operationTypeMap[OperationType.QUERY] = definition;
+      } else if (typeName === mutationTypeName) {
+        operationTypeMap[OperationType.MUTATION] = definition;
+      } else if (typeName === subscriptionTypeName) {
+        operationTypeMap[OperationType.SUBSCRIPTION] = definition;
+      } else {
+        typeMap[typeName] = definition;
+      }
+      return [typeMap, operationTypeMap];
+    },
+    [{}, {}]
+  );
+};
+
+/**
+ * The augmentation entry point for a GraphQL operation
+ * type (Query, Mutation, etc.)
+ */
+const augmentOperationType = ({
+  typeName,
+  definition,
+  typeDefinitionMap,
+  generatedTypeMap,
+  operationTypeMap,
+  config
+}) => {
+  if (isObjectTypeDefinition({ definition })) {
+    if (isQueryTypeDefinition({ definition, operationTypeMap })) {
+      let [
+        nodeInputTypeMap,
+        propertyOutputFields,
+        propertyInputValues,
+        isIgnoredType
+      ] = augmentNodeTypeFields({
+        typeName,
+        definition,
+        typeDefinitionMap,
+        generatedTypeMap,
+        operationTypeMap,
+        config
+      });
+      if (!isIgnoredType) {
+        definition.fields = propertyOutputFields;
+      }
+    }
+  }
+  return definition;
+};
+
+/**
+ * Regenerates the schema type definition using any existing operation types
+ */
+export const regenerateSchemaType = ({ schema = {}, definitions = [] }) => {
+  const operationTypes = [];
+  Object.values(OperationType).forEach(name => {
+    let operationType = undefined;
+    if (name === OperationType.QUERY) operationType = schema.getQueryType();
+    else if (name === OperationType.MUTATION)
+      operationType = schema.getMutationType();
+    else if (name === OperationType.SUBSCRIPTION)
+      operationType = schema.getSubscriptionType();
+    if (operationType) {
+      operationTypes.push(
+        buildOperationType({
+          operation: name.toLowerCase(),
+          type: buildNamedType({ name: operationType.name })
+        })
+      );
+    }
+  });
+  if (operationTypes.length) {
+    definitions.push(
+      buildSchemaDefinition({
+        operationTypes
+      })
+    );
+  }
+  return definitions;
+};
+
+/**
+ * Builds any schema type entry that should exist but doesn't, and
+ * decides to only keep operation type definitions that contain at least
+ * 1 field
+ */
+export const augmentSchemaType = ({
+  definitions,
+  schemaTypeDefinition,
+  operationTypeMap
+}) => {
+  let operationTypes = [];
+  // If schema type provided or regenerated, get its operation types
+  if (schemaTypeDefinition)
+    operationTypes = schemaTypeDefinition.operationTypes;
+  // Only persist operation types that have at least 1 field, and for those add
+  // a schema type operation field if one does not exist
+  operationTypeMap = Object.entries(operationTypeMap).forEach(
+    ([typeName, operationType]) => {
+      // Keep the operation type only if there are fields,
+      if (operationType.fields.length) {
+        const typeNameLow = typeName.toLowerCase();
+        // Keep this operation type definition
+        definitions.push(operationType);
+        // Add schema type field for any generated default operation types (Query, etc.)
+        if (
+          !operationTypes.find(operation => operation.operation === typeNameLow)
+        ) {
+          operationTypes.push(
+            buildOperationType({
+              operation: typeNameLow,
+              type: buildNamedType({ name: operationType.name.value })
+            })
+          );
+        }
+      }
+    }
+  );
+  // If a schema type was regenerated or provided and at least one operation type
+  // exists, then update its operation types and keep it
+  if (schemaTypeDefinition && operationTypes.length) {
+    schemaTypeDefinition.operationTypes = operationTypes;
+    definitions.push(schemaTypeDefinition);
+  }
+  return definitions;
 };

@@ -12,12 +12,7 @@ import {
   useAuthDirective
 } from '../../directives';
 import { shouldAugmentType } from '../../augment';
-import {
-  OperationType,
-  isQueryTypeDefinition,
-  isMutationTypeDefinition,
-  isSubscriptionTypeDefinition
-} from '../../types/types';
+import { OperationType } from '../../types/types';
 import { TypeWrappers, getFieldDefinition } from '../../fields';
 import {
   FilteringArgument,
@@ -80,66 +75,18 @@ export const augmentNodeQueryAPI = ({
 };
 
 /**
- * Given a node type field, builds the input value definitions
- * for its Query arguments, along with those needed for input
- * types generated to support the same Query API for the given
- * field of the given node type
- */
-export const augmentNodeTypeFieldInput = ({
-  typeName,
-  definition,
-  fieldName,
-  fieldArguments,
-  fieldDirectives,
-  outputType,
-  config,
-  relationshipDirective,
-  outputTypeWrappers,
-  nodeInputTypeMap,
-  operationTypeMap
-}) => {
-  fieldArguments = augmentNodeTypeFieldArguments({
-    definition,
-    fieldArguments,
-    fieldDirectives,
-    outputType,
-    outputTypeWrappers,
-    operationTypeMap,
-    config
-  });
-  nodeInputTypeMap = augmentNodeQueryArgumentTypes({
-    typeName,
-    definition,
-    fieldName,
-    outputType,
-    outputTypeWrappers,
-    relationshipDirective,
-    nodeInputTypeMap,
-    operationTypeMap,
-    config
-  });
-  return [fieldArguments, nodeInputTypeMap];
-};
-
-/**
  * Builds the AST for the input value definitions used for
  * node type Query field arguments
  */
-const augmentNodeTypeFieldArguments = ({
-  definition,
+export const augmentNodeTypeFieldArguments = ({
   fieldArguments,
   fieldDirectives,
   outputType,
   outputTypeWrappers,
-  operationTypeMap,
   config
 }) => {
   const queryTypeNameLower = OperationType.QUERY.toLowerCase();
-  if (
-    !isMutationTypeDefinition({ definition, operationTypeMap }) &&
-    !isSubscriptionTypeDefinition({ definition, operationTypeMap }) &&
-    shouldAugmentType(config, queryTypeNameLower, outputType)
-  ) {
+  if (shouldAugmentType(config, queryTypeNameLower, outputType)) {
     fieldArguments = buildQueryFieldArguments({
       argumentMap: NodeQueryArgument,
       fieldArguments,
@@ -156,21 +103,16 @@ const augmentNodeTypeFieldArguments = ({
  * for associated input value definitions used by input types
  * generated for the Query API
  */
-const augmentNodeQueryArgumentTypes = ({
+export const augmentNodeQueryArgumentTypes = ({
   typeName,
-  definition,
   fieldName,
   outputType,
   outputTypeWrappers,
-  relationshipDirective,
   nodeInputTypeMap,
-  operationTypeMap,
   config
 }) => {
-  if (
-    relationshipDirective &&
-    !isQueryTypeDefinition({ definition, operationTypeMap })
-  ) {
+  const queryTypeNameLower = OperationType.QUERY.toLowerCase();
+  if (shouldAugmentType(config, queryTypeNameLower, outputType)) {
     nodeInputTypeMap[FilteringArgument.FILTER].fields.push(
       ...buildRelationshipFilters({
         typeName,

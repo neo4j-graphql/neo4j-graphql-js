@@ -81,7 +81,6 @@ export const augmentRelationshipTypeField = ({
         nodeInputTypeMap
       ] = augmentRelationshipQueryAPI({
         typeName,
-        definition,
         fieldArguments,
         fieldName,
         outputType,
@@ -95,8 +94,7 @@ export const augmentRelationshipTypeField = ({
         config,
         relationshipName,
         fieldType,
-        propertyOutputFields,
-        operationTypeMap
+        propertyOutputFields
       });
       [
         typeDefinitionMap,

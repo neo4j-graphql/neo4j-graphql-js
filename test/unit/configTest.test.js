@@ -239,3 +239,15 @@ test.cb(
     t.end();
   }
 );
+
+test.cb('Config - default configuration persistence', t => {
+  const schema = makeAugmentedSchema({
+    typeDefs,
+    config: {
+      temporal: false
+    }
+  });
+  t.is(printSchema(schema).includes('Query'), true);
+  t.is(printSchema(schema).includes('Mutation'), true);
+  t.end();
+});
