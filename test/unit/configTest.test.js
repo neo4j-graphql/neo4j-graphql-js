@@ -185,6 +185,57 @@ test.cb('Config - temporal - disable temporal schema augmentation', t => {
     }
   });
 
+  t.is(printSchema(schema).includes('_Neo4jDateTime'), false);
   t.is(printSchema(schema).includes('_Neo4jDateTimeInput'), false);
   t.end();
 });
+
+test.cb(
+  'Config - temporal - disable temporal schema augmentation (type specific)',
+  t => {
+    const schema = makeAugmentedSchema({
+      typeDefs,
+      config: {
+        temporal: {
+          time: false,
+          date: false,
+          datetime: false,
+          localtime: false
+        }
+      }
+    });
+
+    t.is(printSchema(schema).includes('_Neo4jDateTime'), false);
+    t.is(printSchema(schema).includes('_Neo4jDateTimeInput'), false);
+    t.end();
+  }
+);
+
+test.cb('Config - spatial - disable spatial schema augmentation', t => {
+  const schema = makeAugmentedSchema({
+    typeDefs,
+    config: {
+      spatial: false
+    }
+  });
+  t.is(printSchema(schema).includes('_Neo4jPoint'), false);
+  t.is(printSchema(schema).includes('_Neo4jPointInput'), false);
+  t.end();
+});
+
+test.cb(
+  'Config - spatial - disable spatial schema augmentation (type specific)',
+  t => {
+    const schema = makeAugmentedSchema({
+      typeDefs,
+      config: {
+        spatial: {
+          point: false
+        }
+      }
+    });
+    t.is(printSchema(schema).includes('_Neo4jPoint'), false);
+    t.is(printSchema(schema).includes('_Neo4jPointInput'), false);
+    t.end();
+  }
+);

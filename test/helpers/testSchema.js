@@ -28,6 +28,8 @@ export const testSchema = /* GraphQL */ `
     ): [Actor] @relation(name: "ACTED_IN", direction: "IN")
     avgStars: Float
     filmedIn: State @relation(name: "FILMED_IN", direction: "OUT")
+    location: Point
+    locations: [Point]
     scaleRating(scale: Int = 3): Float
       @cypher(statement: "WITH $this AS this RETURN $scale * this.imdbRating")
     scaleRatingFloat(scale: Float = 1.5): Float
@@ -43,6 +45,7 @@ export const testSchema = /* GraphQL */ `
       datetime: DateTime
       localtime: LocalTime
       localdatetime: LocalDateTime
+      location: Point
     ): [Rated]
     years: [Int]
     titles: [String]
@@ -96,6 +99,7 @@ export const testSchema = /* GraphQL */ `
       datetime: DateTime
       localtime: LocalTime
       localdatetime: LocalDateTime
+      location: Point
     ): [Rated]
     friends(
       since: Int
@@ -104,6 +108,7 @@ export const testSchema = /* GraphQL */ `
       datetime: DateTime
       localtime: LocalTime
       localdatetime: LocalDateTime
+      location: Point
     ): [FriendOf]
     favorites: [Movie] @relation(name: "FAVORITED", direction: "OUT")
   }
@@ -121,6 +126,7 @@ export const testSchema = /* GraphQL */ `
     datetimes: [DateTime]
     localtime: LocalTime
     localdatetime: LocalDateTime
+    location: Point
     to: User
   }
 
@@ -138,6 +144,7 @@ export const testSchema = /* GraphQL */ `
     localtime: LocalTime
     localdatetime: LocalDateTime
     datetimes: [DateTime]
+    location: Point
     to: Movie
   }
 
@@ -171,6 +178,7 @@ export const testSchema = /* GraphQL */ `
       plot: String
       poster: String
       imdbRating: Float
+      location: Point
       first: Int
       offset: Int
       orderBy: _MovieOrdering
@@ -201,6 +209,10 @@ export const testSchema = /* GraphQL */ `
       @cypher(
         statement: "WITH datetime() AS now RETURN { year: now.year, month: now.month , day: now.day , hour: now.hour , minute: now.minute , second: now.second , millisecond: now.millisecond , microsecond: now.microsecond , nanosecond: now.nanosecond , timezone: now.timezone , formatted: toString(now) }"
       )
+    computedSpatial: Point
+      @cypher(
+        statement: "WITH point({ x: 10, y: 20, z: 15 }) AS instance RETURN { x: instance.x, y: instance.y, z: instance.z, crs: instance.crs }"
+      )
     computedObjectWithCypherParams: currentUserId
       @cypher(statement: "RETURN { userId: $cypherParams.currentUserId }")
     customWithArguments(strArg: String, strInputArg: strInput): String
@@ -216,6 +228,10 @@ export const testSchema = /* GraphQL */ `
     computedTemporal: DateTime
       @cypher(
         statement: "WITH datetime() AS now RETURN { year: now.year, month: now.month , day: now.day , hour: now.hour , minute: now.minute , second: now.second , millisecond: now.millisecond , microsecond: now.microsecond , nanosecond: now.nanosecond , timezone: now.timezone , formatted: toString(now) }"
+      )
+    computedSpatial: Point
+      @cypher(
+        statement: "WITH point({ x: 10, y: 20, z: 15 }) AS instance RETURN { x: instance.x, y: instance.y, z: instance.z, crs: instance.crs }"
       )
     computedStringList: [String]
       @cypher(
@@ -246,6 +262,13 @@ export const testSchema = /* GraphQL */ `
       localtime: LocalTime
       localdatetime: LocalDateTime
     ): [TemporalNode] @relation(name: "TEMPORAL", direction: OUT)
+  }
+
+  type SpatialNode {
+    pointKey: Point
+    point: Point
+    spatialNodes(pointKey: Point): [SpatialNode]
+      @relation(name: "SPATIAL", direction: OUT)
   }
 
   type ignoredType {

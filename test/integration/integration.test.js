@@ -1364,6 +1364,251 @@ test.serial(
   }
 );
 
+/*
+ * Spatial type tests
+ */
+
+// Spatial node property
+test.serial(
+  'Spatial - Create node with spatial property (not-isolated)',
+  async t => {
+    t.plan(1);
+
+    let expected = {
+      data: {
+        CreateMovie: {
+          __typename: 'Movie',
+          title: 'Bob Loblaw 4',
+          location: {
+            __typename: '_Neo4jPoint',
+            latitude: 20,
+            longitude: 10,
+            height: 30
+          }
+        }
+      }
+    };
+
+    await client
+      .mutate({
+        mutation: gql`
+          mutation {
+            CreateMovie(
+              title: "Bob Loblaw 4"
+              location: { longitude: 10, latitude: 20, height: 30 }
+            ) {
+              title
+              location {
+                longitude
+                latitude
+                height
+              }
+            }
+          }
+        `
+      })
+      .then(data => {
+        t.deepEqual(data, expected);
+      })
+      .catch(error => {
+        t.fail(error.message);
+      });
+  }
+);
+
+test.serial(
+  'Spatial - Create node with spatial property - with GraphQL variables (not-isolated)',
+  async t => {
+    t.plan(1);
+
+    let expected = {
+      data: {
+        CreateMovie: {
+          __typename: 'Movie',
+          title: 'Bob Loblaw 5',
+          location: {
+            __typename: '_Neo4jPoint',
+            latitude: 40,
+            longitude: 50,
+            height: 60
+          }
+        }
+      }
+    };
+
+    await client
+      .mutate({
+        mutation: gql`
+          mutation createWithSpatialFields(
+            $title: String
+            $locationInput: _Neo4jPointInput
+          ) {
+            CreateMovie(title: $title, location: $locationInput) {
+              title
+              location {
+                longitude
+                latitude
+                height
+              }
+            }
+          }
+        `,
+        variables: {
+          title: 'Bob Loblaw 5',
+          locationInput: {
+            longitude: 50,
+            latitude: 40,
+            height: 60
+          }
+        }
+      })
+      .then(data => {
+        t.deepEqual(data, expected);
+      })
+      .catch(error => {
+        t.fail(error.message);
+      });
+  }
+);
+
+test.serial(
+  'Spatial - Query node with spatial field (not-isolated)',
+  async t => {
+    let expected = {
+      data: {
+        Movie: [
+          {
+            __typename: 'Movie',
+            location: {
+              __typename: '_Neo4jPoint',
+              crs: 'wgs-84-3d',
+              height: 60,
+              latitude: 40,
+              longitude: 50
+            },
+            title: 'Bob Loblaw 5'
+          }
+        ]
+      }
+    };
+
+    await client
+      .query({
+        query: gql`
+          {
+            Movie(title: "Bob Loblaw 5") {
+              title
+              location {
+                longitude
+                latitude
+                height
+                crs
+              }
+            }
+          }
+        `
+      })
+      .then(data => {
+        t.deepEqual(data.data, expected.data);
+      })
+      .catch(error => {
+        t.fail(error.message);
+      });
+  }
+);
+
+test.serial(
+  'Spatial - create node with only a spatial property (not-isolated)',
+  async t => {
+    t.plan(1);
+
+    let expected = {
+      data: {
+        CreateSpatialNode: {
+          __typename: 'SpatialNode',
+          pointKey: {
+            __typename: '_Neo4jPoint',
+            crs: 'wgs-84-3d',
+            latitude: 20,
+            longitude: 10,
+            height: 30
+          }
+        }
+      }
+    };
+
+    await client
+      .mutate({
+        mutation: gql`
+          mutation {
+            CreateSpatialNode(
+              pointKey: { longitude: 10, latitude: 20, height: 30 }
+            ) {
+              pointKey {
+                longitude
+                latitude
+                height
+                crs
+              }
+            }
+          }
+        `
+      })
+      .then(data => {
+        t.deepEqual(data, expected);
+      })
+      .catch(error => {
+        t.fail(error.message);
+      });
+  }
+);
+
+test.serial(
+  'Spatial - spatial query argument, components (not-isolated)',
+  async t => {
+    t.plan(1);
+
+    let expected = {
+      data: {
+        SpatialNode: [
+          {
+            __typename: 'SpatialNode',
+            pointKey: {
+              __typename: '_Neo4jPoint',
+              crs: 'wgs-84-3d',
+              latitude: 20,
+              longitude: 10,
+              height: 30
+            }
+          }
+        ]
+      }
+    };
+
+    await client
+      .query({
+        query: gql`
+          {
+            SpatialNode(pointKey: { longitude: 10, latitude: 20, height: 30 }) {
+              pointKey {
+                longitude
+                latitude
+                height
+                crs
+              }
+            }
+          }
+        `
+      })
+      .then(data => {
+        t.deepEqual(data.data, expected.data);
+      })
+      .catch(error => {
+        t.fail(error.message);
+      });
+  }
+);
+
 test('Basic filter', async t => {
   t.plan(1);
 
