@@ -81,6 +81,33 @@ type Book {
   genre: BookGenre
 }
 
+interface Camera {
+  id: ID!
+  type: String
+  make: String
+}
+
+type OldCamera implements Camera {
+  id: ID!
+  type: String
+  make: String
+  weight: Int
+}
+
+type NewCamera implements Camera {
+  id: ID!
+  type: String
+  make: String
+  features: [String]
+}
+
+type CameraMan implements Person {
+  userId: ID!
+  name: String
+  favoriteCamera: Camera @relation(name: "favoriteCamera", direction: "OUT")
+  cameras: [Camera] @relation(name: "cameras", direction: "OUT")
+}
+
 type Query {
   Movie(movieId: ID, title: String, year: Int, plot: String, poster: String, imdbRating: Float): [Movie]  MoviesByYear(year: Int, first: Int = 10, offset: Int = 0): [Movie]
   AllMovies: [Movie]

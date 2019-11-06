@@ -86,7 +86,8 @@ export const Neo4jDataType = {
     [SpatialType.POINT]: 'Spatial'
   },
   STRUCTURAL: {
-    [Kind.OBJECT_TYPE_DEFINITION]: Neo4jStructuralType
+    [Kind.OBJECT_TYPE_DEFINITION]: Neo4jStructuralType,
+    [Kind.INTERFACE_TYPE_DEFINITION]: Neo4jStructuralType
   }
 };
 
