@@ -233,10 +233,9 @@ export const mergeDefinitionMaps = ({
   let definitions = Object.values({
     ...generatedTypeMap,
     ...typeExtensionDefinitionMap,
-    ...operationTypeMap,
     ...directiveDefinitionMap
   });
-  [definitions, operationTypeMap] = augmentSchemaType({
+  definitions = augmentSchemaType({
     definitions,
     schemaTypeDefinition,
     operationTypeMap
@@ -322,6 +321,7 @@ const extractSchemaDefinitions = ({ schema = {} }) => {
     const astNode = definition.astNode;
     if (astNode) {
       astNodes.push(astNode);
+      // Extract embedded type extensions
       const extensionASTNodes = definition.extensionASTNodes;
       if (extensionASTNodes) {
         astNodes.push(...extensionASTNodes);

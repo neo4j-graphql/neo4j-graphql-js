@@ -631,14 +631,13 @@ export const augmentSchemaType = ({
     operationTypes = schemaTypeDefinition.operationTypes;
   // Only persist operation types that have at least 1 field, and for those add
   // a schema type operation field if one does not exist
-  operationTypeMap = Object.entries(operationTypeMap).reduce(
-    (operationMap, [typeName, operationType]) => {
+  operationTypeMap = Object.entries(operationTypeMap).forEach(
+    ([typeName, operationType]) => {
       // Keep the operation type only if there are fields,
       if (operationType.fields.length) {
-        // Query -> query, etc.
         const typeNameLow = typeName.toLowerCase();
         // Keep this operation type definition
-        operationMap[typeName] = operationType;
+        definitions.push(operationType);
         // Add schema type field for any generated default operation types (Query, etc.)
         if (
           !operationTypes.find(operation => operation.operation === typeNameLow)
@@ -651,9 +650,7 @@ export const augmentSchemaType = ({
           );
         }
       }
-      return operationMap;
-    },
-    {}
+    }
   );
   // If a schema type was regenerated or provided and at least one operation type
   // exists, then update its operation types and keep it
@@ -661,5 +658,5 @@ export const augmentSchemaType = ({
     schemaTypeDefinition.operationTypes = operationTypes;
     definitions.push(schemaTypeDefinition);
   }
-  return [definitions, operationTypeMap];
+  return definitions;
 };
