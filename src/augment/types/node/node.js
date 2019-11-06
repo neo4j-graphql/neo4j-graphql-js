@@ -1,20 +1,22 @@
-import { GraphQLString } from 'graphql';
-import { augmentNodeQueryAPI, augmentNodeTypeFieldInput } from './query';
+import {
+  augmentNodeQueryAPI,
+  augmentNodeQueryArgumentTypes,
+  augmentNodeTypeFieldArguments
+} from './query';
 import { augmentNodeMutationAPI } from './mutation';
 import { augmentRelationshipTypeField } from '../relationship/relationship';
 import { augmentRelationshipMutationAPI } from '../relationship/mutation';
 import { shouldAugmentType } from '../../augment';
 import {
   TypeWrappers,
-  Neo4jSystemIDField,
   unwrapNamedType,
-  isPropertyTypeField
+  isPropertyTypeField,
+  buildNeo4jSystemIDField
 } from '../../fields';
 import {
   FilteringArgument,
   OrderingArgument,
-  augmentInputTypePropertyFields,
-  buildPropertyOrderingValues
+  augmentInputTypePropertyFields
 } from '../../input-values';
 import {
   getRelationDirection,
@@ -26,7 +28,6 @@ import {
 import {
   buildName,
   buildNamedType,
-  buildField,
   buildInputObjectType,
   buildInputValue
 } from '../../ast';
@@ -66,10 +67,18 @@ export const augmentNodeType = ({
       operationTypeMap,
       config
     });
-    if (
-      !isOperationTypeDefinition({ definition, operationTypeMap }) &&
-      !isIgnoredType
-    ) {
+    // A type is ignored when all its fields use @neo4j_ignore
+    if (!isIgnoredType) {
+      if (!isOperationTypeDefinition({ definition, operationTypeMap })) {
+        [propertyOutputFields, nodeInputTypeMap] = buildNeo4jSystemIDField({
+          definition,
+          typeName,
+          propertyOutputFields,
+          operationTypeMap,
+          nodeInputTypeMap,
+          config
+        });
+      }
       [
         propertyOutputFields,
         typeDefinitionMap,
@@ -86,8 +95,8 @@ export const augmentNodeType = ({
         operationTypeMap,
         config
       });
+      definition.fields = propertyOutputFields;
     }
-    definition.fields = propertyOutputFields;
   }
   return [definition, generatedTypeMap, operationTypeMap];
 };
@@ -97,7 +106,7 @@ export const augmentNodeType = ({
  * to generate the corresponding field or input value definitions that compose
  * the output and input types used in the Query and Mutation API
  */
-const augmentNodeTypeFields = ({
+export const augmentNodeTypeFields = ({
   typeName,
   definition,
   typeDefinitionMap,
@@ -208,40 +217,6 @@ const augmentNodeTypeFields = ({
     });
     return outputFields;
   }, []);
-  if (
-    !isOperationTypeDefinition({ definition, operationTypeMap }) &&
-    !isIgnoredType
-  ) {
-    const queryTypeName = OperationType.QUERY;
-    const queryTypeNameLower = queryTypeName.toLowerCase();
-    if (shouldAugmentType(config, queryTypeNameLower, typeName)) {
-      const neo4jInternalIDConfig = {
-        name: Neo4jSystemIDField,
-        type: {
-          name: GraphQLString.name
-        }
-      };
-      const systemIDIndex = propertyOutputFields.findIndex(
-        e => e.name.value === Neo4jSystemIDField
-      );
-      const systemIDField = buildField({
-        name: buildName({ name: neo4jInternalIDConfig.name }),
-        type: buildNamedType({
-          name: GraphQLString.name
-        })
-      });
-      if (systemIDIndex >= 0) {
-        propertyOutputFields.splice(systemIDIndex, 1, systemIDField);
-      } else {
-        propertyOutputFields.push(systemIDField);
-      }
-      nodeInputTypeMap[OrderingArgument.ORDER_BY].values.push(
-        ...buildPropertyOrderingValues({
-          fieldName: neo4jInternalIDConfig.name
-        })
-      );
-    }
-  }
   return [
     nodeInputTypeMap,
     propertyOutputFields,
@@ -269,23 +244,25 @@ const augmentNodeTypeField = ({
   relationshipDirective,
   outputTypeWrappers
 }) => {
-  [fieldArguments, nodeInputTypeMap] = augmentNodeTypeFieldInput({
-    typeName,
-    definition,
-    fieldName,
+  fieldArguments = augmentNodeTypeFieldArguments({
     fieldArguments,
     fieldDirectives,
     outputType,
-    config,
-    relationshipDirective,
     outputTypeWrappers,
-    nodeInputTypeMap,
-    operationTypeMap
+    config
   });
   if (
     relationshipDirective &&
     !isQueryTypeDefinition({ definition, operationTypeMap })
   ) {
+    nodeInputTypeMap = augmentNodeQueryArgumentTypes({
+      typeName,
+      fieldName,
+      outputType,
+      outputTypeWrappers,
+      nodeInputTypeMap,
+      config
+    });
     const relationshipName = getRelationName(relationshipDirective);
     const relationshipDirection = getRelationDirection(relationshipDirective);
     // Assume direction OUT
