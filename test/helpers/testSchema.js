@@ -220,7 +220,7 @@ export const testSchema = /* GraphQL */ `
     CasedType: [CasedType]
   }
 
-  type MutationB {
+  type Mutation {
     currentUserId: String
       @cypher(statement: "RETURN $cypherParams.currentUserId")
     computedObjectWithCypherParams: currentUserId
@@ -302,7 +302,7 @@ export const testSchema = /* GraphQL */ `
 
   schema {
     query: QueryA
-    mutation: MutationB
+    mutation: Mutation
     subscription: SubscriptionC
   }
 `;

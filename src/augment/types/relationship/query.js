@@ -1,10 +1,6 @@
 import { RelationshipDirectionField } from './relationship';
 import { shouldAugmentRelationshipField } from '../../augment';
-import {
-  OperationType,
-  isMutationTypeDefinition,
-  isSubscriptionTypeDefinition
-} from '../../types/types';
+import { OperationType } from '../../types/types';
 import { TypeWrappers, isListTypeField, unwrapNamedType } from '../../fields';
 import {
   FilteringArgument,
@@ -39,7 +35,6 @@ const RelationshipQueryArgument = {
  */
 export const augmentRelationshipQueryAPI = ({
   typeName,
-  definition,
   fieldArguments,
   fieldName,
   outputType,
@@ -53,8 +48,7 @@ export const augmentRelationshipQueryAPI = ({
   config,
   relationshipName,
   fieldType,
-  propertyOutputFields,
-  operationTypeMap
+  propertyOutputFields
 }) => {
   const queryTypeNameLower = OperationType.QUERY.toLowerCase();
   if (
@@ -95,7 +89,6 @@ export const augmentRelationshipQueryAPI = ({
         nodeInputTypeMap
       ] = augmentRelationshipTypeFieldInput({
         typeName,
-        definition,
         relatedType,
         fieldArguments,
         fieldName,
@@ -107,7 +100,6 @@ export const augmentRelationshipQueryAPI = ({
         nodeInputTypeMap,
         relationshipInputTypeMap,
         outputTypeWrappers,
-        operationTypeMap,
         config
       });
     }
@@ -129,7 +121,6 @@ export const augmentRelationshipQueryAPI = ({
  */
 const augmentRelationshipTypeFieldInput = ({
   typeName,
-  definition,
   relatedType,
   fieldArguments,
   fieldName,
@@ -141,7 +132,6 @@ const augmentRelationshipTypeFieldInput = ({
   nodeInputTypeMap,
   relationshipInputTypeMap,
   outputTypeWrappers,
-  operationTypeMap,
   config
 }) => {
   const nodeFilteringFields = nodeInputTypeMap[FilteringArgument.FILTER].fields;
@@ -164,7 +154,6 @@ const augmentRelationshipTypeFieldInput = ({
   [fieldArguments, generatedTypeMap] = augmentRelationshipTypeFieldArguments({
     fieldArguments,
     typeName,
-    definition,
     fromType,
     toType,
     outputType,
@@ -173,7 +162,6 @@ const augmentRelationshipTypeFieldInput = ({
     outputTypeWrappers,
     typeDefinitionMap,
     generatedTypeMap,
-    operationTypeMap,
     relationshipInputTypeMap
   });
   return [fieldArguments, generatedTypeMap, nodeInputTypeMap];
@@ -186,7 +174,6 @@ const augmentRelationshipTypeFieldInput = ({
 const augmentRelationshipTypeFieldArguments = ({
   fieldArguments,
   typeName,
-  definition,
   fromType,
   toType,
   outputType,
@@ -195,23 +182,17 @@ const augmentRelationshipTypeFieldArguments = ({
   outputTypeWrappers,
   typeDefinitionMap,
   generatedTypeMap,
-  operationTypeMap,
   relationshipInputTypeMap
 }) => {
-  if (
-    !isMutationTypeDefinition({ definition, operationTypeMap }) &&
-    !isSubscriptionTypeDefinition({ definition, operationTypeMap })
-  ) {
-    if (fromType !== toType) {
-      fieldArguments = buildQueryFieldArguments({
-        argumentMap: RelationshipQueryArgument,
-        fieldArguments,
-        outputType: `${typeName}${outputType}`,
-        outputTypeWrappers
-      });
-    } else {
-      fieldArguments = [];
-    }
+  if (fromType !== toType) {
+    fieldArguments = buildQueryFieldArguments({
+      argumentMap: RelationshipQueryArgument,
+      fieldArguments,
+      outputType: `${typeName}${outputType}`,
+      outputTypeWrappers
+    });
+  } else {
+    fieldArguments = [];
   }
   generatedTypeMap = buildRelationshipSelectionArgumentInputTypes({
     fromType,

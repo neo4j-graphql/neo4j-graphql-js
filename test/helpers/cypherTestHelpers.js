@@ -19,7 +19,7 @@ export function cypherTestRunner(
   const testMovieSchema =
     testSchema +
     `
-type MutationB {
+type Mutation {
     CreateGenre(name: String): Genre @cypher(statement: "CREATE (g:Genre) SET g.name = $name RETURN g")
     CreateMovie(movieId: ID, title: String, year: Int, plot: String, poster: String, imdbRating: Float): Movie
     CreateState(name: String!): State
@@ -69,7 +69,7 @@ type MutationB {
       computedIntList: checkCypherQuery,
       customWithArguments: checkCypherQuery
     },
-    MutationB: {
+    Mutation: {
       CreateGenre: checkCypherMutation,
       CreateMovie: checkCypherMutation,
       CreateState: checkCypherMutation,
@@ -182,7 +182,7 @@ export function augmentedSchemaCypherTestRunner(
       computedIntList: checkCypherQuery,
       customWithArguments: checkCypherQuery
     },
-    MutationB: {
+    Mutation: {
       CreateMovie: checkCypherMutation,
       CreateState: checkCypherMutation,
       CreateTemporalNode: checkCypherMutation,

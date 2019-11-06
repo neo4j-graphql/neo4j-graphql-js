@@ -1118,7 +1118,7 @@ test.cb('Test augmented schema', t => {
       _id: String
     }
 
-    type MutationB {
+    type Mutation {
       currentUserId: String
         @cypher(statement: "RETURN $cypherParams.currentUserId")
       computedObjectWithCypherParams: currentUserId
@@ -1722,7 +1722,7 @@ test.cb('Test augmented schema', t => {
 
     schema {
       query: QueryA
-      mutation: MutationB
+      mutation: Mutation
       subscription: SubscriptionC
     }
   `;
@@ -1749,6 +1749,7 @@ const compareSchema = ({ test, sourceSchema = {}, expectedSchema = {} }) => {
         def => def.kind === Kind.SCHEMA_DEFINITION
       );
     } else {
+      const name = definition.name.value;
       augmented = augmentedDefinitions.find(augmentedDefinition => {
         if (augmentedDefinition.name) {
           if (definition.name.value === augmentedDefinition.name.value) {

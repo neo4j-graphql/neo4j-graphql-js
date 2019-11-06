@@ -1,5 +1,12 @@
-import { Kind } from 'graphql';
-import { Neo4jDataType, isNeo4jPropertyType } from './types/types';
+import { Kind, GraphQLString } from 'graphql';
+import { shouldAugmentType } from './augment';
+import {
+  Neo4jDataType,
+  isNeo4jPropertyType,
+  OperationType
+} from './types/types';
+import { OrderingArgument, buildPropertyOrderingValues } from './input-values';
+import { buildField, buildName, buildNamedType } from './ast';
 
 /**
  * The name of the Neo4j system ID field
@@ -172,4 +179,45 @@ export const toSnakeCase = name => {
       return acc;
     }, [])
     .join('');
+};
+
+/**
+ * Builds the AST definition for the Neo4j system ID, adding an
+ * '_id' field to the fields of a given type and its associated API
+ */
+export const buildNeo4jSystemIDField = ({
+  typeName,
+  propertyOutputFields,
+  nodeInputTypeMap,
+  config
+}) => {
+  const queryTypeNameLower = OperationType.QUERY.toLowerCase();
+  if (shouldAugmentType(config, queryTypeNameLower, typeName)) {
+    const neo4jInternalIDConfig = {
+      name: Neo4jSystemIDField,
+      type: {
+        name: GraphQLString.name
+      }
+    };
+    const systemIDIndex = propertyOutputFields.findIndex(
+      e => e.name.value === Neo4jSystemIDField
+    );
+    const systemIDField = buildField({
+      name: buildName({ name: neo4jInternalIDConfig.name }),
+      type: buildNamedType({
+        name: GraphQLString.name
+      })
+    });
+    if (systemIDIndex >= 0) {
+      propertyOutputFields.splice(systemIDIndex, 1, systemIDField);
+    } else {
+      propertyOutputFields.push(systemIDField);
+    }
+    nodeInputTypeMap[OrderingArgument.ORDER_BY].values.push(
+      ...buildPropertyOrderingValues({
+        fieldName: neo4jInternalIDConfig.name
+      })
+    );
+  }
+  return [propertyOutputFields, nodeInputTypeMap];
 };
