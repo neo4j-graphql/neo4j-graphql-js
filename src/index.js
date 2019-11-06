@@ -129,7 +129,8 @@ export const augmentTypeDefs = (typeDefs, config = {}) => {
     typeDefinitionMap,
     typeExtensionDefinitionMap,
     directiveDefinitionMap,
-    operationTypeMap
+    operationTypeMap,
+    schemaTypeDefinition
   ] = mapDefinitions({
     definitions,
     config
@@ -154,7 +155,8 @@ export const augmentTypeDefs = (typeDefs, config = {}) => {
     generatedTypeMap,
     typeExtensionDefinitionMap,
     operationTypeMap,
-    directiveDefinitionMap
+    directiveDefinitionMap,
+    schemaTypeDefinition
   });
   const transformedDefinitions = transformNeo4jTypes({
     definitions: mergedDefinitions,
@@ -167,15 +169,7 @@ export const augmentTypeDefs = (typeDefs, config = {}) => {
   return typeDefs;
 };
 
-export const augmentSchema = (
-  schema,
-  config = {
-    query: true,
-    mutation: true,
-    temporal: true,
-    spatial: true
-  }
-) => {
+export const augmentSchema = (schema, config) => {
   return augmentedSchema(schema, config);
 };
 
@@ -190,12 +184,7 @@ export const makeAugmentedSchema = ({
   schemaDirectives = {},
   parseOptions = {},
   inheritResolversFromInterfaces = false,
-  config = {
-    query: true,
-    mutation: true,
-    temporal: true,
-    spatial: true
-  }
+  config
 }) => {
   if (schema) {
     return augmentedSchema(schema, config);
