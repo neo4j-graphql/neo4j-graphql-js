@@ -140,6 +140,15 @@ test.cb('Test augmented schema', t => {
         orderBy: [_GenreOrdering]
         filter: _GenreFilter
       ): [Genre] @hasScope(scopes: ["Genre: Read"])
+      Person(
+        userId: ID
+        name: String
+        _id: String
+        first: Int
+        offset: Int
+        orderBy: [_PersonOrdering]
+        filter: _PersonFilter
+      ): [Person] @hasScope(scopes: ["Person: Read"])
       Actor(
         userId: ID
         name: String

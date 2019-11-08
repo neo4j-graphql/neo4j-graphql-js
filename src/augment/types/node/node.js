@@ -33,6 +33,7 @@ import {
 } from '../../ast';
 import {
   OperationType,
+  isInterfaceTypeDefinition,
   isNodeType,
   isRelationshipType,
   isObjectTypeDefinition,
@@ -53,7 +54,10 @@ export const augmentNodeType = ({
   operationTypeMap,
   config
 }) => {
-  if (isObjectTypeDefinition({ definition })) {
+  if (
+    isObjectTypeDefinition({ definition }) ||
+    isInterfaceTypeDefinition({ definition })
+  ) {
     let [
       nodeInputTypeMap,
       propertyOutputFields,
@@ -69,7 +73,10 @@ export const augmentNodeType = ({
     });
     // A type is ignored when all its fields use @neo4j_ignore
     if (!isIgnoredType) {
-      if (!isOperationTypeDefinition({ definition, operationTypeMap })) {
+      if (
+        !isOperationTypeDefinition({ definition, operationTypeMap }) &&
+        !isInterfaceTypeDefinition({ definition })
+      ) {
         [propertyOutputFields, nodeInputTypeMap] = buildNeo4jSystemIDField({
           definition,
           typeName,

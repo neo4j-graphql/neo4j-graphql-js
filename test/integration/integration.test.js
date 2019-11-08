@@ -12,7 +12,17 @@ let client;
 test.before(() => {
   client = new ApolloClient({
     link: new HttpLink({ uri: 'http://localhost:3000', fetch: fetch }),
-    cache: new InMemoryCache()
+    cache: new InMemoryCache(),
+    defaultOptions: {
+      watchQuery: {
+        fetchPolicy: 'no-cache',
+        errorPolicy: 'ignore'
+      },
+      query: {
+        fetchPolicy: 'no-cache',
+        errorPolicy: 'all'
+      }
+    }
   });
 });
 
@@ -605,6 +615,260 @@ test('query using inine fragment', async t => {
     })
     .catch(error => {
       t.fail(error.message);
+    });
+});
+
+test('should be able to query node by its interface type', async t => {
+  t.plan(1);
+
+  let id = null;
+  await client
+    .mutate({
+      mutation: gql`
+        mutation {
+          CreateUser(name: "John Petrucci") {
+            userId
+          }
+        }
+      `
+    })
+    .then(data => {
+      id = data.data.CreateUser.userId;
+    });
+
+  let expected = {
+    data: {
+      Person: [
+        {
+          name: 'John Petrucci',
+          userId: id,
+          __typename: 'User'
+        }
+      ]
+    }
+  };
+
+  await client
+    .query({
+      variables: { id },
+      query: gql`
+        query QueryByInterface($id: ID) {
+          Person(userId: $id) {
+            name
+            userId
+          }
+        }
+      `
+    })
+    .then(data => {
+      t.deepEqual(data.data, expected.data);
+    })
+    .catch(error => {
+      t.fail(error.message);
+    })
+    .finally(async () => {
+      await client.mutate({
+        variables: { id },
+        mutation: gql`
+          mutation Cleanup($id: ID!) {
+            DeleteUser(userId: $id) {
+              userId
+            }
+          }
+        `
+      });
+    });
+});
+
+test('should be able to query node by its interface type (with fragments)', async t => {
+  t.plan(1);
+
+  let id = null;
+  await client
+    .mutate({
+      mutation: gql`
+        mutation {
+          CreateUser(name: "John Petrucci") {
+            userId
+          }
+        }
+      `
+    })
+    .then(data => {
+      id = data.data.CreateUser.userId;
+    });
+
+  let expected = {
+    data: {
+      Person: [
+        {
+          name: 'John Petrucci',
+          userId: id,
+          rated: [],
+          __typename: 'User'
+        }
+      ]
+    }
+  };
+
+  await client
+    .query({
+      variables: { id },
+      query: gql`
+        query QueryByInterface($id: ID) {
+          Person(userId: $id) {
+            name
+            userId
+            ... on User {
+              rated {
+                timestamp
+              }
+            }
+          }
+        }
+      `
+    })
+    .then(data => {
+      t.deepEqual(data.data, expected.data);
+    })
+    .catch(error => {
+      t.fail(error.message);
+    })
+    .finally(async () => {
+      await client.mutate({
+        variables: { id },
+        mutation: gql`
+          mutation Cleanup($id: ID!) {
+            DeleteUser(userId: $id) {
+              userId
+            }
+          }
+        `
+      });
+    });
+});
+
+test('should be able to query node relations(s) by interface type', async t => {
+  t.plan(1);
+
+  await client.mutate({
+    mutation: gql`
+      mutation {
+        CreateOldCamera(id: "cam001", type: "macro", weight: 99) {
+          id
+        }
+        CreateNewCamera(
+          id: "cam002"
+          type: "floating"
+          features: ["selfie", "zoom"]
+        ) {
+          id
+        }
+        CreateCameraMan(userId: "man001", name: "Johnnie Zoom") {
+          userId
+        }
+        AddCameraManFavoriteCamera(
+          from: { userId: "man001" }
+          to: { id: "cam001" }
+        ) {
+          from {
+            userId
+          }
+        }
+        a: AddCameraManCameras(
+          from: { userId: "man001" }
+          to: { id: "cam001" }
+        ) {
+          from {
+            userId
+          }
+        }
+        b: AddCameraManCameras(
+          from: { userId: "man001" }
+          to: { id: "cam002" }
+        ) {
+          from {
+            userId
+          }
+        }
+      }
+    `
+  });
+
+  let expected = {
+    data: {
+      CameraMan: [
+        {
+          userId: 'man001',
+          favoriteCamera: {
+            id: 'cam001',
+            __typename: 'OldCamera'
+          },
+          cameras: [
+            {
+              id: 'cam002',
+              type: 'floating',
+              features: ['selfie', 'zoom'],
+              __typename: 'NewCamera'
+            },
+            {
+              id: 'cam001',
+              type: 'macro',
+              weight: 99,
+              __typename: 'OldCamera'
+            }
+          ],
+          __typename: 'CameraMan'
+        }
+      ]
+    }
+  };
+
+  await client
+    .query({
+      query: gql`
+        query {
+          CameraMan {
+            userId
+            favoriteCamera {
+              id
+            }
+            cameras {
+              id
+              type
+              ... on OldCamera {
+                weight
+              }
+              ... on NewCamera {
+                features
+              }
+            }
+          }
+        }
+      `
+    })
+    .then(data => {
+      t.deepEqual(data.data, expected.data);
+    })
+    .catch(error => {
+      t.fail(error.message);
+    })
+    .finally(async () => {
+      await client.mutate({
+        mutation: gql`
+          mutation {
+            DeleteOldCamera(id: "cam001") {
+              id
+            }
+            DeleteNewCamera(id: "cam002") {
+              id
+            }
+            DeleteCameraMan(userId: "man001") {
+              userId
+            }
+          }
+        `
+      });
     });
 });
 
