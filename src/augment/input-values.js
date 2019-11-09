@@ -7,7 +7,11 @@ import {
   buildEnumType,
   buildEnumValue
 } from './ast';
-import { isNeo4jPropertyType } from './types/types';
+import {
+  isNeo4jTemporalType,
+  isNeo4jPointType,
+  Neo4jTypeName
+} from './types/types';
 import { isCypherField } from './directives';
 import {
   TypeWrappers,
@@ -18,9 +22,10 @@ import {
   isStringField,
   isBooleanField,
   isTemporalField,
-  getFieldDefinition
+  getFieldDefinition,
+  isSpatialField
 } from './fields';
-
+import { SpatialType, Neo4jPointDistanceFilter } from './types/spatial';
 /**
  * An enum describing the names of the input value definitions
  * used for the field argument AST for data result pagination
@@ -326,10 +331,8 @@ const buildPropertyFilters = ({
 }) => {
   let filters = [];
   if (
-    isIntegerField({ type: outputType }) ||
-    isFloatField({ type: outputType }) ||
-    isTemporalField({ type: outputType }) ||
-    isNeo4jPropertyType({ type: outputType })
+    isSpatialField({ type: outputType }) ||
+    isNeo4jPointType({ type: outputType })
   ) {
     filters = buildFilters({
       fieldName,
@@ -339,7 +342,23 @@ const buildPropertyFilters = ({
           name: outputType
         }
       },
-      filterTypes: ['_not', '_in', '_not_in', '_lt', '_lte', '_gt', '_gte']
+      filterTypes: ['not', ...Object.values(Neo4jPointDistanceFilter)]
+    });
+  } else if (
+    isIntegerField({ type: outputType }) ||
+    isFloatField({ type: outputType }) ||
+    isTemporalField({ type: outputType }) ||
+    isNeo4jTemporalType({ type: outputType })
+  ) {
+    filters = buildFilters({
+      fieldName,
+      fieldConfig: {
+        name: fieldName,
+        type: {
+          name: outputType
+        }
+      },
+      filterTypes: ['not', 'in', 'not_in', 'lt', 'lte', 'gt', 'gte']
     });
   } else if (isBooleanField({ type: outputType })) {
     filters = buildFilters({
@@ -350,7 +369,7 @@ const buildPropertyFilters = ({
           name: outputType
         }
       },
-      filterTypes: ['_not']
+      filterTypes: ['not']
     });
   } else if (isStringField({ kind: outputKind, type: outputType })) {
     if (outputKind === Kind.ENUM_TYPE_DEFINITION) {
@@ -362,7 +381,7 @@ const buildPropertyFilters = ({
             name: outputType
           }
         },
-        filterTypes: ['_not', '_in', '_not_in']
+        filterTypes: ['not', 'in', 'not_in']
       });
     } else {
       filters = buildFilters({
@@ -374,15 +393,15 @@ const buildPropertyFilters = ({
           }
         },
         filterTypes: [
-          '_not',
-          '_in',
-          '_not_in',
-          '_contains',
-          '_not_contains',
-          '_starts_with',
-          '_not_starts_with',
-          '_ends_with',
-          '_not_ends_with'
+          'not',
+          'in',
+          'not_in',
+          'contains',
+          'not_contains',
+          'starts_with',
+          'not_starts_with',
+          'ends_with',
+          'not_ends_with'
         ]
       });
     }
@@ -394,25 +413,39 @@ const buildPropertyFilters = ({
  * Builds the input value definitions that compose input object types
  * used by filtering arguments
  */
-export const buildFilters = ({ fieldName, fieldConfig, filterTypes = [] }) => [
-  buildInputValue({
-    name: buildName({ name: fieldConfig.name }),
-    type: buildNamedType(fieldConfig.type)
-  }),
-  ...filterTypes.map(filter => {
-    let wrappers = {};
-    if (filter === '_in' || filter === '_not_in') {
-      wrappers = {
-        [TypeWrappers.NON_NULL_NAMED_TYPE]: true,
-        [TypeWrappers.LIST_TYPE]: true
-      };
-    }
-    return buildInputValue({
-      name: buildName({ name: `${fieldName}${filter}` }),
-      type: buildNamedType({
-        name: fieldConfig.type.name,
-        wrappers
+export const buildFilters = ({ fieldName, fieldConfig, filterTypes = [] }) => {
+  return filterTypes.reduce(
+    (inputValues, name) => {
+      const filterName = `${fieldName}_${name}`;
+      const isPointDistanceFilter = Object.values(
+        Neo4jPointDistanceFilter
+      ).some(distanceFilter => distanceFilter === name);
+      const isListFilter = name === 'in' || name === 'not_in';
+      let wrappers = {};
+      if (isListFilter) {
+        wrappers = {
+          [TypeWrappers.NON_NULL_NAMED_TYPE]: true,
+          [TypeWrappers.LIST_TYPE]: true
+        };
+      } else if (isPointDistanceFilter) {
+        fieldConfig.type.name = `${Neo4jTypeName}${SpatialType.POINT}DistanceFilter`;
+      }
+      inputValues.push(
+        buildInputValue({
+          name: buildName({ name: filterName }),
+          type: buildNamedType({
+            name: fieldConfig.type.name,
+            wrappers
+          })
+        })
+      );
+      return inputValues;
+    },
+    [
+      buildInputValue({
+        name: buildName({ name: fieldConfig.name }),
+        type: buildNamedType(fieldConfig.type)
       })
-    });
-  })
-];
+    ]
+  );
+};
