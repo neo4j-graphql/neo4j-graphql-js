@@ -2,6 +2,8 @@ import { isObjectType, parse } from 'graphql';
 import { v1 as neo4j } from 'neo4j-driver';
 import _ from 'lodash';
 import filter from 'lodash/filter';
+import { Neo4jTypeName } from './augment/types/types';
+import { SpatialType } from './augment/types/spatial';
 
 function parseArg(arg, variableValues) {
   switch (arg.value.kind) {
@@ -423,26 +425,26 @@ export const buildCypherParameters = ({
                 }${paramName})`
               );
             } else {
-              let temporalParam = {};
+              let neo4jTypeParam = {};
               if (Array.isArray(param)) {
                 const count = param.length;
                 let i = 0;
                 for (; i < count; ++i) {
-                  temporalParam = param[i];
-                  const formatted = temporalParam.formatted;
-                  if (temporalParam.formatted) {
+                  neo4jTypeParam = param[i];
+                  const formatted = neo4jTypeParam.formatted;
+                  if (neo4jTypeParam.formatted) {
                     paramKey
                       ? (params[paramKey][paramName] = formatted)
                       : (params[paramName] = formatted);
                   } else {
-                    Object.keys(temporalParam).forEach(e => {
-                      if (Number.isInteger(temporalParam[e])) {
+                    Object.keys(neo4jTypeParam).forEach(e => {
+                      if (Number.isInteger(neo4jTypeParam[e])) {
                         paramKey
                           ? (params[paramKey][paramName][i][e] = neo4j.int(
-                              temporalParam[e]
+                              neo4jTypeParam[e]
                             ))
                           : (params[paramName][i][e] = neo4j.int(
-                              temporalParam[e]
+                              neo4jTypeParam[e]
                             ));
                       }
                     });
@@ -454,22 +456,22 @@ export const buildCypherParameters = ({
                   }${paramName} | ${neo4jTypeConstructor}(value)]`
                 );
               } else {
-                temporalParam = paramKey
+                neo4jTypeParam = paramKey
                   ? params[paramKey][paramName]
                   : params[paramName];
-                const formatted = temporalParam.formatted;
-                if (temporalParam.formatted) {
+                const formatted = neo4jTypeParam.formatted;
+                if (neo4jTypeParam.formatted) {
                   paramKey
                     ? (params[paramKey][paramName] = formatted)
                     : (params[paramName] = formatted);
                 } else {
-                  Object.keys(temporalParam).forEach(e => {
-                    if (Number.isInteger(temporalParam[e])) {
+                  Object.keys(neo4jTypeParam).forEach(e => {
+                    if (Number.isInteger(neo4jTypeParam[e])) {
                       paramKey
                         ? (params[paramKey][paramName][e] = neo4j.int(
-                            temporalParam[e]
+                            neo4jTypeParam[e]
                           ))
-                        : (params[paramName][e] = neo4j.int(temporalParam[e]));
+                        : (params[paramName][e] = neo4j.int(neo4jTypeParam[e]));
                     }
                   });
                 }
@@ -808,34 +810,16 @@ export const splitSelectionParameters = (
   return [primaryKeyParam, updateParams];
 };
 
+export const isNeo4jType = name => isTemporalType(name) || isSpatialType(name);
+
 export const isNeo4jTypeField = (schemaType, fieldName) =>
   isTemporalField(schemaType, fieldName) ||
   isSpatialField(schemaType, fieldName);
 
-export const isNeo4jType = name => isTemporalType(name) || isSpatialType(name);
-
 export const isNeo4jTypeInput = name =>
-  isTemporalInputType(name) || isSpatialInputType(name);
-
-export const isSpatialType = name => name === '_Neo4jPoint';
-
-export const isSpatialField = (schemaType, name) => {
-  const type = schemaType ? schemaType.name : '';
-  return (
-    isSpatialType(type) &&
-    (name === 'x' ||
-      name === 'y' ||
-      name === 'z' ||
-      name === 'longitude' ||
-      name === 'latitude' ||
-      name === 'height' ||
-      name === 'crs' ||
-      name === 'srid' ||
-      name === 'formatted')
-  );
-};
-
-export const isSpatialInputType = name => name === '_Neo4jPointInput';
+  isTemporalInputType(name) ||
+  isSpatialInputType(name) ||
+  isSpatialDistanceInputType(name);
 
 export const isTemporalType = name => {
   return (
@@ -874,6 +858,29 @@ export const isTemporalInputType = name => {
     name === '_Neo4jLocalDateTimeInput'
   );
 };
+
+export const isSpatialType = name => name === '_Neo4jPoint';
+
+export const isSpatialField = (schemaType, name) => {
+  const type = schemaType ? schemaType.name : '';
+  return (
+    isSpatialType(type) &&
+    (name === 'x' ||
+      name === 'y' ||
+      name === 'z' ||
+      name === 'longitude' ||
+      name === 'latitude' ||
+      name === 'height' ||
+      name === 'crs' ||
+      name === 'srid' ||
+      name === 'formatted')
+  );
+};
+
+export const isSpatialInputType = name => name === '_Neo4jPointInput';
+
+export const isSpatialDistanceInputType = name =>
+  name === `${Neo4jTypeName}${SpatialType.POINT}DistanceFilter`;
 
 export const decideNeo4jTypeConstructor = typeName => {
   switch (typeName) {
