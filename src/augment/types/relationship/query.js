@@ -285,15 +285,7 @@ export const buildRelationshipFilters = ({
             name: outputType
           }
         },
-        filterTypes: [
-          '_not',
-          '_in',
-          '_not_in',
-          '_some',
-          '_none',
-          '_single',
-          '_every'
-        ]
+        filterTypes: ['not', 'in', 'not_in', 'some', 'none', 'single', 'every']
       });
     } else {
       filters = buildFilters({
@@ -304,7 +296,7 @@ export const buildRelationshipFilters = ({
             name: outputType
           }
         },
-        filterTypes: ['_not', '_in', '_not_in']
+        filterTypes: ['not', 'in', 'not_in']
       });
     }
   }
