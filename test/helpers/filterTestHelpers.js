@@ -22,7 +22,8 @@ export const filterTestRunner = (
       Company(object, params, ctx, resolveInfo) {
         const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
         t.is(query, expectedCypherQuery);
-        t.deepEqual(queryParams, expectedCypherParams);
+        const deserializedParams = JSON.parse(JSON.stringify(queryParams));
+        t.deepEqual(deserializedParams, expectedCypherParams);
       }
     }
   };
