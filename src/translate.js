@@ -33,6 +33,9 @@ import {
   isNeo4jType,
   isTemporalType,
   isNeo4jTypeInput,
+  isTemporalInputType,
+  isSpatialInputType,
+  isSpatialDistanceInputType,
   isGraphqlScalarType,
   isGraphqlInterfaceType,
   innerType,
@@ -1936,7 +1939,12 @@ const parseFilterArgumentName = fieldName => {
     '_some',
     '_none',
     '_single',
-    '_every'
+    '_every',
+    '_distance',
+    '_distance_lt',
+    '_distance_lte',
+    '_distance_gt',
+    '_distance_gte'
   ];
 
   let filterType = '';
@@ -1993,10 +2001,10 @@ const translateScalarFilter = ({
       isListFilterArgument
     });
   }
-  return `${nullFieldPredicate}${buildOperatorExpression(
+  return `${nullFieldPredicate}${buildOperatorExpression({
     filterOperationType,
     propertyPath
-  )} ${parameterPath}`;
+  })} ${parameterPath}`;
 };
 
 const isExistentialFilter = (type, value) =>
@@ -2037,11 +2045,22 @@ const translateNullFilter = ({
   return `${nullFieldPredicate}${predicate}`;
 };
 
-const buildOperatorExpression = (
+//! case 1
+// filterOperationType,
+// propertyPath
+
+//! case 2
+// filterOperationType,
+// propertyPath,
+// isListFilterArgument,
+// parameterPath
+
+const buildOperatorExpression = ({
   filterOperationType,
   propertyPath,
-  isListFilterArgument
-) => {
+  isListFilterArgument,
+  parameterPath
+}) => {
   if (isListFilterArgument) return `${propertyPath} =`;
   switch (filterOperationType) {
     case 'not':
@@ -2062,14 +2081,24 @@ const buildOperatorExpression = (
       return `${propertyPath} ENDS WITH`;
     case 'not_ends_with':
       return `NOT ${propertyPath} ENDS WITH`;
+    case 'distance':
+      return `distance(${propertyPath}, point(${parameterPath}.point)) =`;
     case 'lt':
       return `${propertyPath} <`;
+    case 'distance_lt':
+      return `distance(${propertyPath}, point(${parameterPath}.point)) <`;
     case 'lte':
       return `${propertyPath} <=`;
+    case 'distance_lte':
+      return `distance(${propertyPath}, point(${parameterPath}.point)) <=`;
     case 'gt':
       return `${propertyPath} >`;
+    case 'distance_gt':
+      return `distance(${propertyPath}, point(${parameterPath}.point)) >`;
     case 'gte':
       return `${propertyPath} >=`;
+    case 'distance_gte':
+      return `distance(${propertyPath}, point(${parameterPath}.point)) >=`;
     default: {
       return `${propertyPath} =`;
     }
@@ -2548,6 +2577,12 @@ const decidePredicateFunction = ({
         return 'NONE';
       case 'single':
         return 'SINGLE';
+      case 'distance':
+      case 'distance_lt':
+      case 'distance_lte':
+      case 'distance_gt':
+      case 'distance_gte':
+        return 'distance';
       default:
         return 'ALL';
     }
@@ -2657,39 +2692,49 @@ const translateNeo4jTypeFilter = ({
   isListFilterArgument,
   nullFieldPredicate
 }) => {
-  const cypherTypeConstructor = decideNeo4jTypeConstructor(typeName);
-  const safeVariableName = safeVar(variableName);
-  const propertyPath = `${safeVariableName}.${filterOperationField}`;
-  if (isExistentialFilter(filterOperationType, filterValue)) {
-    return translateNullFilter({
+  let predicate = '';
+  if (
+    isTemporalInputType(typeName) ||
+    isSpatialInputType(typeName) ||
+    isSpatialDistanceInputType(typeName)
+  ) {
+    const cypherTypeConstructor = decideNeo4jTypeConstructor(typeName);
+    const safeVariableName = safeVar(variableName);
+    let propertyPath = `${safeVariableName}.${filterOperationField}`;
+    if (isExistentialFilter(filterOperationType, filterValue)) {
+      return translateNullFilter({
+        filterOperationField,
+        filterOperationType,
+        propertyPath,
+        filterParam,
+        parentParamPath,
+        isListFilterArgument
+      });
+    }
+    const rootPredicateFunction = decidePredicateFunction({
+      isRelationTypeNode,
+      filterOperationField,
+      filterOperationType
+    });
+    predicate = buildNeo4jTypePredicate({
+      typeName,
+      fieldName,
+      fieldType,
+      filterValue,
       filterOperationField,
       filterOperationType,
-      propertyPath,
-      filterParam,
-      parentParamPath,
-      isListFilterArgument
+      parameterPath,
+      variableName,
+      nullFieldPredicate,
+      rootPredicateFunction,
+      cypherTypeConstructor
     });
   }
-  const rootPredicateFunction = decidePredicateFunction({
-    isRelationTypeNode,
-    filterOperationField,
-    filterOperationType
-  });
-  return buildTemporalPredicate({
-    fieldName,
-    fieldType,
-    filterValue,
-    filterOperationField,
-    filterOperationType,
-    parameterPath,
-    variableName,
-    nullFieldPredicate,
-    rootPredicateFunction,
-    cypherTypeConstructor
-  });
+  return predicate;
 };
 
-const buildTemporalPredicate = ({
+const buildNeo4jTypePredicate = ({
+  typeName,
   fieldName,
   fieldType,
   filterOperationField,
@@ -2706,12 +2751,16 @@ const buildTemporalPredicate = ({
   // ex: $filter.datetime_in -> _datetime_in
   if (isListFilterArgument) listVariable = `_${fieldName}`;
   const safeVariableName = safeVar(variableName);
-  const propertyPath = `${safeVariableName}.${filterOperationField}`;
-  const operatorExpression = buildOperatorExpression(
+  let propertyPath = `${safeVariableName}.${filterOperationField}`;
+  const operatorExpression = buildOperatorExpression({
     filterOperationType,
     propertyPath,
-    isListFilterArgument
-  );
+    isListFilterArgument,
+    parameterPath
+  });
+  if (isSpatialDistanceInputType(typeName)) {
+    listVariable = `${listVariable}.distance`;
+  }
   let translation = `(${nullFieldPredicate}${operatorExpression} ${cypherTypeConstructor}(${listVariable}))`;
   if (isListFilterArgument) {
     translation = buildPredicateFunction({
