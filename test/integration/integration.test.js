@@ -1609,6 +1609,151 @@ test.serial(
   }
 );
 
+test.serial('Spatial - filtering - field equal to given value', async t => {
+  t.plan(1);
+  let expected = {
+    data: {
+      SpatialNode: [
+        {
+          __typename: 'SpatialNode',
+          pointKey: {
+            __typename: '_Neo4jPoint',
+            crs: 'wgs-84-3d',
+            latitude: 20,
+            longitude: 10,
+            height: 30
+          }
+        }
+      ]
+    }
+  };
+  await client
+    .query({
+      query: gql`
+        {
+          SpatialNode(
+            filter: { pointKey: { longitude: 10, latitude: 20, height: 30 } }
+          ) {
+            pointKey {
+              longitude
+              latitude
+              height
+              crs
+            }
+          }
+        }
+      `
+    })
+    .then(data => {
+      t.deepEqual(data.data, expected.data);
+    })
+    .catch(error => {
+      t.fail(error.message);
+    });
+});
+
+test.serial(
+  'Spatial - filtering - field different from given value',
+  async t => {
+    t.plan(1);
+    let expected = {
+      data: {
+        Movie: [
+          {
+            __typename: 'Movie',
+            location: {
+              __typename: '_Neo4jPoint',
+              crs: 'wgs-84-3d',
+              height: 60,
+              latitude: 40,
+              longitude: 50
+            },
+            title: 'Bob Loblaw 5'
+          }
+        ]
+      }
+    };
+    await client
+      .query({
+        query: gql`
+          {
+            Movie(
+              title: "Bob Loblaw 5"
+              filter: {
+                location_not: { longitude: 10, latitude: 20, height: 30 }
+              }
+            ) {
+              title
+              location {
+                longitude
+                latitude
+                height
+                crs
+              }
+            }
+          }
+        `
+      })
+      .then(data => {
+        t.deepEqual(data.data, expected.data);
+      })
+      .catch(error => {
+        t.fail(error.message);
+      });
+  }
+);
+
+test.serial(
+  'Spatial - filtering - field distance with given Point value less than given value',
+  async t => {
+    t.plan(1);
+    let expected = {
+      data: {
+        Movie: [
+          {
+            __typename: 'Movie',
+            location: {
+              __typename: '_Neo4jPoint',
+              longitude: 10,
+              latitude: 20,
+              height: 30,
+              crs: 'wgs-84-3d'
+            }
+          }
+        ]
+      }
+    };
+    await client
+      .query({
+        query: gql`
+          {
+            Movie(
+              filter: {
+                location_distance_lt: {
+                  point: { longitude: 10, latitude: 20, height: 30 }
+                  distance: 100
+                }
+              }
+            ) {
+              location {
+                longitude
+                latitude
+                height
+                crs
+              }
+            }
+          }
+        `
+      })
+      .then(data => {
+        t.deepEqual(data.data, expected.data);
+      })
+      .catch(error => {
+        t.fail(error.message);
+      });
+  }
+);
+
 test('Basic filter', async t => {
   t.plan(1);
 
