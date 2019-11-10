@@ -236,6 +236,7 @@ test.cb(
     });
     t.is(printSchema(schema).includes('_Neo4jPoint'), false);
     t.is(printSchema(schema).includes('_Neo4jPointInput'), false);
+    t.is(printSchema(schema).includes('_Neo4jDistanceFilterInput'), false);
     t.end();
   }
 );
