@@ -320,35 +320,24 @@ const buildRelationshipMutationDirectives = ({
     toType
   });
   const directives = [mutationMetaDirective];
-  if (propertyOutputFields.length) {
-    if (useAuthDirective(config, DirectiveDefinition.HAS_SCOPE)) {
-      directives.push(
-        buildAuthScopeDirective({
-          scopes: [
-            {
-              typeName: fromType,
-              mutation: `Create`
-            },
-            {
-              typeName: toType,
-              mutation: `Create`
-            }
-          ]
-        })
-      );
+  if (useAuthDirective(config, DirectiveDefinition.HAS_SCOPE)) {
+    let authAction = '';
+    if (mutationAction === RelationshipMutation.CREATE) {
+      authAction = 'Create';
+    } else if (mutationAction === RelationshipMutation.DELETE) {
+      authAction = 'Delete';
     }
-  } else if (mutationAction === RelationshipMutation.DELETE) {
-    if (useAuthDirective(config, DirectiveDefinition.HAS_SCOPE)) {
+    if (authAction) {
       directives.push(
         buildAuthScopeDirective({
           scopes: [
             {
               typeName: fromType,
-              mutation: `Delete`
+              mutation: authAction
             },
             {
               typeName: toType,
-              mutation: `Delete`
+              mutation: authAction
             }
           ]
         })
