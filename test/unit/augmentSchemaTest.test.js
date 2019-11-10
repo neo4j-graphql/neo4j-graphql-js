@@ -316,6 +316,13 @@ test.cb('Test augmented schema', t => {
       filmedIn_not: _StateFilter
       filmedIn_in: [_StateFilter!]
       filmedIn_not_in: [_StateFilter!]
+      location: _Neo4jPointInput
+      location_not: _Neo4jPointInput
+      location_distance: _Neo4jPointDistanceFilter
+      location_distance_lt: _Neo4jPointDistanceFilter
+      location_distance_lte: _Neo4jPointDistanceFilter
+      location_distance_gt: _Neo4jPointDistanceFilter
+      location_distance_gte: _Neo4jPointDistanceFilter
       ratings: _MovieRatedFilter
       ratings_not: _MovieRatedFilter
       ratings_in: [_MovieRatedFilter!]
@@ -448,6 +455,13 @@ test.cb('Test augmented schema', t => {
       localdatetime_lte: _Neo4jLocalDateTimeInput
       localdatetime_gt: _Neo4jLocalDateTimeInput
       localdatetime_gte: _Neo4jLocalDateTimeInput
+      location: _Neo4jPointInput
+      location_not: _Neo4jPointInput
+      location_distance: _Neo4jPointDistanceFilter
+      location_distance_lt: _Neo4jPointDistanceFilter
+      location_distance_lte: _Neo4jPointDistanceFilter
+      location_distance_gt: _Neo4jPointDistanceFilter
+      location_distance_gte: _Neo4jPointDistanceFilter
       User: _UserFilter
     }
 
@@ -592,6 +606,13 @@ test.cb('Test augmented schema', t => {
       localdatetime_lte: _Neo4jLocalDateTimeInput
       localdatetime_gt: _Neo4jLocalDateTimeInput
       localdatetime_gte: _Neo4jLocalDateTimeInput
+      location: _Neo4jPointInput
+      location_not: _Neo4jPointInput
+      location_distance: _Neo4jPointDistanceFilter
+      location_distance_lt: _Neo4jPointDistanceFilter
+      location_distance_lte: _Neo4jPointDistanceFilter
+      location_distance_gt: _Neo4jPointDistanceFilter
+      location_distance_gte: _Neo4jPointDistanceFilter
       Movie: _MovieFilter
     }
 
@@ -651,6 +672,13 @@ test.cb('Test augmented schema', t => {
       localdatetime_lte: _Neo4jLocalDateTimeInput
       localdatetime_gt: _Neo4jLocalDateTimeInput
       localdatetime_gte: _Neo4jLocalDateTimeInput
+      location: _Neo4jPointInput
+      location_not: _Neo4jPointInput
+      location_distance: _Neo4jPointDistanceFilter
+      location_distance_lt: _Neo4jPointDistanceFilter
+      location_distance_lte: _Neo4jPointDistanceFilter
+      location_distance_gt: _Neo4jPointDistanceFilter
+      location_distance_gte: _Neo4jPointDistanceFilter
       User: _UserFilter
     }
 
@@ -1722,6 +1750,11 @@ test.cb('Test augmented schema', t => {
       height: Int
       crs: String
       srid: Int
+    }
+
+    input _Neo4jPointDistanceFilter {
+      point: _Neo4jPointInput!
+      distance: Float!
     }
 
     enum _RelationDirections {
