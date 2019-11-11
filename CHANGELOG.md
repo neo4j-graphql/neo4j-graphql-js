@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.9.0
+
+- [Initial spatial support using Point type ](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/334)
+- [Spatial filters](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/341)
+- [Fixes for generated schema type and default config](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/339)
+- [Interface handling: generate queries for interface types + FRAGMENT_TYPE fix](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/336)
+- [Fixes for incorrect and non-existing hasScope directives](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/345)
+- [Duplicate query argument fix](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/332)
+
 ## 2.8.0
 
 - [Schema augmentation refactor](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/322)
