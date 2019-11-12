@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.9.1
+
+- [Fix for querying fields of different interface types](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/348)
+
 ## 2.9.0
 
 - [Initial spatial support using Point type ](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/334)
