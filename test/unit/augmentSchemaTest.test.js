@@ -316,6 +316,13 @@ test.cb('Test augmented schema', t => {
       filmedIn_not: _StateFilter
       filmedIn_in: [_StateFilter!]
       filmedIn_not_in: [_StateFilter!]
+      location: _Neo4jPointInput
+      location_not: _Neo4jPointInput
+      location_distance: _Neo4jPointDistanceFilter
+      location_distance_lt: _Neo4jPointDistanceFilter
+      location_distance_lte: _Neo4jPointDistanceFilter
+      location_distance_gt: _Neo4jPointDistanceFilter
+      location_distance_gte: _Neo4jPointDistanceFilter
       ratings: _MovieRatedFilter
       ratings_not: _MovieRatedFilter
       ratings_in: [_MovieRatedFilter!]
@@ -448,6 +455,13 @@ test.cb('Test augmented schema', t => {
       localdatetime_lte: _Neo4jLocalDateTimeInput
       localdatetime_gt: _Neo4jLocalDateTimeInput
       localdatetime_gte: _Neo4jLocalDateTimeInput
+      location: _Neo4jPointInput
+      location_not: _Neo4jPointInput
+      location_distance: _Neo4jPointDistanceFilter
+      location_distance_lt: _Neo4jPointDistanceFilter
+      location_distance_lte: _Neo4jPointDistanceFilter
+      location_distance_gt: _Neo4jPointDistanceFilter
+      location_distance_gte: _Neo4jPointDistanceFilter
       User: _UserFilter
     }
 
@@ -592,6 +606,13 @@ test.cb('Test augmented schema', t => {
       localdatetime_lte: _Neo4jLocalDateTimeInput
       localdatetime_gt: _Neo4jLocalDateTimeInput
       localdatetime_gte: _Neo4jLocalDateTimeInput
+      location: _Neo4jPointInput
+      location_not: _Neo4jPointInput
+      location_distance: _Neo4jPointDistanceFilter
+      location_distance_lt: _Neo4jPointDistanceFilter
+      location_distance_lte: _Neo4jPointDistanceFilter
+      location_distance_gt: _Neo4jPointDistanceFilter
+      location_distance_gte: _Neo4jPointDistanceFilter
       Movie: _MovieFilter
     }
 
@@ -651,6 +672,13 @@ test.cb('Test augmented schema', t => {
       localdatetime_lte: _Neo4jLocalDateTimeInput
       localdatetime_gt: _Neo4jLocalDateTimeInput
       localdatetime_gte: _Neo4jLocalDateTimeInput
+      location: _Neo4jPointInput
+      location_not: _Neo4jPointInput
+      location_distance: _Neo4jPointDistanceFilter
+      location_distance_lt: _Neo4jPointDistanceFilter
+      location_distance_lte: _Neo4jPointDistanceFilter
+      location_distance_gt: _Neo4jPointDistanceFilter
+      location_distance_gte: _Neo4jPointDistanceFilter
       User: _UserFilter
     }
 
@@ -1152,6 +1180,7 @@ test.cb('Test augmented schema', t => {
         to: _GenreInput!
       ): _AddMovieGenresPayload
         @MutationMeta(relationship: "IN_GENRE", from: "Movie", to: "Genre")
+        @hasScope(scopes: ["Movie: Create", "Genre: Create"])
       RemoveMovieGenres(
         from: _MovieInput!
         to: _GenreInput!
@@ -1163,6 +1192,7 @@ test.cb('Test augmented schema', t => {
         to: _MovieInput!
       ): _AddMovieActorsPayload
         @MutationMeta(relationship: "ACTED_IN", from: "Actor", to: "Movie")
+        @hasScope(scopes: ["Actor: Create", "Movie: Create"])
       RemoveMovieActors(
         from: _ActorInput!
         to: _MovieInput!
@@ -1174,6 +1204,7 @@ test.cb('Test augmented schema', t => {
         to: _StateInput!
       ): _AddMovieFilmedInPayload
         @MutationMeta(relationship: "FILMED_IN", from: "Movie", to: "State")
+        @hasScope(scopes: ["Movie: Create", "State: Create"])
       RemoveMovieFilmedIn(
         from: _MovieInput!
         to: _StateInput!
@@ -1192,7 +1223,7 @@ test.cb('Test augmented schema', t => {
         to: _MovieInput!
       ): _RemoveMovieRatingsPayload
         @MutationMeta(relationship: "RATED", from: "User", to: "Movie")
-        @hasScope(scopes: ["User: Create", "Movie: Create"])
+        @hasScope(scopes: ["User: Delete", "Movie: Delete"])
       CreateMovie(
         movieId: ID
         title: String
@@ -1233,6 +1264,7 @@ test.cb('Test augmented schema', t => {
         to: _GenreInput!
       ): _AddGenreMoviesPayload
         @MutationMeta(relationship: "IN_GENRE", from: "Movie", to: "Genre")
+        @hasScope(scopes: ["Movie: Create", "Genre: Create"])
       RemoveGenreMovies(
         from: _MovieInput!
         to: _GenreInput!
@@ -1248,6 +1280,7 @@ test.cb('Test augmented schema', t => {
         to: _MovieInput!
       ): _AddActorMoviesPayload
         @MutationMeta(relationship: "ACTED_IN", from: "Actor", to: "Movie")
+        @hasScope(scopes: ["Actor: Create", "Movie: Create"])
       RemoveActorMovies(
         from: _ActorInput!
         to: _MovieInput!
@@ -1271,7 +1304,7 @@ test.cb('Test augmented schema', t => {
         to: _MovieInput!
       ): _RemoveUserRatedPayload
         @MutationMeta(relationship: "RATED", from: "User", to: "Movie")
-        @hasScope(scopes: ["User: Create", "Movie: Create"])
+        @hasScope(scopes: ["User: Delete", "Movie: Delete"])
       AddUserFriends(
         from: _UserInput!
         to: _UserInput!
@@ -1284,12 +1317,13 @@ test.cb('Test augmented schema', t => {
         to: _UserInput!
       ): _RemoveUserFriendsPayload
         @MutationMeta(relationship: "FRIEND_OF", from: "User", to: "User")
-        @hasScope(scopes: ["User: Create", "User: Create"])
+        @hasScope(scopes: ["User: Delete", "User: Delete"])
       AddUserFavorites(
         from: _UserInput!
         to: _MovieInput!
       ): _AddUserFavoritesPayload
         @MutationMeta(relationship: "FAVORITED", from: "User", to: "Movie")
+        @hasScope(scopes: ["User: Create", "Movie: Create"])
       RemoveUserFavorites(
         from: _UserInput!
         to: _MovieInput!
@@ -1316,6 +1350,7 @@ test.cb('Test augmented schema', t => {
           from: "TemporalNode"
           to: "TemporalNode"
         )
+        @hasScope(scopes: ["TemporalNode: Create", "TemporalNode: Create"])
       RemoveTemporalNodeTemporalNodes(
         from: _TemporalNodeInput!
         to: _TemporalNodeInput!
@@ -1355,6 +1390,7 @@ test.cb('Test augmented schema', t => {
           from: "SpatialNode"
           to: "SpatialNode"
         )
+        @hasScope(scopes: ["SpatialNode: Create", "SpatialNode: Create"])
       RemoveSpatialNodeSpatialNodes(
         from: _SpatialNodeInput!
         to: _SpatialNodeInput!
@@ -1380,6 +1416,7 @@ test.cb('Test augmented schema', t => {
         to: _StateInput!
       ): _AddCasedTypeStatePayload
         @MutationMeta(relationship: "FILMED_IN", from: "CasedType", to: "State")
+        @hasScope(scopes: ["CasedType: Create", "State: Create"])
       RemoveCasedTypeState(
         from: _CasedTypeInput!
         to: _StateInput!
@@ -1722,6 +1759,11 @@ test.cb('Test augmented schema', t => {
       height: Int
       crs: String
       srid: Int
+    }
+
+    input _Neo4jPointDistanceFilter {
+      point: _Neo4jPointInput!
+      distance: Float!
     }
 
     enum _RelationDirections {

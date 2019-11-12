@@ -17,6 +17,7 @@ type Person {
   fun: Boolean
   gender: Gender
   birthday: _Neo4jDateTime
+  location: _Neo4jPoint
   company(filter: _CompanyFilter): Company @relation(name: "WORKS_AT", direction: OUT)
   employmentHistory(filter: _PersonEmploymentHistoryFilter): [_PersonEmploymentHistory]
   knows: _PersonKnowsDirections
@@ -25,6 +26,7 @@ type _PersonEmploymentHistory @relation(name: "WORKED_AT", from: "Person", to: "
   role: String!
   start: _Neo4jDateTime!
   end: _Neo4jDateTime!
+  location: _Neo4jPoint
   Company: Company
 }
 type _PersonKnowsDirections @relation(name: "KNOWS", from: "Person", to: "Person") {
@@ -33,6 +35,7 @@ type _PersonKnowsDirections @relation(name: "KNOWS", from: "Person", to: "Person
 }
 type _PersonKnows @relation(name: "KNOWS", from: "Person", to: "Person") {
   since: _Neo4jDateTime!
+  location: _Neo4jPoint
   Person: Person
 }
 input _PersonFilter {
@@ -88,6 +91,13 @@ input _PersonFilter {
   birthday_lte: _Neo4jDateTimeInput
   birthday_gt: _Neo4jDateTimeInput
   birthday_gte: _Neo4jDateTimeInput
+  location: _Neo4jPointInput
+  location_not: _Neo4jPointInput
+  location_distance: _Neo4jPointDistanceFilter
+  location_distance_lt: _Neo4jPointDistanceFilter
+  location_distance_lte: _Neo4jPointDistanceFilter
+  location_distance_gt: _Neo4jPointDistanceFilter
+  location_distance_gte: _Neo4jPointDistanceFilter
   company: _CompanyFilter
   company_not: _CompanyFilter
   company_in: [_CompanyFilter!]
@@ -138,6 +148,13 @@ input _PersonEmploymentHistoryFilter {
   end_lte: _Neo4jDateTimeInput
   end_gt: _Neo4jDateTimeInput
   end_gte: _Neo4jDateTimeInput
+  location: _Neo4jPointInput
+  location_not: _Neo4jPointInput
+  location_distance: _Neo4jPointDistanceFilter
+  location_distance_lt: _Neo4jPointDistanceFilter
+  location_distance_lte: _Neo4jPointDistanceFilter
+  location_distance_gt: _Neo4jPointDistanceFilter
+  location_distance_gte: _Neo4jPointDistanceFilter
   Company: _CompanyFilter
 }
 input _PersonKnowsDirectionsFilter {
@@ -155,11 +172,19 @@ input _PersonKnowsFilter {
   since_lte: _Neo4jDateTimeInput
   since_gt: _Neo4jDateTimeInput
   since_gte: _Neo4jDateTimeInput
+  location: _Neo4jPointInput
+  location_not: _Neo4jPointInput
+  location_distance: _Neo4jPointDistanceFilter
+  location_distance_lt: _Neo4jPointDistanceFilter
+  location_distance_lte: _Neo4jPointDistanceFilter
+  location_distance_gt: _Neo4jPointDistanceFilter
+  location_distance_gte: _Neo4jPointDistanceFilter
   Person: _PersonFilter
 }
 type Company {
   name: String!
   founded: _Neo4jDateTime
+  location: _Neo4jPoint
   employees(filter: _PersonFilter): [Person] @relation(name: "WORKS_AT", direction: IN)
   employeeHistory(filter: _CompanyEmploymentHistoryFilter): [_CompanyEmployeeHistory]
 }
@@ -167,6 +192,7 @@ type _CompanyEmployeeHistory @relation(name: "WORKED_AT", from: "Person", to: "C
   role: String!
   start: _Neo4jDateTime!
   end: _Neo4jDateTime!
+  location: _Neo4jPoint
   Person: Person
 }
 input _CompanyFilter {
@@ -190,6 +216,13 @@ input _CompanyFilter {
   founded_lte: _Neo4jDateTimeInput
   founded_gt: _Neo4jDateTimeInput
   founded_gte: _Neo4jDateTimeInput
+  location: _Neo4jPointInput
+  location_not: _Neo4jPointInput
+  location_distance: _Neo4jPointDistanceFilter
+  location_distance_lt: _Neo4jPointDistanceFilter
+  location_distance_lte: _Neo4jPointDistanceFilter
+  location_distance_gt: _Neo4jPointDistanceFilter
+  location_distance_gte: _Neo4jPointDistanceFilter
   employees: _PersonFilter
   employees_not: _PersonFilter
   employees_in: [_PersonFilter!]
@@ -236,6 +269,13 @@ input _CompanyEmploymentHistoryFilter {
   end_lte: _Neo4jDateTimeInput
   end_gt: _Neo4jDateTimeInput
   end_gte: _Neo4jDateTimeInput
+  location: _Neo4jPointInput
+  location_not: _Neo4jPointInput
+  location_distance: _Neo4jPointDistanceFilter
+  location_distance_lt: _Neo4jPointDistanceFilter
+  location_distance_lte: _Neo4jPointDistanceFilter
+  location_distance_gt: _Neo4jPointDistanceFilter
+  location_distance_gte: _Neo4jPointDistanceFilter
   Person: _PersonFilter
 }
 type _Neo4jTime {
@@ -337,6 +377,30 @@ input _Neo4jLocalDateTimeInput {
   microsecond: Int
   nanosecond: Int
   formatted: String
+}
+type _Neo4jPoint {
+  x: Int
+  y: Int
+  z: Int
+  longitude: Int
+  latitude: Int
+  height: Int
+  crs: String
+  srid: Int
+}
+input _Neo4jPointInput {
+  x: Int
+  y: Int
+  z: Int
+  longitude: Int
+  latitude: Int
+  height: Int
+  crs: String
+  srid: Int
+}
+input _Neo4jPointDistanceFilter {
+  point: _Neo4jPointInput!
+  distance: Float!
 }
 directive @cypher(statement: String) on FIELD_DEFINITION
 directive @relation(name: String, direction: _RelationDirections, from: String, to: String) on FIELD_DEFINITION | OBJECT
@@ -920,7 +984,7 @@ MATCH (`person`:`Person`) WHERE ((`person`.birthday = datetime($filter.birthday)
 MATCH (`person`:`Person`) WHERE ((NOT `person`.birthday =  datetime($filter.birthday_not))) RETURN `person` { .name } AS `person`
 ```
 
-### Temporal field before or equal to given value
+### Temporal field less than or equal to given value
 ```graphql
 { person(filter: { birthday_lte: { year: 2020 } }) { name } }
 ```
@@ -928,7 +992,7 @@ MATCH (`person`:`Person`) WHERE ((NOT `person`.birthday =  datetime($filter.birt
 MATCH (`person`:`Person`) WHERE ((`person`.birthday <= datetime($filter.birthday_lte))) RETURN `person` { .name } AS `person`
 ```
 
-### Temporal field before given value
+### Temporal field less than given value
 ```graphql
 { person(filter: { birthday_lt: { year: 2021 } }) { name } }
 ```
@@ -1054,6 +1118,118 @@ MATCH (`person`:`Person`) WHERE (EXISTS((`person`)-[:WORKED_AT]->(:Company)) AND
 ```
 ```cypher
 MATCH (`person`:`Person`) WHERE (EXISTS((`person`)-[:WORKED_AT]->(:Company)) AND ALL(`person_filter_company` IN [(`person`)-[`_person_filter_company`:WORKED_AT]->(:Company) | `_person_filter_company`] WHERE ((`person_filter_company`.start = datetime($filter.employmentHistory.start))) AND ((`person_filter_company`.end = datetime($filter.employmentHistory.end))))) RETURN `person` { .name } AS `person`
+```
+
+### Spatial field equal to given value
+```graphql
+{ Company(filter: { location: { longitude: 10, latitude: 20, height: 30 } }) { location { longitude latitude height } } }
+```
+```cypher
+MATCH (`company`:`Company`) WHERE ((`company`.location = point($filter.location))) RETURN `company` {location: { longitude: `company`.location.longitude , latitude: `company`.location.latitude , height: `company`.location.height }} AS `company`
+```
+
+### Spatial field different from given value
+```graphql
+{ Company(filter: { location_not: { longitude: 10, latitude: 20, height: 30 } }) { location { longitude latitude height } } }
+```
+```cypher
+MATCH (`company`:`Company`) WHERE ((NOT `company`.location =  point($filter.location_not))) RETURN `company` {location: { longitude: `company`.location.longitude , latitude: `company`.location.latitude , height: `company`.location.height }} AS `company`
+```
+
+### Spatial field distance with given Point value equal to given value
+```graphql
+{ Company( filter: { location_distance: { point: { longitude: 10, latitude: 20, height: 30 }, distance: 0 } } ) { location { longitude latitude height } } }
+```
+```cypher
+MATCH (`company`:`Company`) WHERE ((distance(`company`.location, point($filter.location_distance.point)) = ($filter.location_distance.distance))) RETURN `company` {location: { longitude: `company`.location.longitude , latitude: `company`.location.latitude , height: `company`.location.height }} AS `company`
+```
+
+### Spatial field distance with given Point value less than given value
+```graphql
+{ Company( filter: { location_distance_lt: { point: { longitude: 10, latitude: 20, height: 30 } distance: 0 } } ) { location { longitude latitude height } } } 
+```
+```cypher
+MATCH (`company`:`Company`) WHERE ((distance(`company`.location, point($filter.location_distance_lt.point)) < ($filter.location_distance_lt.distance))) RETURN `company` {location: { longitude: `company`.location.longitude , latitude: `company`.location.latitude , height: `company`.location.height }} AS `company`
+```
+
+### Spatial field distance with given Point value less than or equal to given value
+```graphql
+{ Company( filter: { location_distance_lte: { point: { longitude: 10, latitude: 20, height: 30 } distance: 0 } } ) { location { longitude latitude height } } } 
+```
+```cypher
+MATCH (`company`:`Company`) WHERE ((distance(`company`.location, point($filter.location_distance_lte.point)) <= ($filter.location_distance_lte.distance))) RETURN `company` {location: { longitude: `company`.location.longitude , latitude: `company`.location.latitude , height: `company`.location.height }} AS `company`
+```
+
+### Spatial field distance with given Point value greater than given value
+```graphql
+{ Company( filter: { location_distance_gt: { point: { longitude: 10, latitude: 20, height: 30 } distance: 0 } } ) { location { longitude latitude height } } } 
+```
+```cypher
+MATCH (`company`:`Company`) WHERE ((distance(`company`.location, point($filter.location_distance_gt.point)) > ($filter.location_distance_gt.distance))) RETURN `company` {location: { longitude: `company`.location.longitude , latitude: `company`.location.latitude , height: `company`.location.height }} AS `company`
+```
+
+### Spatial field distance with given Point value greater than or equal to given value
+```graphql
+{ Company( filter: { location_distance_gte: { point: { longitude: 10, latitude: 20, height: 30 } distance: 0 } } ) { location { longitude latitude height } } } 
+```
+```cypher
+MATCH (`company`:`Company`) WHERE ((distance(`company`.location, point($filter.location_distance_gte.point)) >= ($filter.location_distance_gte.distance))) RETURN `company` {location: { longitude: `company`.location.longitude , latitude: `company`.location.latitude , height: `company`.location.height }} AS `company`
+```
+
+### Spatial field exists
+```graphql
+{ Company( filter: { location_not: null } ) { location { longitude latitude height } } }
+```
+```cypher
+MATCH (`company`:`Company`) WHERE ($filter._location_not_null = TRUE AND EXISTS(`company`.location)) RETURN `company` {location: { longitude: `company`.location.longitude , latitude: `company`.location.latitude , height: `company`.location.height }} AS `company`
+```
+
+### Spatial field does NOT exist
+```graphql
+{ Company( filter: { location: null } ) { location { longitude latitude height } } }
+```
+```cypher
+MATCH (`company`:`Company`) WHERE ($filter._location_null = TRUE AND NOT EXISTS(`company`.location)) RETURN `company` {location: { longitude: `company`.location.longitude , latitude: `company`.location.latitude , height: `company`.location.height }} AS `company`
+```
+
+### Spatial fields on relationship exist
+```graphql
+{ Company(filter: { employees:{ location_not: null } }) { name } }
+```
+```cypher
+MATCH (`company`:`Company`) WHERE (EXISTS((`company`)<-[:WORKS_AT]-(:Person)) AND ALL(`person` IN [(`company`)<-[:WORKS_AT]-(`_person`:Person) | `_person`] WHERE ($filter.employees._location_not_null = TRUE AND EXISTS(`person`.location)))) RETURN `company` { .name } AS `company`
+```
+
+### Spatial field does NOT exist on related node
+```graphql
+{ Company(filter: { employees:{ location: null } }) { name } }
+```
+```cypher
+MATCH (`company`:`Company`) WHERE (EXISTS((`company`)<-[:WORKS_AT]-(:Person)) AND ALL(`person` IN [(`company`)<-[:WORKS_AT]-(`_person`:Person) | `_person`] WHERE ($filter.employees._location_null = TRUE AND NOT EXISTS(`person`.location)))) RETURN `company` { .name } AS `company`
+```
+
+### Spatial field on related node equal to given value
+```graphql
+{ Company(filter: { employees: { location: { longitude: 10, latitude: 20, height: 30 } } }) { name employees { name location { longitude latitude height } } } }
+```
+```cypher
+MATCH (`company`:`Company`) WHERE (EXISTS((`company`)<-[:WORKS_AT]-(:Person)) AND ALL(`person` IN [(`company`)<-[:WORKS_AT]-(`_person`:Person) | `_person`] WHERE ((`person`.location = point($filter.employees.location))))) RETURN `company` { .name ,employees: [(`company`)<-[:`WORKS_AT`]-(`company_employees`:`Person`) | company_employees { .name ,location: { longitude: `company_employees`.location.longitude , latitude: `company_employees`.location.latitude , height: `company_employees`.location.height }}] } AS `company`
+```
+
+### Spatial field on related node equal to given year OR does NOT exist
+```graphql
+{ Company( filter: { employees: { OR: [ { location: { longitude: 10, latitude: 20, height: 30 } } { location: null } ] } } ) { name } }
+```
+```cypher
+MATCH (`company`:`Company`) WHERE (EXISTS((`company`)<-[:WORKS_AT]-(:Person)) AND ALL(`person` IN [(`company`)<-[:WORKS_AT]-(`_person`:Person) | `_person`] WHERE (ANY(_OR IN $filter.employees.OR WHERE ((_OR.location IS NULL OR `person`.location = point(_OR.location))) AND (_OR._location_null IS NULL OR _OR._location_null = TRUE AND NOT EXISTS(`person`.location)))))) RETURN `company` { .name } AS `company`
+```
+
+### Spatial and scalar field on relationship match given logical AND filters
+```graphql
+{ Company( filter: { employees: { AND: [ { location: { longitude: 10, latitude: 20, height: 30 } } { location: { longitude: 10, latitude: 20, height: 30 } } ] } } ) { name } }
+```
+```cypher
+MATCH (`company`:`Company`) WHERE (EXISTS((`company`)<-[:WORKS_AT]-(:Person)) AND ALL(`person` IN [(`company`)<-[:WORKS_AT]-(`_person`:Person) | `_person`] WHERE (ALL(_AND IN $filter.employees.AND WHERE ((_AND.location IS NULL OR `person`.location = point(_AND.location))))))) RETURN `company` { .name } AS `company`
 ```
 
 ### ALL relationships matching filter

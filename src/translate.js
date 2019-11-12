@@ -33,6 +33,9 @@ import {
   isNeo4jType,
   isTemporalType,
   isNeo4jTypeInput,
+  isTemporalInputType,
+  isSpatialInputType,
+  isSpatialDistanceInputType,
   isGraphqlScalarType,
   isGraphqlInterfaceType,
   innerType,
@@ -54,8 +57,21 @@ import { buildCypherSelection } from './selections';
 import _ from 'lodash';
 import { v1 as neo4j } from 'neo4j-driver';
 
-const fragmentType = varName =>
-  `FRAGMENT_TYPE: head( [ label IN labels(${varName}) WHERE label IN $derivedTypes ] )`;
+const derivedTypesParamName = interfaceName => `${interfaceName}_derivedTypes`;
+
+const fragmentType = (varName, interfaceName) =>
+  `FRAGMENT_TYPE: head( [ label IN labels(${varName}) WHERE label IN $${derivedTypesParamName(
+    interfaceName
+  )} ] )`;
+
+const derivedTypesParams = (schema, interfaceName) => {
+  const res = {};
+  res[derivedTypesParamName(interfaceName)] = getDerivedTypeNames(
+    schema,
+    interfaceName
+  );
+  return res;
+};
 
 export const customCypherField = ({
   customCypher,
@@ -91,12 +107,7 @@ export const customCypherField = ({
   // appropriately to the indexed keys produced in getFilterParams()
   const cypherFieldParamsIndex = paramIndex - 1;
   const fragmentTypeParams = fieldIsInterfaceType
-    ? {
-        derivedTypes: getDerivedTypeNames(
-          resolveInfo.schema,
-          fieldType.ofType.astNode.name
-        )
-      }
+    ? derivedTypesParams(resolveInfo.schema, fieldType.ofType.astNode.name)
     : {};
 
   return {
@@ -110,7 +121,9 @@ export const customCypherField = ({
       resolveInfo,
       cypherFieldParamsIndex
     )}}, true) | ${nestedVariable} {${
-      fieldIsInterfaceType ? `${fragmentType(nestedVariable)},` : ''
+      fieldIsInterfaceType
+        ? `${fragmentType(nestedVariable, fieldType.ofType.astNode.name)},`
+        : ''
     }${subSelection[0]}}]${fieldIsList ? '' : ')'}${skipLimit} ${commaIfTail}`,
     ...tailParams,
     ...fragmentTypeParams
@@ -187,12 +200,7 @@ export const relationFieldOnNodeType = ({
     filterParams
   );
   const fragmentTypeParams = isInlineFragment
-    ? {
-        derivedTypes: getDerivedTypeNames(
-          resolveInfo.schema,
-          innerSchemaType.name
-        )
-      }
+    ? derivedTypesParams(resolveInfo.schema, innerSchemaType.name)
     : {};
 
   subSelection[1] = { ...subSelection[1], ...fragmentTypeParams };
@@ -225,7 +233,7 @@ export const relationFieldOnNodeType = ({
         whereClauses.length > 0 ? ` WHERE ${whereClauses.join(' AND ')}` : ''
       } | ${nestedVariable} {${
         isInlineFragment
-          ? `${fragmentType(nestedVariable)}${
+          ? `${fragmentType(nestedVariable, innerSchemaType.name)}${
               subSelection[0] ? `, ${subSelection[0]}` : ''
             }`
           : subSelection[0]
@@ -439,12 +447,7 @@ const directedNodeTypeFieldOnRelationType = ({
   const isFromField = fieldName === fromTypeName || fieldName === 'from';
   const isToField = fieldName === toTypeName || fieldName === 'to';
   const fragmentTypeParams = isInlineFragment
-    ? {
-        derivedTypes: getDerivedTypeNames(
-          resolveInfo.schema,
-          innerSchemaType.name
-        )
-      }
+    ? derivedTypesParams(resolveInfo.schema, innerSchemaType.name)
     : {};
   subSelection[1] = { ...subSelection[1], ...fragmentTypeParams };
   // Since the translations are significantly different,
@@ -503,7 +506,7 @@ const directedNodeTypeFieldOnRelationType = ({
               : ''
           }| ${relationshipVariableName} {${
             isInlineFragment
-              ? `${fragmentType(nestedVariable)}${
+              ? `${fragmentType(nestedVariable, innerSchemaType.name)}${
                   subSelection[0] ? `, ${subSelection[0]}` : ''
                 }`
               : subSelection[0]
@@ -561,7 +564,7 @@ const directedNodeTypeFieldOnRelationType = ({
             : ''
         }${queryParams}) | ${nestedVariable} {${
           isInlineFragment
-            ? `${fragmentType(nestedVariable)}${
+            ? `${fragmentType(nestedVariable, innerSchemaType.name)}${
                 subSelection[0] ? `, ${subSelection[0]}` : ''
               }`
             : subSelection[0]
@@ -820,13 +823,15 @@ const customQuery = ({
     // FIXME: fix subselection translation for temporal type payload
     !isNeo4jTypeOutput && !isScalarType
       ? `{${
-          isInterfaceType ? `${fragmentType(safeVariableName)},` : ''
+          isInterfaceType
+            ? `${fragmentType(safeVariableName, schemaType.name)},`
+            : ''
         }${subQuery}} AS ${safeVariableName}${orderByClause}`
       : ''
   }${outerSkipLimit}`;
 
   const fragmentTypeParams = isInterfaceType
-    ? { derivedTypes: getDerivedTypeNames(resolveInfo.schema, schemaType.name) }
+    ? derivedTypesParams(resolveInfo.schema, schemaType.name)
     : {};
 
   return [query, { ...params, ...fragmentTypeParams }];
@@ -910,10 +915,10 @@ const nodeQuery = ({
 
   const { optimization, cypherPart: orderByClause } = orderByValue;
   const fragmentTypeValue = isGraphqlInterfaceType(schemaType)
-    ? `${fragmentType(safeVariableName)},`
+    ? `${fragmentType(safeVariableName, schemaType.name)},`
     : '';
   const fragmentTypeParams = isGraphqlInterfaceType(schemaType)
-    ? { derivedTypes: getDerivedTypeNames(resolveInfo.schema, schemaType.name) }
+    ? derivedTypesParams(resolveInfo.schema, schemaType.name)
     : {};
 
   let query = `MATCH (${safeVariableName}:${safeLabelName}${
@@ -1061,12 +1066,14 @@ const customMutation = ({
     RETURN ${safeVariableName} ${
     !isNeo4jTypeOutput && !isScalarType
       ? `{${
-          isInterfaceType ? `${fragmentType(safeVariableName)},` : ''
+          isInterfaceType
+            ? `${fragmentType(safeVariableName, schemaType.name)},`
+            : ''
         }${subQuery}} AS ${safeVariableName}${orderByClause}${outerSkipLimit}`
       : ''
   }`;
   const fragmentTypeParams = isInterfaceType
-    ? { derivedTypes: getDerivedTypeNames(resolveInfo.schema, schemaType.name) }
+    ? derivedTypesParams(resolveInfo.schema, schemaType.name)
     : {};
   return [query, { ...params, ...fragmentTypeParams }];
 };
@@ -1936,7 +1943,12 @@ const parseFilterArgumentName = fieldName => {
     '_some',
     '_none',
     '_single',
-    '_every'
+    '_every',
+    '_distance',
+    '_distance_lt',
+    '_distance_lte',
+    '_distance_gt',
+    '_distance_gte'
   ];
 
   let filterType = '';
@@ -1993,10 +2005,10 @@ const translateScalarFilter = ({
       isListFilterArgument
     });
   }
-  return `${nullFieldPredicate}${buildOperatorExpression(
+  return `${nullFieldPredicate}${buildOperatorExpression({
     filterOperationType,
     propertyPath
-  )} ${parameterPath}`;
+  })} ${parameterPath}`;
 };
 
 const isExistentialFilter = (type, value) =>
@@ -2037,11 +2049,22 @@ const translateNullFilter = ({
   return `${nullFieldPredicate}${predicate}`;
 };
 
-const buildOperatorExpression = (
+//! case 1
+// filterOperationType,
+// propertyPath
+
+//! case 2
+// filterOperationType,
+// propertyPath,
+// isListFilterArgument,
+// parameterPath
+
+const buildOperatorExpression = ({
   filterOperationType,
   propertyPath,
-  isListFilterArgument
-) => {
+  isListFilterArgument,
+  parameterPath
+}) => {
   if (isListFilterArgument) return `${propertyPath} =`;
   switch (filterOperationType) {
     case 'not':
@@ -2062,14 +2085,24 @@ const buildOperatorExpression = (
       return `${propertyPath} ENDS WITH`;
     case 'not_ends_with':
       return `NOT ${propertyPath} ENDS WITH`;
+    case 'distance':
+      return `distance(${propertyPath}, point(${parameterPath}.point)) =`;
     case 'lt':
       return `${propertyPath} <`;
+    case 'distance_lt':
+      return `distance(${propertyPath}, point(${parameterPath}.point)) <`;
     case 'lte':
       return `${propertyPath} <=`;
+    case 'distance_lte':
+      return `distance(${propertyPath}, point(${parameterPath}.point)) <=`;
     case 'gt':
       return `${propertyPath} >`;
+    case 'distance_gt':
+      return `distance(${propertyPath}, point(${parameterPath}.point)) >`;
     case 'gte':
       return `${propertyPath} >=`;
+    case 'distance_gte':
+      return `distance(${propertyPath}, point(${parameterPath}.point)) >=`;
     default: {
       return `${propertyPath} =`;
     }
@@ -2548,6 +2581,12 @@ const decidePredicateFunction = ({
         return 'NONE';
       case 'single':
         return 'SINGLE';
+      case 'distance':
+      case 'distance_lt':
+      case 'distance_lte':
+      case 'distance_gt':
+      case 'distance_gte':
+        return 'distance';
       default:
         return 'ALL';
     }
@@ -2657,39 +2696,49 @@ const translateNeo4jTypeFilter = ({
   isListFilterArgument,
   nullFieldPredicate
 }) => {
-  const cypherTypeConstructor = decideNeo4jTypeConstructor(typeName);
-  const safeVariableName = safeVar(variableName);
-  const propertyPath = `${safeVariableName}.${filterOperationField}`;
-  if (isExistentialFilter(filterOperationType, filterValue)) {
-    return translateNullFilter({
+  let predicate = '';
+  if (
+    isTemporalInputType(typeName) ||
+    isSpatialInputType(typeName) ||
+    isSpatialDistanceInputType(typeName)
+  ) {
+    const cypherTypeConstructor = decideNeo4jTypeConstructor(typeName);
+    const safeVariableName = safeVar(variableName);
+    let propertyPath = `${safeVariableName}.${filterOperationField}`;
+    if (isExistentialFilter(filterOperationType, filterValue)) {
+      return translateNullFilter({
+        filterOperationField,
+        filterOperationType,
+        propertyPath,
+        filterParam,
+        parentParamPath,
+        isListFilterArgument
+      });
+    }
+    const rootPredicateFunction = decidePredicateFunction({
+      isRelationTypeNode,
+      filterOperationField,
+      filterOperationType
+    });
+    predicate = buildNeo4jTypePredicate({
+      typeName,
+      fieldName,
+      fieldType,
+      filterValue,
       filterOperationField,
       filterOperationType,
-      propertyPath,
-      filterParam,
-      parentParamPath,
-      isListFilterArgument
+      parameterPath,
+      variableName,
+      nullFieldPredicate,
+      rootPredicateFunction,
+      cypherTypeConstructor
     });
   }
-  const rootPredicateFunction = decidePredicateFunction({
-    isRelationTypeNode,
-    filterOperationField,
-    filterOperationType
-  });
-  return buildTemporalPredicate({
-    fieldName,
-    fieldType,
-    filterValue,
-    filterOperationField,
-    filterOperationType,
-    parameterPath,
-    variableName,
-    nullFieldPredicate,
-    rootPredicateFunction,
-    cypherTypeConstructor
-  });
+  return predicate;
 };
 
-const buildTemporalPredicate = ({
+const buildNeo4jTypePredicate = ({
+  typeName,
   fieldName,
   fieldType,
   filterOperationField,
@@ -2706,12 +2755,16 @@ const buildTemporalPredicate = ({
   // ex: $filter.datetime_in -> _datetime_in
   if (isListFilterArgument) listVariable = `_${fieldName}`;
   const safeVariableName = safeVar(variableName);
-  const propertyPath = `${safeVariableName}.${filterOperationField}`;
-  const operatorExpression = buildOperatorExpression(
+  let propertyPath = `${safeVariableName}.${filterOperationField}`;
+  const operatorExpression = buildOperatorExpression({
     filterOperationType,
     propertyPath,
-    isListFilterArgument
-  );
+    isListFilterArgument,
+    parameterPath
+  });
+  if (isSpatialDistanceInputType(typeName)) {
+    listVariable = `${listVariable}.distance`;
+  }
   let translation = `(${nullFieldPredicate}${operatorExpression} ${cypherTypeConstructor}(${listVariable}))`;
   if (isListFilterArgument) {
     translation = buildPredicateFunction({
