@@ -791,6 +791,17 @@ test('should be able to query node relations(s) by interface type', async t => {
             userId
           }
         }
+        c: CreateCameraMan(userId: "man002", name: "Bud Wise") {
+          userId
+        }
+        AddCameraManCameraBuddy(
+          from: { userId: "man001" }
+          to: { userId: "man002" }
+        ) {
+          from {
+            userId
+          }
+        }
       }
     `
   });
@@ -818,6 +829,10 @@ test('should be able to query node relations(s) by interface type', async t => {
               __typename: 'OldCamera'
             }
           ],
+          cameraBuddy: {
+            userId: 'man002',
+            __typename: 'CameraMan'
+          },
           __typename: 'CameraMan'
         }
       ]
@@ -828,7 +843,7 @@ test('should be able to query node relations(s) by interface type', async t => {
     .query({
       query: gql`
         query {
-          CameraMan {
+          CameraMan(userId: "man001") {
             userId
             favoriteCamera {
               id
@@ -842,6 +857,9 @@ test('should be able to query node relations(s) by interface type', async t => {
               ... on NewCamera {
                 features
               }
+            }
+            cameraBuddy {
+              userId
             }
           }
         }
@@ -863,7 +881,10 @@ test('should be able to query node relations(s) by interface type', async t => {
             DeleteNewCamera(id: "cam002") {
               id
             }
-            DeleteCameraMan(userId: "man001") {
+            a: DeleteCameraMan(userId: "man001") {
+              userId
+            }
+            b: DeleteCameraMan(userId: "man002") {
               userId
             }
           }

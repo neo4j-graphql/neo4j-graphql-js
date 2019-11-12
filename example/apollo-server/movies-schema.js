@@ -106,6 +106,7 @@ type CameraMan implements Person {
   name: String
   favoriteCamera: Camera @relation(name: "favoriteCamera", direction: "OUT")
   cameras: [Camera] @relation(name: "cameras", direction: "OUT")
+  cameraBuddy: Person @relation(name: "cameraBuddy", direction: "OUT")
 }
 
 type Query {
