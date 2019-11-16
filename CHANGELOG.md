@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.9.3
+
+- [Stringify Cypher parameters object in debug output](https://github.com/neo4j-graphql/neo4j-graphql-js/commit/b06f9b1b50fc20c9cb66ab536f97c7a5b31dd13c)
+
 ## 2.9.2
 
 - [Use Float for Point fields](https://github.com/neo4j-graphql/neo4j-graphql-js/commit/cca0f40232a1d99f4ea1679433941a9c649790dd)
