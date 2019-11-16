@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.9.2
+
+- [Use Float for Point fields](https://github.com/neo4j-graphql/neo4j-graphql-js/commit/cca0f40232a1d99f4ea1679433941a9c649790dd)
+
 ## 2.9.1
 
 - [Fix for querying fields of different interface types](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/348)
