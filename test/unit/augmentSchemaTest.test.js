@@ -1740,23 +1740,23 @@ test.cb('Test augmented schema', t => {
     }
 
     type _Neo4jPoint {
-      x: Int
-      y: Int
-      z: Int
-      longitude: Int
-      latitude: Int
-      height: Int
+      x: Float
+      y: Float
+      z: Float
+      longitude: Float
+      latitude: Float
+      height: Float
       crs: String
       srid: Int
     }
 
     input _Neo4jPointInput {
-      x: Int
-      y: Int
-      z: Int
-      longitude: Int
-      latitude: Int
-      height: Int
+      x: Float
+      y: Float
+      z: Float
+      longitude: Float
+      latitude: Float
+      height: Float
       crs: String
       srid: Int
     }

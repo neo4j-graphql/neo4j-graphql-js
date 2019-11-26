@@ -57,8 +57,21 @@ import { buildCypherSelection } from './selections';
 import _ from 'lodash';
 import { v1 as neo4j } from 'neo4j-driver';
 
-const fragmentType = varName =>
-  `FRAGMENT_TYPE: head( [ label IN labels(${varName}) WHERE label IN $derivedTypes ] )`;
+const derivedTypesParamName = interfaceName => `${interfaceName}_derivedTypes`;
+
+const fragmentType = (varName, interfaceName) =>
+  `FRAGMENT_TYPE: head( [ label IN labels(${varName}) WHERE label IN $${derivedTypesParamName(
+    interfaceName
+  )} ] )`;
+
+const derivedTypesParams = (schema, interfaceName) => {
+  const res = {};
+  res[derivedTypesParamName(interfaceName)] = getDerivedTypeNames(
+    schema,
+    interfaceName
+  );
+  return res;
+};
 
 export const customCypherField = ({
   customCypher,
@@ -94,12 +107,7 @@ export const customCypherField = ({
   // appropriately to the indexed keys produced in getFilterParams()
   const cypherFieldParamsIndex = paramIndex - 1;
   const fragmentTypeParams = fieldIsInterfaceType
-    ? {
-        derivedTypes: getDerivedTypeNames(
-          resolveInfo.schema,
-          fieldType.ofType.astNode.name
-        )
-      }
+    ? derivedTypesParams(resolveInfo.schema, fieldType.ofType.astNode.name)
     : {};
 
   return {
@@ -113,7 +121,9 @@ export const customCypherField = ({
       resolveInfo,
       cypherFieldParamsIndex
     )}}, true) | ${nestedVariable} {${
-      fieldIsInterfaceType ? `${fragmentType(nestedVariable)},` : ''
+      fieldIsInterfaceType
+        ? `${fragmentType(nestedVariable, fieldType.ofType.astNode.name)},`
+        : ''
     }${subSelection[0]}}]${fieldIsList ? '' : ')'}${skipLimit} ${commaIfTail}`,
     ...tailParams,
     ...fragmentTypeParams
@@ -190,12 +200,7 @@ export const relationFieldOnNodeType = ({
     filterParams
   );
   const fragmentTypeParams = isInlineFragment
-    ? {
-        derivedTypes: getDerivedTypeNames(
-          resolveInfo.schema,
-          innerSchemaType.name
-        )
-      }
+    ? derivedTypesParams(resolveInfo.schema, innerSchemaType.name)
     : {};
 
   subSelection[1] = { ...subSelection[1], ...fragmentTypeParams };
@@ -228,7 +233,7 @@ export const relationFieldOnNodeType = ({
         whereClauses.length > 0 ? ` WHERE ${whereClauses.join(' AND ')}` : ''
       } | ${nestedVariable} {${
         isInlineFragment
-          ? `${fragmentType(nestedVariable)}${
+          ? `${fragmentType(nestedVariable, innerSchemaType.name)}${
               subSelection[0] ? `, ${subSelection[0]}` : ''
             }`
           : subSelection[0]
@@ -442,12 +447,7 @@ const directedNodeTypeFieldOnRelationType = ({
   const isFromField = fieldName === fromTypeName || fieldName === 'from';
   const isToField = fieldName === toTypeName || fieldName === 'to';
   const fragmentTypeParams = isInlineFragment
-    ? {
-        derivedTypes: getDerivedTypeNames(
-          resolveInfo.schema,
-          innerSchemaType.name
-        )
-      }
+    ? derivedTypesParams(resolveInfo.schema, innerSchemaType.name)
     : {};
   subSelection[1] = { ...subSelection[1], ...fragmentTypeParams };
   // Since the translations are significantly different,
@@ -506,7 +506,7 @@ const directedNodeTypeFieldOnRelationType = ({
               : ''
           }| ${relationshipVariableName} {${
             isInlineFragment
-              ? `${fragmentType(nestedVariable)}${
+              ? `${fragmentType(nestedVariable, innerSchemaType.name)}${
                   subSelection[0] ? `, ${subSelection[0]}` : ''
                 }`
               : subSelection[0]
@@ -564,7 +564,7 @@ const directedNodeTypeFieldOnRelationType = ({
             : ''
         }${queryParams}) | ${nestedVariable} {${
           isInlineFragment
-            ? `${fragmentType(nestedVariable)}${
+            ? `${fragmentType(nestedVariable, innerSchemaType.name)}${
                 subSelection[0] ? `, ${subSelection[0]}` : ''
               }`
             : subSelection[0]
@@ -823,13 +823,15 @@ const customQuery = ({
     // FIXME: fix subselection translation for temporal type payload
     !isNeo4jTypeOutput && !isScalarType
       ? `{${
-          isInterfaceType ? `${fragmentType(safeVariableName)},` : ''
+          isInterfaceType
+            ? `${fragmentType(safeVariableName, schemaType.name)},`
+            : ''
         }${subQuery}} AS ${safeVariableName}${orderByClause}`
       : ''
   }${outerSkipLimit}`;
 
   const fragmentTypeParams = isInterfaceType
-    ? { derivedTypes: getDerivedTypeNames(resolveInfo.schema, schemaType.name) }
+    ? derivedTypesParams(resolveInfo.schema, schemaType.name)
     : {};
 
   return [query, { ...params, ...fragmentTypeParams }];
@@ -913,10 +915,10 @@ const nodeQuery = ({
 
   const { optimization, cypherPart: orderByClause } = orderByValue;
   const fragmentTypeValue = isGraphqlInterfaceType(schemaType)
-    ? `${fragmentType(safeVariableName)},`
+    ? `${fragmentType(safeVariableName, schemaType.name)},`
     : '';
   const fragmentTypeParams = isGraphqlInterfaceType(schemaType)
-    ? { derivedTypes: getDerivedTypeNames(resolveInfo.schema, schemaType.name) }
+    ? derivedTypesParams(resolveInfo.schema, schemaType.name)
     : {};
 
   let query = `MATCH (${safeVariableName}:${safeLabelName}${
@@ -1064,12 +1066,14 @@ const customMutation = ({
     RETURN ${safeVariableName} ${
     !isNeo4jTypeOutput && !isScalarType
       ? `{${
-          isInterfaceType ? `${fragmentType(safeVariableName)},` : ''
+          isInterfaceType
+            ? `${fragmentType(safeVariableName, schemaType.name)},`
+            : ''
         }${subQuery}} AS ${safeVariableName}${orderByClause}${outerSkipLimit}`
       : ''
   }`;
   const fragmentTypeParams = isInterfaceType
-    ? { derivedTypes: getDerivedTypeNames(resolveInfo.schema, schemaType.name) }
+    ? derivedTypesParams(resolveInfo.schema, schemaType.name)
     : {};
   return [query, { ...params, ...fragmentTypeParams }];
 };

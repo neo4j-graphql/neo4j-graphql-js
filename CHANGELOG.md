@@ -1,5 +1,26 @@
 # Changelog
 
+## 2.9.3
+
+- [Stringify Cypher parameters object in debug output](https://github.com/neo4j-graphql/neo4j-graphql-js/commit/b06f9b1b50fc20c9cb66ab536f97c7a5b31dd13c)
+
+## 2.9.2
+
+- [Use Float for Point fields](https://github.com/neo4j-graphql/neo4j-graphql-js/commit/cca0f40232a1d99f4ea1679433941a9c649790dd)
+
+## 2.9.1
+
+- [Fix for querying fields of different interface types](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/348)
+
+## 2.9.0
+
+- [Initial spatial support using Point type ](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/334)
+- [Spatial filters](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/341)
+- [Fixes for generated schema type and default config](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/339)
+- [Interface handling: generate queries for interface types + FRAGMENT_TYPE fix](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/336)
+- [Fixes for incorrect and non-existing hasScope directives](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/345)
+- [Duplicate query argument fix](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/332)
+
 ## 2.8.0
 
 - [Schema augmentation refactor](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/322)
