@@ -25,6 +25,7 @@ type Mutation {
     CreateState(name: String!): State
     UpdateMovie(movieId: ID!, title: String, year: Int, plot: String, poster: String, imdbRating: Float): Movie
     DeleteMovie(movieId: ID!): Movie
+    MergeUser(userId: ID!, name: String): User
     currentUserId: String @cypher(statement: "RETURN $cypherParams.currentUserId")
     computedObjectWithCypherParams: currentUserId @cypher(statement: "RETURN { userId: $cypherParams.currentUserId }")
     computedStringList: [String] @cypher(statement: "UNWIND ['hello', 'world'] AS stringList RETURN stringList")
@@ -75,6 +76,7 @@ type Mutation {
       CreateState: checkCypherMutation,
       UpdateMovie: checkCypherMutation,
       DeleteMovie: checkCypherMutation,
+      MergeUser: checkCypherMutation,
       currentUserId: checkCypherMutation,
       computedObjectWithCypherParams: checkCypherMutation,
       computedStringList: checkCypherMutation,
@@ -196,10 +198,15 @@ export function augmentedSchemaCypherTestRunner(
       AddSpatialNodeSpatialNodes: checkCypherMutation,
       RemoveSpatialNodeSpatialNodes: checkCypherMutation,
       AddMovieGenres: checkCypherMutation,
+      MergeMovieGenres: checkCypherMutation,
       RemoveMovieGenres: checkCypherMutation,
       AddUserRated: checkCypherMutation,
+      MergeUserRated: checkCypherMutation,
+      UpdateUserRated: checkCypherMutation,
       RemoveUserRated: checkCypherMutation,
       AddUserFriends: checkCypherMutation,
+      MergeUserFriends: checkCypherMutation,
+      UpdateUserFriends: checkCypherMutation,
       RemoveUserFriends: checkCypherMutation,
       currentUserId: checkCypherMutation,
       computedObjectWithCypherParams: checkCypherMutation,
