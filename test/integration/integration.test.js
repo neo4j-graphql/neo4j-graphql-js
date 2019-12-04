@@ -212,7 +212,7 @@ test('Mutation with @cypher directive (not-isolated)', async t => {
     });
 });
 
-test('Create node mutation (not-isolated)', async t => {
+test.serial('Create node mutation (not-isolated)', async t => {
   t.plan(1);
 
   let expected = {
@@ -273,7 +273,7 @@ test('Create node mutation (not-isolated)', async t => {
     });
 });
 
-test('Merge node mutation (not-isolated)', async t => {
+test.serial('Merge node mutation (not-isolated)', async t => {
   t.plan(1);
 
   let expected = {
