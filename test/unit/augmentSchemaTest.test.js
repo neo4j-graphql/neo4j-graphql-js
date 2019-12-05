@@ -182,7 +182,7 @@ test.cb('Test augmented schema', t => {
         filter: _TemporalNodeFilter
       ): [TemporalNode] @hasScope(scopes: ["TemporalNode: Read"])
       SpatialNode(
-        pointKey: _Neo4jPointInput
+        id: ID
         point: _Neo4jPointInput
         _id: String
         first: Int
@@ -1187,6 +1187,12 @@ test.cb('Test augmented schema', t => {
       ): _RemoveMovieGenresPayload
         @MutationMeta(relationship: "IN_GENRE", from: "Movie", to: "Genre")
         @hasScope(scopes: ["Movie: Delete", "Genre: Delete"])
+      MergeMovieGenres(
+        from: _MovieInput!
+        to: _GenreInput!
+      ): _MergeMovieGenresPayload
+        @MutationMeta(relationship: "IN_GENRE", from: "Movie", to: "Genre")
+        @hasScope(scopes: ["Movie: Merge", "Genre: Merge"])
       AddMovieActors(
         from: _ActorInput!
         to: _MovieInput!
@@ -1199,6 +1205,12 @@ test.cb('Test augmented schema', t => {
       ): _RemoveMovieActorsPayload
         @MutationMeta(relationship: "ACTED_IN", from: "Actor", to: "Movie")
         @hasScope(scopes: ["Actor: Delete", "Movie: Delete"])
+      MergeMovieActors(
+        from: _ActorInput!
+        to: _MovieInput!
+      ): _MergeMovieActorsPayload
+        @MutationMeta(relationship: "ACTED_IN", from: "Actor", to: "Movie")
+        @hasScope(scopes: ["Actor: Merge", "Movie: Merge"])
       AddMovieFilmedIn(
         from: _MovieInput!
         to: _StateInput!
@@ -1211,6 +1223,12 @@ test.cb('Test augmented schema', t => {
       ): _RemoveMovieFilmedInPayload
         @MutationMeta(relationship: "FILMED_IN", from: "Movie", to: "State")
         @hasScope(scopes: ["Movie: Delete", "State: Delete"])
+      MergeMovieFilmedIn(
+        from: _MovieInput!
+        to: _StateInput!
+      ): _MergeMovieFilmedInPayload
+        @MutationMeta(relationship: "FILMED_IN", from: "Movie", to: "State")
+        @hasScope(scopes: ["Movie: Merge", "State: Merge"])
       AddMovieRatings(
         from: _UserInput!
         to: _MovieInput!
@@ -1224,6 +1242,20 @@ test.cb('Test augmented schema', t => {
       ): _RemoveMovieRatingsPayload
         @MutationMeta(relationship: "RATED", from: "User", to: "Movie")
         @hasScope(scopes: ["User: Delete", "Movie: Delete"])
+      UpdateMovieRatings(
+        from: _UserInput!
+        to: _MovieInput!
+        data: _RatedInput!
+      ): _UpdateMovieRatingsPayload
+        @MutationMeta(relationship: "RATED", from: "User", to: "Movie")
+        @hasScope(scopes: ["User: Update", "Movie: Update"])
+      MergeMovieRatings(
+        from: _UserInput!
+        to: _MovieInput!
+        data: _RatedInput!
+      ): _MergeMovieRatingsPayload
+        @MutationMeta(relationship: "RATED", from: "User", to: "Movie")
+        @hasScope(scopes: ["User: Merge", "Movie: Merge"])
       CreateMovie(
         movieId: ID
         title: String
@@ -1259,6 +1291,23 @@ test.cb('Test augmented schema', t => {
         releases: [_Neo4jDateTimeInput]
       ): Movie @hasScope(scopes: ["Movie: Update"])
       DeleteMovie(movieId: ID!): Movie @hasScope(scopes: ["Movie: Delete"])
+      MergeMovie(
+        movieId: ID!
+        title: String
+        someprefix_title_with_underscores: String
+        year: Int
+        released: _Neo4jDateTimeInput
+        plot: String
+        poster: String
+        imdbRating: Float
+        avgStars: Float
+        location: _Neo4jPointInput
+        locations: [_Neo4jPointInput]
+        years: [Int]
+        titles: [String]
+        imdbRatings: [Float]
+        releases: [_Neo4jDateTimeInput]
+      ): Movie @hasScope(scopes: ["Movie: Merge"])
       AddGenreMovies(
         from: _MovieInput!
         to: _GenreInput!
@@ -1271,6 +1320,12 @@ test.cb('Test augmented schema', t => {
       ): _RemoveGenreMoviesPayload
         @MutationMeta(relationship: "IN_GENRE", from: "Movie", to: "Genre")
         @hasScope(scopes: ["Movie: Delete", "Genre: Delete"])
+      MergeGenreMovies(
+        from: _MovieInput!
+        to: _GenreInput!
+      ): _MergeGenreMoviesPayload
+        @MutationMeta(relationship: "IN_GENRE", from: "Movie", to: "Genre")
+        @hasScope(scopes: ["Movie: Merge", "Genre: Merge"])
       CreateGenre(name: String): Genre @hasScope(scopes: ["Genre: Create"])
       DeleteGenre(name: String!): Genre @hasScope(scopes: ["Genre: Delete"])
       CreateState(name: String!): State @hasScope(scopes: ["State: Create"])
@@ -1287,11 +1342,19 @@ test.cb('Test augmented schema', t => {
       ): _RemoveActorMoviesPayload
         @MutationMeta(relationship: "ACTED_IN", from: "Actor", to: "Movie")
         @hasScope(scopes: ["Actor: Delete", "Movie: Delete"])
+      MergeActorMovies(
+        from: _ActorInput!
+        to: _MovieInput!
+      ): _MergeActorMoviesPayload
+        @MutationMeta(relationship: "ACTED_IN", from: "Actor", to: "Movie")
+        @hasScope(scopes: ["Actor: Merge", "Movie: Merge"])
       CreateActor(userId: ID, name: String): Actor
         @hasScope(scopes: ["Actor: Create"])
       UpdateActor(userId: ID!, name: String): Actor
         @hasScope(scopes: ["Actor: Update"])
       DeleteActor(userId: ID!): Actor @hasScope(scopes: ["Actor: Delete"])
+      MergeActor(userId: ID!, name: String): Actor
+        @hasScope(scopes: ["Actor: Merge"])
       AddUserRated(
         from: _UserInput!
         to: _MovieInput!
@@ -1305,6 +1368,20 @@ test.cb('Test augmented schema', t => {
       ): _RemoveUserRatedPayload
         @MutationMeta(relationship: "RATED", from: "User", to: "Movie")
         @hasScope(scopes: ["User: Delete", "Movie: Delete"])
+      UpdateUserRated(
+        from: _UserInput!
+        to: _MovieInput!
+        data: _RatedInput!
+      ): _UpdateUserRatedPayload
+        @MutationMeta(relationship: "RATED", from: "User", to: "Movie")
+        @hasScope(scopes: ["User: Update", "Movie: Update"])
+      MergeUserRated(
+        from: _UserInput!
+        to: _MovieInput!
+        data: _RatedInput!
+      ): _MergeUserRatedPayload
+        @MutationMeta(relationship: "RATED", from: "User", to: "Movie")
+        @hasScope(scopes: ["User: Merge", "Movie: Merge"])
       AddUserFriends(
         from: _UserInput!
         to: _UserInput!
@@ -1318,6 +1395,20 @@ test.cb('Test augmented schema', t => {
       ): _RemoveUserFriendsPayload
         @MutationMeta(relationship: "FRIEND_OF", from: "User", to: "User")
         @hasScope(scopes: ["User: Delete", "User: Delete"])
+      UpdateUserFriends(
+        from: _UserInput!
+        to: _UserInput!
+        data: _FriendOfInput!
+      ): _UpdateUserFriendsPayload
+        @MutationMeta(relationship: "FRIEND_OF", from: "User", to: "User")
+        @hasScope(scopes: ["User: Update", "User: Update"])
+      MergeUserFriends(
+        from: _UserInput!
+        to: _UserInput!
+        data: _FriendOfInput!
+      ): _MergeUserFriendsPayload
+        @MutationMeta(relationship: "FRIEND_OF", from: "User", to: "User")
+        @hasScope(scopes: ["User: Merge", "User: Merge"])
       AddUserFavorites(
         from: _UserInput!
         to: _MovieInput!
@@ -1330,11 +1421,19 @@ test.cb('Test augmented schema', t => {
       ): _RemoveUserFavoritesPayload
         @MutationMeta(relationship: "FAVORITED", from: "User", to: "Movie")
         @hasScope(scopes: ["User: Delete", "Movie: Delete"])
+      MergeUserFavorites(
+        from: _UserInput!
+        to: _MovieInput!
+      ): _MergeUserFavoritesPayload
+        @MutationMeta(relationship: "FAVORITED", from: "User", to: "Movie")
+        @hasScope(scopes: ["User: Merge", "Movie: Merge"])
       CreateUser(userId: ID, name: String): User
         @hasScope(scopes: ["User: Create"])
       UpdateUser(userId: ID!, name: String): User
         @hasScope(scopes: ["User: Update"])
       DeleteUser(userId: ID!): User @hasScope(scopes: ["User: Delete"])
+      MergeUser(userId: ID!, name: String): User
+        @hasScope(scopes: ["User: Merge"])
       CreateBook(genre: BookGenre): Book @hasScope(scopes: ["Book: Create"])
       DeleteBook(genre: BookGenre!): Book @hasScope(scopes: ["Book: Delete"])
       CreatecurrentUserId(userId: String): currentUserId
@@ -1361,6 +1460,16 @@ test.cb('Test augmented schema', t => {
           to: "TemporalNode"
         )
         @hasScope(scopes: ["TemporalNode: Delete", "TemporalNode: Delete"])
+      MergeTemporalNodeTemporalNodes(
+        from: _TemporalNodeInput!
+        to: _TemporalNodeInput!
+      ): _MergeTemporalNodeTemporalNodesPayload
+        @MutationMeta(
+          relationship: "TEMPORAL"
+          from: "TemporalNode"
+          to: "TemporalNode"
+        )
+        @hasScope(scopes: ["TemporalNode: Merge", "TemporalNode: Merge"])
       CreateTemporalNode(
         datetime: _Neo4jDateTimeInput
         name: String
@@ -1381,6 +1490,15 @@ test.cb('Test augmented schema', t => {
       ): TemporalNode @hasScope(scopes: ["TemporalNode: Update"])
       DeleteTemporalNode(datetime: _Neo4jDateTimeInput!): TemporalNode
         @hasScope(scopes: ["TemporalNode: Delete"])
+      MergeTemporalNode(
+        datetime: _Neo4jDateTimeInput!
+        name: String
+        time: _Neo4jTimeInput
+        date: _Neo4jDateInput
+        localtime: _Neo4jLocalTimeInput
+        localdatetime: _Neo4jLocalDateTimeInput
+        localdatetimes: [_Neo4jLocalDateTimeInput]
+      ): TemporalNode @hasScope(scopes: ["TemporalNode: Merge"])
       AddSpatialNodeSpatialNodes(
         from: _SpatialNodeInput!
         to: _SpatialNodeInput!
@@ -1401,16 +1519,24 @@ test.cb('Test augmented schema', t => {
           to: "SpatialNode"
         )
         @hasScope(scopes: ["SpatialNode: Delete", "SpatialNode: Delete"])
-      CreateSpatialNode(
-        pointKey: _Neo4jPointInput
-        point: _Neo4jPointInput
-      ): SpatialNode @hasScope(scopes: ["SpatialNode: Create"])
-      UpdateSpatialNode(
-        pointKey: _Neo4jPointInput!
-        point: _Neo4jPointInput
-      ): SpatialNode @hasScope(scopes: ["SpatialNode: Update"])
-      DeleteSpatialNode(pointKey: _Neo4jPointInput!): SpatialNode
+      MergeSpatialNodeSpatialNodes(
+        from: _SpatialNodeInput!
+        to: _SpatialNodeInput!
+      ): _MergeSpatialNodeSpatialNodesPayload
+        @MutationMeta(
+          relationship: "SPATIAL"
+          from: "SpatialNode"
+          to: "SpatialNode"
+        )
+        @hasScope(scopes: ["SpatialNode: Merge", "SpatialNode: Merge"])
+      CreateSpatialNode(id: ID, point: _Neo4jPointInput): SpatialNode
+        @hasScope(scopes: ["SpatialNode: Create"])
+      UpdateSpatialNode(id: ID!, point: _Neo4jPointInput): SpatialNode
+        @hasScope(scopes: ["SpatialNode: Update"])
+      DeleteSpatialNode(id: ID!): SpatialNode
         @hasScope(scopes: ["SpatialNode: Delete"])
+      MergeSpatialNode(id: ID!, point: _Neo4jPointInput): SpatialNode
+        @hasScope(scopes: ["SpatialNode: Merge"])
       AddCasedTypeState(
         from: _CasedTypeInput!
         to: _StateInput!
@@ -1423,6 +1549,12 @@ test.cb('Test augmented schema', t => {
       ): _RemoveCasedTypeStatePayload
         @MutationMeta(relationship: "FILMED_IN", from: "CasedType", to: "State")
         @hasScope(scopes: ["CasedType: Delete", "State: Delete"])
+      MergeCasedTypeState(
+        from: _CasedTypeInput!
+        to: _StateInput!
+      ): _MergeCasedTypeStatePayload
+        @MutationMeta(relationship: "FILMED_IN", from: "CasedType", to: "State")
+        @hasScope(scopes: ["CasedType: Merge", "State: Merge"])
       CreateCasedType(name: String): CasedType
         @hasScope(scopes: ["CasedType: Create"])
       DeleteCasedType(name: String!): CasedType

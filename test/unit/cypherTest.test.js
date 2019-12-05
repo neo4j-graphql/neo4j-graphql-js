@@ -672,6 +672,30 @@ test.cb('Create node mutation', t => {
   });
 });
 
+test.cb('Merge node mutation', t => {
+  const graphQLQuery = `mutation {
+    MergeUser(
+      userId: "883c6b3e-3863-49a1-b190-1cee083c98b1",
+      name: "Michael"
+    ) {
+      userId
+      name
+    }
+  }`,
+    expectedCypherQuery = `MERGE (\`user\`:\`User\`{userId: $params.userId})
+  SET \`user\` += {name:$params.name} RETURN \`user\` { .userId , .name } AS \`user\``;
+
+  t.plan(2);
+  cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery, {
+    params: {
+      userId: '883c6b3e-3863-49a1-b190-1cee083c98b1',
+      name: 'Michael'
+    },
+    first: -1,
+    offset: 0
+  });
+});
+
 test.cb('Update node mutation', t => {
   const graphQLQuery = `mutation updateMutation {
     UpdateMovie(movieId: "12dd334d5", year: 2010) {
@@ -737,6 +761,46 @@ test('Add relationship mutation', t => {
       MATCH (\`genre_to\`:\`Genre\` {name: $to.name})
       CREATE (\`movie_from\`)-[\`in_genre_relation\`:\`IN_GENRE\`]->(\`genre_to\`)
       RETURN \`in_genre_relation\` { from: \`movie_from\` { .movieId ,genres: [(\`movie_from\`)-[:\`IN_GENRE\`]->(\`movie_from_genres\`:\`Genre\`) | movie_from_genres {_id: ID(\`movie_from_genres\`), .name }] } ,to: \`genre_to\` { .name }  } AS \`_AddMovieGenresPayload\`;
+    `;
+
+  t.plan(1);
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {
+      from: { movieId: '123' },
+      to: { name: 'Action' },
+      first: -1,
+      offset: 0
+    },
+    expectedCypherQuery,
+    {}
+  );
+});
+
+test('Merge relationship mutation', t => {
+  const graphQLQuery = `mutation someMutation {
+    MergeMovieGenres(
+      from: { movieId: "123" },
+      to: { name: "Action" }
+    ) {
+      from {
+        movieId
+        genres {
+          _id
+          name
+        }
+      }
+      to {
+        name
+      }
+    }
+  }`,
+    expectedCypherQuery = `
+      MATCH (\`movie_from\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {movieId: $from.movieId})
+      MATCH (\`genre_to\`:\`Genre\` {name: $to.name})
+      MERGE (\`movie_from\`)-[\`in_genre_relation\`:\`IN_GENRE\`]->(\`genre_to\`)
+      RETURN \`in_genre_relation\` { from: \`movie_from\` { .movieId ,genres: [(\`movie_from\`)-[:\`IN_GENRE\`]->(\`movie_from_genres\`:\`Genre\`) | movie_from_genres {_id: ID(\`movie_from_genres\`), .name }] } ,to: \`genre_to\` { .name }  } AS \`_MergeMovieGenresPayload\`;
     `;
 
   t.plan(1);
@@ -857,6 +921,138 @@ test('Add relationship mutation with relationship property', t => {
   );
 });
 
+test('Merge relationship mutation with relationship property', t => {
+  const graphQLQuery = `mutation someMutation {
+    MergeUserRated(
+      from: { userId: "123" }
+      to: { movieId: "8" }
+      data: { rating: 9 }
+    ) {
+      from {
+        _id
+        userId
+        name
+        rated {
+          rating
+          Movie {
+            _id
+            movieId
+            title
+          }
+        }
+      }
+      to {
+        _id
+        movieId
+        title
+        ratings {
+          rating
+          User {
+            _id
+            userId
+            name
+          }
+        }
+      }
+      rating
+    }
+  }`,
+    expectedCypherQuery = `
+      MATCH (\`user_from\`:\`User\` {userId: $from.userId})
+      MATCH (\`movie_to\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {movieId: $to.movieId})
+      MERGE (\`user_from\`)-[\`rated_relation\`:\`RATED\`]->(\`movie_to\`)
+      SET \`rated_relation\` += {rating:$data.rating} 
+      RETURN \`rated_relation\` { from: \`user_from\` {_id: ID(\`user_from\`), .userId , .name ,rated: [(\`user_from\`)-[\`user_from_rated_relation\`:\`RATED\`]->(:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) | user_from_rated_relation { .rating ,Movie: head([(:\`User\`)-[\`user_from_rated_relation\`]->(\`user_from_rated_Movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) | user_from_rated_Movie {_id: ID(\`user_from_rated_Movie\`), .movieId , .title }]) }] } ,to: \`movie_to\` {_id: ID(\`movie_to\`), .movieId , .title ,ratings: [(\`movie_to\`)<-[\`movie_to_ratings_relation\`:\`RATED\`]-(:\`User\`) | movie_to_ratings_relation { .rating ,User: head([(:\`Movie\`${ADDITIONAL_MOVIE_LABELS})<-[\`movie_to_ratings_relation\`]-(\`movie_to_ratings_User\`:\`User\`) | movie_to_ratings_User {_id: ID(\`movie_to_ratings_User\`), .userId , .name }]) }] } , .rating  } AS \`_MergeUserRatedPayload\`;
+    `;
+
+  t.plan(1);
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {
+      from: { userId: '123' },
+      to: { movieId: '456' },
+      data: { rating: 9 },
+      first: -1,
+      offset: 0
+    },
+    expectedCypherQuery
+  );
+});
+
+test('Update relationship mutation with relationship property', t => {
+  const graphQLQuery = `mutation someMutation {
+    UpdateUserRated(
+      from: { userId: "123" }
+      to: { movieId: "2kljghd" }
+      data: {
+        rating: 1,
+        location: {
+          longitude: 3.0,
+          latitude: 4.5,
+          height: 12.5
+        }
+      }
+    ) {
+      from {
+        _id
+        userId
+        name
+        rated {
+          rating
+          Movie {
+            _id
+            movieId
+            title
+          }
+        }
+      }
+      to {
+        _id
+        movieId
+        title
+        ratings {
+          rating
+          User {
+            _id
+            userId
+            name
+          }
+        }
+      }
+      rating
+    }
+  }`,
+    expectedCypherQuery = `
+      MATCH (\`user_from\`:\`User\` {userId: $from.userId})
+      MATCH (\`movie_to\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {movieId: $to.movieId})
+      MATCH (\`user_from\`)-[\`rated_relation\`:\`RATED\`]->(\`movie_to\`)
+      SET \`rated_relation\` += {rating:$data.rating,location: point($data.location)} 
+      RETURN \`rated_relation\` { from: \`user_from\` {_id: ID(\`user_from\`), .userId , .name ,rated: [(\`user_from\`)-[\`user_from_rated_relation\`:\`RATED\`]->(:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) | user_from_rated_relation { .rating ,Movie: head([(:\`User\`)-[\`user_from_rated_relation\`]->(\`user_from_rated_Movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) | user_from_rated_Movie {_id: ID(\`user_from_rated_Movie\`), .movieId , .title }]) }] } ,to: \`movie_to\` {_id: ID(\`movie_to\`), .movieId , .title ,ratings: [(\`movie_to\`)<-[\`movie_to_ratings_relation\`:\`RATED\`]-(:\`User\`) | movie_to_ratings_relation { .rating ,User: head([(:\`Movie\`${ADDITIONAL_MOVIE_LABELS})<-[\`movie_to_ratings_relation\`]-(\`movie_to_ratings_User\`:\`User\`) | movie_to_ratings_User {_id: ID(\`movie_to_ratings_User\`), .userId , .name }]) }] } , .rating  } AS \`_UpdateUserRatedPayload\`;
+    `;
+
+  t.plan(1);
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {
+      from: { userId: '123' },
+      to: { movieId: '2kljghd' },
+      data: {
+        rating: 1,
+        location: {
+          longitude: 3.0,
+          latitude: 4.5,
+          height: 12.5
+        }
+      },
+      first: -1,
+      offset: 0
+    },
+    expectedCypherQuery
+  );
+});
+
 test('Add reflexive relationship mutation with relationship property', t => {
   const graphQLQuery = `mutation {
     AddUserFriends(
@@ -946,6 +1142,200 @@ test('Add reflexive relationship mutation with relationship property', t => {
       from: { userId: '123' },
       to: { userId: '456' },
       data: { since: 7 },
+      first: -1,
+      offset: 0
+    },
+    expectedCypherQuery
+  );
+});
+
+test('Merge reflexive relationship mutation with relationship property', t => {
+  const graphQLQuery = `mutation {
+    MergeUserFriends(
+      from: {
+        userId: "123"
+      },
+      to: {
+        userId: "456"
+      },
+      data: {
+        since: 8
+      }
+    ) {
+      from {
+        _id
+        userId
+        name
+        friends {
+          from {
+            since
+            User {
+              _id
+              name
+              friends {
+                from {
+                  since
+                  User {
+                    _id
+                    name
+                  }
+                }
+                to {
+                  since
+                  User {
+                    _id
+                    name
+                  }
+                }
+              }
+            }
+          }
+          to {
+            since
+            User {
+              _id
+              name
+            }
+          }
+        }
+      }
+      to {
+        _id
+        name
+        friends {
+          from {
+            since
+            User {
+              _id
+              name
+            }
+          }
+          to {
+            since
+            User {
+              _id
+              name
+            }
+          }
+        }
+      }
+      since
+    }
+  }
+  `,
+    expectedCypherQuery = `
+      MATCH (\`user_from\`:\`User\` {userId: $from.userId})
+      MATCH (\`user_to\`:\`User\` {userId: $to.userId})
+      MERGE (\`user_from\`)-[\`friend_of_relation\`:\`FRIEND_OF\`]->(\`user_to\`)
+      SET \`friend_of_relation\` += {since:$data.since} 
+      RETURN \`friend_of_relation\` { from: \`user_from\` {_id: ID(\`user_from\`), .userId , .name ,friends: {from: [(\`user_from\`)<-[\`user_from_from_relation\`:\`FRIEND_OF\`]-(\`user_from_from\`:\`User\`) | user_from_from_relation { .since ,User: user_from_from {_id: ID(\`user_from_from\`), .name ,friends: {from: [(\`user_from_from\`)<-[\`user_from_from_from_relation\`:\`FRIEND_OF\`]-(\`user_from_from_from\`:\`User\`) | user_from_from_from_relation { .since ,User: user_from_from_from {_id: ID(\`user_from_from_from\`), .name } }] ,to: [(\`user_from_from\`)-[\`user_from_from_to_relation\`:\`FRIEND_OF\`]->(\`user_from_from_to\`:\`User\`) | user_from_from_to_relation { .since ,User: user_from_from_to {_id: ID(\`user_from_from_to\`), .name } }] } } }] ,to: [(\`user_from\`)-[\`user_from_to_relation\`:\`FRIEND_OF\`]->(\`user_from_to\`:\`User\`) | user_from_to_relation { .since ,User: user_from_to {_id: ID(\`user_from_to\`), .name } }] } } ,to: \`user_to\` {_id: ID(\`user_to\`), .name ,friends: {from: [(\`user_to\`)<-[\`user_to_from_relation\`:\`FRIEND_OF\`]-(\`user_to_from\`:\`User\`) | user_to_from_relation { .since ,User: user_to_from {_id: ID(\`user_to_from\`), .name } }] ,to: [(\`user_to\`)-[\`user_to_to_relation\`:\`FRIEND_OF\`]->(\`user_to_to\`:\`User\`) | user_to_to_relation { .since ,User: user_to_to {_id: ID(\`user_to_to\`), .name } }] } } , .since  } AS \`_MergeUserFriendsPayload\`;
+    `;
+
+  t.plan(1);
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {
+      from: { userId: '123' },
+      to: { userId: '456' },
+      data: { since: 8 },
+      first: -1,
+      offset: 0
+    },
+    expectedCypherQuery
+  );
+});
+
+test('Update reflexive relationship mutation with relationship property', t => {
+  const graphQLQuery = `mutation {
+    UpdateUserFriends(
+      from: {
+        userId: "123"
+      },
+      to: {
+        userId: "456"
+      },
+      data: {
+        since: 8
+      }
+    ) {
+      from {
+        _id
+        userId
+        name
+        friends {
+          from {
+            since
+            User {
+              _id
+              name
+              friends {
+                from {
+                  since
+                  User {
+                    _id
+                    name
+                  }
+                }
+                to {
+                  since
+                  User {
+                    _id
+                    name
+                  }
+                }
+              }
+            }
+          }
+          to {
+            since
+            User {
+              _id
+              name
+            }
+          }
+        }
+      }
+      to {
+        _id
+        name
+        friends {
+          from {
+            since
+            User {
+              _id
+              name
+            }
+          }
+          to {
+            since
+            User {
+              _id
+              name
+            }
+          }
+        }
+      }
+      since
+    }
+  }
+  `,
+    expectedCypherQuery = `
+      MATCH (\`user_from\`:\`User\` {userId: $from.userId})
+      MATCH (\`user_to\`:\`User\` {userId: $to.userId})
+      MATCH (\`user_from\`)-[\`friend_of_relation\`:\`FRIEND_OF\`]->(\`user_to\`)
+      SET \`friend_of_relation\` += {since:$data.since} 
+      RETURN \`friend_of_relation\` { from: \`user_from\` {_id: ID(\`user_from\`), .userId , .name ,friends: {from: [(\`user_from\`)<-[\`user_from_from_relation\`:\`FRIEND_OF\`]-(\`user_from_from\`:\`User\`) | user_from_from_relation { .since ,User: user_from_from {_id: ID(\`user_from_from\`), .name ,friends: {from: [(\`user_from_from\`)<-[\`user_from_from_from_relation\`:\`FRIEND_OF\`]-(\`user_from_from_from\`:\`User\`) | user_from_from_from_relation { .since ,User: user_from_from_from {_id: ID(\`user_from_from_from\`), .name } }] ,to: [(\`user_from_from\`)-[\`user_from_from_to_relation\`:\`FRIEND_OF\`]->(\`user_from_from_to\`:\`User\`) | user_from_from_to_relation { .since ,User: user_from_from_to {_id: ID(\`user_from_from_to\`), .name } }] } } }] ,to: [(\`user_from\`)-[\`user_from_to_relation\`:\`FRIEND_OF\`]->(\`user_from_to\`:\`User\`) | user_from_to_relation { .since ,User: user_from_to {_id: ID(\`user_from_to\`), .name } }] } } ,to: \`user_to\` {_id: ID(\`user_to\`), .name ,friends: {from: [(\`user_to\`)<-[\`user_to_from_relation\`:\`FRIEND_OF\`]-(\`user_to_from\`:\`User\`) | user_to_from_relation { .since ,User: user_to_from {_id: ID(\`user_to_from\`), .name } }] ,to: [(\`user_to\`)-[\`user_to_to_relation\`:\`FRIEND_OF\`]->(\`user_to_to\`:\`User\`) | user_to_to_relation { .since ,User: user_to_to {_id: ID(\`user_to_to\`), .name } }] } } , .since  } AS \`_UpdateUserFriendsPayload\`;
+    `;
+
+  t.plan(1);
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {
+      from: { userId: '123' },
+      to: { userId: '456' },
+      data: { since: 8 },
       first: -1,
       offset: 0
     },
@@ -1751,23 +2141,10 @@ test('Create node with temporal properties', t => {
 test('Create node with spatial properties', t => {
   const graphQLQuery = `mutation {
     CreateSpatialNode(
-      pointKey: {
-        x: 10,
-        y: 20,
-        z: 30
-      },
-      point: {
-        longitude: 40,
-        latitude: 50,
-        height: 60
-      }
+      id: "xyz"
+      point: { longitude: 40, latitude: 50, height: 60 }
     ) {
-      pointKey {
-        x
-        y
-        z
-        crs
-      }
+      id
       point {
         longitude
         latitude
@@ -1777,8 +2154,8 @@ test('Create node with spatial properties', t => {
     }
   }`,
     expectedCypherQuery = `
-    CREATE (\`spatialNode\`:\`SpatialNode\` {pointKey: point($params.pointKey),point: point($params.point)})
-    RETURN \`spatialNode\` {pointKey: { x: \`spatialNode\`.pointKey.x , y: \`spatialNode\`.pointKey.y , z: \`spatialNode\`.pointKey.z , crs: \`spatialNode\`.pointKey.crs },point: { longitude: \`spatialNode\`.point.longitude , latitude: \`spatialNode\`.point.latitude , height: \`spatialNode\`.point.height , crs: \`spatialNode\`.point.crs }} AS \`spatialNode\`
+    CREATE (\`spatialNode\`:\`SpatialNode\` {id:$params.id,point: point($params.point)})
+    RETURN \`spatialNode\` { .id ,point: { longitude: \`spatialNode\`.point.longitude , latitude: \`spatialNode\`.point.latitude , height: \`spatialNode\`.point.height , crs: \`spatialNode\`.point.crs }} AS \`spatialNode\`
   `;
 
   t.plan(1);
@@ -1909,22 +2286,14 @@ test('Query node with temporal properties using temporal arguments', t => {
   );
 });
 
-test('Query node with spatial properties using spatial arguments', t => {
+test('Query node with spatial properties', t => {
   const graphQLQuery = `query {
-    SpatialNode(
-      pointKey: {
-        x: 10
-      },
+    SpatialNode(      
       point: {
-        longitude: 40
+        longitude: 40, latitude: 50, height: 60
       }
     ) {
-      pointKey {
-        x
-        y
-        z
-        crs
-      }
+      id
       point {
         longitude
         latitude
@@ -1933,7 +2302,7 @@ test('Query node with spatial properties using spatial arguments', t => {
       }
     }
   }`,
-    expectedCypherQuery = `MATCH (\`spatialNode\`:\`SpatialNode\`) WHERE \`spatialNode\`.pointKey.x = $pointKey.x AND \`spatialNode\`.point.longitude = $point.longitude RETURN \`spatialNode\` {pointKey: { x: \`spatialNode\`.pointKey.x , y: \`spatialNode\`.pointKey.y , z: \`spatialNode\`.pointKey.z , crs: \`spatialNode\`.pointKey.crs },point: { longitude: \`spatialNode\`.point.longitude , latitude: \`spatialNode\`.point.latitude , height: \`spatialNode\`.point.height , crs: \`spatialNode\`.point.crs }} AS \`spatialNode\``;
+    expectedCypherQuery = `MATCH (\`spatialNode\`:\`SpatialNode\`) WHERE \`spatialNode\`.point.longitude = $point.longitude AND \`spatialNode\`.point.latitude = $point.latitude AND \`spatialNode\`.point.height = $point.height RETURN \`spatialNode\` { .id ,point: { longitude: \`spatialNode\`.point.longitude , latitude: \`spatialNode\`.point.latitude , height: \`spatialNode\`.point.height , crs: \`spatialNode\`.point.crs }} AS \`spatialNode\``;
 
   t.plan(1);
 
@@ -2108,30 +2477,22 @@ test('Nested Query with temporal property arguments', t => {
 
 test('Nested Query with spatial property arguments', t => {
   const graphQLQuery = `query {
-    SpatialNode(
-      pointKey: {
-        x: 50
+    SpatialNode(point: { longitude: 1.5 }) {
+      point {
+        longitude
+        latitude
+        height
       }
-    ) {
-      pointKey {
-        x
-        y
-        z
-      }
-      spatialNodes(
-        pointKey: {
-          y: 20
-        }
-      ) {
-        pointKey {
-          x
-          y
-          z
+      spatialNodes(point: { longitude: 40 }) {
+        point {
+          longitude
+          latitude
+          height
         }
       }
     }
   }`,
-    expectedCypherQuery = `MATCH (\`spatialNode\`:\`SpatialNode\`) WHERE \`spatialNode\`.pointKey.x = $pointKey.x RETURN \`spatialNode\` {pointKey: { x: \`spatialNode\`.pointKey.x , y: \`spatialNode\`.pointKey.y , z: \`spatialNode\`.pointKey.z },spatialNodes: [(\`spatialNode\`)-[:\`SPATIAL\`]->(\`spatialNode_spatialNodes\`:\`SpatialNode\`) WHERE spatialNode_spatialNodes.pointKey.y = $1_pointKey.y | spatialNode_spatialNodes {pointKey: { x: \`spatialNode_spatialNodes\`.pointKey.x , y: \`spatialNode_spatialNodes\`.pointKey.y , z: \`spatialNode_spatialNodes\`.pointKey.z }}] } AS \`spatialNode\``;
+    expectedCypherQuery = `MATCH (\`spatialNode\`:\`SpatialNode\`) WHERE \`spatialNode\`.point.longitude = $point.longitude RETURN \`spatialNode\` {point: { longitude: \`spatialNode\`.point.longitude , latitude: \`spatialNode\`.point.latitude , height: \`spatialNode\`.point.height },spatialNodes: [(\`spatialNode\`)-[:\`SPATIAL\`]->(\`spatialNode_spatialNodes\`:\`SpatialNode\`) WHERE spatialNode_spatialNodes.point.longitude = $1_point.longitude | spatialNode_spatialNodes {point: { longitude: \`spatialNode_spatialNodes\`.point.longitude , latitude: \`spatialNode_spatialNodes\`.point.latitude , height: \`spatialNode_spatialNodes\`.point.height }}] } AS \`spatialNode\``;
 
   t.plan(1);
 
@@ -2232,27 +2593,25 @@ test('Update temporal and non-temporal properties on node using temporal propert
   );
 });
 
-test('Update node spatial property using spatial property node selection', t => {
+test('Update node spatial property', t => {
   const graphQLQuery = `mutation {
     UpdateSpatialNode(
-      pointKey: {
-        y: 60
-      }
+      id: "xyz",
       point: {
-        x: 100,
-        y: 200,
-        z: 300
+        longitude: 100,
+        latitude: 200,
+        height: 300
       }
     ) {
       point {
-        x
-        y
-        z
+        longitude
+        latitude
+        height
       }
     }
   }`,
-    expectedCypherQuery = `MATCH (\`spatialNode\`:\`SpatialNode\`) WHERE \`spatialNode\`.pointKey.y = $params.pointKey.y  
-  SET \`spatialNode\` += {point: point($params.point)} RETURN \`spatialNode\` {point: { x: \`spatialNode\`.point.x , y: \`spatialNode\`.point.y , z: \`spatialNode\`.point.z }} AS \`spatialNode\``;
+    expectedCypherQuery = `MATCH (\`spatialNode\`:\`SpatialNode\`{id: $params.id})
+  SET \`spatialNode\` += {point: point($params.point)} RETURN \`spatialNode\` {point: { longitude: \`spatialNode\`.point.longitude , latitude: \`spatialNode\`.point.latitude , height: \`spatialNode\`.point.height }} AS \`spatialNode\``;
 
   t.plan(1);
 
@@ -2393,37 +2752,6 @@ test('Delete node using temporal property node selection', t => {
 WITH \`temporalNode\` AS \`temporalNode_toDelete\`, \`temporalNode\` {_id: ID(\`temporalNode\`), .name ,time: { hour: \`temporalNode\`.time.hour , minute: \`temporalNode\`.time.minute , second: \`temporalNode\`.time.second , millisecond: \`temporalNode\`.time.millisecond , microsecond: \`temporalNode\`.time.microsecond , nanosecond: \`temporalNode\`.time.nanosecond , timezone: \`temporalNode\`.time.timezone , formatted: toString(\`temporalNode\`.time) },date: { year: \`temporalNode\`.date.year , month: \`temporalNode\`.date.month , day: \`temporalNode\`.date.day , formatted: toString(\`temporalNode\`.date) },datetime: { year: \`temporalNode\`.datetime.year , month: \`temporalNode\`.datetime.month , day: \`temporalNode\`.datetime.day , hour: \`temporalNode\`.datetime.hour , minute: \`temporalNode\`.datetime.minute , second: \`temporalNode\`.datetime.second , millisecond: \`temporalNode\`.datetime.millisecond , microsecond: \`temporalNode\`.datetime.microsecond , nanosecond: \`temporalNode\`.datetime.nanosecond , timezone: \`temporalNode\`.datetime.timezone , formatted: toString(\`temporalNode\`.datetime) },localtime: { hour: \`temporalNode\`.localtime.hour , minute: \`temporalNode\`.localtime.minute , second: \`temporalNode\`.localtime.second , millisecond: \`temporalNode\`.localtime.millisecond , microsecond: \`temporalNode\`.localtime.microsecond , nanosecond: \`temporalNode\`.localtime.nanosecond , formatted: toString(\`temporalNode\`.localtime) },localdatetime: { year: \`temporalNode\`.localdatetime.year , month: \`temporalNode\`.localdatetime.month , day: \`temporalNode\`.localdatetime.day , hour: \`temporalNode\`.localdatetime.hour , minute: \`temporalNode\`.localdatetime.minute , second: \`temporalNode\`.localdatetime.second , millisecond: \`temporalNode\`.localdatetime.millisecond , microsecond: \`temporalNode\`.localdatetime.microsecond , nanosecond: \`temporalNode\`.localdatetime.nanosecond , formatted: toString(\`temporalNode\`.localdatetime) }} AS \`temporalNode\`
 DETACH DELETE \`temporalNode_toDelete\`
 RETURN \`temporalNode\``;
-
-  t.plan(1);
-
-  return augmentedSchemaCypherTestRunner(
-    t,
-    graphQLQuery,
-    {},
-    expectedCypherQuery,
-    {}
-  );
-});
-
-test('Delete node using spatial property node selection', t => {
-  const graphQLQuery = `mutation {
-    DeleteSpatialNode(
-      pointKey: {
-        x: 50      
-      }
-    ) {
-      _id
-      pointKey {
-        x
-        y
-        z
-      }
-    }
-  }`,
-    expectedCypherQuery = `MATCH (\`spatialNode\`:\`SpatialNode\`) WHERE \`spatialNode\`.pointKey.x = $pointKey.x
-WITH \`spatialNode\` AS \`spatialNode_toDelete\`, \`spatialNode\` {_id: ID(\`spatialNode\`),pointKey: { x: \`spatialNode\`.pointKey.x , y: \`spatialNode\`.pointKey.y , z: \`spatialNode\`.pointKey.z }} AS \`spatialNode\`
-DETACH DELETE \`spatialNode_toDelete\`
-RETURN \`spatialNode\``;
 
   t.plan(1);
 
@@ -2581,42 +2909,6 @@ test('Add relationship mutation using temporal property node selection', t => {
       MATCH (\`temporalNode_to\`:\`TemporalNode\`) WHERE \`temporalNode_to\`.datetime.year = $to.datetime.year AND \`temporalNode_to\`.datetime.month = $to.datetime.month AND \`temporalNode_to\`.datetime.day = $to.datetime.day AND \`temporalNode_to\`.datetime.hour = $to.datetime.hour AND \`temporalNode_to\`.datetime.minute = $to.datetime.minute AND \`temporalNode_to\`.datetime.second = $to.datetime.second AND \`temporalNode_to\`.datetime.millisecond = $to.datetime.millisecond AND \`temporalNode_to\`.datetime.microsecond = $to.datetime.microsecond AND \`temporalNode_to\`.datetime.nanosecond = $to.datetime.nanosecond AND \`temporalNode_to\`.datetime.timezone = $to.datetime.timezone 
       CREATE (\`temporalNode_from\`)-[\`temporal_relation\`:\`TEMPORAL\`]->(\`temporalNode_to\`)
       RETURN \`temporal_relation\` { from: \`temporalNode_from\` {_id: ID(\`temporalNode_from\`),time: { hour: \`temporalNode_from\`.time.hour , minute: \`temporalNode_from\`.time.minute , second: \`temporalNode_from\`.time.second , millisecond: \`temporalNode_from\`.time.millisecond , microsecond: \`temporalNode_from\`.time.microsecond , nanosecond: \`temporalNode_from\`.time.nanosecond , timezone: \`temporalNode_from\`.time.timezone , formatted: toString(\`temporalNode_from\`.time) },date: { year: \`temporalNode_from\`.date.year , month: \`temporalNode_from\`.date.month , day: \`temporalNode_from\`.date.day , formatted: toString(\`temporalNode_from\`.date) },datetime: { year: \`temporalNode_from\`.datetime.year , month: \`temporalNode_from\`.datetime.month , day: \`temporalNode_from\`.datetime.day , hour: \`temporalNode_from\`.datetime.hour , minute: \`temporalNode_from\`.datetime.minute , second: \`temporalNode_from\`.datetime.second , millisecond: \`temporalNode_from\`.datetime.millisecond , microsecond: \`temporalNode_from\`.datetime.microsecond , nanosecond: \`temporalNode_from\`.datetime.nanosecond , timezone: \`temporalNode_from\`.datetime.timezone , formatted: toString(\`temporalNode_from\`.datetime) },localtime: { hour: \`temporalNode_from\`.localtime.hour , minute: \`temporalNode_from\`.localtime.minute , second: \`temporalNode_from\`.localtime.second , millisecond: \`temporalNode_from\`.localtime.millisecond , microsecond: \`temporalNode_from\`.localtime.microsecond , nanosecond: \`temporalNode_from\`.localtime.nanosecond , formatted: toString(\`temporalNode_from\`.localtime) },localdatetime: { year: \`temporalNode_from\`.localdatetime.year , month: \`temporalNode_from\`.localdatetime.month , day: \`temporalNode_from\`.localdatetime.day , hour: \`temporalNode_from\`.localdatetime.hour , minute: \`temporalNode_from\`.localdatetime.minute , second: \`temporalNode_from\`.localdatetime.second , millisecond: \`temporalNode_from\`.localdatetime.millisecond , microsecond: \`temporalNode_from\`.localdatetime.microsecond , nanosecond: \`temporalNode_from\`.localdatetime.nanosecond , formatted: toString(\`temporalNode_from\`.localdatetime) }} ,to: \`temporalNode_to\` {_id: ID(\`temporalNode_to\`),time: { hour: \`temporalNode_to\`.time.hour , minute: \`temporalNode_to\`.time.minute , second: \`temporalNode_to\`.time.second , millisecond: \`temporalNode_to\`.time.millisecond , microsecond: \`temporalNode_to\`.time.microsecond , nanosecond: \`temporalNode_to\`.time.nanosecond , timezone: \`temporalNode_to\`.time.timezone , formatted: toString(\`temporalNode_to\`.time) },date: { year: \`temporalNode_to\`.date.year , month: \`temporalNode_to\`.date.month , day: \`temporalNode_to\`.date.day , formatted: toString(\`temporalNode_to\`.date) },datetime: { year: \`temporalNode_to\`.datetime.year , month: \`temporalNode_to\`.datetime.month , day: \`temporalNode_to\`.datetime.day , hour: \`temporalNode_to\`.datetime.hour , minute: \`temporalNode_to\`.datetime.minute , second: \`temporalNode_to\`.datetime.second , millisecond: \`temporalNode_to\`.datetime.millisecond , microsecond: \`temporalNode_to\`.datetime.microsecond , nanosecond: \`temporalNode_to\`.datetime.nanosecond , timezone: \`temporalNode_to\`.datetime.timezone , formatted: toString(\`temporalNode_to\`.datetime) },localtime: { hour: \`temporalNode_to\`.localtime.hour , minute: \`temporalNode_to\`.localtime.minute , second: \`temporalNode_to\`.localtime.second , millisecond: \`temporalNode_to\`.localtime.millisecond , microsecond: \`temporalNode_to\`.localtime.microsecond , nanosecond: \`temporalNode_to\`.localtime.nanosecond , formatted: toString(\`temporalNode_to\`.localtime) },localdatetime: { year: \`temporalNode_to\`.localdatetime.year , month: \`temporalNode_to\`.localdatetime.month , day: \`temporalNode_to\`.localdatetime.day , hour: \`temporalNode_to\`.localdatetime.hour , minute: \`temporalNode_to\`.localdatetime.minute , second: \`temporalNode_to\`.localdatetime.second , millisecond: \`temporalNode_to\`.localdatetime.millisecond , microsecond: \`temporalNode_to\`.localdatetime.microsecond , nanosecond: \`temporalNode_to\`.localdatetime.nanosecond , formatted: toString(\`temporalNode_to\`.localdatetime) }}  } AS \`_AddTemporalNodeTemporalNodesPayload\`;
-    `;
-
-  t.plan(1);
-
-  return augmentedSchemaCypherTestRunner(
-    t,
-    graphQLQuery,
-    {},
-    expectedCypherQuery,
-    {}
-  );
-});
-
-test('Add relationship mutation using spatial property node selection', t => {
-  const graphQLQuery = `mutation {
-    AddSpatialNodeSpatialNodes(
-      from: { pointKey: { x: 50 } }
-      to: { pointKey: { y: 20 } }
-    ) {
-      from {
-        pointKey {
-          x
-        }
-      }
-      to {
-        pointKey {
-          y
-        }
-      }
-    }
-  }`,
-    expectedCypherQuery = `
-      MATCH (\`spatialNode_from\`:\`SpatialNode\`) WHERE \`spatialNode_from\`.pointKey.x = $from.pointKey.x 
-      MATCH (\`spatialNode_to\`:\`SpatialNode\`) WHERE \`spatialNode_to\`.pointKey.y = $to.pointKey.y 
-      CREATE (\`spatialNode_from\`)-[\`spatial_relation\`:\`SPATIAL\`]->(\`spatialNode_to\`)
-      RETURN \`spatial_relation\` { from: \`spatialNode_from\` {pointKey: { x: \`spatialNode_from\`.pointKey.x }} ,to: \`spatialNode_to\` {pointKey: { y: \`spatialNode_to\`.pointKey.y }}  } AS \`_AddSpatialNodeSpatialNodesPayload\`;
     `;
 
   t.plan(1);
@@ -2790,44 +3082,6 @@ test('Remove relationship mutation using temporal property node selection', t =>
   );
 });
 
-test('Remove relationship mutation using spatial property node selection', t => {
-  const graphQLQuery = `mutation {
-    RemoveSpatialNodeSpatialNodes(
-      from: { pointKey: { x: 50 } }
-      to: { pointKey: { y: 20 } }
-    ) {
-      from {
-        pointKey {
-          x
-        }
-      }
-      to {
-        pointKey {
-          y
-        }
-      }
-    }
-  }`,
-    expectedCypherQuery = `
-      MATCH (\`spatialNode_from\`:\`SpatialNode\`) WHERE \`spatialNode_from\`.pointKey.x = $from.pointKey.x 
-      MATCH (\`spatialNode_to\`:\`SpatialNode\`) WHERE \`spatialNode_to\`.pointKey.y = $to.pointKey.y 
-      OPTIONAL MATCH (\`spatialNode_from\`)-[\`spatialNode_fromspatialNode_to\`:\`SPATIAL\`]->(\`spatialNode_to\`)
-      DELETE \`spatialNode_fromspatialNode_to\`
-      WITH COUNT(*) AS scope, \`spatialNode_from\` AS \`_spatialNode_from\`, \`spatialNode_to\` AS \`_spatialNode_to\`
-      RETURN {from: \`_spatialNode_from\` {pointKey: { x: \`_spatialNode_from\`.pointKey.x }} ,to: \`_spatialNode_to\` {pointKey: { y: \`_spatialNode_to\`.pointKey.y }} } AS \`_RemoveSpatialNodeSpatialNodesPayload\`;
-    `;
-
-  t.plan(1);
-
-  return augmentedSchemaCypherTestRunner(
-    t,
-    graphQLQuery,
-    {},
-    expectedCypherQuery,
-    {}
-  );
-});
-
 test('Query relationship with temporal properties', t => {
   const graphQLQuery = `query {
     Movie {
@@ -2846,32 +3100,6 @@ test('Query relationship with temporal properties', t => {
     }
   }`,
     expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) RETURN \`movie\` {_id: ID(\`movie\`), .title ,ratings: [(\`movie\`)<-[\`movie_ratings_relation\`:\`RATED\`]-(:\`User\`) | movie_ratings_relation { .rating ,datetime: { year: \`movie_ratings_relation\`.datetime.year },User: head([(:\`Movie\`${ADDITIONAL_MOVIE_LABELS})<-[\`movie_ratings_relation\`]-(\`movie_ratings_User\`:\`User\`) | movie_ratings_User {_id: ID(\`movie_ratings_User\`), .name }]) }] } AS \`movie\``;
-
-  t.plan(1);
-
-  return augmentedSchemaCypherTestRunner(
-    t,
-    graphQLQuery,
-    {},
-    expectedCypherQuery,
-    {}
-  );
-});
-
-test('Query relationship with spatial properties', t => {
-  const graphQLQuery = `query {
-    User {
-      rated {
-        location {
-          x
-          y
-          z
-          srid
-        }
-      }
-    }
-  }`,
-    expectedCypherQuery = `MATCH (\`user\`:\`User\`) RETURN \`user\` {rated: [(\`user\`)-[\`user_rated_relation\`:\`RATED\`]->(:\`Movie\`:\`u_user-id\`:\`newMovieLabel\`) | user_rated_relation {location: { x: \`user_rated_relation\`.location.x , y: \`user_rated_relation\`.location.y , z: \`user_rated_relation\`.location.z , srid: \`user_rated_relation\`.location.srid }}] } AS \`user\``;
 
   t.plan(1);
 
@@ -3037,25 +3265,21 @@ test('Add relationship mutation with temporal properties', t => {
 test('Add relationship mutation with spatial properties', t => {
   const graphQLQuery = `mutation {
     AddUserRated(
-      from: {
-        userId: "6973aff4-3113-45b0-9ce4-9879f0077b46"
-      },
-      to: {
-        movieId: "6f565c2a-cf1b-4969-951e-d0adade1e48c"
-      },
-      data: {
-        rating: 10,
+      from: { userId: "123" }
+      to: { movieId: "2kljghd" }
+      data: { 
+        rating: 10, 
         location: {
-          x: 10,
-          y: 20,
-          z: 30
+          longitude: 10,
+          latitude: 20.3,
+          height: 30.2
         }
       }
     ) {
       location {
-        x
-        y
-        z
+        longitude
+        latitude
+        height
       }
       from {
         _id
@@ -3069,8 +3293,34 @@ test('Add relationship mutation with spatial properties', t => {
       MATCH (\`user_from\`:\`User\` {userId: $from.userId})
       MATCH (\`movie_to\`:\`Movie\`:\`u_user-id\`:\`newMovieLabel\` {movieId: $to.movieId})
       CREATE (\`user_from\`)-[\`rated_relation\`:\`RATED\` {rating:$data.rating,location: point($data.location)}]->(\`movie_to\`)
-      RETURN \`rated_relation\` { location: { x: \`rated_relation\`.location.x , y: \`rated_relation\`.location.y , z: \`rated_relation\`.location.z },from: \`user_from\` {_id: ID(\`user_from\`)} ,to: \`movie_to\` {_id: ID(\`movie_to\`)}  } AS \`_AddUserRatedPayload\`;
+      RETURN \`rated_relation\` { location: { longitude: \`rated_relation\`.location.longitude , latitude: \`rated_relation\`.location.latitude , height: \`rated_relation\`.location.height },from: \`user_from\` {_id: ID(\`user_from\`)} ,to: \`movie_to\` {_id: ID(\`movie_to\`)}  } AS \`_AddUserRatedPayload\`;
     `;
+
+  t.plan(1);
+
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {},
+    expectedCypherQuery,
+    {}
+  );
+});
+
+test('Query relationship with spatial properties', t => {
+  const graphQLQuery = `query {
+    User {
+      rated {
+        location {
+          longitude
+          latitude
+          height  
+          srid
+        }
+      }
+    }
+  }`,
+    expectedCypherQuery = `MATCH (\`user\`:\`User\`) RETURN \`user\` {rated: [(\`user\`)-[\`user_rated_relation\`:\`RATED\`]->(:\`Movie\`:\`u_user-id\`:\`newMovieLabel\`) | user_rated_relation {location: { longitude: \`user_rated_relation\`.location.longitude , latitude: \`user_rated_relation\`.location.latitude , height: \`user_rated_relation\`.location.height , srid: \`user_rated_relation\`.location.srid }}] } AS \`user\``;
 
   t.plan(1);
 
