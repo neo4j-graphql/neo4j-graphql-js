@@ -1,9 +1,10 @@
-import { isObjectType, parse } from 'graphql';
+import { isObjectType, parse, GraphQLInt } from 'graphql';
 import { v1 as neo4j } from 'neo4j-driver';
 import _ from 'lodash';
 import filter from 'lodash/filter';
 import { Neo4jTypeName } from './augment/types/types';
 import { SpatialType } from './augment/types/spatial';
+import { unwrapNamedType } from './augment/fields';
 
 function parseArg(arg, variableValues) {
   switch (arg.value.kind) {
@@ -164,6 +165,14 @@ export const isUpdateMutation = _isNamedMutation('update');
 export const isDeleteMutation = _isNamedMutation('delete');
 
 export const isRemoveMutation = _isNamedMutation('remove');
+
+export const isMergeMutation = _isNamedMutation('merge');
+
+const isRelationshipUpdateMutation = ({ resolveInfo, mutationMeta }) =>
+  isUpdateMutation(resolveInfo) && !mutationMeta;
+
+const isRelationshipMergeMutation = ({ resolveInfo, mutationMeta }) =>
+  isMergeMutation(resolveInfo) && !mutationMeta;
 
 export function isMutation(resolveInfo) {
   return resolveInfo.operation.operation === 'mutation';
@@ -356,7 +365,7 @@ export const computeOrderBy = (resolveInfo, schemaType) => {
   };
 };
 
-export const possiblySetFirstId = ({ args, statements, params }) => {
+export const possiblySetFirstId = ({ args, statements = [], params }) => {
   const arg = args.find(e => _getNamedType(e).name.value === 'ID');
   // arg is the first ID field if it exists, and we set the value
   // if no value is provided for the field name (arg.name.value) in params
@@ -392,17 +401,17 @@ export const getAdditionalLabels = (schemaType, cypherParams) => {
   return parsedLabels;
 };
 
-// TODO refactor
 export const buildCypherParameters = ({
   args,
   statements = [],
   params,
-  paramKey
+  paramKey,
+  resolveInfo
 }) => {
   const dataParams = paramKey ? params[paramKey] : params;
   const paramKeys = dataParams ? Object.keys(dataParams) : [];
   if (args) {
-    statements = paramKeys.reduce((acc, paramName) => {
+    statements = paramKeys.reduce((paramStatements, paramName) => {
       const param = paramKey ? params[paramKey][paramName] : params[paramName];
       // Get the AST definition for the argument matching this param name
       const fieldAst = args.find(arg => arg.name.value === paramName);
@@ -410,93 +419,141 @@ export const buildCypherParameters = ({
         const fieldType = _getNamedType(fieldAst.type);
         const fieldTypeName = fieldType.name.value;
         if (isNeo4jTypeInput(fieldTypeName)) {
-          const formatted = param.formatted;
-          const neo4jTypeConstructor = decideNeo4jTypeConstructor(
-            fieldTypeName
-          );
-          if (neo4jTypeConstructor) {
-            // Prefer only using formatted, if provided
-            if (formatted) {
-              if (paramKey) params[paramKey][paramName] = formatted;
-              else params[paramName] = formatted;
-              acc.push(
-                `${paramName}: ${neo4jTypeConstructor}($${
-                  paramKey ? `${paramKey}.` : ''
-                }${paramName})`
-              );
-            } else {
-              let neo4jTypeParam = {};
-              if (Array.isArray(param)) {
-                const count = param.length;
-                let i = 0;
-                for (; i < count; ++i) {
-                  neo4jTypeParam = param[i];
-                  const formatted = neo4jTypeParam.formatted;
-                  if (neo4jTypeParam.formatted) {
-                    paramKey
-                      ? (params[paramKey][paramName] = formatted)
-                      : (params[paramName] = formatted);
-                  } else {
-                    Object.keys(neo4jTypeParam).forEach(e => {
-                      if (Number.isInteger(neo4jTypeParam[e])) {
-                        paramKey
-                          ? (params[paramKey][paramName][i][e] = neo4j.int(
-                              neo4jTypeParam[e]
-                            ))
-                          : (params[paramName][i][e] = neo4j.int(
-                              neo4jTypeParam[e]
-                            ));
-                      }
-                    });
-                  }
-                }
-                acc.push(
-                  `${paramName}: [value IN $${
-                    paramKey ? `${paramKey}.` : ''
-                  }${paramName} | ${neo4jTypeConstructor}(value)]`
-                );
-              } else {
-                neo4jTypeParam = paramKey
-                  ? params[paramKey][paramName]
-                  : params[paramName];
-                const formatted = neo4jTypeParam.formatted;
-                if (neo4jTypeParam.formatted) {
-                  paramKey
-                    ? (params[paramKey][paramName] = formatted)
-                    : (params[paramName] = formatted);
-                } else {
-                  Object.keys(neo4jTypeParam).forEach(e => {
-                    if (Number.isInteger(neo4jTypeParam[e])) {
-                      paramKey
-                        ? (params[paramKey][paramName][e] = neo4j.int(
-                            neo4jTypeParam[e]
-                          ))
-                        : (params[paramName][e] = neo4j.int(neo4jTypeParam[e]));
-                    }
-                  });
-                }
-                acc.push(
-                  `${paramName}: ${neo4jTypeConstructor}($${
-                    paramKey ? `${paramKey}.` : ''
-                  }${paramName})`
-                );
-              }
-            }
-          }
+          paramStatements = buildNeo4jTypeCypherParameters({
+            paramStatements,
+            params,
+            param,
+            paramKey,
+            paramName,
+            fieldTypeName,
+            resolveInfo
+          });
         } else {
           // normal case
-          acc.push(
+          paramStatements.push(
             `${paramName}:$${paramKey ? `${paramKey}.` : ''}${paramName}`
           );
         }
       }
-      return acc;
+      return paramStatements;
     }, statements);
   }
   if (paramKey) {
     params[paramKey] = dataParams;
   }
   return [params, statements];
+};
+
+const buildNeo4jTypeCypherParameters = ({
+  paramStatements,
+  params,
+  param,
+  paramKey,
+  paramName,
+  fieldTypeName,
+  resolveInfo
+}) => {
+  const formatted = param.formatted;
+  const neo4jTypeConstructor = decideNeo4jTypeConstructor(fieldTypeName);
+  if (neo4jTypeConstructor) {
+    // Prefer only using formatted, if provided
+    if (formatted) {
+      if (paramKey) params[paramKey][paramName] = formatted;
+      else params[paramName] = formatted;
+      paramStatements.push(
+        `${paramName}: ${neo4jTypeConstructor}($${
+          paramKey ? `${paramKey}.` : ''
+        }${paramName})`
+      );
+    } else {
+      let neo4jTypeParam = {};
+      if (Array.isArray(param)) {
+        const count = param.length;
+        let paramIndex = 0;
+        for (; paramIndex < count; ++paramIndex) {
+          neo4jTypeParam = param[paramIndex];
+          if (neo4jTypeParam.formatted) {
+            const formatted = neo4jTypeParam.formatted;
+            if (paramKey) params[paramKey][paramName] = formatted;
+            else params[paramName] = formatted;
+          } else {
+            params = serializeNeo4jIntegers({
+              paramKey,
+              fieldTypeName,
+              paramName,
+              paramIndex: paramIndex,
+              neo4jTypeParam,
+              params,
+              resolveInfo
+            });
+          }
+        }
+        paramStatements.push(
+          `${paramName}: [value IN $${
+            paramKey ? `${paramKey}.` : ''
+          }${paramName} | ${neo4jTypeConstructor}(value)]`
+        );
+      } else {
+        if (paramKey) neo4jTypeParam = params[paramKey][paramName];
+        else neo4jTypeParam = params[paramName];
+        const formatted = neo4jTypeParam.formatted;
+        if (neo4jTypeParam.formatted) {
+          if (paramKey) params[paramKey][paramName] = formatted;
+          else params[paramName] = formatted;
+        } else {
+          params = serializeNeo4jIntegers({
+            paramKey,
+            fieldTypeName,
+            paramName,
+            neo4jTypeParam,
+            params,
+            resolveInfo
+          });
+        }
+        paramStatements.push(
+          `${paramName}: ${neo4jTypeConstructor}($${
+            paramKey ? `${paramKey}.` : ''
+          }${paramName})`
+        );
+      }
+    }
+  }
+  return paramStatements;
+};
+
+const serializeNeo4jIntegers = ({
+  paramKey,
+  fieldTypeName,
+  paramName,
+  paramIndex,
+  neo4jTypeParam = {},
+  params = {},
+  resolveInfo
+}) => {
+  const schema = resolveInfo.schema;
+  const neo4jTypeDefinition = schema.getType(fieldTypeName);
+  const neo4jTypeAst = neo4jTypeDefinition.astNode;
+  const neo4jTypeFields = neo4jTypeAst.fields;
+  Object.keys(neo4jTypeParam).forEach(paramFieldName => {
+    const fieldAst = neo4jTypeFields.find(
+      field => field.name.value === paramFieldName
+    );
+    const unwrappedFieldType = unwrapNamedType({ type: fieldAst.type });
+    const fieldTypeName = unwrappedFieldType.name;
+    if (
+      fieldTypeName === GraphQLInt.name &&
+      Number.isInteger(neo4jTypeParam[paramFieldName])
+    ) {
+      const serialized = neo4j.int(neo4jTypeParam[paramFieldName]);
+      let param = params[paramName];
+      if (paramIndex >= 0) {
+        if (paramKey) param = params[paramKey][paramName][paramIndex];
+        else param = param[paramIndex];
+      } else if (paramKey) param = params[paramKey][paramName];
+      param[paramFieldName] = serialized;
+    }
+  });
+  return params;
 };
 
 // TODO refactor to handle Query/Mutation type schema directives
@@ -647,6 +704,15 @@ export const getPrimaryKey = astNode => {
   if (!pk) {
     pk = firstField(fields);
   }
+  // Do not allow Point primary key
+  if (pk) {
+    const type = pk.type;
+    const unwrappedType = unwrapNamedType({ type });
+    const typeName = unwrappedType.name;
+    if (isSpatialType(typeName) || typeName === SpatialType.POINT) {
+      pk = undefined;
+    }
+  }
   return pk;
 };
 
@@ -727,13 +793,16 @@ export const decideNestedVariableName = ({
 };
 
 export const initializeMutationParams = ({
+  mutationMeta,
   resolveInfo,
   mutationTypeCypherDirective,
   otherParams,
   first,
   offset
 }) => {
-  return (isCreateMutation(resolveInfo) || isUpdateMutation(resolveInfo)) &&
+  return (isCreateMutation(resolveInfo) ||
+    isRelationshipUpdateMutation({ resolveInfo, mutationMeta }) ||
+    isRelationshipMergeMutation({ resolveInfo, mutationMeta })) &&
     !mutationTypeCypherDirective
     ? { params: otherParams, ...{ first, offset } }
     : { ...otherParams, ...{ first, offset } };

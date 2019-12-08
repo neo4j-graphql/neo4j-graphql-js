@@ -265,9 +265,9 @@ export const testSchema = /* GraphQL */ `
   }
 
   type SpatialNode {
-    pointKey: Point
+    id: ID!
     point: Point
-    spatialNodes(pointKey: Point): [SpatialNode]
+    spatialNodes(point: Point): [SpatialNode]
       @relation(name: "SPATIAL", direction: OUT)
   }
 

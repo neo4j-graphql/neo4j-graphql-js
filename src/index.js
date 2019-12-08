@@ -55,7 +55,7 @@ instead: \`DEBUG=neo4j-graphql-js\`.
   }
 
   debug('%s', query);
-  debug('%o', cypherParams);
+  debug('%s', JSON.stringify(cypherParams, null, 2));
 
   const session = context.driver.session();
   let result;

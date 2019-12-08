@@ -212,7 +212,7 @@ test('Mutation with @cypher directive (not-isolated)', async t => {
     });
 });
 
-test('Create node mutation (not-isolated)', async t => {
+test.serial('Create node mutation (not-isolated)', async t => {
   t.plan(1);
 
   let expected = {
@@ -223,7 +223,13 @@ test('Create node mutation (not-isolated)', async t => {
         year: 2018,
         plot: 'An unending saga',
         poster: 'www.movieposter.com/img.png',
-        imdbRating: 1
+        imdbRating: 1,
+        location: {
+          __typename: '_Neo4jPoint',
+          longitude: 46.870035,
+          latitude: -113.990976,
+          height: 12.3
+        }
       }
     }
   };
@@ -239,12 +245,83 @@ test('Create node mutation (not-isolated)', async t => {
             plot: "An unending saga"
             poster: "www.movieposter.com/img.png"
             imdbRating: 1.0
+            location: {
+              longitude: 46.870035
+              latitude: -113.990976
+              height: 12.3
+            }
           ) {
             title
             year
             plot
             poster
             imdbRating
+            location {
+              longitude
+              latitude
+              height
+            }
+          }
+        }
+      `
+    })
+    .then(data => {
+      t.deepEqual(data.data, expected.data);
+    })
+    .catch(error => {
+      t.fail(error.message);
+    });
+});
+
+test.serial('Merge node mutation (not-isolated)', async t => {
+  t.plan(1);
+
+  let expected = {
+    data: {
+      MergeMovie: {
+        __typename: 'Movie',
+        title: 'My Super Awesome Movie',
+        year: 2018,
+        plot: 'An unending saga',
+        poster: 'www.movieposter.com/img.png',
+        imdbRating: 1,
+        location: {
+          __typename: '_Neo4jPoint',
+          longitude: 46.870035,
+          latitude: -113.990976,
+          height: 12.3
+        }
+      }
+    }
+  };
+
+  await client
+    .mutate({
+      mutation: gql`
+        mutation someMutation {
+          MergeMovie(
+            movieId: "12dd334d5zaaaa"
+            title: "My Super Awesome Movie"
+            year: 2018
+            plot: "An unending saga"
+            poster: "www.movieposter.com/img.png"
+            imdbRating: 1.0
+            location: {
+              longitude: 46.870035
+              latitude: -113.990976
+              height: 12.3
+            }
+          ) {
+            title
+            year
+            plot
+            poster
+            imdbRating
+            location {
+              longitude
+              latitude
+              height
+            }
           }
         }
       `
@@ -350,6 +427,75 @@ test.serial('Add relationship mutation (not-isolated)', async t => {
     })
     .then(data => {
       t.is(data.data.AddMovieGenres.from.genres.length, 4);
+      // FIXME: Check length of genres array instead of exact response until ordering is implemented
+      //t.deepEqual(data.data, expected.data);
+    })
+    .catch(error => {
+      t.fail(error.message);
+    });
+});
+
+test.serial('Merge relationship mutation (not-isolated)', async t => {
+  t.plan(1);
+
+  let expected = {
+    data: {
+      MergeMovieGenre: {
+        __typename: 'Movie',
+        title: 'Chungking Express (Chung Hing sam lam)',
+        genres: [
+          {
+            name: 'Mystery',
+            __typename: 'Genre'
+          },
+          {
+            name: 'Drama',
+            __typename: 'Genre'
+          },
+          {
+            name: 'Romance',
+            __typename: 'Genre'
+          },
+          {
+            name: 'Action',
+            __typename: 'Genre'
+          }
+        ]
+      }
+    }
+  };
+
+  await client
+    .mutate({
+      mutation: gql`
+        mutation mergeGenreRelationToMovie(
+          $from: _MovieInput!
+          $to: _GenreInput!
+        ) {
+          MergeMovieGenres(from: $from, to: $to) {
+            from {
+              title
+              genres {
+                name
+              }
+            }
+            to {
+              name
+            }
+          }
+        }
+      `,
+      variables: {
+        from: {
+          movieId: '123'
+        },
+        to: {
+          name: 'Action'
+        }
+      }
+    })
+    .then(data => {
+      t.is(data.data.MergeMovieGenres.from.genres.length, 4);
       // FIXME: Check length of genres array instead of exact response until ordering is implemented
       //t.deepEqual(data.data, expected.data);
     })
@@ -893,6 +1039,105 @@ test('should be able to query node relations(s) by interface type', async t => {
     });
 });
 
+test('should be able to query custom cypher field returning interface type', async t => {
+  t.plan(1);
+
+  await client.mutate({
+    mutation: gql`
+      mutation {
+        CreateOldCamera(
+          id: "cam010"
+          type: "macro"
+          weight: 99
+          smell: "rancid"
+        ) {
+          id
+        }
+        CreateNewCamera(
+          id: "cam011"
+          type: "floating"
+          weight: 122
+          features: ["selfie", "zoom"]
+        ) {
+          id
+        }
+        CreateCameraMan(userId: "man010", name: "Johnnie Zoom") {
+          userId
+        }
+        a: AddCameraManCameras(
+          from: { userId: "man010" }
+          to: { id: "cam010" }
+        ) {
+          from {
+            userId
+          }
+        }
+        b: AddCameraManCameras(
+          from: { userId: "man010" }
+          to: { id: "cam011" }
+        ) {
+          from {
+            userId
+          }
+        }
+      }
+    `
+  });
+
+  let expected = {
+    data: {
+      CameraMan: [
+        {
+          userId: 'man010',
+          heaviestCamera: [
+            {
+              id: 'cam011',
+              __typename: 'NewCamera'
+            }
+          ],
+          __typename: 'CameraMan'
+        }
+      ]
+    }
+  };
+
+  await client
+    .query({
+      query: gql`
+        query {
+          CameraMan(userId: "man010") {
+            userId
+            heaviestCamera {
+              id
+            }
+          }
+        }
+      `
+    })
+    .then(data => {
+      t.deepEqual(data.data, expected.data);
+    })
+    .catch(error => {
+      t.fail(error.message);
+    })
+    .finally(async () => {
+      await client.mutate({
+        mutation: gql`
+          mutation {
+            DeleteOldCamera(id: "cam010") {
+              id
+            }
+            DeleteNewCamera(id: "cam011") {
+              id
+            }
+            DeleteCameraMan(userId: "man010") {
+              userId
+            }
+          }
+        `
+      });
+    });
+});
 /*
  * Temporal type tests
  */
@@ -1335,6 +1580,94 @@ test.serial(
 );
 
 test.serial(
+  'Merge relationship with temporal property (not-isolated)',
+  async t => {
+    t.plan(1);
+
+    let expected = {
+      data: {
+        MergeMovieRatings: {
+          __typename: '_MergeMovieRatingsPayload',
+          date: {
+            __typename: '_Neo4jDate',
+            formatted: '2018-12-18'
+          },
+          rating: 9
+        }
+      }
+    };
+
+    await client
+      .mutate({
+        mutation: gql`
+          mutation {
+            MergeMovieRatings(
+              from: { userId: 18 }
+              to: { movieId: 6683 }
+              data: { rating: 9, date: { year: 2018, month: 12, day: 18 } }
+            ) {
+              date {
+                formatted
+              }
+              rating
+            }
+          }
+        `
+      })
+      .then(data => {
+        t.deepEqual(data, expected);
+      })
+      .catch(error => {
+        t.fail(error.message);
+      });
+  }
+);
+
+test.serial(
+  'Update relationship with temporal property (not-isolated)',
+  async t => {
+    t.plan(1);
+
+    let expected = {
+      data: {
+        UpdateMovieRatings: {
+          __typename: '_UpdateMovieRatingsPayload',
+          date: {
+            __typename: '_Neo4jDate',
+            formatted: '2018-12-18'
+          },
+          rating: 7
+        }
+      }
+    };
+
+    await client
+      .mutate({
+        mutation: gql`
+          mutation {
+            UpdateMovieRatings(
+              from: { userId: 18 }
+              to: { movieId: 6683 }
+              data: { rating: 7, date: { year: 2018, month: 12, day: 18 } }
+            ) {
+              date {
+                formatted
+              }
+              rating
+            }
+          }
+        `
+      })
+      .then(data => {
+        t.deepEqual(data, expected);
+      })
+      .catch(error => {
+        t.fail(error.message);
+      });
+  }
+);
+
+test.serial(
   'Query for temporal property on relationship (not-isolated)',
   async t => {
     t.plan(1);
@@ -1352,7 +1685,7 @@ test.serial(
                   __typename: '_Neo4jDate',
                   formatted: '2018-12-18'
                 },
-                rating: 5
+                rating: 7
               }
             ]
           }
@@ -1547,7 +1880,8 @@ test.serial(
       data: {
         CreateSpatialNode: {
           __typename: 'SpatialNode',
-          pointKey: {
+          id: 'xyz',
+          point: {
             __typename: '_Neo4jPoint',
             crs: 'wgs-84-3d',
             latitude: 20,
@@ -1563,9 +1897,11 @@ test.serial(
         mutation: gql`
           mutation {
             CreateSpatialNode(
-              pointKey: { longitude: 10, latitude: 20, height: 30 }
+              id: "xyz"
+              point: { longitude: 10, latitude: 20, height: 30 }
             ) {
-              pointKey {
+              id
+              point {
                 longitude
                 latitude
                 height
@@ -1594,7 +1930,8 @@ test.serial(
         SpatialNode: [
           {
             __typename: 'SpatialNode',
-            pointKey: {
+            id: 'xyz',
+            point: {
               __typename: '_Neo4jPoint',
               crs: 'wgs-84-3d',
               latitude: 20,
@@ -1610,8 +1947,9 @@ test.serial(
       .query({
         query: gql`
           {
-            SpatialNode(pointKey: { longitude: 10, latitude: 20, height: 30 }) {
-              pointKey {
+            SpatialNode(point: { longitude: 10, latitude: 20, height: 30 }) {
+              id
+              point {
                 longitude
                 latitude
                 height
@@ -1637,7 +1975,7 @@ test.serial('Spatial - filtering - field equal to given value', async t => {
       SpatialNode: [
         {
           __typename: 'SpatialNode',
-          pointKey: {
+          point: {
             __typename: '_Neo4jPoint',
             crs: 'wgs-84-3d',
             latitude: 20,
@@ -1653,9 +1991,9 @@ test.serial('Spatial - filtering - field equal to given value', async t => {
       query: gql`
         {
           SpatialNode(
-            filter: { pointKey: { longitude: 10, latitude: 20, height: 30 } }
+            filter: { point: { longitude: 10, latitude: 20, height: 30 } }
           ) {
-            pointKey {
+            point {
               longitude
               latitude
               height

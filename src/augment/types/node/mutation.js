@@ -19,11 +19,11 @@ import { TypeWrappers, getFieldDefinition, isNeo4jIDField } from '../../fields';
 /**
  * An enum describing the names of node type mutations
  */
-export const NodeMutation = {
+const NodeMutation = {
   CREATE: 'Create',
   UPDATE: 'Update',
-  DELETE: 'Delete'
-  // MERGE: 'Merge'
+  DELETE: 'Delete',
+  MERGE: 'Merge'
 };
 
 /**
@@ -103,7 +103,10 @@ const buildNodeMutationField = ({
     };
     if (mutationAction === NodeMutation.CREATE) {
       mutationFields.push(buildField(mutationField));
-    } else if (mutationAction === NodeMutation.UPDATE) {
+    } else if (
+      mutationAction === NodeMutation.UPDATE ||
+      mutationAction === NodeMutation.MERGE
+    ) {
       if (primaryKey && mutationField.args.length > 1) {
         mutationFields.push(buildField(mutationField));
       }
@@ -134,8 +137,8 @@ const buildNodeMutationArguments = ({
       const type = field.type;
       if (operationName === NodeMutation.CREATE) {
         // Uses primary key and any other property field
-        if (primaryKeyName === field.name) {
-          if (field.type.name === GraphQLID.name) {
+        if (primaryKeyName === name) {
+          if (type.name === GraphQLID.name) {
             // Create auto-generates ID primary keys
             args.push({
               name,
@@ -158,7 +161,10 @@ const buildNodeMutationArguments = ({
             type
           });
         }
-      } else if (operationName === NodeMutation.UPDATE) {
+      } else if (
+        operationName === NodeMutation.UPDATE ||
+        operationName === NodeMutation.MERGE
+      ) {
         // Uses primary key and any other property field
         if (primaryKeyName === name) {
           // Require primary key otherwise

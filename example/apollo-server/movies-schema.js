@@ -71,9 +71,9 @@ type OnlyDate {
 }
 
 type SpatialNode {
-  pointKey: Point
+  id: ID!
   point: Point
-  spatialNodes(pointKey: Point): [SpatialNode]
+  spatialNodes(point: Point): [SpatialNode]
     @relation(name: "SPATIAL", direction: OUT)
 }
 
@@ -85,6 +85,7 @@ interface Camera {
   id: ID!
   type: String
   make: String
+  weight: Int
 }
 
 type OldCamera implements Camera {
@@ -92,12 +93,14 @@ type OldCamera implements Camera {
   type: String
   make: String
   weight: Int
+  smell: String
 }
 
 type NewCamera implements Camera {
   id: ID!
   type: String
   make: String
+  weight: Int
   features: [String]
 }
 
@@ -105,7 +108,8 @@ type CameraMan implements Person {
   userId: ID!
   name: String
   favoriteCamera: Camera @relation(name: "favoriteCamera", direction: "OUT")
-  cameras: [Camera] @relation(name: "cameras", direction: "OUT")
+  heaviestCamera: [Camera] @cypher(statement: "MATCH (c: Camera)--(this) RETURN c ORDER BY c.weight DESC LIMIT 1")
+  cameras: [Camera!]! @relation(name: "cameras", direction: "OUT")
   cameraBuddy: Person @relation(name: "cameraBuddy", direction: "OUT")
 }
 
@@ -115,7 +119,8 @@ type Query {
   MovieById(movieId: ID!): Movie
   GenresBySubstring(substring: String): [Genre] @cypher(statement: "MATCH (g:Genre) WHERE toLower(g.name) CONTAINS toLower($substring) RETURN g")
   Books: [Book]
-}`;
+}
+`;
 
 export const resolvers = {
   // root entry point to GraphQL service

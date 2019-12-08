@@ -35,12 +35,12 @@ const Neo4jPointField = {
  * GraphQL types
  */
 export const Neo4jPoint = {
-  [Neo4jPointField.X]: GraphQLInt.name,
-  [Neo4jPointField.Y]: GraphQLInt.name,
-  [Neo4jPointField.Z]: GraphQLInt.name,
-  [Neo4jPointField.LONGITUDE]: GraphQLInt.name,
-  [Neo4jPointField.LATITUDE]: GraphQLInt.name,
-  [Neo4jPointField.HEIGHT]: GraphQLInt.name,
+  [Neo4jPointField.X]: GraphQLFloat.name,
+  [Neo4jPointField.Y]: GraphQLFloat.name,
+  [Neo4jPointField.Z]: GraphQLFloat.name,
+  [Neo4jPointField.LONGITUDE]: GraphQLFloat.name,
+  [Neo4jPointField.LATITUDE]: GraphQLFloat.name,
+  [Neo4jPointField.HEIGHT]: GraphQLFloat.name,
   [Neo4jPointField.CRS]: GraphQLString.name,
   [Neo4jPointField.SRID]: GraphQLInt.name
 };

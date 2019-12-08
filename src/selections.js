@@ -74,7 +74,19 @@ export function buildCypherSelection({
       ...args,
       ...{ paramIndex }
     });
-    return [subSelection, { ...shallowFilterParams, ...subFilterParams }];
+    const derivedTypesParams = Object.entries(args)
+      .filter(([key]) => key.endsWith('_derivedTypes'))
+      .reduce(
+        (acc, [key, value]) => ({
+          ...acc,
+          [key]: value
+        }),
+        {}
+      );
+    return [
+      subSelection,
+      { ...shallowFilterParams, ...subFilterParams, ...derivedTypesParams }
+    ];
   };
 
   if (selections.find(({ kind }) => kind && kind === 'InlineFragment')) {
