@@ -71,9 +71,9 @@ type OnlyDate {
 }
 
 type SpatialNode {
-  pointKey: Point
+  id: ID!
   point: Point
-  spatialNodes(pointKey: Point): [SpatialNode]
+  spatialNodes(point: Point): [SpatialNode]
     @relation(name: "SPATIAL", direction: OUT)
 }
 
@@ -119,7 +119,8 @@ type Query {
   MovieById(movieId: ID!): Movie
   GenresBySubstring(substring: String): [Genre] @cypher(statement: "MATCH (g:Genre) WHERE toLower(g.name) CONTAINS toLower($substring) RETURN g")
   Books: [Book]
-}`;
+}
+`;
 
 export const resolvers = {
   // root entry point to GraphQL service

@@ -2,7 +2,11 @@ import { RelationshipDirectionField } from './relationship';
 import { buildNodeOutputFields } from './query';
 import { shouldAugmentRelationshipField } from '../../augment';
 import { OperationType } from '../../types/types';
-import { TypeWrappers, getFieldDefinition } from '../../fields';
+import {
+  TypeWrappers,
+  getFieldDefinition,
+  unwrapNamedType
+} from '../../fields';
 import {
   DirectiveDefinition,
   buildAuthScopeDirective,
@@ -20,15 +24,18 @@ import {
   buildObjectType,
   buildInputObjectType
 } from '../../ast';
+import { getPrimaryKey } from '../../../utils';
 
 /**
  * An enum describing the names of relationship mutations,
  * for node and relationship type fields (field and type
  * relation directive)
  */
-export const RelationshipMutation = {
+const RelationshipMutation = {
   CREATE: 'Add',
-  DELETE: 'Remove'
+  DELETE: 'Remove',
+  UPDATE: 'Update',
+  MERGE: 'Merge'
 };
 
 /**
@@ -68,11 +75,19 @@ export const augmentRelationshipMutationAPI = ({
         typeName,
         fieldName
       });
+      const fromTypeDefinition = typeDefinitionMap[fromType];
+      const toTypeDefinition = typeDefinitionMap[toType];
+      const fromTypePk = getPrimaryKey(fromTypeDefinition);
+      const toTypePk = getPrimaryKey(toTypeDefinition);
       if (
         !getFieldDefinition({
           fields: mutationType.fields,
           name: mutationName
-        })
+        }) &&
+        // Only generate mutation API for given relationship if both related
+        // nodes have a primary key
+        fromTypePk &&
+        toTypePk
       ) {
         [operationTypeMap, generatedTypeMap] = buildRelationshipMutationAPI({
           mutationAction,
@@ -149,6 +164,7 @@ const buildRelationshipMutationAPI = ({
     relationshipName,
     fromType,
     toType,
+    propertyInputValues,
     propertyOutputFields,
     mutationOutputType,
     outputType,
@@ -183,6 +199,7 @@ const buildRelationshipMutationField = ({
   relationshipName,
   fromType,
   toType,
+  propertyInputValues,
   propertyOutputFields,
   mutationOutputType,
   outputType,
@@ -191,7 +208,10 @@ const buildRelationshipMutationField = ({
 }) => {
   if (
     mutationAction === RelationshipMutation.CREATE ||
-    mutationAction === RelationshipMutation.DELETE
+    mutationAction === RelationshipMutation.DELETE ||
+    (mutationAction === RelationshipMutation.UPDATE &&
+      propertyInputValues.length) ||
+    mutationAction === RelationshipMutation.MERGE
   ) {
     operationTypeMap[OperationType.MUTATION].fields.push(
       buildField({
@@ -213,7 +233,6 @@ const buildRelationshipMutationField = ({
           relationshipName,
           fromType,
           toType,
-          propertyOutputFields,
           config
         })
       })
@@ -252,7 +271,9 @@ const buildRelationshipMutationPropertyInputType = ({
   generatedTypeMap
 }) => {
   if (
-    mutationAction === RelationshipMutation.CREATE &&
+    (mutationAction === RelationshipMutation.CREATE ||
+      mutationAction === RelationshipMutation.UPDATE ||
+      mutationAction === RelationshipMutation.MERGE) &&
     propertyInputValues.length
   ) {
     let nonComputedPropertyInputFields = propertyInputValues.filter(field => {
@@ -289,7 +310,9 @@ const buildRelationshipMutationArguments = ({
 }) => {
   const fieldArguments = buildNodeSelectionArguments({ fromType, toType });
   if (
-    mutationAction === RelationshipMutation.CREATE &&
+    (mutationAction === RelationshipMutation.CREATE ||
+      mutationAction === RelationshipMutation.UPDATE ||
+      mutationAction === RelationshipMutation.MERGE) &&
     propertyOutputFields.length
   ) {
     fieldArguments.push(
@@ -311,7 +334,6 @@ const buildRelationshipMutationDirectives = ({
   relationshipName,
   fromType,
   toType,
-  propertyOutputFields,
   config
 }) => {
   const mutationMetaDirective = buildMutationMetaDirective({
@@ -326,6 +348,10 @@ const buildRelationshipMutationDirectives = ({
       authAction = 'Create';
     } else if (mutationAction === RelationshipMutation.DELETE) {
       authAction = 'Delete';
+    } else if (mutationAction === RelationshipMutation.UPDATE) {
+      authAction = 'Update';
+    } else if (mutationAction === RelationshipMutation.MERGE) {
+      authAction = 'Merge';
     }
     if (authAction) {
       directives.push(
@@ -362,7 +388,9 @@ const buildRelationshipMutationOutputType = ({
 }) => {
   if (
     mutationAction === RelationshipMutation.CREATE ||
-    mutationAction === RelationshipMutation.DELETE
+    mutationAction === RelationshipMutation.DELETE ||
+    mutationAction === RelationshipMutation.MERGE ||
+    mutationAction === RelationshipMutation.UPDATE
   ) {
     const relationTypeDirective = buildRelationDirective({
       relationshipName,
@@ -370,7 +398,11 @@ const buildRelationshipMutationOutputType = ({
       toType
     });
     let fields = buildNodeOutputFields({ fromType, toType });
-    if (mutationAction === RelationshipMutation.CREATE) {
+    if (
+      mutationAction === RelationshipMutation.CREATE ||
+      mutationAction === RelationshipMutation.UPDATE ||
+      mutationAction === RelationshipMutation.MERGE
+    ) {
       // TODO temporary block on cypher field arguments - needs translation test
       const mutationOutputFields = propertyOutputFields.map(field => {
         if (isCypherField({ directives: field.directives })) {
@@ -382,6 +414,7 @@ const buildRelationshipMutationOutputType = ({
       });
       fields.push(...mutationOutputFields);
     }
+    // Overwrite
     generatedTypeMap[mutationOutputType] = buildObjectType({
       name: buildName({ name: mutationOutputType }),
       fields,
