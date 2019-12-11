@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.10.1
+
+- [Use debug environment variable for inferSchema console info level](https://github.com/neo4j-graphql/neo4j-graphql-js/commit/5d72f5a4325cad2d3d5fb4f6a8ec7b66e843d6ba)
+
 ## 2.10.0
 
 - [MERGE operation support](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/355)
