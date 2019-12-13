@@ -108,7 +108,10 @@ export const customCypherField = ({
   // appropriately to the indexed keys produced in getFilterParams()
   const cypherFieldParamsIndex = paramIndex - 1;
   const fragmentTypeParams = fieldIsInterfaceType
-    ? derivedTypesParams(resolveInfo.schema, fieldType.ofType.astNode.name)
+    ? derivedTypesParams(
+        resolveInfo.schema,
+        fieldType.ofType.astNode.name.value
+      )
     : {};
 
   return {
@@ -123,7 +126,10 @@ export const customCypherField = ({
       cypherFieldParamsIndex
     )}}, true) | ${nestedVariable} {${
       fieldIsInterfaceType
-        ? `${fragmentType(nestedVariable, fieldType.ofType.astNode.name)},`
+        ? `${fragmentType(
+            nestedVariable,
+            fieldType.ofType.astNode.name.value
+          )},`
         : ''
     }${subSelection[0]}}]${fieldIsList ? '' : ')'}${skipLimit} ${commaIfTail}`,
     ...tailParams,
