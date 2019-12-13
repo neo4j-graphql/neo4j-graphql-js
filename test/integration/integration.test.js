@@ -1039,6 +1039,105 @@ test('should be able to query node relations(s) by interface type', async t => {
     });
 });
 
+test('should be able to query custom cypher field returning interface type', async t => {
+  t.plan(1);
+
+  await client.mutate({
+    mutation: gql`
+      mutation {
+        CreateOldCamera(
+          id: "cam010"
+          type: "macro"
+          weight: 99
+          smell: "rancid"
+        ) {
+          id
+        }
+        CreateNewCamera(
+          id: "cam011"
+          type: "floating"
+          weight: 122
+          features: ["selfie", "zoom"]
+        ) {
+          id
+        }
+        CreateCameraMan(userId: "man010", name: "Johnnie Zoom") {
+          userId
+        }
+        a: AddCameraManCameras(
+          from: { userId: "man010" }
+          to: { id: "cam010" }
+        ) {
+          from {
+            userId
+          }
+        }
+        b: AddCameraManCameras(
+          from: { userId: "man010" }
+          to: { id: "cam011" }
+        ) {
+          from {
+            userId
+          }
+        }
+      }
+    `
+  });
+
+  let expected = {
+    data: {
+      CameraMan: [
+        {
+          userId: 'man010',
+          heaviestCamera: [
+            {
+              id: 'cam011',
+              __typename: 'NewCamera'
+            }
+          ],
+          __typename: 'CameraMan'
+        }
+      ]
+    }
+  };
+
+  await client
+    .query({
+      query: gql`
+        query {
+          CameraMan(userId: "man010") {
+            userId
+            heaviestCamera {
+              id
+            }
+          }
+        }
+      `
+    })
+    .then(data => {
+      t.deepEqual(data.data, expected.data);
+    })
+    .catch(error => {
+      t.fail(error.message);
+    })
+    .finally(async () => {
+      await client.mutate({
+        mutation: gql`
+          mutation {
+            DeleteOldCamera(id: "cam010") {
+              id
+            }
+            DeleteNewCamera(id: "cam011") {
+              id
+            }
+            DeleteCameraMan(userId: "man010") {
+              userId
+            }
+          }
+        `
+      });
+    });
+});
 /*
  * Temporal type tests
  */
