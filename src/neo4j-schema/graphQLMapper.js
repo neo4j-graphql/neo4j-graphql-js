@@ -1,6 +1,9 @@
 import schema from './entities';
 import neo4jTypes from './types';
 import _ from 'lodash';
+import Debug from 'debug';
+
+const debug = Debug('neo4j-graphql-js');
 
 const relationDirective = (relType, direction) =>
   `@relation(name: "${relType}", direction: "${direction}")`;
@@ -22,9 +25,7 @@ const mapOutboundRels = (tree, node, config) => {
         // (:Customer)-[:BUYS]->(:Service)
         // In this case, without type unions the destination type for :BUYS is ambiguous.
         console.warn(
-          `RelID ${
-            rel.id
-          } for label set ${labels} has > 1 target type (${targetLabels}); skipping`
+          `RelID ${rel.id} for label set ${labels} has > 1 target type (${targetLabels}); skipping`
         );
         return null;
       }
@@ -76,9 +77,7 @@ const mapInboundRels = (tree, node, config) => {
 
       if (originLabels.length > 1) {
         console.warn(
-          `RelID ${
-            rel.id
-          } for label set ${labels} has > 1 origin type (${originLabels}); skipping`
+          `RelID ${rel.id} for label set ${labels} has > 1 origin type (${originLabels}); skipping`
         );
         return null;
       }
@@ -209,7 +208,8 @@ const mapRel = (tree, rel, config) => {
   if (rel.isUnivalent()) {
     if (!rel.hasProperties() && !config.alwaysIncludeRelationships) {
       const rt = rel.getRelationshipType();
-      console.info(
+      debug(
+        '%s',
         `Relationship :${rt} has no properties and does not need to be generated`
       );
       return '';

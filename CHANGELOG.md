@@ -1,5 +1,18 @@
 # Changelog
 
+## 2.10.2
+
+- [Fix for custom cypher fields of interface type](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/356)
+- [Add support for Point type to inferSchema](https://github.com/neo4j-graphql/neo4j-graphql-js/commit/e8a86b037c362e97ccc75b05f5ced2e8666cadfb)
+
+## 2.10.1
+
+- [Use debug environment variable for inferSchema console info level](https://github.com/neo4j-graphql/neo4j-graphql-js/commit/5d72f5a4325cad2d3d5fb4f6a8ec7b66e843d6ba)
+
+## 2.10.0
+
+- [MERGE operation support](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/355)
+
 ## 2.9.3
 
 - [Stringify Cypher parameters object in debug output](https://github.com/neo4j-graphql/neo4j-graphql-js/commit/b06f9b1b50fc20c9cb66ab536f97c7a5b31dd13c)

@@ -28,6 +28,7 @@ const chooseGraphQLType = property => {
       LocalTime: 'LocalTime',
       LocalDateTime: 'LocalDateTime',
       Time: 'Time',
+      Point: 'Point',
 
       // Array types
       LongArray: '[Int]',
@@ -40,7 +41,8 @@ const chooseGraphQLType = property => {
       DateTimeArray: '[DateTime]',
       TimeArray: '[Time]',
       LocalTimeArray: '[LocalTime]',
-      LocalDateTimeArray: '[LocalDateTime]'
+      LocalDateTimeArray: '[LocalDateTime]',
+      PointArray: '[Point]'
     };
 
     return mapping[t] || 'String';
