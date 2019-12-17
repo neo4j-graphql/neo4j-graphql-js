@@ -24,6 +24,7 @@ type Movie {
   locations: [Point]
   scaleRating(scale: Int = 3): Float @cypher(statement: "WITH $this AS this RETURN $scale * this.imdbRating")
   scaleRatingFloat(scale: Float = 1.5): Float @cypher(statement: "WITH $this AS this RETURN $scale * this.imdbRating")
+  _id: ID
 }
 
 type Genre {

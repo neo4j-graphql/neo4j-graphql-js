@@ -213,11 +213,19 @@ export const buildNeo4jSystemIDField = ({
     } else {
       propertyOutputFields.push(systemIDField);
     }
-    nodeInputTypeMap[OrderingArgument.ORDER_BY].values.push(
-      ...buildPropertyOrderingValues({
-        fieldName: neo4jInternalIDConfig.name
-      })
+    const orderingValues = nodeInputTypeMap[OrderingArgument.ORDER_BY].values;
+    const systemIDOrderingValue = orderingValues.find(
+      value =>
+        value.name.value === `${Neo4jSystemIDField}_asc` ||
+        value.name.value === `${Neo4jSystemIDField}_desc`
     );
+    if (!systemIDOrderingValue) {
+      nodeInputTypeMap[OrderingArgument.ORDER_BY].values.push(
+        ...buildPropertyOrderingValues({
+          fieldName: neo4jInternalIDConfig.name
+        })
+      );
+    }
   }
   return [propertyOutputFields, nodeInputTypeMap];
 };
