@@ -38,7 +38,7 @@ test('Simple skip limit', t => {
   }
 }
   `,
-    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {title:$title}) RETURN \`movie\` { .title , .year } AS \`movie\` SKIP $offset LIMIT $first`;
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {title:$title}) RETURN \`movie\` { .title , .year } AS \`movie\` SKIP toInteger($offset) LIMIT toInteger($first)`;
 
   t.plan(3);
   return Promise.all([
@@ -1748,7 +1748,7 @@ test('orderBy test - descending, top level - augmented schema', t => {
     }
   }
   `,
-    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {year:$year}) WITH \`movie\` ORDER BY movie.title DESC RETURN \`movie\` { .title ,actors: [(\`movie\`)<-[:\`ACTED_IN\`]-(\`movie_actors\`:\`Actor\`) | movie_actors { .name }][..3] } AS \`movie\` LIMIT $first`;
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {year:$year}) WITH \`movie\` ORDER BY movie.title DESC RETURN \`movie\` { .title ,actors: [(\`movie\`)<-[:\`ACTED_IN\`]-(\`movie_actors\`:\`Actor\`) | movie_actors { .name }][..3] } AS \`movie\` LIMIT toInteger($first)`;
 
   t.plan(1);
 

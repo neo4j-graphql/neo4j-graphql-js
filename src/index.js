@@ -57,6 +57,7 @@ instead: \`DEBUG=neo4j-graphql-js\`.
   debug('%s', query);
   debug('%s', JSON.stringify(cypherParams, null, 2));
 
+  // TODO: Is this a 4.0 driver instance? Check bolt path for default database name and use that when creating the session
   const session = context.driver.session();
   let result;
 

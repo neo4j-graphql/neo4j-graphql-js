@@ -1,5 +1,5 @@
 import { isObjectType, parse, GraphQLInt } from 'graphql';
-import { v1 as neo4j } from 'neo4j-driver';
+import neo4j from 'neo4j-driver';
 import _ from 'lodash';
 import filter from 'lodash/filter';
 import { Neo4jTypeName } from './augment/types/types';
@@ -809,7 +809,9 @@ export const initializeMutationParams = ({
 };
 
 export const getOuterSkipLimit = (first, offset) =>
-  `${offset > 0 ? ` SKIP $offset` : ''}${first > -1 ? ' LIMIT $first' : ''}`;
+  `${offset > 0 ? ` SKIP toInteger($offset)` : ''}${
+    first > -1 ? ' LIMIT toInteger($first)' : ''
+  }`;
 
 export const getPayloadSelections = resolveInfo => {
   const filteredFieldNodes = filter(

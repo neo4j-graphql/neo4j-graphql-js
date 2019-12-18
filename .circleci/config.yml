@@ -123,6 +123,16 @@ references:
       NEO4J_VERSION: '3.5.4'
       APOC_VERSION: '3.5.0.2'
       DATASTORE_VERSION: '3_5'
+  env_neo4j40ce: &env_neo4j40ce
+      NEO4J_DIST: 'community'
+      NEO4J_VERSION: '4.0.0'
+      APOC_VERSION: '4.0.0-rc01'
+      DATASTORE_VERSION: '4_0'
+  env_neo4j40ee: &env_neo4j40ee
+      NEO4J_DIST: 'enterprise'
+      NEO4J_VERSION: '4.0.0'
+      APOC_VERSION: '4.0.0-rc01'
+      DATASTORE_VERSION: '4_0'
 
   install_neo4j_steps: &install_neo4j_steps
     - checkout
@@ -165,6 +175,16 @@ jobs:
     environment: *env_neo4j35ee
     steps: *install_neo4j_steps
 
+  install_neo4j40ce:
+    docker: *node10
+    environment: *env_neo4j40ce
+    steps: *install_neo4j_steps
+
+  install_neo4j40ee:
+    docker: *node10
+    environment: *env_neo4j40ee
+    steps: *install_neo4j_steps
+
   # Node 8
   install_for_node8:
     docker: *node8
@@ -188,6 +208,16 @@ jobs:
   neo4j35ee_node8:
     docker: *node8
     environment: *env_neo4j35ee
+    steps: *run_tests_steps
+
+  neo4j40ce_node8:
+    docker: *node8
+    environment: *env_neo4j40ce
+    steps: *run_tests_steps
+
+  neo4j40ee_node8:
+    docker: *node8
+    environment: *env_neo4j40ee
     steps: *run_tests_steps
 
   # Node 10
@@ -215,6 +245,16 @@ jobs:
     environment: *env_neo4j35ee
     steps: *run_tests_steps
 
+  neo4j40ce_node10:
+    docker: *node10
+    environment: *env_neo4j40ce
+    steps: *run_tests_steps
+
+  neo4j40ee_node10:
+    docker: *node10
+    environment: *env_neo4j40ee
+    steps: *run_tests_steps
+
 workflows:
   version: 2
   integration_test:
@@ -225,6 +265,8 @@ workflows:
       - install_neo4j34ce
       - install_neo4j35ce
       - install_neo4j35ee
+      - install_neo4j40ce
+      - install_neo4j40ee
 
       - neo4j34ee_node8:
           requires:
@@ -242,6 +284,14 @@ workflows:
           requires:
             - install_neo4j35ee
             - install_for_node8
+      - neo4j40ce_node8:
+          requires:
+            - install_neo4j40ce
+            - install_for_node8
+      - neo4j40ee_node8:
+          requires:
+            - install_neo4j40ee
+            - install_for_node8
 
       - neo4j34ee_node10:
           requires:
@@ -258,4 +308,12 @@ workflows:
       - neo4j35ee_node10:
           requires:
             - install_neo4j35ee
+            - install_for_node10
+      - neo4j40ce_node10:
+          requires:
+            - install_neo4j40ce
+            - install_for_node10
+      - neo4j40ee_node10:
+          requires:
+            - install_neo4j40ee
             - install_for_node10
