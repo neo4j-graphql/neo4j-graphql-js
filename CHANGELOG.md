@@ -1,6 +1,6 @@
 # Changelog
 
-# 2.11.0
+## 2.11.0
 
 - [Fix for \_id field on generated ordering types](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/360)
 - [Initial support for Neo4j v4.0](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/363)
