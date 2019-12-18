@@ -16,6 +16,7 @@ else
             nc -z 127.0.0.1 $BOLT_PORT
             is_up=$?
             if [ $is_up -eq 0 ]; then
+                ./neo4j/bin/neo4j-admin set-initial-password letmein
                 echo
                 echo "Successfully started, neo4j bolt available on $BOLT_PORT"
                 break

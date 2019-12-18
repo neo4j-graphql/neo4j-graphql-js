@@ -2,7 +2,7 @@ import { makeAugmentedSchema } from '../../src/index';
 import { ApolloServer } from 'apollo-server-express';
 import express from 'express';
 import bodyParser from 'body-parser';
-import { v1 as neo4j } from 'neo4j-driver';
+import neo4j from 'neo4j-driver';
 import { typeDefs, resolvers } from './movies-schema';
 
 const schema = makeAugmentedSchema({

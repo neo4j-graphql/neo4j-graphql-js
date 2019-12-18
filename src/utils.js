@@ -1,5 +1,5 @@
 import { isObjectType, parse, GraphQLInt } from 'graphql';
-import { v1 as neo4j } from 'neo4j-driver';
+import neo4j from 'neo4j-driver';
 import _ from 'lodash';
 import filter from 'lodash/filter';
 import { Neo4jTypeName } from './augment/types/types';
