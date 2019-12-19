@@ -227,8 +227,36 @@ test.cb('Test augmented schema', t => {
     }
 
     enum _MovieOrdering {
-      title_desc
+      _id_asc
+      _id_desc
+      movieId_asc
+      movieId_desc
       title_asc
+      title_desc
+      someprefix_title_with_underscores_asc
+      someprefix_title_with_underscores_desc
+      year_asc
+      year_desc
+      released_asc
+      released_desc
+      plot_asc
+      plot_desc
+      poster_asc
+      poster_desc
+      imdbRating_asc
+      imdbRating_desc
+      degree_asc
+      degree_desc
+      avgStars_asc
+      avgStars_desc
+      location_asc
+      location_desc
+      scaleRating_asc
+      scaleRating_desc
+      scaleRatingFloat_asc
+      scaleRatingFloat_desc
+      currentUserId_asc
+      currentUserId_desc
     }
 
     input _MovieFilter {

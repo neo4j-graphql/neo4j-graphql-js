@@ -14,16 +14,17 @@ type Movie {
   imdbRating: Float
   ratings: [Rated]
   genres: [Genre] @relation(name: "IN_GENRE", direction: "OUT")
-  similar(first: Int = 3, offset: Int = 0, limit: Int = 5): [Movie] @cypher(statement: "WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o LIMIT {limit}")
-  mostSimilar: Movie @cypher(statement: "WITH {this} AS this RETURN this")
-  degree: Int @cypher(statement: "WITH {this} AS this RETURN SIZE((this)--())")
+  similar(first: Int = 3, offset: Int = 0, limit: Int = 5): [Movie] @cypher(statement: "MATCH (this)--(:Genre)--(o:Movie) RETURN o LIMIT $limit")
+  mostSimilar: Movie @cypher(statement: "RETURN this")
+  degree: Int @cypher(statement: "RETURN SIZE((this)--())")
   actors(first: Int = 3, offset: Int = 0): [Actor] @relation(name: "ACTED_IN", direction:"IN")
   avgStars: Float
   filmedIn: State @relation(name: "FILMED_IN", direction: "OUT")
   location: Point
   locations: [Point]
-  scaleRating(scale: Int = 3): Float @cypher(statement: "WITH $this AS this RETURN $scale * this.imdbRating")
-  scaleRatingFloat(scale: Float = 1.5): Float @cypher(statement: "WITH $this AS this RETURN $scale * this.imdbRating")
+  scaleRating(scale: Int = 3): Float @cypher(statement: "RETURN $scale * this.imdbRating")
+  scaleRatingFloat(scale: Float = 1.5): Float @cypher(statement: "RETURN $scale * this.imdbRating")
+  _id: ID
 }
 
 type Genre {

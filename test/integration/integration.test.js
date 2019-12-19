@@ -226,8 +226,8 @@ test.serial('Create node mutation (not-isolated)', async t => {
         imdbRating: 1,
         location: {
           __typename: '_Neo4jPoint',
-          longitude: 46.870035,
-          latitude: -113.990976,
+          longitude: -113.990976,
+          latitude: 46.870035,
           height: 12.3
         }
       }
@@ -246,8 +246,8 @@ test.serial('Create node mutation (not-isolated)', async t => {
             poster: "www.movieposter.com/img.png"
             imdbRating: 1.0
             location: {
-              longitude: 46.870035
-              latitude: -113.990976
+              latitude: 46.870035
+              longitude: -113.990976
               height: 12.3
             }
           ) {
@@ -287,8 +287,8 @@ test.serial('Merge node mutation (not-isolated)', async t => {
         imdbRating: 1,
         location: {
           __typename: '_Neo4jPoint',
-          longitude: 46.870035,
-          latitude: -113.990976,
+          latitude: 46.870035,
+          longitude: -113.990976,
           height: 12.3
         }
       }
@@ -307,8 +307,8 @@ test.serial('Merge node mutation (not-isolated)', async t => {
             poster: "www.movieposter.com/img.png"
             imdbRating: 1.0
             location: {
-              longitude: 46.870035
-              latitude: -113.990976
+              latitude: 46.870035
+              longitude: -113.990976
               height: 12.3
             }
           ) {
@@ -318,8 +318,8 @@ test.serial('Merge node mutation (not-isolated)', async t => {
             poster
             imdbRating
             location {
-              longitude
               latitude
+              longitude
               height
             }
           }

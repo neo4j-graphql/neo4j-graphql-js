@@ -179,11 +179,6 @@ export const testSchema = /* GraphQL */ `
     genre: BookGenre
   }
 
-  enum _MovieOrdering {
-    title_desc
-    title_asc
-  }
-
   enum _GenreOrdering {
     name_desc
     name_asc
@@ -202,7 +197,6 @@ export const testSchema = /* GraphQL */ `
       location: Point
       first: Int
       offset: Int
-      orderBy: _MovieOrdering
     ): [Movie]
     MoviesByYear(year: Int): [Movie]
     MoviesByYears(year: [Int]): [Movie]
