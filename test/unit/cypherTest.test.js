@@ -5118,3 +5118,125 @@ test('Handle @cypher field with parameterized value for field of input type argu
     augmentedSchemaCypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery)
   ]);
 });
+
+test('Create node with @created/@updated directives', t => {
+  const graphQLQuery = `mutation someMutation {
+    CreateSuperHero(name: "Flash") {
+      name
+      created { formatted },
+      updated { formatted }
+    }
+  }`;
+  const expectedCypherQuery = `
+    CREATE (\`superHero\`:\`SuperHero\` {id: apoc.create.uuid(),name:$params.name,created: timestamp(),updated: timestamp()})
+    RETURN \`superHero\` { .name ,created: { formatted: toString(\`superHero\`.created) },updated: { formatted: toString(\`superHero\`.updated) }} AS \`superHero\`
+  `;
+  t.plan(1);
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {},
+    expectedCypherQuery
+  );
+});
+
+test('Merge node with @created/@updated directives', t => {
+  const graphQLQuery = `mutation someMutation {
+    MergeSuperHero(id: "abc123", name: "Flash") {
+      name
+      created { formatted },
+      updated { formatted }
+    }
+  }`;
+  const expectedCypherQuery =
+    'MERGE (`superHero`:`SuperHero`{id: $params.id})\n  ON CREATE SET `superHero` += {created: timestamp(),updated: timestamp()} ON MATCH SET `superHero`.updated = timestamp() SET `superHero` += {name:$params.name} RETURN `superHero` { .name ,created: { formatted: toString(`superHero`.created) },updated: { formatted: toString(`superHero`.updated) }} AS `superHero`';
+  t.plan(1);
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {},
+    expectedCypherQuery
+  );
+});
+
+test('Update node with @created/@updated directives', t => {
+  const graphQLQuery = `mutation someMutation {
+    UpdateSuperHero(id: "abc123", name: "Flash") {
+      name
+      created { formatted },
+      updated { formatted }
+    }
+  }`;
+  const expectedCypherQuery =
+    'MATCH (`superHero`:`SuperHero`{id: $params.id})\n  SET `superHero` += {name:$params.name,updated: timestamp()} RETURN `superHero` { .name ,created: { formatted: toString(`superHero`.created) },updated: { formatted: toString(`superHero`.updated) }} AS `superHero`';
+  t.plan(1);
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {},
+    expectedCypherQuery
+  );
+});
+
+test('Create relationship with @created/@updated directives', t => {
+  const graphQLQuery = `mutation someMutation {
+    AddPowerEndowment(from: {id: "flash"}, to: {id: "lightning"}, data: {strength: 25}) {
+      from { id }
+      to { id }
+      strength
+      since { formatted },
+      modified { formatted }
+    }
+  }`;
+  const expectedCypherQuery =
+    '\n      MATCH (`power_from`:`Power` {id: $from.id})\n      MATCH (`superHero_to`:`SuperHero` {id: $to.id})\n      CREATE (`power_from`)-[`endowed_to_relation`:`ENDOWED_TO` {strength:$data.strength,since: timestamp(),modified: timestamp()}]->(`superHero_to`)\n      RETURN `endowed_to_relation` { from: `power_from` { .id } ,to: `superHero_to` { .id } , .strength ,since: { formatted: toString(`endowed_to_relation`.since) },modified: { formatted: toString(`endowed_to_relation`.modified) } } AS `_AddPowerEndowmentPayload`;\n    ';
+  t.plan(1);
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {},
+    expectedCypherQuery
+  );
+});
+
+test('Merge relationship with @created/@updated directives', t => {
+  const graphQLQuery = `mutation someMutation {
+    MergePowerEndowment(from: {id: "flash"}, to: {id: "lightning"}, data: {strength: 25}) {
+      from { id }
+      to { id }
+      strength
+      since { formatted },
+      modified { formatted }
+    }
+  }`;
+  const expectedCypherQuery =
+    '\n      MATCH (`power_from`:`Power` {id: $from.id})\n      MATCH (`superHero_to`:`SuperHero` {id: $to.id})\n      MERGE (`power_from`)-[`endowed_to_relation`:`ENDOWED_TO`]->(`superHero_to`)\nON CREATE SET `endowed_to_relation` += {since: timestamp(),modified: timestamp()} \nON MATCH SET `endowed_to_relation`.modified = timestamp() \n      SET `endowed_to_relation` += {strength:$data.strength} \n      RETURN `endowed_to_relation` { from: `power_from` { .id } ,to: `superHero_to` { .id } , .strength ,since: { formatted: toString(`endowed_to_relation`.since) },modified: { formatted: toString(`endowed_to_relation`.modified) } } AS `_MergePowerEndowmentPayload`;\n    ';
+  t.plan(1);
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {},
+    expectedCypherQuery
+  );
+});
+
+test('Update relationship with @created/@updated directives', t => {
+  const graphQLQuery = `mutation someMutation {
+    UpdatePowerEndowment(from: {id: "flash"}, to: {id: "lightning"}, data: {strength: 25}) {
+      from { id }
+      to { id }
+      strength
+      since { formatted },
+      modified { formatted }
+    }
+  }`;
+  const expectedCypherQuery =
+    '\n      MATCH (`power_from`:`Power` {id: $from.id})\n      MATCH (`superHero_to`:`SuperHero` {id: $to.id})\n      MATCH (`power_from`)-[`endowed_to_relation`:`ENDOWED_TO`]->(`superHero_to`)\n      SET `endowed_to_relation` += {strength:$data.strength,modified: timestamp()} \n      RETURN `endowed_to_relation` { from: `power_from` { .id } ,to: `superHero_to` { .id } , .strength ,since: { formatted: toString(`endowed_to_relation`.since) },modified: { formatted: toString(`endowed_to_relation`.modified) } } AS `_UpdatePowerEndowmentPayload`;\n    ';
+  t.plan(1);
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {},
+    expectedCypherQuery
+  );
+});

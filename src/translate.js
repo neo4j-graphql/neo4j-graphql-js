@@ -44,7 +44,8 @@ import {
   typeIdentifiers,
   decideNeo4jTypeConstructor,
   getAdditionalLabels,
-  getDerivedTypeNames
+  getDerivedTypeNames,
+  getCreatedUpdatedDirectiveFields
 } from './utils';
 import {
   getNamedType,
@@ -1152,6 +1153,15 @@ const nodeCreate = ({
     schemaType,
     resolveInfo
   });
+  const { createdField, updatedField } = getCreatedUpdatedDirectiveFields(
+    resolveInfo
+  );
+  if (createdField) {
+    paramStatements.push(`${createdField}: timestamp()`);
+  }
+  if (updatedField) {
+    paramStatements.push(`${updatedField}: timestamp()`);
+  }
   params = { ...preparedParams, ...subParams };
   const query = `
     CREATE (${safeVariableName}:${safeLabelName} {${paramStatements.join(',')}})
@@ -1277,6 +1287,16 @@ const relationshipCreate = ({
     paramKey: 'data',
     resolveInfo
   });
+  const { createdField, updatedField } = getCreatedUpdatedDirectiveFields(
+    resolveInfo
+  );
+  if (createdField) {
+    paramStatements.push(`${createdField}: timestamp()`);
+  }
+  if (updatedField) {
+    paramStatements.push(`${updatedField}: timestamp()`);
+  }
+
   const schemaTypeName = safeVar(schemaType);
   const fromVariable = safeVar(fromVar);
   const fromAdditionalLabels = getAdditionalLabels(
@@ -1575,6 +1595,32 @@ const relationshipMergeOrUpdate = ({
     } else if (isUpdateMutation(resolveInfo)) {
       cypherOperation = 'MATCH';
     }
+
+    const { createdField, updatedField } = getCreatedUpdatedDirectiveFields(
+      resolveInfo
+    );
+    let timestampSet = '';
+    if (cypherOperation === 'MERGE') {
+      const onCreateSetParams = [createdField, updatedField]
+        .map(field => {
+          if (field) {
+            return `${field}: timestamp()`;
+          }
+          return null;
+        })
+        .filter(param => !!param);
+      if (onCreateSetParams.length > 0) {
+        timestampSet += `\nON CREATE SET ${relationshipVariable} += {${onCreateSetParams.join(
+          ','
+        )}} `;
+      }
+      if (updatedField) {
+        timestampSet += `\nON MATCH SET ${relationshipVariable}.${updatedField} = timestamp() `;
+      }
+    } else if (cypherOperation === 'MATCH' && updatedField) {
+      paramStatements.push(`${updatedField}: timestamp()`);
+    }
+
     params = { ...preparedParams, ...subParams };
     query = `
       MATCH (${fromVariable}:${fromLabel}${
@@ -1590,7 +1636,7 @@ const relationshipMergeOrUpdate = ({
         ? `) WHERE ${toNodeNeo4jTypeClauses.join(' AND ')} `
         : ` {${toParam}: $to.${toParam}})`
     }
-      ${cypherOperation} (${fromVariable})-[${relationshipVariable}:${relationshipLabel}]->(${toVariable})${
+      ${cypherOperation} (${fromVariable})-[${relationshipVariable}:${relationshipLabel}]->(${toVariable})${timestampSet}${
       paramStatements.length > 0
         ? `
       SET ${relationshipVariable} += {${paramStatements.join(',')}} `
@@ -1650,6 +1696,31 @@ const nodeMergeOrUpdate = ({
       : `{${primaryKeyArgName}: $params.${primaryKeyArgName}})`
   }
   `;
+
+  const { createdField, updatedField } = getCreatedUpdatedDirectiveFields(
+    resolveInfo
+  );
+  if (cypherOperation === 'MERGE') {
+    const onCreateSetParams = [createdField, updatedField]
+      .map(field => {
+        if (field) {
+          return `${field}: timestamp()`;
+        }
+        return null;
+      })
+      .filter(param => !!param);
+    if (onCreateSetParams.length > 0) {
+      query += `ON CREATE SET ${safeVariableName} += {${onCreateSetParams.join(
+        ','
+      )}} `;
+    }
+    if (updatedField) {
+      query += `ON MATCH SET ${safeVariableName}.${updatedField} = timestamp() `;
+    }
+  } else if (cypherOperation === 'MATCH' && updatedField) {
+    paramUpdateStatements.push(`${updatedField}: timestamp()`);
+  }
+
   if (paramUpdateStatements.length > 0) {
     query += `SET ${safeVariableName} += {${paramUpdateStatements.join(',')}} `;
   }

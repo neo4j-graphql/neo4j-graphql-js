@@ -148,6 +148,27 @@ export const testSchema = /* GraphQL */ `
     to: Movie
   }
 
+  type SuperHero {
+    id: ID!
+    name: String!
+    created: DateTime @created
+    updated: DateTime @updated
+  }
+
+  type Power {
+    id: ID!
+    title: String!
+    endowment: [Endowment]
+  }
+
+  type Endowment @relation(name: "ENDOWED_TO") {
+    from: Power!
+    to: SuperHero!
+    strength: Int!
+    since: DateTime @created
+    modified: DateTime @updated
+  }
+
   enum BookGenre {
     Mystery
     Science

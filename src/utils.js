@@ -629,6 +629,28 @@ export const getMutationCypherDirective = resolveInfo => {
     });
 };
 
+export const getCreatedUpdatedDirectiveFields = resolveInfo => {
+  const fields = resolveInfo.schema.getType(resolveInfo.returnType).getFields();
+  let createdField, updatedField;
+  Object.keys(fields).forEach(fieldKey => {
+    const field = fields[fieldKey];
+    const type = _getNamedType(field.astNode.type).name.value;
+    if (type === '_Neo4jDateTime') {
+      const name = field.astNode.name.value;
+      field.astNode.directives.forEach(directive => {
+        switch (directive.name.value) {
+          case 'created':
+            createdField = createdField || name;
+            break;
+          case 'updated':
+            updatedField = updatedField || name;
+        }
+      });
+    }
+  });
+  return { createdField, updatedField };
+};
+
 function argumentValue(selection, name, variableValues) {
   let arg = selection.arguments.find(a => a.name.value === name);
   if (!arg) {

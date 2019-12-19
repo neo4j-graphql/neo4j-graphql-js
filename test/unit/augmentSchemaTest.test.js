@@ -158,6 +158,26 @@ test.cb('Test augmented schema', t => {
         orderBy: [_ActorOrdering]
         filter: _ActorFilter
       ): [Actor] @hasScope(scopes: ["Actor: Read"])
+      SuperHero(
+        id: ID
+        name: String
+        created: _Neo4jDateTimeInput
+        updated: _Neo4jDateTimeInput
+        _id: String
+        first: Int
+        offset: Int
+        orderBy: [_SuperHeroOrdering]
+        filter: _SuperHeroFilter
+      ): [SuperHero] @hasScope(scopes: ["SuperHero: Read"])
+      Power(
+        id: ID
+        title: String
+        _id: String
+        first: Int
+        offset: Int
+        orderBy: [_PowerOrdering]
+        filter: _PowerFilter
+      ): [Power] @hasScope(scopes: ["Power: Read"])
       Book(
         genre: BookGenre
         _id: String
@@ -1434,6 +1454,76 @@ test.cb('Test augmented schema', t => {
       DeleteUser(userId: ID!): User @hasScope(scopes: ["User: Delete"])
       MergeUser(userId: ID!, name: String): User
         @hasScope(scopes: ["User: Merge"])
+      CreateSuperHero(
+        id: ID
+        name: String!
+        created: _Neo4jDateTimeInput
+        updated: _Neo4jDateTimeInput
+      ): SuperHero @hasScope(scopes: ["SuperHero: Create"])
+      UpdateSuperHero(
+        id: ID!
+        name: String
+        created: _Neo4jDateTimeInput
+        updated: _Neo4jDateTimeInput
+      ): SuperHero @hasScope(scopes: ["SuperHero: Update"])
+      DeleteSuperHero(id: ID!): SuperHero
+        @hasScope(scopes: ["SuperHero: Delete"])
+      MergeSuperHero(
+        id: ID!
+        name: String
+        created: _Neo4jDateTimeInput
+        updated: _Neo4jDateTimeInput
+      ): SuperHero @hasScope(scopes: ["SuperHero: Merge"])
+      AddPowerEndowment(
+        from: _PowerInput!
+        to: _SuperHeroInput!
+        data: _EndowmentInput!
+      ): _AddPowerEndowmentPayload
+        @MutationMeta(
+          relationship: "ENDOWED_TO"
+          from: "Power"
+          to: "SuperHero"
+        )
+        @hasScope(scopes: ["Power: Create", "SuperHero: Create"])
+      RemovePowerEndowment(
+        from: _PowerInput!
+        to: _SuperHeroInput!
+      ): _RemovePowerEndowmentPayload
+        @MutationMeta(
+          relationship: "ENDOWED_TO"
+          from: "Power"
+          to: "SuperHero"
+        )
+        @hasScope(scopes: ["Power: Delete", "SuperHero: Delete"])
+      UpdatePowerEndowment(
+        from: _PowerInput!
+        to: _SuperHeroInput!
+        data: _EndowmentInput!
+      ): _UpdatePowerEndowmentPayload
+        @MutationMeta(
+          relationship: "ENDOWED_TO"
+          from: "Power"
+          to: "SuperHero"
+        )
+        @hasScope(scopes: ["Power: Update", "SuperHero: Update"])
+      MergePowerEndowment(
+        from: _PowerInput!
+        to: _SuperHeroInput!
+        data: _EndowmentInput!
+      ): _MergePowerEndowmentPayload
+        @MutationMeta(
+          relationship: "ENDOWED_TO"
+          from: "Power"
+          to: "SuperHero"
+        )
+        @hasScope(scopes: ["Power: Merge", "SuperHero: Merge"])
+      CreatePower(id: ID, title: String!): Power
+        @hasScope(scopes: ["Power: Create"])
+      UpdatePower(id: ID!, title: String): Power
+        @hasScope(scopes: ["Power: Update"])
+      DeletePower(id: ID!): Power @hasScope(scopes: ["Power: Delete"])
+      MergePower(id: ID!, title: String): Power
+        @hasScope(scopes: ["Power: Merge"])
       CreateBook(genre: BookGenre): Book @hasScope(scopes: ["Book: Create"])
       DeleteBook(genre: BookGenre!): Book @hasScope(scopes: ["Book: Delete"])
       CreatecurrentUserId(userId: String): currentUserId
