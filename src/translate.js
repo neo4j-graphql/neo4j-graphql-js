@@ -56,7 +56,7 @@ import {
 } from 'graphql';
 import { buildCypherSelection } from './selections';
 import _ from 'lodash';
-import { v1 as neo4j } from 'neo4j-driver';
+import neo4j from 'neo4j-driver';
 
 const derivedTypesParamName = interfaceName => `${interfaceName}_derivedTypes`;
 
