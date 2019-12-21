@@ -691,8 +691,14 @@ const firstField = fields => {
 export const getPrimaryKey = astNode => {
   let fields = astNode.fields;
   let pk = undefined;
-  // remove all ignored fields
-  fields = fields.filter(field => !getFieldDirective(field, 'neo4j_ignore'));
+  // prevent ignored, relation, and computed fields
+  // from being used as primary keys
+  fields = fields.filter(
+    field =>
+      !getFieldDirective(field, 'neo4j_ignore') &&
+      !getFieldDirective(field, 'relation') &&
+      !getFieldDirective(field, 'cypher')
+  );
   if (!fields.length) return pk;
   pk = firstNonNullAndIdField(fields);
   if (!pk) {
