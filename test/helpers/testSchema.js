@@ -56,6 +56,10 @@ export const testSchema = /* GraphQL */ `
       @cypher(
         statement: "RETURN $cypherParams.currentUserId AS cypherParamsUserId"
       )
+    interfaceNoScalars(
+      orderBy: _InterfaceNoScalarsOrdering
+    ): [InterfaceNoScalars]
+      @relation(name: "INTERFACE_NO_SCALARS", direction: OUT)
   }
 
   type Genre {
@@ -212,6 +216,9 @@ export const testSchema = /* GraphQL */ `
     customWithArguments(strArg: String, strInputArg: strInput): String
       @cypher(statement: "RETURN $strInputArg.strArg")
     CasedType: [CasedType]
+    InterfaceNoScalars(
+      orderBy: _InterfaceNoScalarsOrdering
+    ): [InterfaceNoScalars]
   }
 
   type Mutation {
@@ -288,6 +295,14 @@ export const testSchema = /* GraphQL */ `
   type CasedType {
     name: String
     state: State @relation(name: "FILMED_IN", direction: "OUT")
+  }
+
+  interface InterfaceNoScalars {
+    movies: [Movie] @relation(name: "MOVIES", direction: OUT)
+  }
+
+  enum _InterfaceNoScalarsOrdering {
+    movies_asc
   }
 
   type SubscriptionC {
