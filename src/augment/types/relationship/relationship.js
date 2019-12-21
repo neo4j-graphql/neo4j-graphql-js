@@ -179,8 +179,7 @@ const augmentRelationshipTypeFields = ({
           fieldDirectives,
           outputType,
           outputKind,
-          outputTypeWrappers,
-          config
+          outputTypeWrappers
         });
         propertyInputValues.push({
           name: fieldName,
