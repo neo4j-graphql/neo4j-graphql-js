@@ -124,16 +124,22 @@ export const augmentNodeTypeFields = ({
   const fields = definition.fields;
   let isIgnoredType = true;
   const propertyInputValues = [];
-  let nodeInputTypeMap = {
-    [FilteringArgument.FILTER]: {
+  let nodeInputTypeMap = {};
+  if (
+    !isQueryTypeDefinition({
+      definition,
+      operationTypeMap
+    })
+  ) {
+    nodeInputTypeMap[FilteringArgument.FILTER] = {
       name: `_${typeName}Filter`,
       fields: []
-    },
-    [OrderingArgument.ORDER_BY]: {
+    };
+    nodeInputTypeMap[OrderingArgument.ORDER_BY] = {
       name: `_${typeName}Ordering`,
       values: []
-    }
-  };
+    };
+  }
   let propertyOutputFields = fields.reduce((outputFields, field) => {
     let fieldType = field.type;
     let fieldArguments = field.arguments;
@@ -256,6 +262,7 @@ const augmentNodeTypeField = ({
     fieldDirectives,
     outputType,
     outputTypeWrappers,
+    typeDefinitionMap,
     config
   });
   if (

@@ -682,7 +682,7 @@ test.cb('Merge node mutation', t => {
       name
     }
   }`,
-    expectedCypherQuery = `MERGE (\`user\`:\`User\`{userId: $params.userId})
+    expectedCypherQuery = `MERGE (\`user\`:\`User\`:\`Person\`{userId: $params.userId})
   SET \`user\` += {name:$params.name} RETURN \`user\` { .userId , .name } AS \`user\``;
 
   t.plan(2);
