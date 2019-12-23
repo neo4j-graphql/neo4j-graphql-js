@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.11.1
+
+- [Fix #361 Merge node should add interface label](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/365)
+- [Fix #349 Interfaces with no scalar fields generate invalid schemas](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/365)
+
 ## 2.11.0
 
 - [Fix for \_id field on generated ordering types](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/360)
