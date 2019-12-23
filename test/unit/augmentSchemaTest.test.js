@@ -132,6 +132,12 @@ test.cb('Test augmented schema', t => {
         orderBy: [_CasedTypeOrdering]
         filter: _CasedTypeFilter
       ): [CasedType]
+      InterfaceNoScalars(
+        orderBy: _InterfaceNoScalarsOrdering
+        first: Int
+        offset: Int
+        filter: _InterfaceNoScalarsFilter
+      ): [InterfaceNoScalars]
       Genre(
         _id: String
         name: String
@@ -359,6 +365,14 @@ test.cb('Test augmented schema', t => {
       ratings_none: _MovieRatedFilter
       ratings_single: _MovieRatedFilter
       ratings_every: _MovieRatedFilter
+      interfaceNoScalars: _InterfaceNoScalarsFilter
+      interfaceNoScalars_not: _InterfaceNoScalarsFilter
+      interfaceNoScalars_in: [_InterfaceNoScalarsFilter!]
+      interfaceNoScalars_not_in: [_InterfaceNoScalarsFilter!]
+      interfaceNoScalars_some: _InterfaceNoScalarsFilter
+      interfaceNoScalars_none: _InterfaceNoScalarsFilter
+      interfaceNoScalars_single: _InterfaceNoScalarsFilter
+      interfaceNoScalars_every: _InterfaceNoScalarsFilter
     }
 
     input _GenreFilter {
@@ -780,6 +794,13 @@ test.cb('Test augmented schema', t => {
         @cypher(
           statement: "RETURN $cypherParams.currentUserId AS cypherParamsUserId"
         )
+      interfaceNoScalars(
+        orderBy: _InterfaceNoScalarsOrdering
+        first: Int
+        offset: Int
+        filter: _InterfaceNoScalarsFilter
+      ): [InterfaceNoScalars]
+        @relation(name: "INTERFACE_NO_SCALARS", direction: OUT)
     }
 
     type _Neo4jDateTime {

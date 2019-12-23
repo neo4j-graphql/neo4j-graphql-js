@@ -229,3 +229,22 @@ export const buildNeo4jSystemIDField = ({
   }
   return [propertyOutputFields, nodeInputTypeMap];
 };
+
+export const propertyFieldExists = ({
+  definition = {},
+  typeDefinitionMap = {}
+}) => {
+  const fields = definition.fields || [];
+  return fields.find(field => {
+    const fieldName = field.name.value;
+    const fieldType = field.type;
+    const unwrappedType = unwrapNamedType({ type: fieldType });
+    const outputType = unwrappedType.name;
+    const outputDefinition = typeDefinitionMap[outputType];
+    const outputKind = outputDefinition ? outputDefinition.kind : '';
+    return isPropertyTypeField({
+      kind: outputKind,
+      type: outputType
+    });
+  });
+};

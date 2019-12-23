@@ -56,6 +56,7 @@ export const augmentNodeQueryAPI = ({
         queryType,
         propertyInputValues,
         operationTypeMap,
+        typeDefinitionMap,
         config
       });
     }
@@ -83,6 +84,7 @@ export const augmentNodeTypeFieldArguments = ({
   fieldDirectives,
   outputType,
   outputTypeWrappers,
+  typeDefinitionMap,
   config
 }) => {
   const queryTypeNameLower = OperationType.QUERY.toLowerCase();
@@ -92,7 +94,8 @@ export const augmentNodeTypeFieldArguments = ({
       fieldArguments,
       fieldDirectives,
       outputType,
-      outputTypeWrappers
+      outputTypeWrappers,
+      typeDefinitionMap
     });
   }
   return fieldArguments;
@@ -136,6 +139,7 @@ const buildNodeQueryField = ({
   queryType,
   propertyInputValues,
   operationTypeMap,
+  typeDefinitionMap,
   config
 }) => {
   const queryFields = queryType.fields;
@@ -156,7 +160,8 @@ const buildNodeQueryField = ({
         }),
         args: buildNodeQueryArguments({
           typeName,
-          propertyInputValues
+          propertyInputValues,
+          typeDefinitionMap
         }),
         directives: buildNodeQueryDirectives({
           typeName,
@@ -173,7 +178,11 @@ const buildNodeQueryField = ({
  * Builds the AST for input value definitions used for the
  * arguments of the Query type field for a given node type
  */
-const buildNodeQueryArguments = ({ typeName, propertyInputValues }) => {
+const buildNodeQueryArguments = ({
+  typeName,
+  propertyInputValues,
+  typeDefinitionMap
+}) => {
   // Do not persist type wrappers
   propertyInputValues = propertyInputValues.map(arg =>
     buildInputValue({
@@ -199,7 +208,8 @@ const buildNodeQueryArguments = ({ typeName, propertyInputValues }) => {
     outputType: typeName,
     outputTypeWrappers: {
       [TypeWrappers.LIST_TYPE]: true
-    }
+    },
+    typeDefinitionMap
   });
   return propertyInputValues;
 };

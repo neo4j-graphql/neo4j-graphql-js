@@ -1039,7 +1039,7 @@ export const translateMutation = ({
         selections,
         schemaType,
         params,
-        additionalLabels: additionalNodeLabels
+        additionalLabels: additionalNodeLabels.concat(interfaceLabels)
       });
     }
   } else if (isRemoveMutation(resolveInfo)) {
