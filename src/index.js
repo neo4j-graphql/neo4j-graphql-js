@@ -20,6 +20,8 @@ import { augmentTypes, transformNeo4jTypes } from './augment/types/types';
 import { buildDocument } from './augment/ast';
 import { augmentDirectiveDefinitions } from './augment/directives';
 
+const neo4jGraphQLVersion = require('../package.json').version;
+
 const debug = Debug('neo4j-graphql-js');
 
 export async function neo4jgraphql(
@@ -32,6 +34,12 @@ export async function neo4jgraphql(
   // throw error if context.req.error exists
   if (checkRequestError(context)) {
     throw new Error(checkRequestError(context));
+  }
+
+  if (!context.driver) {
+    throw new Error(
+      "No Neo4j JavaScript driver instance provided. Please ensure a Neo4j JavaScript driver instance is injected into the context object at the key 'driver'."
+    );
   }
 
   let query;
@@ -56,6 +64,8 @@ instead: \`DEBUG=neo4j-graphql-js\`.
 
   debug('%s', query);
   debug('%s', JSON.stringify(cypherParams, null, 2));
+
+  context.driver._userAgent = `neo4j-graphql-js/${neo4jGraphQLVersion}`;
 
   // TODO: Is this a 4.0 driver instance? Check bolt path for default database name and use that when creating the session
   const session = context.driver.session();

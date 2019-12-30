@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.11.1
+
+- [Fix #361 Merge node should add interface label](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/365)
+- [Fix #349 Interfaces with no scalar fields generate invalid schemas](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/365)
+
+## 2.11.0
+
+- [Fix for \_id field on generated ordering types](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/360)
+- [Initial support for Neo4j v4.0](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/363)
+
+_Note: Multi-database support is not exposed via neo4j-graphql.js in this release, only the default database can be used with neo4j-graphql.js. Multi-database support will be addressed in a future release._
+
 ## 2.10.2
 
 - [Fix for custom cypher fields of interface type](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/356)
