@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.11.2
+
+- [Fix #295 Querying interface @relation fields with non-unique relationship names](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/366)
+- [Update driver user agent](https://github.com/neo4j-graphql/neo4j-graphql-js/commit/5a2e52ecb604483a7aa10383340fd95cdd581f26)
+
 ## 2.11.1
 
 - [Fix #361 Merge node should add interface label](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/365)
