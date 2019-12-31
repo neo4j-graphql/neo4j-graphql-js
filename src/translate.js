@@ -226,17 +226,13 @@ export const relationFieldOnNodeType = ({
         relDirection === 'in' || relDirection === 'IN' ? '<' : ''
       }-[:${safeLabel([relType])}]-${
         relDirection === 'out' || relDirection === 'OUT' ? '>' : ''
-      }(${safeVariableName}${
-        !isInlineFragment
-          ? `:${safeLabel([
-              innerSchemaType.name,
-              ...getAdditionalLabels(
-                resolveInfo.schema.getType(innerSchemaType.name),
-                cypherParams
-              )
-            ])}`
-          : ''
-      }${queryParams})${
+      }(${safeVariableName}${`:${safeLabel([
+        innerSchemaType.name,
+        ...getAdditionalLabels(
+          resolveInfo.schema.getType(innerSchemaType.name),
+          cypherParams
+        )
+      ])}`}${queryParams})${
         whereClauses.length > 0 ? ` WHERE ${whereClauses.join(' AND ')}` : ''
       } | ${nestedVariable} {${
         isInlineFragment
