@@ -724,7 +724,7 @@ test('query relationship property data', async t => {
     });
 });
 
-test('query using inine fragment', async t => {
+test('query using inline fragment', async t => {
   t.plan(1);
 
   let expected = {
