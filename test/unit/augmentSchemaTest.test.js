@@ -235,8 +235,6 @@ test.cb('Test augmented schema', t => {
       degree_desc
       avgStars_asc
       avgStars_desc
-      location_asc
-      location_desc
       scaleRating_asc
       scaleRating_desc
       scaleRatingFloat_asc
@@ -724,6 +722,19 @@ test.cb('Test augmented schema', t => {
       User: _UserFilter
     }
 
+    input _InterfaceNoScalarsFilter {
+      AND: [_InterfaceNoScalarsFilter!]
+      OR: [_InterfaceNoScalarsFilter!]
+      movies: _MovieFilter
+      movies_not: _MovieFilter
+      movies_in: [_MovieFilter!]
+      movies_not_in: [_MovieFilter!]
+      movies_some: _MovieFilter
+      movies_none: _MovieFilter
+      movies_single: _MovieFilter
+      movies_every: _MovieFilter
+    }
+
     type Movie
       @additionalLabels(
         labels: ["u_<%= $cypherParams.userId %>", "newMovieLabel"]
@@ -1015,6 +1026,19 @@ test.cb('Test augmented schema', t => {
       User: User
     }
 
+    enum _InterfaceNoScalarsOrdering {
+      movies_asc
+    }
+
+    interface InterfaceNoScalars {
+      movies(
+        first: Int
+        offset: Int
+        orderBy: [_MovieOrdering]
+        filter: _MovieFilter
+      ): [Movie] @relation(name: "MOVIES", direction: OUT)
+    }
+
     enum _StateOrdering {
       name_asc
       name_desc
@@ -1096,6 +1120,38 @@ test.cb('Test augmented schema', t => {
       state(filter: _StateFilter): State
         @relation(name: "FILMED_IN", direction: "OUT")
       _id: String
+    }
+
+    enum _PersonOrdering {
+      userId_asc
+      userId_desc
+      name_asc
+      name_desc
+    }
+
+    input _PersonFilter {
+      AND: [_PersonFilter!]
+      OR: [_PersonFilter!]
+      userId: ID
+      userId_not: ID
+      userId_in: [ID!]
+      userId_not_in: [ID!]
+      userId_contains: ID
+      userId_not_contains: ID
+      userId_starts_with: ID
+      userId_not_starts_with: ID
+      userId_ends_with: ID
+      userId_not_ends_with: ID
+      name: String
+      name_not: String
+      name_in: [String!]
+      name_not_in: [String!]
+      name_contains: String
+      name_not_contains: String
+      name_starts_with: String
+      name_not_starts_with: String
+      name_ends_with: String
+      name_not_ends_with: String
     }
 
     enum _TemporalNodeOrdering {
@@ -1202,6 +1258,56 @@ test.cb('Test augmented schema', t => {
         filter: _TemporalNodeFilter
       ): [TemporalNode] @relation(name: "TEMPORAL", direction: OUT)
       _id: String
+    }
+
+    enum _SpatialNodeOrdering {
+      id_asc
+      id_desc
+      _id_asc
+      _id_desc
+    }
+
+    type SpatialNode {
+      id: ID!
+      point: _Neo4jPoint
+      spatialNodes(
+        point: _Neo4jPointInput
+        first: Int
+        offset: Int
+        orderBy: [_SpatialNodeOrdering]
+        filter: _SpatialNodeFilter
+      ): [SpatialNode] @relation(name: "SPATIAL", direction: OUT)
+      _id: String
+    }
+
+    input _SpatialNodeFilter {
+      AND: [_SpatialNodeFilter!]
+      OR: [_SpatialNodeFilter!]
+      id: ID
+      id_not: ID
+      id_in: [ID!]
+      id_not_in: [ID!]
+      id_contains: ID
+      id_not_contains: ID
+      id_starts_with: ID
+      id_not_starts_with: ID
+      id_ends_with: ID
+      id_not_ends_with: ID
+      point: _Neo4jPointInput
+      point_not: _Neo4jPointInput
+      point_distance: _Neo4jPointDistanceFilter
+      point_distance_lt: _Neo4jPointDistanceFilter
+      point_distance_lte: _Neo4jPointDistanceFilter
+      point_distance_gt: _Neo4jPointDistanceFilter
+      point_distance_gte: _Neo4jPointDistanceFilter
+      spatialNodes: _SpatialNodeFilter
+      spatialNodes_not: _SpatialNodeFilter
+      spatialNodes_in: [_SpatialNodeFilter!]
+      spatialNodes_not_in: [_SpatialNodeFilter!]
+      spatialNodes_some: _SpatialNodeFilter
+      spatialNodes_none: _SpatialNodeFilter
+      spatialNodes_single: _SpatialNodeFilter
+      spatialNodes_every: _SpatialNodeFilter
     }
 
     type Mutation {
@@ -1662,6 +1768,12 @@ test.cb('Test augmented schema', t => {
       to: State
     }
 
+    type _MergeMovieFilmedInPayload
+      @relation(name: "FILMED_IN", from: "Movie", to: "State") {
+      from: Movie
+      to: State
+    }
+
     input _UserInput {
       userId: ID!
     }
@@ -1703,6 +1815,44 @@ test.cb('Test augmented schema', t => {
       to: Movie
     }
 
+    type _UpdateMovieRatingsPayload
+      @relation(name: "RATED", from: "User", to: "Movie") {
+      from: User
+      to: Movie
+      currentUserId: String
+        @cypher(
+          statement: "RETURN $cypherParams.currentUserId AS cypherParamsUserId"
+        )
+      rating: Int
+      ratings: [Int]
+      time: _Neo4jTime
+      date: _Neo4jDate
+      datetime: _Neo4jDateTime
+      localtime: _Neo4jLocalTime
+      localdatetime: _Neo4jLocalDateTime
+      datetimes: [_Neo4jDateTime]
+      location: _Neo4jPoint
+    }
+
+    type _MergeMovieRatingsPayload
+      @relation(name: "RATED", from: "User", to: "Movie") {
+      from: User
+      to: Movie
+      currentUserId: String
+        @cypher(
+          statement: "RETURN $cypherParams.currentUserId AS cypherParamsUserId"
+        )
+      rating: Int
+      ratings: [Int]
+      time: _Neo4jTime
+      date: _Neo4jDate
+      datetime: _Neo4jDateTime
+      localtime: _Neo4jLocalTime
+      localdatetime: _Neo4jLocalDateTime
+      datetimes: [_Neo4jDateTime]
+      location: _Neo4jPoint
+    }
+
     type _AddGenreMoviesPayload
       @relation(name: "IN_GENRE", from: "Movie", to: "Genre") {
       from: Movie
@@ -1715,6 +1865,18 @@ test.cb('Test augmented schema', t => {
       to: Genre
     }
 
+    type _MergeGenreMoviesPayload
+      @relation(name: "IN_GENRE", from: "Movie", to: "Genre") {
+      from: Movie
+      to: Genre
+    }
+
+    type _MergeMovieGenresPayload
+      @relation(name: "IN_GENRE", from: "Movie", to: "Genre") {
+      from: Movie
+      to: Genre
+    }
+
     type _AddActorMoviesPayload
       @relation(name: "ACTED_IN", from: "Actor", to: "Movie") {
       from: Actor
@@ -1722,6 +1884,18 @@ test.cb('Test augmented schema', t => {
     }
 
     type _RemoveActorMoviesPayload
+      @relation(name: "ACTED_IN", from: "Actor", to: "Movie") {
+      from: Actor
+      to: Movie
+    }
+
+    type _MergeActorMoviesPayload
+      @relation(name: "ACTED_IN", from: "Actor", to: "Movie") {
+      from: Actor
+      to: Movie
+    }
+
+    type _MergeMovieActorsPayload
       @relation(name: "ACTED_IN", from: "Actor", to: "Movie") {
       from: Actor
       to: Movie
@@ -1750,6 +1924,44 @@ test.cb('Test augmented schema', t => {
       @relation(name: "RATED", from: "User", to: "Movie") {
       from: User
       to: Movie
+    }
+
+    type _UpdateUserRatedPayload
+      @relation(name: "RATED", from: "User", to: "Movie") {
+      from: User
+      to: Movie
+      currentUserId: String
+        @cypher(
+          statement: "RETURN $cypherParams.currentUserId AS cypherParamsUserId"
+        )
+      rating: Int
+      ratings: [Int]
+      time: _Neo4jTime
+      date: _Neo4jDate
+      datetime: _Neo4jDateTime
+      localtime: _Neo4jLocalTime
+      localdatetime: _Neo4jLocalDateTime
+      datetimes: [_Neo4jDateTime]
+      location: _Neo4jPoint
+    }
+
+    type _MergeUserRatedPayload
+      @relation(name: "RATED", from: "User", to: "Movie") {
+      from: User
+      to: Movie
+      currentUserId: String
+        @cypher(
+          statement: "RETURN $cypherParams.currentUserId AS cypherParamsUserId"
+        )
+      rating: Int
+      ratings: [Int]
+      time: _Neo4jTime
+      date: _Neo4jDate
+      datetime: _Neo4jDateTime
+      localtime: _Neo4jLocalTime
+      localdatetime: _Neo4jLocalDateTime
+      datetimes: [_Neo4jDateTime]
+      location: _Neo4jPoint
     }
 
     input _FriendOfInput {
@@ -1787,6 +1999,42 @@ test.cb('Test augmented schema', t => {
       to: User
     }
 
+    type _UpdateUserFriendsPayload
+      @relation(name: "FRIEND_OF", from: "User", to: "User") {
+      from: User
+      to: User
+      currentUserId: String
+        @cypher(
+          statement: "RETURN $cypherParams.currentUserId AS cypherParamsUserId"
+        )
+      since: Int
+      time: _Neo4jTime
+      date: _Neo4jDate
+      datetime: _Neo4jDateTime
+      datetimes: [_Neo4jDateTime]
+      localtime: _Neo4jLocalTime
+      localdatetime: _Neo4jLocalDateTime
+      location: _Neo4jPoint
+    }
+
+    type _MergeUserFriendsPayload
+      @relation(name: "FRIEND_OF", from: "User", to: "User") {
+      from: User
+      to: User
+      currentUserId: String
+        @cypher(
+          statement: "RETURN $cypherParams.currentUserId AS cypherParamsUserId"
+        )
+      since: Int
+      time: _Neo4jTime
+      date: _Neo4jDate
+      datetime: _Neo4jDateTime
+      datetimes: [_Neo4jDateTime]
+      localtime: _Neo4jLocalTime
+      localdatetime: _Neo4jLocalDateTime
+      location: _Neo4jPoint
+    }
+
     type _AddUserFavoritesPayload
       @relation(name: "FAVORITED", from: "User", to: "Movie") {
       from: User
@@ -1794,6 +2042,12 @@ test.cb('Test augmented schema', t => {
     }
 
     type _RemoveUserFavoritesPayload
+      @relation(name: "FAVORITED", from: "User", to: "Movie") {
+      from: User
+      to: Movie
+    }
+
+    type _MergeUserFavoritesPayload
       @relation(name: "FAVORITED", from: "User", to: "Movie") {
       from: User
       to: Movie
@@ -1815,6 +2069,34 @@ test.cb('Test augmented schema', t => {
       to: TemporalNode
     }
 
+    type _MergeTemporalNodeTemporalNodesPayload
+      @relation(name: "TEMPORAL", from: "TemporalNode", to: "TemporalNode") {
+      from: TemporalNode
+      to: TemporalNode
+    }
+
+    input _SpatialNodeInput {
+      id: ID!
+    }
+
+    type _AddSpatialNodeSpatialNodesPayload
+      @relation(name: "SPATIAL", from: "SpatialNode", to: "SpatialNode") {
+      from: SpatialNode
+      to: SpatialNode
+    }
+
+    type _RemoveSpatialNodeSpatialNodesPayload
+      @relation(name: "SPATIAL", from: "SpatialNode", to: "SpatialNode") {
+      from: SpatialNode
+      to: SpatialNode
+    }
+
+    type _MergeSpatialNodeSpatialNodesPayload
+      @relation(name: "SPATIAL", from: "SpatialNode", to: "SpatialNode") {
+      from: SpatialNode
+      to: SpatialNode
+    }
+
     input _CasedTypeInput {
       name: String!
     }
@@ -1829,6 +2111,16 @@ test.cb('Test augmented schema', t => {
       @relation(name: "FILMED_IN", from: "CasedType", to: "State") {
       from: CasedType
       to: State
+    }
+
+    type _MergeCasedTypeStatePayload
+      @relation(name: "FILMED_IN", from: "CasedType", to: "State") {
+      from: CasedType
+      to: State
+    }
+
+    input _PersonInput {
+      userId: ID!
     }
 
     type SubscriptionC {
@@ -1967,32 +2259,33 @@ test.cb('Test augmented schema', t => {
 });
 
 const compareSchema = ({ test, sourceSchema = {}, expectedSchema = {} }) => {
-  const definitions = parse(expectedSchema).definitions;
+  const expectedDefinitions = parse(expectedSchema).definitions;
   // printSchema is no longer used here, as it simplifies out the schema type and all
   // directive instances. printSchemaDocument does not simplify anything out, as it uses
   // the graphql print function instead, along with the regeneration of the schema type
   const printedSourceSchema = printSchemaDocument({ schema: sourceSchema });
   const augmentedDefinitions = parse(printedSourceSchema).definitions;
-  definitions.forEach(definition => {
-    const kind = definition.kind;
-    let augmented = undefined;
+  augmentedDefinitions.forEach(augmentedDefinition => {
+    const kind = augmentedDefinition.kind;
+    let expectedDefinition = undefined;
+    let name = '';
     if (kind === Kind.SCHEMA_DEFINITION) {
-      augmented = augmentedDefinitions.find(
+      expectedDefinition = expectedDefinitions.find(
         def => def.kind === Kind.SCHEMA_DEFINITION
       );
     } else {
-      const name = definition.name.value;
-      augmented = augmentedDefinitions.find(augmentedDefinition => {
-        if (augmentedDefinition.name) {
+      name = augmentedDefinition.name.value;
+      expectedDefinition = expectedDefinitions.find(definition => {
+        if (definition.name) {
           if (definition.name.value === augmentedDefinition.name.value) {
-            return augmentedDefinition;
+            return definition;
           }
         }
       });
-      if (!augmented) {
+      if (!expectedDefinition) {
         throw new Error(`${name} is missing from the augmented schema`);
       }
     }
-    test.is(print(augmented), print(definition));
+    test.is(print(expectedDefinition), print(augmentedDefinition));
   });
 };
