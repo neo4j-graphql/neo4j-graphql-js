@@ -180,6 +180,7 @@ const buildRelationshipMutationAPI = ({
   generatedTypeMap = buildRelationshipMutationOutputType({
     mutationAction,
     mutationOutputType,
+    propertyInputValues,
     propertyOutputFields,
     relationshipName,
     fromType,
@@ -380,6 +381,7 @@ const buildRelationshipMutationDirectives = ({
 const buildRelationshipMutationOutputType = ({
   mutationAction,
   mutationOutputType,
+  propertyInputValues,
   propertyOutputFields,
   relationshipName,
   fromType,
@@ -390,7 +392,8 @@ const buildRelationshipMutationOutputType = ({
     mutationAction === RelationshipMutation.CREATE ||
     mutationAction === RelationshipMutation.DELETE ||
     mutationAction === RelationshipMutation.MERGE ||
-    mutationAction === RelationshipMutation.UPDATE
+    (mutationAction === RelationshipMutation.UPDATE &&
+      propertyInputValues.length)
   ) {
     const relationTypeDirective = buildRelationDirective({
       relationshipName,
