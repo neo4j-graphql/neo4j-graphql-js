@@ -298,7 +298,7 @@ export function paramsToString(params, cypherParams) {
   if (params.length > 0) {
     const strings = _.map(params, param => {
       return `${param.key}:${param.paramKey ? `$${param.paramKey}.` : '$'}${
-        typeof param.value.index === 'undefined'
+        !param.value || typeof param.value.index === 'undefined'
           ? param.key
           : `${param.value.index}_${param.key}`
       }`;
