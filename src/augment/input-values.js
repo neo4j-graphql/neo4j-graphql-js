@@ -83,7 +83,7 @@ export const augmentInputTypePropertyFields = ({
         );
       }
     }
-    if (orderingType) {
+    if (orderingType && outputType !== SpatialType.POINT) {
       orderingType.values.push(...buildPropertyOrderingValues({ fieldName }));
     }
   }
