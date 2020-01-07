@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.11.3
+
+- [Fixes for augmentation tests](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/371)
+- [Fix null-access for null string/ID values.](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/368)
+- [Fix for nested filtering](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/372)
+
 ## 2.11.2
 
 - [Fix #295 Querying interface @relation fields with non-unique relationship names](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/366)
