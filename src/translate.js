@@ -2778,7 +2778,11 @@ const buildRelatedTypeListComprehension = ({
   if (rootIsRelationType) {
     relationVariable = variableName;
   }
-  const thisTypeVariable = safeVar(lowFirstLetter(thisType));
+
+  const thisTypeVariable =
+    !rootIsRelationType && !isRelationTypeNode
+      ? safeVar(lowFirstLetter(variableName))
+      : safeVar(lowFirstLetter(thisType));
   // prevents related node variable from
   // conflicting with parent variables
   const relatedTypeVariable = safeVar(`_${relatedType.toLowerCase()}`);
