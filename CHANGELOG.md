@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.11.4
+
+- [Fix for nested ordering fields with underscores](https://github.com/neo4j-graphql/neo4j-graphql-js/commit/b422f3bbef4ffe1a243193d5d1662313625e54c4)
+
 ## 2.11.3
 
 - [Fixes for augmentation tests](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/371)
