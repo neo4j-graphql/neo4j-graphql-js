@@ -1713,7 +1713,7 @@ const temporalOrderingFieldExists = (schemaType, filterParams) => {
     orderByParam = orderByParam.value;
     if (!Array.isArray(orderByParam)) orderByParam = [orderByParam];
     return orderByParam.find(e => {
-      const fieldName = e.substring(0, e.indexOf('_'));
+      const fieldName = e.substring(0, e.lastIndexOf('_'));
       const fieldTypeName = getFieldTypeName(schemaType, fieldName);
       return isTemporalType(fieldTypeName);
     });
@@ -1727,7 +1727,7 @@ const buildSortMultiArgs = param => {
   if (!Array.isArray(values)) values = [values];
   return values
     .map(e => {
-      fieldName = e.substring(0, e.indexOf('_'));
+      fieldName = e.substring(0, e.lastIndexOf('_'));
       return e.includes('_asc') ? `'^${fieldName}'` : `'${fieldName}'`;
     })
     .join(',');

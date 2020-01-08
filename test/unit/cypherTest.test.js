@@ -5118,3 +5118,33 @@ test('Handle @cypher field with parameterized value for field of input type argu
     augmentedSchemaCypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery)
   ]);
 });
+
+test('Handle order by field with underscores - root level', t => {
+  const graphQLQuery = `{Movie(orderBy: someprefix_title_with_underscores_desc){title}}`,
+    expectedCypherQuery =
+      'MATCH (`movie`:`Movie`:`u_user-id`:`newMovieLabel`) WITH `movie` ORDER BY movie.someprefix_title_with_underscores DESC RETURN `movie` { .title } AS `movie`';
+
+  t.plan(1);
+  return Promise.all([
+    augmentedSchemaCypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery)
+  ]);
+});
+
+test('Handle order by field with underscores - nested field ', t => {
+  const graphQLQuery = `
+  {
+    GenresBySubstring(substring: "Foo") {
+      movies(orderBy: someprefix_title_with_underscores_desc) {
+        title
+      }
+    }
+  }
+  `,
+    expectedCypherQuery =
+      'WITH apoc.cypher.runFirstColumn("MATCH (g:Genre) WHERE toLower(g.name) CONTAINS toLower($substring) RETURN g", {offset:$offset, first:$first, substring:$substring, cypherParams: $cypherParams}, True) AS x UNWIND x AS `genre` RETURN `genre` {movies: apoc.coll.sortMulti([(`genre`)<-[:`IN_GENRE`]-(`genre_movies`:`Movie`:`u_user-id`:`newMovieLabel`) | genre_movies { .title }], [\'someprefix_title_with_underscores\']) } AS `genre`';
+
+  t.plan(1);
+  return Promise.all([
+    augmentedSchemaCypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery)
+  ]);
+});
