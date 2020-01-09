@@ -427,6 +427,14 @@ test.cb('Test augmented schema', t => {
       movies_none: _MovieFilter
       movies_single: _MovieFilter
       movies_every: _MovieFilter
+      knows: _PersonFilter
+      knows_not: _PersonFilter
+      knows_in: [_PersonFilter!]
+      knows_not_in: [_PersonFilter!]
+      knows_some: _PersonFilter
+      knows_none: _PersonFilter
+      knows_single: _PersonFilter
+      knows_every: _PersonFilter
     }
 
     input _StateFilter {
@@ -866,6 +874,12 @@ test.cb('Test augmented schema', t => {
         orderBy: [_MovieOrdering]
         filter: _MovieFilter
       ): [Movie] @relation(name: "ACTED_IN", direction: "OUT")
+      knows(
+        first: Int
+        offset: Int
+        orderBy: [_PersonOrdering]
+        filter: _PersonFilter
+      ): [Person] @relation(name: "KNOWS", direction: "OUT")
       _id: String
     }
 
@@ -1503,6 +1517,24 @@ test.cb('Test augmented schema', t => {
       ): _MergeActorMoviesPayload
         @MutationMeta(relationship: "ACTED_IN", from: "Actor", to: "Movie")
         @hasScope(scopes: ["Actor: Merge", "Movie: Merge"])
+      AddActorKnows(
+        from: _ActorInput!
+        to: _PersonInput!
+      ): _AddActorKnowsPayload
+        @MutationMeta(relationship: "KNOWS", from: "Actor", to: "Person")
+        @hasScope(scopes: ["Actor: Create", "Person: Create"])
+      RemoveActorKnows(
+        from: _ActorInput!
+        to: _PersonInput!
+      ): _RemoveActorKnowsPayload
+        @MutationMeta(relationship: "KNOWS", from: "Actor", to: "Person")
+        @hasScope(scopes: ["Actor: Delete", "Person: Delete"])
+      MergeActorKnows(
+        from: _ActorInput!
+        to: _PersonInput!
+      ): _MergeActorKnowsPayload
+        @MutationMeta(relationship: "KNOWS", from: "Actor", to: "Person")
+        @hasScope(scopes: ["Actor: Merge", "Person: Merge"])
       CreateActor(userId: ID, name: String): Actor
         @hasScope(scopes: ["Actor: Create"])
       UpdateActor(userId: ID!, name: String): Actor
@@ -1899,6 +1931,24 @@ test.cb('Test augmented schema', t => {
       @relation(name: "ACTED_IN", from: "Actor", to: "Movie") {
       from: Actor
       to: Movie
+    }
+
+    type _AddActorKnowsPayload
+      @relation(name: "KNOWS", from: "Actor", to: "Person") {
+      from: Actor
+      to: Person
+    }
+
+    type _MergeActorKnowsPayload
+      @relation(name: "KNOWS", from: "Actor", to: "Person") {
+      from: Actor
+      to: Person
+    }
+
+    type _RemoveActorKnowsPayload
+      @relation(name: "KNOWS", from: "Actor", to: "Person") {
+      from: Actor
+      to: Person
     }
 
     type _AddUserRatedPayload
