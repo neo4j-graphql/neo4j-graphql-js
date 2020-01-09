@@ -1343,6 +1343,122 @@ test('Update reflexive relationship mutation with relationship property', t => {
   );
 });
 
+test('Add interfaced relationship mutation', t => {
+  const graphQLQuery = `mutation someMutation {
+    AddActorKnows(
+      from: { userId: "123" },
+      to: { userId: "456" }
+    ) {
+      from {
+        userId
+        name
+      }
+      to {
+        userId
+        name
+      }
+    }
+  }`,
+    expectedCypherQuery = `
+      MATCH (\`actor_from\`:\`Actor\` {userId: $from.userId})
+      MATCH (\`person_to\`:\`Person\` {userId: $to.userId})
+      CREATE (\`actor_from\`)-[\`knows_relation\`:\`KNOWS\`]->(\`person_to\`)
+      RETURN \`knows_relation\` { from: \`actor_from\` { .userId , .name } ,to: \`person_to\` {FRAGMENT_TYPE: head( [ label IN labels(person_to) WHERE label IN $Person_derivedTypes ] ), .userId , .name }  } AS \`_AddActorKnowsPayload\`;
+    `;
+
+  t.plan(1);
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {
+      from: { userId: '123' },
+      to: { userId: '456' },
+      first: -1,
+      offset: 0
+    },
+    expectedCypherQuery,
+    {}
+  );
+});
+
+test('Merge interfaced relationship mutation', t => {
+  const graphQLQuery = `mutation someMutation {
+    MergeActorKnows(
+      from: { userId: "123" },
+      to: { userId: "456" }
+    ) {
+      from {
+        userId
+        name
+      }
+      to {
+        userId
+        name
+      }
+    }
+  }`,
+    expectedCypherQuery = `
+      MATCH (\`actor_from\`:\`Actor\` {userId: $from.userId})
+      MATCH (\`person_to\`:\`Person\` {userId: $to.userId})
+      MERGE (\`actor_from\`)-[\`knows_relation\`:\`KNOWS\`]->(\`person_to\`)
+      RETURN \`knows_relation\` { from: \`actor_from\` { .userId , .name } ,to: \`person_to\` {FRAGMENT_TYPE: head( [ label IN labels(person_to) WHERE label IN $Person_derivedTypes ] ), .userId , .name }  } AS \`_MergeActorKnowsPayload\`;
+    `;
+
+  t.plan(1);
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {
+      from: { userId: '123' },
+      to: { userId: '456' },
+      first: -1,
+      offset: 0
+    },
+    expectedCypherQuery,
+    {}
+  );
+});
+
+test('Remove interfaced relationship mutation', t => {
+  const graphQLQuery = `mutation someMutation {
+    RemoveActorKnows(
+      from: { userId: "123" },
+      to: { userId: "456" }
+    ) {
+      from {
+        userId
+        name
+      }
+      to {
+        userId
+        name
+      }
+    }
+  }`,
+    expectedCypherQuery = `
+      MATCH (\`actor_from\`:\`Actor\` {userId: $from.userId})
+      MATCH (\`person_to\`:\`Person\` {userId: $to.userId})
+      OPTIONAL MATCH (\`actor_from\`)-[\`actor_fromperson_to\`:\`KNOWS\`]->(\`person_to\`)
+      DELETE \`actor_fromperson_to\`
+      WITH COUNT(*) AS scope, \`actor_from\` AS \`_actor_from\`, \`person_to\` AS \`_person_to\`
+      RETURN {from: \`_actor_from\` { .userId , .name } ,to: \`_person_to\` {FRAGMENT_TYPE: head( [ label IN labels(_person_to) WHERE label IN $Person_derivedTypes ] ), .userId , .name } } AS \`_RemoveActorKnowsPayload\`;
+    `;
+
+  t.plan(1);
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {
+      from: { userId: '123' },
+      to: { userId: '456' },
+      first: -1,
+      offset: 0
+    },
+    expectedCypherQuery,
+    {}
+  );
+});
+
 test('Remove relationship mutation', t => {
   const graphQLQuery = `mutation someMutation {
     RemoveMovieGenres(

@@ -87,6 +87,7 @@ export const testSchema = /* GraphQL */ `
     userId: ID!
     name: String
     movies: [Movie] @relation(name: "ACTED_IN", direction: "OUT")
+    knows: [Person] @relation(name: "KNOWS", direction: "OUT")
   }
 
   type User implements Person {

@@ -379,7 +379,11 @@ export const nodeTypeFieldOnRelationType = ({
     return {
       selection: relationTypeMutationPayloadField({
         ...fieldInfo,
-        parentSelectionInfo
+        schemaType,
+        isInlineFragment,
+        parentSelectionInfo,
+        innerSchemaType,
+        resolveInfo
       }),
       subSelection: fieldInfo.subSelection
     };
@@ -405,17 +409,27 @@ const relationTypeMutationPayloadField = ({
   initial,
   fieldName,
   variableName,
+  nestedVariable,
   subSelection,
   skipLimit,
   commaIfTail,
   tailParams,
-  parentSelectionInfo
+  parentSelectionInfo,
+  isInlineFragment,
+  resolveInfo,
+  innerSchemaType
 }) => {
   const safeVariableName = safeVar(variableName);
+  const fragmentTypeParams = isInlineFragment
+    ? derivedTypesParams(resolveInfo.schema, innerSchemaType.name)
+    : {};
+  subSelection[1] = { ...subSelection[1], ...fragmentTypeParams };
   return {
     initial: `${initial}${fieldName}: ${safeVariableName} {${
-      subSelection[0]
-    }}${skipLimit} ${commaIfTail}`,
+      isInlineFragment
+        ? `${fragmentType(nestedVariable, innerSchemaType.name)},`
+        : ''
+    }${subSelection[0]}}${skipLimit} ${commaIfTail}`,
     ...tailParams,
     variableName:
       fieldName === 'from' ? parentSelectionInfo.to : parentSelectionInfo.from
