@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.11.5
+
+- [Add relation mutations for interfaced types](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/374)
+
 ## 2.11.4
 
 - [Fix for nested ordering fields with underscores](https://github.com/neo4j-graphql/neo4j-graphql-js/commit/b422f3bbef4ffe1a243193d5d1662313625e54c4)
