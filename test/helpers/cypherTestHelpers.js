@@ -152,6 +152,7 @@ export function augmentedSchemaCypherTestRunner(
 
   const resolvers = {
     QueryA: {
+      Actor: checkCypherQuery,
       User: checkCypherQuery,
       Movie: checkCypherQuery,
       MoviesByYear: checkCypherQuery,
