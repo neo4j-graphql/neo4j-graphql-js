@@ -168,7 +168,7 @@ export const testSchema = /* GraphQL */ `
     name_asc
   }
 
-  type QueryA {
+  type Query {
     Movie(
       _id: String
       movieId: ID
