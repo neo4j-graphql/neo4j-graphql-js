@@ -12,14 +12,21 @@ type MainType {
   outProp: [RelexiveRelationshipType]
   inProp: [RelexiveRelationshipType]
 }
+
+type ChildType {
+  code: String
+}
 type RelexiveRelationshipType @relation(name: "REFLEXIVE_REL") {
   from: MainType
-  to: MainType
+  to: ChildType
 }
 type Query {
   MainType (
     _id: String
   ): MainType
+  ChildType (
+    _id: String
+  ): ChildType
 }
     `,
     config: {
@@ -164,8 +171,41 @@ type Query {
       formatted: String
     }
 
+    type _Neo4jPoint {
+      x: Float
+      y: Float
+      z: Float
+      longitude: Float
+      latitude: Float
+      height: Float
+      crs: String
+      srid: Int
+    }
+
+    input _Neo4jPointInput {
+      x: Float
+      y: Float
+      z: Float
+      longitude: Float
+      latitude: Float
+      height: Float
+      crs: String
+      srid: Int
+    }
+
+    input _Neo4jPointDistanceFilter {
+      point: _Neo4jPointInput!
+      distance: Float!
+    }
+
+    enum _RelationDirections {
+      IN
+      OUT
+    }
+
     type Query {
       MainType(_id: String, filter: _MainTypeFilter): MainType
+      ChildType(_id: String, filter: _ChildTypeFilter): ChildType
     }
 
     input _MainTypeFilter {
@@ -181,22 +221,43 @@ type Query {
       code_not_starts_with: String
       code_ends_with: String
       code_not_ends_with: String
-      outProp: _RelexiveRelationshipTypeDirectionsFilter
-      outProp_not: _RelexiveRelationshipTypeDirectionsFilter
-      outProp_in: [_RelexiveRelationshipTypeDirectionsFilter!]
-      outProp_not_in: [_RelexiveRelationshipTypeDirectionsFilter!]
-      outProp_some: _RelexiveRelationshipTypeDirectionsFilter
-      outProp_none: _RelexiveRelationshipTypeDirectionsFilter
-      outProp_single: _RelexiveRelationshipTypeDirectionsFilter
-      outProp_every: _RelexiveRelationshipTypeDirectionsFilter
-      inProp: _RelexiveRelationshipTypeDirectionsFilter
-      inProp_not: _RelexiveRelationshipTypeDirectionsFilter
-      inProp_in: [_RelexiveRelationshipTypeDirectionsFilter!]
-      inProp_not_in: [_RelexiveRelationshipTypeDirectionsFilter!]
-      inProp_some: _RelexiveRelationshipTypeDirectionsFilter
-      inProp_none: _RelexiveRelationshipTypeDirectionsFilter
-      inProp_single: _RelexiveRelationshipTypeDirectionsFilter
-      inProp_every: _RelexiveRelationshipTypeDirectionsFilter
+      outProp: _MainTypeRelexiveRelationshipTypeFilter
+      outProp_not: _MainTypeRelexiveRelationshipTypeFilter
+      outProp_in: [_MainTypeRelexiveRelationshipTypeFilter!]
+      outProp_not_in: [_MainTypeRelexiveRelationshipTypeFilter!]
+      outProp_some: _MainTypeRelexiveRelationshipTypeFilter
+      outProp_none: _MainTypeRelexiveRelationshipTypeFilter
+      outProp_single: _MainTypeRelexiveRelationshipTypeFilter
+      outProp_every: _MainTypeRelexiveRelationshipTypeFilter
+      inProp: _MainTypeRelexiveRelationshipTypeFilter
+      inProp_not: _MainTypeRelexiveRelationshipTypeFilter
+      inProp_in: [_MainTypeRelexiveRelationshipTypeFilter!]
+      inProp_not_in: [_MainTypeRelexiveRelationshipTypeFilter!]
+      inProp_some: _MainTypeRelexiveRelationshipTypeFilter
+      inProp_none: _MainTypeRelexiveRelationshipTypeFilter
+      inProp_single: _MainTypeRelexiveRelationshipTypeFilter
+      inProp_every: _MainTypeRelexiveRelationshipTypeFilter
+    }
+
+    input _MainTypeRelexiveRelationshipTypeFilter {
+      AND: [_MainTypeRelexiveRelationshipTypeFilter!]
+      OR: [_MainTypeRelexiveRelationshipTypeFilter!]
+      ChildType: _ChildTypeFilter
+    }
+
+    input _ChildTypeFilter {
+      AND: [_ChildTypeFilter!]
+      OR: [_ChildTypeFilter!]
+      code: String
+      code_not: String
+      code_in: [String!]
+      code_not_in: [String!]
+      code_contains: String
+      code_not_contains: String
+      code_starts_with: String
+      code_not_starts_with: String
+      code_ends_with: String
+      code_not_ends_with: String
     }
 
     input _RelexiveRelationshipTypeDirectionsFilter {
@@ -212,8 +273,10 @@ type Query {
 
     type MainType {
       code: String
-      outProp: _MainTypeOutPropDirections
-      inProp: _MainTypeInPropDirections
+      outProp(
+        filter: _MainTypeRelexiveRelationshipTypeFilter
+      ): [_MainTypeOutProp]
+      inProp(filter: _MainTypeRelexiveRelationshipTypeFilter): [_MainTypeInProp]
       _id: String
     }
 
@@ -230,13 +293,18 @@ type Query {
     }
 
     type _MainTypeOutProp
-      @relation(name: "REFLEXIVE_REL", from: "MainType", to: "MainType") {
-      MainType: MainType
+      @relation(name: "REFLEXIVE_REL", from: "MainType", to: "ChildType") {
+      ChildType: ChildType
     }
 
     type _MainTypeInProp
-      @relation(name: "REFLEXIVE_REL", from: "MainType", to: "MainType") {
-      MainType: MainType
+      @relation(name: "REFLEXIVE_REL", from: "MainType", to: "ChildType") {
+      ChildType: ChildType
+    }
+
+    type ChildType {
+      code: String
+      _id: String
     }
 
     enum _MainTypeOrdering {
@@ -246,9 +314,20 @@ type Query {
       _id_desc
     }
 
+    enum _ChildTypeOrdering {
+      code_asc
+      code_desc
+      _id_asc
+      _id_desc
+    }
+
     type RelexiveRelationshipType @relation(name: "REFLEXIVE_REL") {
       from: MainType
-      to: MainType
+      to: ChildType
+    }
+
+    schema {
+      query: Query
     }
   `;
   compareSchema({

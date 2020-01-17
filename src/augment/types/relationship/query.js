@@ -40,6 +40,7 @@ export const augmentRelationshipQueryAPI = ({
   outputType,
   fromType,
   toType,
+  direction,
   typeDefinitionMap,
   generatedTypeMap,
   nodeInputTypeMap,
@@ -81,7 +82,8 @@ export const augmentRelationshipQueryAPI = ({
         config,
         relationshipName,
         fieldType,
-        propertyOutputFields
+        propertyOutputFields,
+        direction
       });
       [
         fieldArguments,
@@ -224,16 +226,20 @@ const transformRelationshipTypeFieldOutput = ({
   outputTypeWrappers,
   relationshipName,
   fieldType,
-  propertyOutputFields
+  propertyOutputFields,
+  direction
 }) => {
   const relationshipOutputName = `_${typeName}${fieldName[0].toUpperCase() +
     fieldName.substr(1)}`;
   const unwrappedType = unwrapNamedType({ type: fieldType });
-  if (fromType === toType) {
+  if (fromType === toType && !direction) {
     // Clear arguments on this field, given their distribution
     fieldType = buildNamedType({
       name: `${relationshipOutputName}Directions`
     });
+  } else if (direction) {
+    unwrappedType.name = relationshipOutputName;
+    fieldType = buildNamedType(unwrappedType);
   } else {
     // Output transform
     unwrappedType.name = relationshipOutputName;

@@ -88,6 +88,15 @@ export const makeAugmentedExecutableSchema = ({
     config
   );
   resolverValidationOptions.requireResolversForResolveType = false;
+  console.log('asdlkj saldkjsa lkdjsa ldjaslkd sa');
+  console.log('asdlkj saldkjsa lkdjsa ldjaslkd sa');
+  console.log('asdlkj saldkjsa lkdjsa ldjaslkd sa');
+  console.log('asdlkj saldkjsa lkdjsa ldjaslkd sa');
+  console.log('asdlkj saldkjsa lkdjsa ldjaslkd sa');
+  console.log('asdlkj saldkjsa lkdjsa ldjaslkd sa');
+  console.log('asdlkj saldkjsa lkdjsa ldjaslkd sa');
+
+  console.log(transformedDefinitions);
   return makeExecutableSchema({
     typeDefs: print(documentAST),
     resolvers: augmentedResolvers,

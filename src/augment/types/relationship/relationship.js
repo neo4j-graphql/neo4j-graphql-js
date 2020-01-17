@@ -60,6 +60,15 @@ export const augmentRelationshipTypeField = ({
         outputType,
         relationshipName
       });
+
+      const direction = getDirective({
+        directives: typeDefinitionMap[typeName].fields.find(
+          ({ kind, name }) =>
+            kind === 'FieldDefinition' && name.value === fieldName
+        ).directives,
+        name: DirectiveDefinition.RELATION
+      }).arguments.find(({ name }) => name.value === 'direction').value.value;
+
       let [
         fromType,
         toType,
@@ -71,6 +80,7 @@ export const augmentRelationshipTypeField = ({
         outputType,
         outputDefinition,
         typeDefinitionMap,
+        direction,
         config
       });
       [
@@ -86,6 +96,7 @@ export const augmentRelationshipTypeField = ({
         outputType,
         fromType,
         toType,
+        direction,
         typeDefinitionMap,
         generatedTypeMap,
         nodeInputTypeMap,
@@ -136,6 +147,7 @@ const augmentRelationshipTypeFields = ({
   outputType,
   outputDefinition,
   typeDefinitionMap,
+  direction,
   config
 }) => {
   const fields = outputDefinition.fields;
@@ -148,7 +160,7 @@ const augmentRelationshipTypeFields = ({
     name: RelationshipDirectionField.TO
   });
   let relatedTypeFilterName = `_${typeName}${outputType}Filter`;
-  if (fromTypeName === toTypeName) {
+  if (fromTypeName === toTypeName && !direction) {
     relatedTypeFilterName = `_${outputType}Filter`;
   }
   let relationshipInputTypeMap = {
@@ -157,6 +169,7 @@ const augmentRelationshipTypeFields = ({
       fields: []
     }
   };
+
   const propertyInputValues = [];
   const propertyOutputFields = fields.reduce((outputFields, field) => {
     const fieldName = field.name.value;
