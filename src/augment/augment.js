@@ -35,7 +35,32 @@ export const makeAugmentedExecutableSchema = ({
 }) => {
   config = setDefaultConfig({ config });
   const definitions = parse(typeDefs).definitions;
-  let generatedTypeMap = {};
+  const done = {
+    _MainTypeOutProp: 0,
+    _MainTypeInProp: 0,
+    _MainTypeOrdering: 0,
+    _MainTypeFilter: 0,
+    MainType: 0,
+    RelexiveRelationshipType: 0,
+    _RelationDirections: 0,
+    _MainTypeRelexiveRelationshipTypeFilter: 0
+  };
+  let generatedTypeMap = new Proxy(
+    {},
+    {
+      set(obj, prop, value) {
+        if (!/^_Neo4j/.test(prop)) {
+          if (prop in done && done[prop] === 0) {
+            done[prop] = 1;
+          } else if (!(prop in done)) {
+            done[prop] = -1;
+          }
+          console.log({ prop, line: new Error(prop).stack });
+        }
+        return Reflect.set(...arguments);
+      }
+    }
+  );
   let [
     typeDefinitionMap,
     typeExtensionDefinitionMap,
@@ -88,15 +113,8 @@ export const makeAugmentedExecutableSchema = ({
     config
   );
   resolverValidationOptions.requireResolversForResolveType = false;
-  console.log('asdlkj saldkjsa lkdjsa ldjaslkd sa');
-  console.log('asdlkj saldkjsa lkdjsa ldjaslkd sa');
-  console.log('asdlkj saldkjsa lkdjsa ldjaslkd sa');
-  console.log('asdlkj saldkjsa lkdjsa ldjaslkd sa');
-  console.log('asdlkj saldkjsa lkdjsa ldjaslkd sa');
-  console.log('asdlkj saldkjsa lkdjsa ldjaslkd sa');
-  console.log('asdlkj saldkjsa lkdjsa ldjaslkd sa');
+  console.log(done);
 
-  console.log(transformedDefinitions);
   return makeExecutableSchema({
     typeDefs: print(documentAST),
     resolvers: augmentedResolvers,

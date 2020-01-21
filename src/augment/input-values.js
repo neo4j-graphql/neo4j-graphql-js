@@ -284,14 +284,19 @@ export const buildQueryFilteringInputType = ({
   typeName,
   inputTypeMap,
   typeDefinitionMap,
-  generatedTypeMap
+  generatedTypeMap,
+  direction
 }) => {
   const inputType = inputTypeMap[FilteringArgument.FILTER];
   if (inputType) {
     const inputTypeName = inputType.name;
     inputType.name = buildName({ name: inputTypeName });
     inputType.fields.unshift(...buildLogicalFilterInputValues({ typeName }));
-    if (!typeDefinitionMap[inputTypeName]) {
+    if (
+      !typeDefinitionMap[inputTypeName]
+      // stops generating _MainTypeRelexiveRelationshipTypeFilter
+      // && !direction
+    ) {
       generatedTypeMap[inputTypeName] = buildInputObjectType(inputType);
     }
   }

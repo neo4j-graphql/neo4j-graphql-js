@@ -25,6 +25,31 @@ export const RelationshipDirectionField = {
   TO: 'to'
 };
 
+const getDirection = ({ typeDefinitionMap, typeName, fieldName }) => {
+  const directives = typeDefinitionMap[typeName].fields.find(
+    ({ kind, name }) => kind === 'FieldDefinition' && name.value === fieldName
+  ).directives;
+  const directive = getDirective({
+    directives,
+    name: DirectiveDefinition.RELATION
+  });
+
+  if (!directive) {
+    return;
+  }
+  try {
+    const direction = directive.arguments.find(
+      ({ name }) => name.value === 'direction'
+    ).value.value;
+    directives.splice(directives.indexOf(directive), 1);
+    return direction;
+  } catch (err) {
+    throw new Error(
+      `The use of the @relation directive on ${typeName} ${fieldName} must specify a direction argument`
+    );
+  }
+};
+
 /**
  * The main export for the augmentation process of a GraphQL
  * type definition representing a Neo4j relationship entity
@@ -61,13 +86,11 @@ export const augmentRelationshipTypeField = ({
         relationshipName
       });
 
-      const direction = getDirective({
-        directives: typeDefinitionMap[typeName].fields.find(
-          ({ kind, name }) =>
-            kind === 'FieldDefinition' && name.value === fieldName
-        ).directives,
-        name: DirectiveDefinition.RELATION
-      }).arguments.find(({ name }) => name.value === 'direction').value.value;
+      const direction = getDirection({
+        typeDefinitionMap,
+        typeName,
+        fieldName
+      });
 
       let [
         fromType,
@@ -160,7 +183,11 @@ const augmentRelationshipTypeFields = ({
     name: RelationshipDirectionField.TO
   });
   let relatedTypeFilterName = `_${typeName}${outputType}Filter`;
-  if (fromTypeName === toTypeName && !direction) {
+  if (
+    fromTypeName === toTypeName &&
+    // adds _MainTypeRelexiveRelationshipTypeFilter
+    !direction
+  ) {
     relatedTypeFilterName = `_${outputType}Filter`;
   }
   let relationshipInputTypeMap = {
@@ -174,7 +201,9 @@ const augmentRelationshipTypeFields = ({
   const propertyOutputFields = fields.reduce((outputFields, field) => {
     const fieldName = field.name.value;
     const fieldDirectives = field.directives;
+    console.log('xx0', fieldName, fieldDirectives);
     if (!isIgnoredField({ directives: fieldDirectives })) {
+      console.log('xx1', fieldName, fieldDirectives);
       const unwrappedType = unwrapNamedType({ type: field.type });
       const outputType = unwrappedType.name;
       const outputTypeWrappers = unwrappedType.wrappers;
@@ -186,6 +215,7 @@ const augmentRelationshipTypeFields = ({
           type: outputType
         })
       ) {
+        console.log('xx2', fieldName, fieldDirectives);
         relationshipInputTypeMap = augmentInputTypePropertyFields({
           inputTypeMap: relationshipInputTypeMap,
           fieldName,
@@ -194,6 +224,7 @@ const augmentRelationshipTypeFields = ({
           outputKind,
           outputTypeWrappers
         });
+
         propertyInputValues.push({
           name: fieldName,
           type: unwrappedType,

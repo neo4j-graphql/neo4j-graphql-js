@@ -58,8 +58,10 @@ export const augmentRelationshipQueryAPI = ({
     const relatedType = decideRelatedType({
       typeName,
       fromType,
-      toType
+      toType,
+      direction
     });
+
     if (
       validateRelationTypeDirectedFields(
         typeName,
@@ -102,10 +104,12 @@ export const augmentRelationshipQueryAPI = ({
         nodeInputTypeMap,
         relationshipInputTypeMap,
         outputTypeWrappers,
+        direction,
         config
       });
     }
   }
+
   return [
     fieldType,
     fieldArguments,
@@ -134,13 +138,18 @@ const augmentRelationshipTypeFieldInput = ({
   nodeInputTypeMap,
   relationshipInputTypeMap,
   outputTypeWrappers,
+  direction,
   config
 }) => {
   const nodeFilteringFields = nodeInputTypeMap[FilteringArgument.FILTER].fields;
   let relationshipFilterTypeName = `_${typeName}${outputType[0].toUpperCase() +
     outputType.substr(1)}`;
   // Assume outgoing relationship
-  if (fromType === toType) {
+  if (
+    fromType === toType &&
+    // stop referring to _RelexiveRelationshipTypeDirectionsFilter
+    !direction
+  ) {
     relationshipFilterTypeName = `_${outputType}Directions`;
   }
   nodeFilteringFields.push(
@@ -150,9 +159,11 @@ const augmentRelationshipTypeFieldInput = ({
       outputType: `${relationshipFilterTypeName}Filter`,
       relatedType: outputType,
       outputTypeWrappers,
+
       config
     })
   );
+
   [fieldArguments, generatedTypeMap] = augmentRelationshipTypeFieldArguments({
     fieldArguments,
     typeName,
@@ -164,6 +175,7 @@ const augmentRelationshipTypeFieldInput = ({
     outputTypeWrappers,
     typeDefinitionMap,
     generatedTypeMap,
+    direction,
     relationshipInputTypeMap
   });
   return [fieldArguments, generatedTypeMap, nodeInputTypeMap];
@@ -184,9 +196,10 @@ const augmentRelationshipTypeFieldArguments = ({
   outputTypeWrappers,
   typeDefinitionMap,
   generatedTypeMap,
+  direction,
   relationshipInputTypeMap
 }) => {
-  if (fromType !== toType) {
+  if (fromType !== toType || direction) {
     fieldArguments = buildQueryFieldArguments({
       argumentMap: RelationshipQueryArgument,
       fieldArguments,
@@ -199,6 +212,7 @@ const augmentRelationshipTypeFieldArguments = ({
   generatedTypeMap = buildRelationshipSelectionArgumentInputTypes({
     fromType,
     toType,
+    direction,
     relatedType,
     relationshipFilterTypeName,
     generatedTypeMap,
@@ -231,18 +245,25 @@ const transformRelationshipTypeFieldOutput = ({
 }) => {
   const relationshipOutputName = `_${typeName}${fieldName[0].toUpperCase() +
     fieldName.substr(1)}`;
+
+  console.log({ relationshipOutputName });
   const unwrappedType = unwrapNamedType({ type: fieldType });
-  if (fromType === toType && !direction) {
+  if (
+    fromType === toType &&
+    // remove references to _MainTypeOutPropDirections and _MainTypeInPropDirections
+    !direction
+  ) {
     // Clear arguments on this field, given their distribution
     fieldType = buildNamedType({
       name: `${relationshipOutputName}Directions`
     });
-  } else if (direction) {
-    unwrappedType.name = relationshipOutputName;
-    fieldType = buildNamedType(unwrappedType);
+    // } else if (direction) {
+    //   unwrappedType.name = '_MainTypeRelexiveRelationshipTypeFilter';
+    //   fieldType = buildNamedType(unwrappedType);
   } else {
     // Output transform
     unwrappedType.name = relationshipOutputName;
+
     fieldType = buildNamedType(unwrappedType);
   }
   generatedTypeMap = buildRelationshipFieldOutputTypes({
@@ -255,8 +276,11 @@ const transformRelationshipTypeFieldOutput = ({
     relationshipName,
     relatedType,
     propertyOutputFields,
-    generatedTypeMap
+    generatedTypeMap,
+    direction
   });
+
+  console.log(JSON.stringify(fieldType, null, 2));
   return [fieldType, generatedTypeMap];
 };
 
@@ -270,6 +294,7 @@ export const buildRelationshipFilters = ({
   outputType,
   relatedType,
   outputTypeWrappers,
+  direction,
   config
 }) => {
   let filters = [];
@@ -358,14 +383,19 @@ const buildRelationshipFieldOutputTypes = ({
   relationshipName,
   relatedType,
   propertyOutputFields,
-  generatedTypeMap
+  generatedTypeMap,
+  direction
 }) => {
   const relationTypeDirective = buildRelationDirective({
     relationshipName,
     fromType,
     toType
   });
-  if (fromType === toType) {
+  if (
+    fromType === toType &&
+    // stops generating _MainTypeOutPropDirections and _MainTypeInPropDirections
+    !direction
+  ) {
     fieldArguments = buildQueryFieldArguments({
       argumentMap: RelationshipQueryArgument,
       fieldArguments,
@@ -414,13 +444,18 @@ const buildRelationshipSelectionArgumentInputTypes = ({
   relationshipFilterTypeName,
   generatedTypeMap,
   relationshipInputTypeMap,
+  direction,
   typeDefinitionMap
 }) => {
   const relationshipFilteringFields =
     relationshipInputTypeMap[FilteringArgument.FILTER].fields;
   const relatedTypeFilterName =
     relationshipInputTypeMap[FilteringArgument.FILTER].name;
-  if (fromType === toType) {
+  if (
+    fromType === toType &&
+    // stops generating _RelexiveRelationshipTypeDirectionsFilter
+    !direction
+  ) {
     const reflexiveFilteringTypeName = `${relationshipFilterTypeName}Filter`;
     generatedTypeMap[reflexiveFilteringTypeName] = buildInputObjectType({
       name: buildName({
@@ -443,7 +478,8 @@ const buildRelationshipSelectionArgumentInputTypes = ({
     typeName: relatedTypeFilterName,
     typeDefinitionMap,
     generatedTypeMap,
-    inputTypeMap: relationshipInputTypeMap
+    inputTypeMap: relationshipInputTypeMap,
+    direction
   });
   return generatedTypeMap;
 };
@@ -479,7 +515,7 @@ const buildNodeInputFields = ({ fromType, toType }) => {
  * of a relationship type, decides which type it is related to
  * (possibly itself)
  */
-const decideRelatedType = ({ typeName, fromType, toType }) => {
+const decideRelatedType = ({ typeName, fromType, toType, direction }) => {
   let relatedType = toType;
   if (fromType !== toType) {
     // Interpret relationship direction

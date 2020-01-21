@@ -302,7 +302,6 @@ const compareSchema = ({ test, sourceSchema = {}, expectedSchema = {} }) => {
   // the graphql print function instead, along with the regeneration of the schema type
   const printedSourceSchema = printSchemaDocument({ schema: sourceSchema });
   const augmentedDefinitions = parse(printedSourceSchema).definitions;
-  console.log(augmentedDefinitions);
   augmentedDefinitions.forEach(augmentedDefinition => {
     const kind = augmentedDefinition.kind;
     let expectedDefinition = undefined;

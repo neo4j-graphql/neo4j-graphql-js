@@ -260,17 +260,6 @@ type Query {
       code_not_ends_with: String
     }
 
-    input _RelexiveRelationshipTypeDirectionsFilter {
-      from: _RelexiveRelationshipTypeFilter
-      to: _RelexiveRelationshipTypeFilter
-    }
-
-    input _RelexiveRelationshipTypeFilter {
-      AND: [_RelexiveRelationshipTypeFilter!]
-      OR: [_RelexiveRelationshipTypeFilter!]
-      MainType: _MainTypeFilter
-    }
-
     type MainType {
       code: String
       outProp(
@@ -278,18 +267,6 @@ type Query {
       ): [_MainTypeOutProp]
       inProp(filter: _MainTypeRelexiveRelationshipTypeFilter): [_MainTypeInProp]
       _id: String
-    }
-
-    type _MainTypeOutPropDirections
-      @relation(name: "REFLEXIVE_REL", from: "MainType", to: "MainType") {
-      from(filter: _RelexiveRelationshipTypeFilter): [_MainTypeOutProp]
-      to(filter: _RelexiveRelationshipTypeFilter): [_MainTypeOutProp]
-    }
-
-    type _MainTypeInPropDirections
-      @relation(name: "REFLEXIVE_REL", from: "MainType", to: "MainType") {
-      from(filter: _RelexiveRelationshipTypeFilter): [_MainTypeInProp]
-      to(filter: _RelexiveRelationshipTypeFilter): [_MainTypeInProp]
     }
 
     type _MainTypeOutProp
@@ -338,6 +315,41 @@ type Query {
   t.end();
 });
 
+// type _MainTypeOutPropDirections
+//   @relation(name: "REFLEXIVE_REL", from: "MainType", to: "MainType") {
+//   from(filter: _RelexiveRelationshipTypeFilter): [_MainTypeOutProp]
+//   to(filter: _RelexiveRelationshipTypeFilter): [_MainTypeOutProp]
+// }
+
+// type _MainTypeInPropDirections
+//   @relation(name: "REFLEXIVE_REL", from: "MainType", to: "MainType") {
+//   from(filter: _RelexiveRelationshipTypeFilter): [_MainTypeInProp]
+//   to(filter: _RelexiveRelationshipTypeFilter): [_MainTypeInProp]
+// }
+
+// input _RelexiveRelationshipTypeDirectionsFilter {
+//   from: _RelexiveRelationshipTypeFilter
+//   to: _RelexiveRelationshipTypeFilter
+// }
+
+// input _RelexiveRelationshipTypeFilter {
+//   AND: [_RelexiveRelationshipTypeFilter!]
+//   OR: [_RelexiveRelationshipTypeFilter!]
+//   MainType: _MainTypeFilter
+// }
+//   '_MainTypeOutProp',
+// '_MainTypeRelexiveRelationshipTypeFilter',
+// '_MainTypeInProp',
+// '_MainTypeRelexiveRelationshipTypeFilter',
+// '_MainTypeOrdering',
+// '_MainTypeFilter',
+// 'MainType',
+// '_ChildTypeOrdering',
+// '_ChildTypeFilter',
+// 'ChildType',
+// 'RelexiveRelationshipType',
+// '_RelationDirections',
+
 const compareSchema = ({ test, sourceSchema = {}, expectedSchema = {} }) => {
   const expectedDefinitions = parse(expectedSchema).definitions;
   // printSchema is no longer used here, as it simplifies out the schema type and all
@@ -345,7 +357,6 @@ const compareSchema = ({ test, sourceSchema = {}, expectedSchema = {} }) => {
   // the graphql print function instead, along with the regeneration of the schema type
   const printedSourceSchema = printSchemaDocument({ schema: sourceSchema });
   const augmentedDefinitions = parse(printedSourceSchema).definitions;
-  console.log(augmentedDefinitions);
   augmentedDefinitions.forEach(augmentedDefinition => {
     const kind = augmentedDefinition.kind;
     let expectedDefinition = undefined;
