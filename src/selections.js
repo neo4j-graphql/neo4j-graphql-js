@@ -68,6 +68,7 @@ export function buildCypherSelection({
   };
 
   const recurse = args => {
+    console.log({ args });
     paramIndex =
       Object.keys(shallowFilterParams).length > 0 ? paramIndex + 1 : paramIndex;
     const [subSelection, subFilterParams] = buildCypherSelection({
@@ -182,6 +183,7 @@ export function buildCypherSelection({
         })
       );
     }
+
     // graphql scalar type, no custom cypher statement
     return recurse({
       initial: `${initial} .${fieldName} ${commaIfTail}`,

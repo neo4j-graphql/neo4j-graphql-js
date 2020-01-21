@@ -872,6 +872,7 @@ const nodeQuery = ({
   neo4jTypeArgs,
   _id
 }) => {
+  console.log('a nod');
   const safeVariableName = safeVar(variableName);
   const safeLabelName = safeLabel([typeName, ...additionalLabels]);
   const rootParamIndex = 1;
@@ -883,6 +884,8 @@ const nodeQuery = ({
     resolveInfo,
     paramIndex: rootParamIndex
   });
+
+  console.log({ subQuery });
 
   const fieldArgs = getQueryArguments(resolveInfo);
   const [filterPredicates, serializedFilter] = processFilterArgument({

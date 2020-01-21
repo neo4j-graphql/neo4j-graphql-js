@@ -19,19 +19,29 @@ const checkCypherQuery = (object, params, ctx, resolveInfo) => {
 const schema = makeAugmentedSchema({
   typeDefs: `
 type MainType {
-code: String
-outProp: [RelexiveRelationshipType] @relation(direction: "OUT")
-inProp: [RelexiveRelationshipType] @relation(direction: "IN")
+  code: String
+  reflexive: [ReflexiveRelationshipType] @relation(direction: "OUT")
+  non: [RelationshipType]
 }
 
-type RelexiveRelationshipType @relation(name: "REFLEXIVE_REL") {
-from: MainType
-to: MainType
+type ChildType {
+  code: String
 }
+
+type ReflexiveRelationshipType @relation(name: "REFLEXIVE_REL") {
+  from: MainType
+  to: MainType
+}
+
+type RelationshipType @relation(name: "NON_REL") {
+  from: MainType
+  to: ChildType
+}
+
 type Query {
-MainType (
-  _id: String
-): MainType
+  MainType (
+    _id: String
+  ): MainType
 }
   `,
   config: {
@@ -50,8 +60,28 @@ graphql(
   `
     {
       MainType {
-        outProp {
+        reflexive {
           MainType {
+            code
+          }
+        }
+      }
+    }
+  `,
+  null,
+  {},
+  {}
+);
+
+console.log('BBBBBBREEEEEEEEAKKKKKKK');
+
+graphql(
+  schema,
+  `
+    {
+      MainType {
+        non {
+          ChildType {
             code
           }
         }
