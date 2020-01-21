@@ -278,9 +278,14 @@ export const relationTypeFieldOnNodeType = ({
   selectionFilters,
   paramIndex,
   fieldArgs,
-  cypherParams
+  cypherParams,
+  relType,
+  relDirection
 }) => {
-  if (innerSchemaTypeRelation.from === innerSchemaTypeRelation.to) {
+  if (
+    innerSchemaTypeRelation.from === innerSchemaTypeRelation.to &&
+    !(relType && relDirection)
+  ) {
     return {
       selection: {
         initial: `${initial}${fieldName}: {${
@@ -317,17 +322,31 @@ export const relationTypeFieldOnNodeType = ({
   }
 
   const whereClauses = [...neo4jTypeClauses, ...filterPredicates];
+
+  const openingArrow = relDirection
+    ? relDirection === 'OUT'
+      ? ''
+      : '<'
+    : schemaType.name === innerSchemaTypeRelation.to
+    ? '<'
+    : '';
+  const closingArrow = relDirection
+    ? relDirection === 'OUT'
+      ? '>'
+      : ''
+    : schemaType.name === innerSchemaTypeRelation.from
+    ? '>'
+    : '';
+
   return {
     selection: {
       initial: `${initial}${fieldName}: ${
         !isArrayType(fieldType) ? 'head(' : ''
-      }[(${safeVar(variableName)})${
-        schemaType.name === innerSchemaTypeRelation.to ? '<' : ''
-      }-[${safeVar(relationshipVariableName)}:${safeLabel(
+      }[(${safeVar(variableName)})${openingArrow}-[${safeVar(
+        relationshipVariableName
+      )}:${safeLabel(
         innerSchemaTypeRelation.name
-      )}${queryParams}]-${
-        schemaType.name === innerSchemaTypeRelation.from ? '>' : ''
-      }(:${safeLabel(
+      )}${queryParams}]-${closingArrow}(:${safeLabel(
         schemaType.name === innerSchemaTypeRelation.from
           ? [
               innerSchemaTypeRelation.to,
@@ -872,7 +891,6 @@ const nodeQuery = ({
   neo4jTypeArgs,
   _id
 }) => {
-  console.log('a nod');
   const safeVariableName = safeVar(variableName);
   const safeLabelName = safeLabel([typeName, ...additionalLabels]);
   const rootParamIndex = 1;

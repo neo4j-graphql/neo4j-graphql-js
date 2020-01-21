@@ -73,7 +73,7 @@ graphql(
   {}
 );
 
-console.log('BBBBBBREEEEEEEEAKKKKKKK');
+console.log('\n\n\nBBBBBBREEEEEEEEAKKKKKKK\n\n\n');
 
 graphql(
   schema,

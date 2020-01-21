@@ -41,7 +41,7 @@ const getDirection = ({ typeDefinitionMap, typeName, fieldName }) => {
     const direction = directive.arguments.find(
       ({ name }) => name.value === 'direction'
     ).value.value;
-    directives.splice(directives.indexOf(directive), 1);
+    // directives.splice(directives.indexOf(directive), 1);
     return direction;
   } catch (err) {
     throw new Error(

@@ -571,9 +571,13 @@ const directiveWithArgs = (directiveName, args) => (schemaType, fieldName) => {
   }
 
   function directiveArgument(directive, name) {
-    return directive && directive.arguments
-      ? directive.arguments.find(e => e.name.value === name).value.value
-      : [];
+    if (directive && directive.arguments) {
+      const argument = directive.arguments.find(e => e.name.value === name);
+      if (argument) {
+        return argument.value.value;
+      }
+    }
+    return [];
   }
 
   const directive = fieldDirective(schemaType, fieldName, directiveName);
