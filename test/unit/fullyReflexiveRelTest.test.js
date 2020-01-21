@@ -283,29 +283,6 @@ type Query {
   t.end();
 });
 
-// input _RelexiveRelationshipTypeDirectionsFilter {
-//    from: _RelexiveRelationshipTypeFilter
-//    to: _RelexiveRelationshipTypeFilter
-//  }
-
-//  input _RelexiveRelationshipTypeFilter {
-//    AND: [_RelexiveRelationshipTypeFilter!]
-//    OR: [_RelexiveRelationshipTypeFilter!]
-//    MainType: _MainTypeFilter
-//  }
-
-//  type _MainTypeOutPropDirections
-//    @relation(name: "REFLEXIVE_REL", from: "MainType", to: "MainType") {
-//    from(filter: _RelexiveRelationshipTypeFilter): [_MainTypeOutProp]
-//    to(filter: _RelexiveRelationshipTypeFilter): [_MainTypeOutProp]
-//  }
-
-//  type _MainTypeInPropDirections
-//    @relation(name: "REFLEXIVE_REL", from: "MainType", to: "MainType") {
-//    from(filter: _RelexiveRelationshipTypeFilter): [_MainTypeInProp]
-//    to(filter: _RelexiveRelationshipTypeFilter): [_MainTypeInProp]
-//  }
-
 const compareSchema = ({ test, sourceSchema = {}, expectedSchema = {} }) => {
   const expectedDefinitions = parse(expectedSchema).definitions;
   // printSchema is no longer used here, as it simplifies out the schema type and all
@@ -331,8 +308,7 @@ const compareSchema = ({ test, sourceSchema = {}, expectedSchema = {} }) => {
         }
       });
       if (!expectedDefinition) {
-        // throw new Error
-        console.log(`${name} is missing from the augmented schema`);
+        throw new Error(`${name} is missing from the augmented schema`);
       }
     }
     test.is(print(expectedDefinition), print(augmentedDefinition));

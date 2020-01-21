@@ -12,7 +12,7 @@
     "build-with-sourcemaps": "babel src --presets @babel/preset-env --out-dir dist --source-maps",
     "precommit": "lint-staged",
     "prepare": "npm run build",
-    "test": "ava test/unit/*.test.js --verbose",
+    "test": "ava test/unit/**.test.js --verbose",
     "parse-tck": "babel-node test/helpers/tck/parseTck.js",
     "test-tck": "nyc ava --fail-fast test/unit/filterTests.test.js",
     "report-coverage": "nyc report --reporter=text-lcov > coverage.lcov && codecov",

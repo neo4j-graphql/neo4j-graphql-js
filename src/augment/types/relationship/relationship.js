@@ -201,9 +201,7 @@ const augmentRelationshipTypeFields = ({
   const propertyOutputFields = fields.reduce((outputFields, field) => {
     const fieldName = field.name.value;
     const fieldDirectives = field.directives;
-    console.log('xx0', fieldName, fieldDirectives);
     if (!isIgnoredField({ directives: fieldDirectives })) {
-      console.log('xx1', fieldName, fieldDirectives);
       const unwrappedType = unwrapNamedType({ type: field.type });
       const outputType = unwrappedType.name;
       const outputTypeWrappers = unwrappedType.wrappers;
@@ -215,7 +213,6 @@ const augmentRelationshipTypeFields = ({
           type: outputType
         })
       ) {
-        console.log('xx2', fieldName, fieldDirectives);
         relationshipInputTypeMap = augmentInputTypePropertyFields({
           inputTypeMap: relationshipInputTypeMap,
           fieldName,

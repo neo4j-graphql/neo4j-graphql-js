@@ -246,7 +246,6 @@ const transformRelationshipTypeFieldOutput = ({
   const relationshipOutputName = `_${typeName}${fieldName[0].toUpperCase() +
     fieldName.substr(1)}`;
 
-  console.log({ relationshipOutputName });
   const unwrappedType = unwrapNamedType({ type: fieldType });
   if (
     fromType === toType &&
@@ -257,9 +256,6 @@ const transformRelationshipTypeFieldOutput = ({
     fieldType = buildNamedType({
       name: `${relationshipOutputName}Directions`
     });
-    // } else if (direction) {
-    //   unwrappedType.name = '_MainTypeRelexiveRelationshipTypeFilter';
-    //   fieldType = buildNamedType(unwrappedType);
   } else {
     // Output transform
     unwrappedType.name = relationshipOutputName;
@@ -280,7 +276,6 @@ const transformRelationshipTypeFieldOutput = ({
     direction
   });
 
-  console.log(JSON.stringify(fieldType, null, 2));
   return [fieldType, generatedTypeMap];
 };
 

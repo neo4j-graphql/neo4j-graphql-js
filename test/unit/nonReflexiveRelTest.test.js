@@ -315,41 +315,6 @@ type Query {
   t.end();
 });
 
-// type _MainTypeOutPropDirections
-//   @relation(name: "REFLEXIVE_REL", from: "MainType", to: "MainType") {
-//   from(filter: _RelexiveRelationshipTypeFilter): [_MainTypeOutProp]
-//   to(filter: _RelexiveRelationshipTypeFilter): [_MainTypeOutProp]
-// }
-
-// type _MainTypeInPropDirections
-//   @relation(name: "REFLEXIVE_REL", from: "MainType", to: "MainType") {
-//   from(filter: _RelexiveRelationshipTypeFilter): [_MainTypeInProp]
-//   to(filter: _RelexiveRelationshipTypeFilter): [_MainTypeInProp]
-// }
-
-// input _RelexiveRelationshipTypeDirectionsFilter {
-//   from: _RelexiveRelationshipTypeFilter
-//   to: _RelexiveRelationshipTypeFilter
-// }
-
-// input _RelexiveRelationshipTypeFilter {
-//   AND: [_RelexiveRelationshipTypeFilter!]
-//   OR: [_RelexiveRelationshipTypeFilter!]
-//   MainType: _MainTypeFilter
-// }
-//   '_MainTypeOutProp',
-// '_MainTypeRelexiveRelationshipTypeFilter',
-// '_MainTypeInProp',
-// '_MainTypeRelexiveRelationshipTypeFilter',
-// '_MainTypeOrdering',
-// '_MainTypeFilter',
-// 'MainType',
-// '_ChildTypeOrdering',
-// '_ChildTypeFilter',
-// 'ChildType',
-// 'RelexiveRelationshipType',
-// '_RelationDirections',
-
 const compareSchema = ({ test, sourceSchema = {}, expectedSchema = {} }) => {
   const expectedDefinitions = parse(expectedSchema).definitions;
   // printSchema is no longer used here, as it simplifies out the schema type and all
