@@ -113,7 +113,6 @@ export const customCypherField = ({
         fieldType.ofType.astNode.name.value
       )
     : {};
-
   return {
     initial: `${initial}${fieldName}: ${
       fieldIsList ? '' : 'head('
@@ -211,7 +210,6 @@ export const relationFieldOnNodeType = ({
     : {};
 
   subSelection[1] = { ...subSelection[1], ...fragmentTypeParams };
-
   return {
     selection: {
       initial: `${initial}${fieldName}: ${
@@ -338,6 +336,7 @@ export const relationTypeFieldOnNodeType = ({
     ? '>'
     : '';
 
+  console.log({ initial: ` {${subSelection[0]}}` });
   return {
     selection: {
       initial: `${initial}${fieldName}: ${
@@ -379,6 +378,7 @@ export const nodeTypeFieldOnRelationType = ({
   innerSchemaType,
   isInlineFragment,
   paramIndex,
+  outerSchemaType,
   schemaType,
   filterParams,
   neo4jTypeArgs,
@@ -412,11 +412,13 @@ export const nodeTypeFieldOnRelationType = ({
     ...fieldInfo,
     schemaTypeRelation,
     innerSchemaType,
+    outerSchemaType,
     isInlineFragment,
     paramIndex,
     schemaType,
     filterParams,
     neo4jTypeArgs,
+    parentSelectionInfo,
     resolveInfo,
     selectionFilters,
     fieldArgs,
@@ -465,8 +467,10 @@ const directedNodeTypeFieldOnRelationType = ({
   subSelection,
   skipLimit,
   commaIfTail,
+  parentSelectionInfo,
   tailParams,
   schemaTypeRelation,
+  schemaType,
   innerSchemaType,
   isInlineFragment,
   filterParams,
@@ -475,6 +479,7 @@ const directedNodeTypeFieldOnRelationType = ({
   resolveInfo,
   selectionFilters,
   fieldArgs,
+  outerSchemaType,
   cypherParams
 }) => {
   const relType = schemaTypeRelation.name;
@@ -486,9 +491,15 @@ const directedNodeTypeFieldOnRelationType = ({
     ? derivedTypesParams(resolveInfo.schema, innerSchemaType.name)
     : {};
   subSelection[1] = { ...subSelection[1], ...fragmentTypeParams };
+  const { direction: relDirection } = relationDirective(
+    outerSchemaType,
+    parentSelectionInfo && parentSelectionInfo.fieldName
+  );
+
   // Since the translations are significantly different,
   // we first check whether the relationship is reflexive
-  if (fromTypeName === toTypeName) {
+
+  if (fromTypeName === toTypeName && !(relType && relDirection)) {
     const relationshipVariableName = `${variableName}_${
       isFromField ? 'from' : 'to'
     }_relation`;

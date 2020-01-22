@@ -32,6 +32,7 @@ export function buildCypherSelection({
   initial = '',
   cypherParams,
   selections,
+  outerSchemaType,
   variableName,
   schemaType,
   resolveInfo,
@@ -39,7 +40,6 @@ export function buildCypherSelection({
   parentSelectionInfo = {},
   secondParentSelectionInfo = {}
 }) {
-  // console.log('xx1', initial);
   if (!selections.length) return [initial, {}];
   selections = removeIgnoredFields(schemaType, selections);
   let selectionFilters = filtersFromSelections(
@@ -54,7 +54,6 @@ export function buildCypherSelection({
     },
     {}
   );
-  // console.log('xx2');
   const [headSelection, ...tailSelections] = selections;
 
   let tailParams = {
@@ -90,9 +89,7 @@ export function buildCypherSelection({
       { ...shallowFilterParams, ...subFilterParams, ...derivedTypesParams }
     ];
   };
-  // console.log('xx3');
   if (selections.find(({ kind }) => kind && kind === 'InlineFragment')) {
-    // console.log('xx4');
     return selections
       .filter(({ kind }) => kind && kind === 'InlineFragment')
       .reduce((query, selection, index) => {
@@ -126,7 +123,6 @@ export function buildCypherSelection({
     : {};
   // Schema meta fields(__schema, __typename, etc)
   if (!isScalarSchemaType && !schemaTypeField) {
-    // console.log('xx5');
     return recurse({
       initial: tailSelections.length
         ? initial
@@ -156,12 +152,9 @@ export function buildCypherSelection({
       ...tailParams
     });
   }
-  // console.log('xx6');
   // Main control flow
   if (isGraphqlScalarType(innerSchemaType)) {
-    // console.log('xx7');
     if (customCypher) {
-      // console.log('xx8');
       if (getRelationTypeDirective(schemaTypeAstNode)) {
         variableName = `${variableName}_relation`;
       }
@@ -177,7 +170,6 @@ export function buildCypherSelection({
         ...tailParams
       });
     } else if (isNeo4jTypeField(schemaType, fieldName)) {
-      // console.log('xx9');
       return recurse(
         neo4jTypeField({
           initial,
@@ -190,7 +182,6 @@ export function buildCypherSelection({
         })
       );
     }
-    // console.log('xx0');
     // graphql scalar type, no custom cypher statement
     return recurse({
       initial: `${initial} .${fieldName} ${commaIfTail}`,
@@ -206,6 +197,7 @@ export function buildCypherSelection({
   const innerSchemaTypeRelation = getRelationTypeDirective(
     innerSchemaTypeAstNode
   );
+  console.log({ schemaTypeAstNode });
   const schemaTypeRelation = getRelationTypeDirective(schemaTypeAstNode);
   let { name: relType, direction: relDirection } = relationDirective(
     schemaType,
@@ -224,7 +216,6 @@ export function buildCypherSelection({
     fieldName,
     parentSelectionInfo
   });
-  // console.log('xx10');
   const skipLimit = computeSkipLimit(headSelection, resolveInfo.variableValues);
 
   const subSelections = extractSelections(
@@ -237,6 +228,7 @@ export function buildCypherSelection({
     selections: subSelections,
     variableName: nestedVariable,
     schemaType: innerSchemaType,
+    outerSchemaType: schemaType,
     resolveInfo,
     cypherParams,
     parentSelectionInfo: {
@@ -276,7 +268,6 @@ export function buildCypherSelection({
     tailParams
   };
   if (customCypher) {
-    // console.log('xx11');
     // Object type field with cypher directive
     selection = recurse(
       customCypherField({
@@ -291,7 +282,6 @@ export function buildCypherSelection({
       })
     );
   } else if (isNeo4jType(innerSchemaType.name)) {
-    // console.log('xx12');
     selection = recurse(
       neo4jType({
         schemaType,
@@ -301,7 +291,7 @@ export function buildCypherSelection({
       })
     );
   } else if (schemaTypeRelation) {
-    // console.log('xx14');
+    console.log({ schemaTypeRelation });
     // Object type field on relation type
     // (from, to, renamed, relation mutation payloads...)
     const translation = nodeTypeFieldOnRelationType({
@@ -310,6 +300,7 @@ export function buildCypherSelection({
       innerSchemaType,
       isInlineFragment,
       paramIndex,
+      outerSchemaType,
       schemaType,
       filterParams,
       neo4jTypeArgs,
@@ -323,7 +314,6 @@ export function buildCypherSelection({
     // set subSelection to update field argument params
     subSelection = translation.subSelection;
   } else if (innerSchemaTypeRelation) {
-    // console.log('xx15');
     // Relation type field on node type (field payload types...)
     const translation = relationTypeFieldOnNodeType({
       ...fieldInfo,
@@ -344,7 +334,6 @@ export function buildCypherSelection({
     // set subSelection to update field argument params
     subSelection = translation.subSelection;
   } else if (relType && relDirection) {
-    // console.log('xx13');
     // Object type field with relation directive
     const neo4jTypeClauses = neo4jTypePredicateClauses(
       filterParams,
@@ -371,6 +360,5 @@ export function buildCypherSelection({
     // set subSelection to update field argument params
     subSelection = translation.subSelection;
   }
-  // console.log('xx16');
   return [selection[0], { ...selection[1], ...subSelection[1] }];
 }
