@@ -336,7 +336,6 @@ export const relationTypeFieldOnNodeType = ({
     ? '>'
     : '';
 
-  console.log({ initial: ` {${subSelection[0]}}` });
   return {
     selection: {
       initial: `${initial}${fieldName}: ${
@@ -913,8 +912,6 @@ const nodeQuery = ({
     resolveInfo,
     paramIndex: rootParamIndex
   });
-
-  console.log({ subQuery });
 
   const fieldArgs = getQueryArguments(resolveInfo);
   const [filterPredicates, serializedFilter] = processFilterArgument({

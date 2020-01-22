@@ -68,7 +68,6 @@ export function buildCypherSelection({
   };
 
   const recurse = args => {
-    console.log('RECURSE');
     paramIndex =
       Object.keys(shallowFilterParams).length > 0 ? paramIndex + 1 : paramIndex;
     const [subSelection, subFilterParams] = buildCypherSelection({
@@ -197,7 +196,6 @@ export function buildCypherSelection({
   const innerSchemaTypeRelation = getRelationTypeDirective(
     innerSchemaTypeAstNode
   );
-  console.log({ schemaTypeAstNode });
   const schemaTypeRelation = getRelationTypeDirective(schemaTypeAstNode);
   let { name: relType, direction: relDirection } = relationDirective(
     schemaType,
@@ -291,7 +289,6 @@ export function buildCypherSelection({
       })
     );
   } else if (schemaTypeRelation) {
-    console.log({ schemaTypeRelation });
     // Object type field on relation type
     // (from, to, renamed, relation mutation payloads...)
     const translation = nodeTypeFieldOnRelationType({
