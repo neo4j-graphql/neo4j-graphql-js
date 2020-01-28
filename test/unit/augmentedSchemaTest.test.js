@@ -328,6 +328,18 @@ test.cb('Test augmented schema', t => {
       genres_none: _GenreFilter
       genres_single: _GenreFilter
       genres_every: _GenreFilter
+      nextInFranchise: _MovieSequelFilter
+      nextInFranchise_not: _MovieSequelFilter
+      nextInFranchise_in: [_MovieSequelFilter!]
+      nextInFranchise_not_in: [_MovieSequelFilter!]
+      viewedBy: _MovieViewingFilter
+      viewedBy_not: _MovieViewingFilter
+      viewedBy_in: [_MovieViewingFilter!]
+      viewedBy_not_in: [_MovieViewingFilter!]
+      viewedBy_some: _MovieViewingFilter
+      viewedBy_none: _MovieViewingFilter
+      viewedBy_single: _MovieViewingFilter
+      viewedBy_every: _MovieViewingFilter
       actors: _ActorFilter
       actors_not: _ActorFilter
       actors_in: [_ActorFilter!]
@@ -371,6 +383,34 @@ test.cb('Test augmented schema', t => {
       interfaceNoScalars_none: _InterfaceNoScalarsFilter
       interfaceNoScalars_single: _InterfaceNoScalarsFilter
       interfaceNoScalars_every: _InterfaceNoScalarsFilter
+    }
+
+    input _MovieSequelFilter {
+      AND: [_MovieSequelFilter!]
+      OR: [_MovieSequelFilter!]
+      yearsBetween: Int
+      yearsBetween_not: Int
+      yearsBetween_in: [Int!]
+      yearsBetween_not_in: [Int!]
+      yearsBetween_lt: Int
+      yearsBetween_lte: Int
+      yearsBetween_gt: Int
+      yearsBetween_gte: Int
+      Movie: _MovieFilter
+    }
+
+    input _MovieViewingFilter {
+      AND: [_MovieViewingFilter!]
+      OR: [_MovieViewingFilter!]
+      dateViewed: _Neo4jDateInput
+      dateViewed_not: _Neo4jDateInput
+      dateViewed_in: [_Neo4jDateInput!]
+      dateViewed_not_in: [_Neo4jDateInput!]
+      dateViewed_lt: _Neo4jDateInput
+      dateViewed_lte: _Neo4jDateInput
+      dateViewed_gt: _Neo4jDateInput
+      dateViewed_gte: _Neo4jDateInput
+      User: _UserFilter
     }
 
     input _GenreFilter {
@@ -762,6 +802,9 @@ test.cb('Test augmented schema', t => {
         orderBy: [_GenreOrdering]
         filter: _GenreFilter
       ): [Genre] @relation(name: "IN_GENRE", direction: "OUT")
+      nextInFranchise(filter: _MovieSequelFilter): _MovieNextInFranchise
+        @relation(direction: "OUT")
+      viewedBy(filter: _MovieViewingFilter): [_MovieViewedBy]
       similar(
         first: Int = 3
         offset: Int = 0
@@ -820,6 +863,18 @@ test.cb('Test augmented schema', t => {
         filter: _InterfaceNoScalarsFilter
       ): [InterfaceNoScalars]
         @relation(name: "INTERFACE_NO_SCALARS", direction: OUT)
+    }
+
+    type _MovieNextInFranchise
+      @relation(name: "IS_SEQUEL_TO", from: "Movie", to: "Movie") {
+      yearsBetween: Int
+      Movie: Movie
+    }
+
+    type _MovieViewedBy
+      @relation(name: "VIEWED_BY", from: "Movie", to: "User") {
+      dateViewed: _Neo4jDate
+      User: User
     }
 
     type _Neo4jDateTime {
@@ -1362,6 +1417,60 @@ test.cb('Test augmented schema', t => {
       ): _MergeMovieGenresPayload
         @MutationMeta(relationship: "IN_GENRE", from: "Movie", to: "Genre")
         @hasScope(scopes: ["Movie: Merge", "Genre: Merge"])
+      AddMovieNextInFranchise(
+        from: _MovieInput!
+        to: _MovieInput!
+        data: _SequelInput!
+      ): _AddMovieNextInFranchisePayload
+        @MutationMeta(relationship: "IS_SEQUEL_TO", from: "Movie", to: "Movie")
+        @hasScope(scopes: ["Movie: Create", "Movie: Create"])
+      RemoveMovieNextInFranchise(
+        from: _MovieInput!
+        to: _MovieInput!
+      ): _RemoveMovieNextInFranchisePayload
+        @MutationMeta(relationship: "IS_SEQUEL_TO", from: "Movie", to: "Movie")
+        @hasScope(scopes: ["Movie: Delete", "Movie: Delete"])
+      UpdateMovieNextInFranchise(
+        from: _MovieInput!
+        to: _MovieInput!
+        data: _SequelInput!
+      ): _UpdateMovieNextInFranchisePayload
+        @MutationMeta(relationship: "IS_SEQUEL_TO", from: "Movie", to: "Movie")
+        @hasScope(scopes: ["Movie: Update", "Movie: Update"])
+      MergeMovieNextInFranchise(
+        from: _MovieInput!
+        to: _MovieInput!
+        data: _SequelInput!
+      ): _MergeMovieNextInFranchisePayload
+        @MutationMeta(relationship: "IS_SEQUEL_TO", from: "Movie", to: "Movie")
+        @hasScope(scopes: ["Movie: Merge", "Movie: Merge"])
+      AddMovieViewedBy(
+        from: _MovieInput!
+        to: _UserInput!
+        data: _ViewingInput!
+      ): _AddMovieViewedByPayload
+        @MutationMeta(relationship: "VIEWED_BY", from: "Movie", to: "User")
+        @hasScope(scopes: ["Movie: Create", "User: Create"])
+      RemoveMovieViewedBy(
+        from: _MovieInput!
+        to: _UserInput!
+      ): _RemoveMovieViewedByPayload
+        @MutationMeta(relationship: "VIEWED_BY", from: "Movie", to: "User")
+        @hasScope(scopes: ["Movie: Delete", "User: Delete"])
+      UpdateMovieViewedBy(
+        from: _MovieInput!
+        to: _UserInput!
+        data: _ViewingInput!
+      ): _UpdateMovieViewedByPayload
+        @MutationMeta(relationship: "VIEWED_BY", from: "Movie", to: "User")
+        @hasScope(scopes: ["Movie: Update", "User: Update"])
+      MergeMovieViewedBy(
+        from: _MovieInput!
+        to: _UserInput!
+        data: _ViewingInput!
+      ): _MergeMovieViewedByPayload
+        @MutationMeta(relationship: "VIEWED_BY", from: "Movie", to: "User")
+        @hasScope(scopes: ["Movie: Merge", "User: Merge"])
       AddMovieActors(
         from: _ActorInput!
         to: _MovieInput!
@@ -1804,6 +1913,80 @@ test.cb('Test augmented schema', t => {
       @relation(name: "FILMED_IN", from: "Movie", to: "State") {
       from: Movie
       to: State
+    }
+
+    input _SequelInput {
+      yearsBetween: Int
+    }
+
+    type _AddMovieNextInFranchisePayload
+      @relation(name: "IS_SEQUEL_TO", from: "Movie", to: "Movie") {
+      from: Movie
+      to: Movie
+      yearsBetween: Int
+    }
+
+    type _RemoveMovieNextInFranchisePayload
+      @relation(name: "IS_SEQUEL_TO", from: "Movie", to: "Movie") {
+      from: Movie
+      to: Movie
+    }
+
+    type _UpdateMovieNextInFranchisePayload
+      @relation(name: "IS_SEQUEL_TO", from: "Movie", to: "Movie") {
+      from: Movie
+      to: Movie
+      yearsBetween: Int
+    }
+
+    type _MergeMovieNextInFranchisePayload
+      @relation(name: "IS_SEQUEL_TO", from: "Movie", to: "Movie") {
+      from: Movie
+      to: Movie
+      yearsBetween: Int
+    }
+
+    input _ViewingInput {
+      dateViewed: _Neo4jDateInput
+    }
+
+    type _AddMovieViewedByPayload
+      @relation(name: "VIEWED_BY", from: "Movie", to: "User") {
+      from: Movie
+      to: User
+      dateViewed: _Neo4jDate
+    }
+
+    type _RemoveMovieViewedByPayload
+      @relation(name: "VIEWED_BY", from: "Movie", to: "User") {
+      from: Movie
+      to: User
+    }
+
+    type _UpdateMovieViewedByPayload
+      @relation(name: "VIEWED_BY", from: "Movie", to: "User") {
+      from: Movie
+      to: User
+      dateViewed: _Neo4jDate
+    }
+
+    type _MergeMovieViewedByPayload
+      @relation(name: "VIEWED_BY", from: "Movie", to: "User") {
+      from: Movie
+      to: User
+      dateViewed: _Neo4jDate
+    }
+
+    type Sequel @relation(name: "IS_SEQUEL_TO") {
+      yearsBetween: Int
+      from: Movie
+      to: Movie
+    }
+
+    type Viewing @relation(name: "VIEWED_BY") {
+      dateViewed: _Neo4jDate
+      from: Movie
+      to: User
     }
 
     input _UserInput {

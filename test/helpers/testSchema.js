@@ -13,6 +13,8 @@ export const testSchema = /* GraphQL */ `
     poster: String
     imdbRating: Float
     genres: [Genre] @relation(name: "IN_GENRE", direction: "OUT")
+    nextInFranchise: Sequel @relation(direction: "OUT")
+    viewedBy: [Viewing]
     similar(first: Int = 3, offset: Int = 0): [Movie]
       @cypher(
         statement: "WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o"
@@ -71,6 +73,18 @@ export const testSchema = /* GraphQL */ `
       @cypher(
         statement: "MATCH (m:Movie)-[:IN_GENRE]->(this) RETURN m ORDER BY m.imdbRating DESC LIMIT 1"
       )
+  }
+
+  type Sequel @relation(name: "IS_SEQUEL_TO") {
+    yearsBetween: Int
+    from: Movie
+    to: Movie
+  }
+
+  type Viewing @relation(name: "VIEWED_BY") {
+    dateViewed: Date
+    from: Movie
+    to: User
   }
 
   type State {
