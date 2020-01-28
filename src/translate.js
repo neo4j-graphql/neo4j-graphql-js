@@ -484,8 +484,6 @@ const directedNodeTypeFieldOnRelationType = ({
   const relType = schemaTypeRelation.name;
   const fromTypeName = schemaTypeRelation.from;
   const toTypeName = schemaTypeRelation.to;
-  const isFromField = fieldName === fromTypeName || fieldName === 'from';
-  const isToField = fieldName === toTypeName || fieldName === 'to';
   const fragmentTypeParams = isInlineFragment
     ? derivedTypesParams(resolveInfo.schema, innerSchemaType.name)
     : {};
@@ -494,6 +492,14 @@ const directedNodeTypeFieldOnRelationType = ({
     outerSchemaType,
     parentSelectionInfo && parentSelectionInfo.fieldName
   );
+
+  const isFromField = relDirection
+    ? relDirection === 'IN'
+    : fieldName === fromTypeName || fieldName === 'from';
+  const isToField = relDirection
+    ? relDirection === 'OUT'
+    : fieldName === toTypeName || fieldName === 'to';
+  console.log({ relDirection, isFromField, isToField });
 
   // Since the translations are significantly different,
   // we first check whether the relationship is reflexive
