@@ -332,6 +332,10 @@ test.cb('Test augmented schema', t => {
       nextInFranchise_not: _MovieSequelFilter
       nextInFranchise_in: [_MovieSequelFilter!]
       nextInFranchise_not_in: [_MovieSequelFilter!]
+      nextInFranchiseDirectionless: _SequelDirectionsFilter
+      nextInFranchiseDirectionless_not: _SequelDirectionsFilter
+      nextInFranchiseDirectionless_in: [_SequelDirectionsFilter!]
+      nextInFranchiseDirectionless_not_in: [_SequelDirectionsFilter!]
       viewedBy: _MovieViewingFilter
       viewedBy_not: _MovieViewingFilter
       viewedBy_in: [_MovieViewingFilter!]
@@ -388,6 +392,25 @@ test.cb('Test augmented schema', t => {
     input _MovieSequelFilter {
       AND: [_MovieSequelFilter!]
       OR: [_MovieSequelFilter!]
+      yearsBetween: Int
+      yearsBetween_not: Int
+      yearsBetween_in: [Int!]
+      yearsBetween_not_in: [Int!]
+      yearsBetween_lt: Int
+      yearsBetween_lte: Int
+      yearsBetween_gt: Int
+      yearsBetween_gte: Int
+      Movie: _MovieFilter
+    }
+
+    input _SequelDirectionsFilter {
+      from: _SequelFilter
+      to: _SequelFilter
+    }
+
+    input _SequelFilter {
+      AND: [_SequelFilter!]
+      OR: [_SequelFilter!]
       yearsBetween: Int
       yearsBetween_not: Int
       yearsBetween_in: [Int!]
@@ -804,6 +827,7 @@ test.cb('Test augmented schema', t => {
       ): [Genre] @relation(name: "IN_GENRE", direction: "OUT")
       nextInFranchise(filter: _MovieSequelFilter): _MovieNextInFranchise
         @relation(direction: "OUT")
+      nextInFranchiseDirectionless: _MovieNextInFranchiseDirectionlessDirections
       viewedBy(filter: _MovieViewingFilter): [_MovieViewedBy]
       similar(
         first: Int = 3
@@ -866,6 +890,18 @@ test.cb('Test augmented schema', t => {
     }
 
     type _MovieNextInFranchise
+      @relation(name: "IS_SEQUEL_TO", from: "Movie", to: "Movie") {
+      yearsBetween: Int
+      Movie: Movie
+    }
+
+    type _MovieNextInFranchiseDirectionlessDirections
+      @relation(name: "IS_SEQUEL_TO", from: "Movie", to: "Movie") {
+      from(filter: _SequelFilter): [_MovieNextInFranchiseDirectionless]
+      to(filter: _SequelFilter): [_MovieNextInFranchiseDirectionless]
+    }
+
+    type _MovieNextInFranchiseDirectionless
       @relation(name: "IS_SEQUEL_TO", from: "Movie", to: "Movie") {
       yearsBetween: Int
       Movie: Movie
@@ -1444,6 +1480,33 @@ test.cb('Test augmented schema', t => {
       ): _MergeMovieNextInFranchisePayload
         @MutationMeta(relationship: "IS_SEQUEL_TO", from: "Movie", to: "Movie")
         @hasScope(scopes: ["Movie: Merge", "Movie: Merge"])
+      AddMovieNextInFranchiseDirectionless(
+        from: _MovieInput!
+        to: _MovieInput!
+        data: _SequelInput!
+      ): _AddMovieNextInFranchiseDirectionlessPayload
+        @MutationMeta(relationship: "IS_SEQUEL_TO", from: "Movie", to: "Movie")
+        @hasScope(scopes: ["Movie: Create", "Movie: Create"])
+      RemoveMovieNextInFranchiseDirectionless(
+        from: _MovieInput!
+        to: _MovieInput!
+      ): _RemoveMovieNextInFranchiseDirectionlessPayload
+        @MutationMeta(relationship: "IS_SEQUEL_TO", from: "Movie", to: "Movie")
+        @hasScope(scopes: ["Movie: Delete", "Movie: Delete"])
+      UpdateMovieNextInFranchiseDirectionless(
+        from: _MovieInput!
+        to: _MovieInput!
+        data: _SequelInput!
+      ): _UpdateMovieNextInFranchiseDirectionlessPayload
+        @MutationMeta(relationship: "IS_SEQUEL_TO", from: "Movie", to: "Movie")
+        @hasScope(scopes: ["Movie: Update", "Movie: Update"])
+      MergeMovieNextInFranchiseDirectionless(
+        from: _MovieInput!
+        to: _MovieInput!
+        data: _SequelInput!
+      ): _MergeMovieNextInFranchiseDirectionlessPayload
+        @MutationMeta(relationship: "IS_SEQUEL_TO", from: "Movie", to: "Movie")
+        @hasScope(scopes: ["Movie: Merge", "Movie: Merge"])
       AddMovieViewedBy(
         from: _MovieInput!
         to: _UserInput!
@@ -1940,6 +2003,33 @@ test.cb('Test augmented schema', t => {
     }
 
     type _MergeMovieNextInFranchisePayload
+      @relation(name: "IS_SEQUEL_TO", from: "Movie", to: "Movie") {
+      from: Movie
+      to: Movie
+      yearsBetween: Int
+    }
+
+    type _AddMovieNextInFranchiseDirectionlessPayload
+      @relation(name: "IS_SEQUEL_TO", from: "Movie", to: "Movie") {
+      from: Movie
+      to: Movie
+      yearsBetween: Int
+    }
+
+    type _RemoveMovieNextInFranchiseDirectionlessPayload
+      @relation(name: "IS_SEQUEL_TO", from: "Movie", to: "Movie") {
+      from: Movie
+      to: Movie
+    }
+
+    type _UpdateMovieNextInFranchiseDirectionlessPayload
+      @relation(name: "IS_SEQUEL_TO", from: "Movie", to: "Movie") {
+      from: Movie
+      to: Movie
+      yearsBetween: Int
+    }
+
+    type _MergeMovieNextInFranchiseDirectionlessPayload
       @relation(name: "IS_SEQUEL_TO", from: "Movie", to: "Movie") {
       from: Movie
       to: Movie

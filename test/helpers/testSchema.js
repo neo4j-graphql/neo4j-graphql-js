@@ -14,6 +14,7 @@ export const testSchema = /* GraphQL */ `
     imdbRating: Float
     genres: [Genre] @relation(name: "IN_GENRE", direction: "OUT")
     nextInFranchise: Sequel @relation(direction: "OUT")
+    nextInFranchiseDirectionless: Sequel
     viewedBy: [Viewing]
     similar(first: Int = 3, offset: Int = 0): [Movie]
       @cypher(
