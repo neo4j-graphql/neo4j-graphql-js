@@ -499,7 +499,6 @@ const directedNodeTypeFieldOnRelationType = ({
   const isToField = relDirection
     ? relDirection === 'OUT'
     : fieldName === toTypeName || fieldName === 'to';
-  console.log({ relDirection, isFromField, isToField });
 
   // Since the translations are significantly different,
   // we first check whether the relationship is reflexive

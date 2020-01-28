@@ -763,7 +763,9 @@ export const decideNestedVariableName = ({
   innerSchemaTypeRelation,
   variableName,
   fieldName,
-  parentSelectionInfo
+  parentSelectionInfo,
+  relDirection,
+  parentRelDirection
 }) => {
   if (
     isRootSelection({
@@ -776,7 +778,7 @@ export const decideNestedVariableName = ({
   } else if (schemaTypeRelation) {
     const fromTypeName = schemaTypeRelation.from;
     const toTypeName = schemaTypeRelation.to;
-    if (fromTypeName === toTypeName) {
+    if (!parentRelDirection && fromTypeName === toTypeName) {
       if (fieldName === 'from' || fieldName === 'to') {
         return variableName + '_' + fieldName;
       } else {
@@ -791,7 +793,10 @@ export const decideNestedVariableName = ({
     // and only node types can have fields whose values are relation types
     if (innerSchemaTypeRelation) {
       // innerSchemaType is a field payload type using a @relation directive
-      if (innerSchemaTypeRelation.from === innerSchemaTypeRelation.to) {
+      if (
+        !relDirection &&
+        innerSchemaTypeRelation.from === innerSchemaTypeRelation.to
+      ) {
         return variableName;
       }
     } else {

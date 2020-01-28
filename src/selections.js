@@ -17,7 +17,8 @@ import {
   isNeo4jTypeField,
   getNeo4jTypeArguments,
   neo4jTypePredicateClauses,
-  removeIgnoredFields
+  removeIgnoredFields,
+  parentRelDirection
 } from './utils';
 import {
   customCypherField,
@@ -38,7 +39,8 @@ export function buildCypherSelection({
   resolveInfo,
   paramIndex = 1,
   parentSelectionInfo = {},
-  secondParentSelectionInfo = {}
+  secondParentSelectionInfo = {},
+  parentRelDirection
 }) {
   if (!selections.length) return [initial, {}];
   selections = removeIgnoredFields(schemaType, selections);
@@ -212,7 +214,9 @@ export function buildCypherSelection({
     innerSchemaTypeRelation,
     variableName,
     fieldName,
-    parentSelectionInfo
+    parentSelectionInfo,
+    relDirection,
+    parentRelDirection
   });
   const skipLimit = computeSkipLimit(headSelection, resolveInfo.variableValues);
 
@@ -227,6 +231,7 @@ export function buildCypherSelection({
     variableName: nestedVariable,
     schemaType: innerSchemaType,
     outerSchemaType: schemaType,
+    parentRelDirection: relDirection,
     resolveInfo,
     cypherParams,
     parentSelectionInfo: {
