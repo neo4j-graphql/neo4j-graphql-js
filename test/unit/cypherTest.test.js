@@ -2135,6 +2135,39 @@ test('query using inline fragment', t => {
   );
 });
 
+test('query interfaced relation using inline fragment', t => {
+  const graphQLQuery = `query 
+  {
+    Actor {
+      name
+      knows {
+        ...userFavorites
+      }
+    }
+  }
+  
+  fragment userFavorites on User {
+    name
+    favorites {
+      movieId
+      title
+      year
+    }
+  } 
+  `,
+    expectedCypherQuery = `MATCH (\`actor\`:\`Actor\`) RETURN \`actor\` { .name ,knows: [(\`actor\`)-[:\`KNOWS\`]->(\`actor_knows\`:\`Person\`) | actor_knows {FRAGMENT_TYPE: head( [ label IN labels(actor_knows) WHERE label IN $Person_derivedTypes ] ),  .name ,favorites: [(\`actor_knows\`)-[:\`FAVORITED\`]->(\`actor_knows_favorites\`:\`Movie\`:\`u_user-id\`:\`newMovieLabel\`) | actor_knows_favorites { .movieId , .title , .year }] }] } AS \`actor\``;
+
+  t.plan(1);
+
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {},
+    expectedCypherQuery,
+    {}
+  );
+});
+
 test('Create node with temporal properties', t => {
   const graphQLQuery = `mutation {
     CreateTemporalNode(
