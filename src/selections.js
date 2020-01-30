@@ -64,6 +64,7 @@ export function buildCypherSelection({
     variableName,
     paramIndex,
     schemaType,
+    outerSchemaType,
     resolveInfo,
     parentSelectionInfo,
     secondParentSelectionInfo

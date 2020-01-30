@@ -5264,3 +5264,47 @@ test('Handle order by field with underscores - nested field ', t => {
     augmentedSchemaCypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery)
   ]);
 });
+
+test('Handle properties on reflexive relationship last', t => {
+  const graphQLQuery = `
+  {
+    Movie(title: "River Runs Through It, A", first: 2, offset: 1) {
+      nextInFranchise {
+        Movie {
+          title
+        }
+        yearsBetween
+      }
+    }
+  }
+  `,
+    expectedCypherQuery =
+      'MATCH (`movie`:`Movie`:`u_user-id`:`newMovieLabel` {title:$title}) RETURN `movie` {nextInFranchise: head([(`movie`)-[`movie_nextInFranchise_relation`:`IS_SEQUEL_TO`]->(:`Movie`:`u_user-id`:`newMovieLabel`) | movie_nextInFranchise_relation {Movie: head([(:`Movie`:`u_user-id`:`newMovieLabel`)-[`movie_nextInFranchise_relation`]->(`movie_nextInFranchise_Movie`:`Movie`:`u_user-id`:`newMovieLabel`) | movie_nextInFranchise_Movie { .title }]) , .yearsBetween }]) } AS `movie` SKIP toInteger($offset) LIMIT toInteger($first)';
+
+  t.plan(1);
+  return Promise.all([
+    augmentedSchemaCypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery)
+  ]);
+});
+
+test.only('Handle properties on reflexive relationship first', t => {
+  const graphQLQuery = `
+  {
+    Movie(title: "River Runs Through It, A", first: 2, offset: 1) {
+      nextInFranchise {
+        yearsBetween
+        Movie {
+          title
+        }
+      }
+    }
+  }
+  `,
+    expectedCypherQuery =
+      'MATCH (`movie`:`Movie`:`u_user-id`:`newMovieLabel` {title:$title}) RETURN `movie` {nextInFranchise: head([(`movie`)-[`movie_nextInFranchise_relation`:`IS_SEQUEL_TO`]->(:`Movie`:`u_user-id`:`newMovieLabel`) | movie_nextInFranchise_relation { .yearsBetween ,Movie: head([(:`Movie`:`u_user-id`:`newMovieLabel`)-[`movie_nextInFranchise_relation`]->(`movie_nextInFranchise`:`Movie`:`u_user-id`:`newMovieLabel`) | movie_nextInFranchise { .title }]) }]) } AS `movie` SKIP toInteger($offset) LIMIT toInteger($first)';
+
+  t.plan(1);
+  return Promise.all([
+    augmentedSchemaCypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery)
+  ]);
+});
