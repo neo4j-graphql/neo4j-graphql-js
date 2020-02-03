@@ -1833,6 +1833,7 @@ test('nested fragments on relations', t => {
     fragment Foo on Movie {
       title
       actors {
+        userId
         ...Bar
       }
     }
@@ -1840,7 +1841,7 @@ test('nested fragments on relations', t => {
     fragment Bar on Actor {
       name
     }`,
-    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {year:$year}) RETURN \`movie\` { .title ,actors: [(\`movie\`)<-[:\`ACTED_IN\`]-(\`movie_actors\`:\`Actor\`) | movie_actors { .name }] } AS \`movie\``;
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {year:$year}) RETURN \`movie\` { .title ,actors: [(\`movie\`)<-[:\`ACTED_IN\`]-(\`movie_actors\`:\`Actor\`) | movie_actors { .userId , .name }] } AS \`movie\``;
 
   t.plan(3);
   return Promise.all([
