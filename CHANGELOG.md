@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.12.1
+
+- [Fix nested fragments on relations](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/385)
+
 ## 2.12.0
 
 - [Add support for Neo4j multi-database](https://github.com/neo4j-graphql/neo4j-graphql-js/commit/fd557123667ab11c4c97fdf1d05c6861def5651b)
