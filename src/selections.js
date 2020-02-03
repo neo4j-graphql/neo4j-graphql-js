@@ -240,7 +240,7 @@ export function buildCypherSelection({
   // Fragments can have a different schemaType than the upper field definition due to interfaces.
   subSelection = headSelectionSetSelections
     .filter(({ kind }) => kind === 'FragmentSpread')
-    .reduce((acc, cur, index) => {
+    .reduce((acc, cur) => {
       const fragmentSelections = extractSelections(
         resolveInfo.fragments[cur.name.value].selectionSet.selections,
         resolveInfo.fragments
@@ -251,7 +251,7 @@ export function buildCypherSelection({
       );
 
       return recurse({
-        initial: index === 0 || !acc[0] ? acc[0] : acc[0] + ',',
+        initial: !acc[0] ? acc[0] : acc[0] + ',',
         selections: fragmentSelections,
         variableName: nestedVariable,
         schemaType: fragmentSchemaType,
