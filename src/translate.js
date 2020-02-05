@@ -44,7 +44,8 @@ import {
   typeIdentifiers,
   decideNeo4jTypeConstructor,
   getAdditionalLabels,
-  getDerivedTypeNames
+  getDerivedTypeNames,
+  getPrimaryKeyFromFields
 } from './utils';
 import {
   getNamedType,
@@ -283,9 +284,7 @@ export const relationTypeFieldOnNodeType = ({
   if (innerSchemaTypeRelation.from === innerSchemaTypeRelation.to) {
     return {
       selection: {
-        initial: `${initial}${fieldName}: {${
-          subSelection[0]
-        }}${skipLimit} ${commaIfTail}`,
+        initial: `${initial}${fieldName}: {${subSelection[0]}}${skipLimit} ${commaIfTail}`,
         ...tailParams
       },
       subSelection
@@ -537,9 +536,7 @@ const directedNodeTypeFieldOnRelationType = ({
       // e.g., 'from: Movie' -> 'Movie: Movie'
       return {
         selection: {
-          initial: `${initial}${fieldName}: ${variableName} {${
-            subSelection[0]
-          }}${skipLimit} ${commaIfTail}`,
+          initial: `${initial}${fieldName}: ${variableName} {${subSelection[0]}}${skipLimit} ${commaIfTail}`,
           ...tailParams
         },
         subSelection
@@ -699,9 +696,7 @@ export const neo4jType = ({
   return {
     initial: `${initial}${fieldName}: ${
       fieldIsArray
-        ? `reduce(a = [], INSTANCE IN ${variableName}.${fieldName} | a + {${
-            subSelection[0]
-          }})${commaIfTail}`
+        ? `reduce(a = [], INSTANCE IN ${variableName}.${fieldName} | a + {${subSelection[0]}})${commaIfTail}`
         : temporalOrderingFieldExists(parentSchemaType, parentFilterParams)
         ? `${safeVariableName}.${fieldName}${commaIfTail}`
         : `{${subSelection[0]}}${commaIfTail}`
@@ -1182,7 +1177,7 @@ const nodeDelete = ({
   const safeVariableName = safeVar(variableName);
   const safeLabelName = safeLabel([typeName, ...additionalLabels]);
   const args = getMutationArguments(resolveInfo);
-  const primaryKeyArg = args[0];
+  const primaryKeyArg = getPrimaryKeyFromFields(args) || args[0];
   const primaryKeyArgName = primaryKeyArg.name.value;
   const neo4jTypeArgs = getNeo4jTypeArguments(args);
   const [primaryKeyParam] = splitSelectionParameters(params, primaryKeyArgName);
@@ -1624,7 +1619,7 @@ const nodeMergeOrUpdate = ({
   const safeVariableName = safeVar(variableName);
   const safeLabelName = safeLabel([typeName, ...additionalLabels]);
   const args = getMutationArguments(resolveInfo);
-  const primaryKeyArg = args[0];
+  const primaryKeyArg = getPrimaryKeyFromFields(args) || args[0];
   const primaryKeyArgName = primaryKeyArg.name.value;
   const neo4jTypeArgs = getNeo4jTypeArguments(args);
   const [primaryKeyParam, updateParams] = splitSelectionParameters(

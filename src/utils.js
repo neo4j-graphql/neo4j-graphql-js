@@ -690,7 +690,6 @@ const firstField = fields => {
 
 export const getPrimaryKey = astNode => {
   let fields = astNode.fields;
-  let pk = undefined;
   // prevent ignored, relation, and computed fields
   // from being used as primary keys
   fields = fields.filter(
@@ -699,6 +698,11 @@ export const getPrimaryKey = astNode => {
       !getFieldDirective(field, 'relation') &&
       !getFieldDirective(field, 'cypher')
   );
+  return getPrimaryKeyFromFields(fields);
+};
+
+export const getPrimaryKeyFromFields = fields => {
+  let pk = undefined;
   if (!fields.length) return pk;
   pk = firstNonNullAndIdField(fields);
   if (!pk) {
