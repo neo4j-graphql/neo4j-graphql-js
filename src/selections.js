@@ -101,6 +101,7 @@ export function buildCypherSelection({
         );
         let fragmentTailParams = {
           selections: fragmentSelections,
+          cypherParams,
           variableName,
           schemaType: fragmentSchemaType,
           resolveInfo,
