@@ -152,6 +152,7 @@ export function augmentedSchemaCypherTestRunner(
 
   const resolvers = {
     QueryA: {
+      Actor: checkCypherQuery,
       User: checkCypherQuery,
       Movie: checkCypherQuery,
       MoviesByYear: checkCypherQuery,
@@ -208,6 +209,9 @@ export function augmentedSchemaCypherTestRunner(
       MergeUserFriends: checkCypherMutation,
       UpdateUserFriends: checkCypherMutation,
       RemoveUserFriends: checkCypherMutation,
+      AddActorKnows: checkCypherMutation,
+      MergeActorKnows: checkCypherMutation,
+      RemoveActorKnows: checkCypherMutation,
       currentUserId: checkCypherMutation,
       computedObjectWithCypherParams: checkCypherMutation,
       computedStringList: checkCypherMutation,

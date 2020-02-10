@@ -1,5 +1,28 @@
 # Changelog
 
+## 2.12.1
+
+- [Fix nested fragments on relations](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/385)
+
+## 2.12.0
+
+- [Add support for Neo4j multi-database](https://github.com/neo4j-graphql/neo4j-graphql-js/commit/fd557123667ab11c4c97fdf1d05c6861def5651b)
+- [Fix fragments on interfaced relational fields](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/377)
+
+## 2.11.5
+
+- [Add relation mutations for interfaced types](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/374)
+
+## 2.11.4
+
+- [Fix for nested ordering fields with underscores](https://github.com/neo4j-graphql/neo4j-graphql-js/commit/b422f3bbef4ffe1a243193d5d1662313625e54c4)
+
+## 2.11.3
+
+- [Fixes for augmentation tests](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/371)
+- [Fix null-access for null string/ID values.](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/368)
+- [Fix for nested filtering](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/372)
+
 ## 2.11.2
 
 - [Fix #295 Querying interface @relation fields with non-unique relationship names](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/366)

@@ -1343,6 +1343,122 @@ test('Update reflexive relationship mutation with relationship property', t => {
   );
 });
 
+test('Add interfaced relationship mutation', t => {
+  const graphQLQuery = `mutation someMutation {
+    AddActorKnows(
+      from: { userId: "123" },
+      to: { userId: "456" }
+    ) {
+      from {
+        userId
+        name
+      }
+      to {
+        userId
+        name
+      }
+    }
+  }`,
+    expectedCypherQuery = `
+      MATCH (\`actor_from\`:\`Actor\` {userId: $from.userId})
+      MATCH (\`person_to\`:\`Person\` {userId: $to.userId})
+      CREATE (\`actor_from\`)-[\`knows_relation\`:\`KNOWS\`]->(\`person_to\`)
+      RETURN \`knows_relation\` { from: \`actor_from\` { .userId , .name } ,to: \`person_to\` {FRAGMENT_TYPE: head( [ label IN labels(person_to) WHERE label IN $Person_derivedTypes ] ), .userId , .name }  } AS \`_AddActorKnowsPayload\`;
+    `;
+
+  t.plan(1);
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {
+      from: { userId: '123' },
+      to: { userId: '456' },
+      first: -1,
+      offset: 0
+    },
+    expectedCypherQuery,
+    {}
+  );
+});
+
+test('Merge interfaced relationship mutation', t => {
+  const graphQLQuery = `mutation someMutation {
+    MergeActorKnows(
+      from: { userId: "123" },
+      to: { userId: "456" }
+    ) {
+      from {
+        userId
+        name
+      }
+      to {
+        userId
+        name
+      }
+    }
+  }`,
+    expectedCypherQuery = `
+      MATCH (\`actor_from\`:\`Actor\` {userId: $from.userId})
+      MATCH (\`person_to\`:\`Person\` {userId: $to.userId})
+      MERGE (\`actor_from\`)-[\`knows_relation\`:\`KNOWS\`]->(\`person_to\`)
+      RETURN \`knows_relation\` { from: \`actor_from\` { .userId , .name } ,to: \`person_to\` {FRAGMENT_TYPE: head( [ label IN labels(person_to) WHERE label IN $Person_derivedTypes ] ), .userId , .name }  } AS \`_MergeActorKnowsPayload\`;
+    `;
+
+  t.plan(1);
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {
+      from: { userId: '123' },
+      to: { userId: '456' },
+      first: -1,
+      offset: 0
+    },
+    expectedCypherQuery,
+    {}
+  );
+});
+
+test('Remove interfaced relationship mutation', t => {
+  const graphQLQuery = `mutation someMutation {
+    RemoveActorKnows(
+      from: { userId: "123" },
+      to: { userId: "456" }
+    ) {
+      from {
+        userId
+        name
+      }
+      to {
+        userId
+        name
+      }
+    }
+  }`,
+    expectedCypherQuery = `
+      MATCH (\`actor_from\`:\`Actor\` {userId: $from.userId})
+      MATCH (\`person_to\`:\`Person\` {userId: $to.userId})
+      OPTIONAL MATCH (\`actor_from\`)-[\`actor_fromperson_to\`:\`KNOWS\`]->(\`person_to\`)
+      DELETE \`actor_fromperson_to\`
+      WITH COUNT(*) AS scope, \`actor_from\` AS \`_actor_from\`, \`person_to\` AS \`_person_to\`
+      RETURN {from: \`_actor_from\` { .userId , .name } ,to: \`_person_to\` {FRAGMENT_TYPE: head( [ label IN labels(_person_to) WHERE label IN $Person_derivedTypes ] ), .userId , .name } } AS \`_RemoveActorKnowsPayload\`;
+    `;
+
+  t.plan(1);
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {
+      from: { userId: '123' },
+      to: { userId: '456' },
+      first: -1,
+      offset: 0
+    },
+    expectedCypherQuery,
+    {}
+  );
+});
+
 test('Remove relationship mutation', t => {
   const graphQLQuery = `mutation someMutation {
     RemoveMovieGenres(
@@ -1717,6 +1833,7 @@ test('nested fragments on relations', t => {
     fragment Foo on Movie {
       title
       actors {
+        userId
         ...Bar
       }
     }
@@ -1724,7 +1841,7 @@ test('nested fragments on relations', t => {
     fragment Bar on Actor {
       name
     }`,
-    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {year:$year}) RETURN \`movie\` { .title ,actors: [(\`movie\`)<-[:\`ACTED_IN\`]-(\`movie_actors\`:\`Actor\`) | movie_actors { .name }] } AS \`movie\``;
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {year:$year}) RETURN \`movie\` { .title ,actors: [(\`movie\`)<-[:\`ACTED_IN\`]-(\`movie_actors\`:\`Actor\`) | movie_actors { .userId , .name }] } AS \`movie\``;
 
   t.plan(3);
   return Promise.all([
@@ -2007,6 +2124,39 @@ test('query using inline fragment', t => {
   }
   `,
     expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {title:$title}) RETURN \`movie\` { .title ,ratings: [(\`movie\`)<-[\`movie_ratings_relation\`:\`RATED\`]-(:\`User\`) | movie_ratings_relation { .rating ,User: head([(:\`Movie\`${ADDITIONAL_MOVIE_LABELS})<-[\`movie_ratings_relation\`]-(\`movie_ratings_User\`:\`User\`) | movie_ratings_User { .name , .userId }]) }] } AS \`movie\``;
+
+  t.plan(1);
+
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {},
+    expectedCypherQuery,
+    {}
+  );
+});
+
+test('query interfaced relation using inline fragment', t => {
+  const graphQLQuery = `query 
+  {
+    Actor {
+      name
+      knows {
+        ...userFavorites
+      }
+    }
+  }
+  
+  fragment userFavorites on User {
+    name
+    favorites {
+      movieId
+      title
+      year
+    }
+  } 
+  `,
+    expectedCypherQuery = `MATCH (\`actor\`:\`Actor\`) RETURN \`actor\` { .name ,knows: [(\`actor\`)-[:\`KNOWS\`]->(\`actor_knows\`:\`Person\`) | actor_knows {FRAGMENT_TYPE: head( [ label IN labels(actor_knows) WHERE label IN $Person_derivedTypes ] ),  .name ,favorites: [(\`actor_knows\`)-[:\`FAVORITED\`]->(\`actor_knows_favorites\`:\`Movie\`:\`u_user-id\`:\`newMovieLabel\`) | actor_knows_favorites { .movieId , .title , .year }] }] } AS \`actor\``;
 
   t.plan(1);
 
@@ -5115,6 +5265,36 @@ test('Handle @cypher field with parameterized value for field of input type argu
         cypherParams: CYPHER_PARAMS
       }
     ),
+    augmentedSchemaCypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery)
+  ]);
+});
+
+test('Handle order by field with underscores - root level', t => {
+  const graphQLQuery = `{Movie(orderBy: someprefix_title_with_underscores_desc){title}}`,
+    expectedCypherQuery =
+      'MATCH (`movie`:`Movie`:`u_user-id`:`newMovieLabel`) WITH `movie` ORDER BY movie.someprefix_title_with_underscores DESC RETURN `movie` { .title } AS `movie`';
+
+  t.plan(1);
+  return Promise.all([
+    augmentedSchemaCypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery)
+  ]);
+});
+
+test('Handle order by field with underscores - nested field ', t => {
+  const graphQLQuery = `
+  {
+    GenresBySubstring(substring: "Foo") {
+      movies(orderBy: someprefix_title_with_underscores_desc) {
+        title
+      }
+    }
+  }
+  `,
+    expectedCypherQuery =
+      'WITH apoc.cypher.runFirstColumn("MATCH (g:Genre) WHERE toLower(g.name) CONTAINS toLower($substring) RETURN g", {offset:$offset, first:$first, substring:$substring, cypherParams: $cypherParams}, True) AS x UNWIND x AS `genre` RETURN `genre` {movies: apoc.coll.sortMulti([(`genre`)<-[:`IN_GENRE`]-(`genre_movies`:`Movie`:`u_user-id`:`newMovieLabel`) | genre_movies { .title }], [\'someprefix_title_with_underscores\']) } AS `genre`';
+
+  t.plan(1);
+  return Promise.all([
     augmentedSchemaCypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery)
   ]);
 });

@@ -67,8 +67,26 @@ instead: \`DEBUG=neo4j-graphql-js\`.
 
   context.driver._userAgent = `neo4j-graphql-js/${neo4jGraphQLVersion}`;
 
-  // TODO: Is this a 4.0 driver instance? Check bolt path for default database name and use that when creating the session
-  const session = context.driver.session();
+  let session;
+
+  if (context.neo4jDatabase) {
+    // database is specified in context object
+    try {
+      // connect to the specified database
+      // must be using 4.x version of driver
+      session = context.driver.session({
+        database: context.neo4jDatabase
+      });
+    } catch (e) {
+      // error - not using a 4.x version of driver!
+      // fall back to default database
+      session = context.driver.session();
+    }
+  } else {
+    // no database specified
+    session = context.driver.session();
+  }
+
   let result;
 
   try {

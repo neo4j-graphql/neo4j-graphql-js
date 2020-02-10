@@ -211,15 +211,15 @@ export function buildCypherSelection({
   });
 
   const skipLimit = computeSkipLimit(headSelection, resolveInfo.variableValues);
-
-  const subSelections = extractSelections(
-    headSelection.selectionSet ? headSelection.selectionSet.selections : [],
-    resolveInfo.fragments
-  );
+  const headSelectionSetSelections = headSelection.selectionSet
+    ? headSelection.selectionSet.selections
+    : [];
 
   let subSelection = recurse({
     initial: '',
-    selections: subSelections,
+    selections: headSelectionSetSelections.filter(
+      ({ kind }) => kind !== 'FragmentSpread'
+    ),
     variableName: nestedVariable,
     schemaType: innerSchemaType,
     resolveInfo,
@@ -235,6 +235,40 @@ export function buildCypherSelection({
     },
     secondParentSelectionInfo: parentSelectionInfo
   });
+
+  // The following code will create all field selections per FragmentSpread.
+  // Fragments can have a different schemaType than the upper field definition due to interfaces.
+  subSelection = headSelectionSetSelections
+    .filter(({ kind }) => kind === 'FragmentSpread')
+    .reduce((acc, cur) => {
+      const fragmentSelections = extractSelections(
+        resolveInfo.fragments[cur.name.value].selectionSet.selections,
+        resolveInfo.fragments
+      );
+
+      const fragmentSchemaType = resolveInfo.schema.getType(
+        resolveInfo.fragments[cur.name.value].typeCondition.name.value
+      );
+
+      return recurse({
+        initial: !acc[0] ? acc[0] : acc[0] + ',',
+        selections: fragmentSelections,
+        variableName: nestedVariable,
+        schemaType: fragmentSchemaType,
+        resolveInfo,
+        cypherParams,
+        parentSelectionInfo: {
+          fieldName,
+          schemaType,
+          variableName,
+          fieldType,
+          filterParams,
+          selections,
+          paramIndex
+        },
+        secondParentSelectionInfo: parentSelectionInfo
+      });
+    }, subSelection);
 
   let selection;
   const fieldArgs =

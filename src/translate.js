@@ -379,7 +379,11 @@ export const nodeTypeFieldOnRelationType = ({
     return {
       selection: relationTypeMutationPayloadField({
         ...fieldInfo,
-        parentSelectionInfo
+        schemaType,
+        isInlineFragment,
+        parentSelectionInfo,
+        innerSchemaType,
+        resolveInfo
       }),
       subSelection: fieldInfo.subSelection
     };
@@ -405,17 +409,27 @@ const relationTypeMutationPayloadField = ({
   initial,
   fieldName,
   variableName,
+  nestedVariable,
   subSelection,
   skipLimit,
   commaIfTail,
   tailParams,
-  parentSelectionInfo
+  parentSelectionInfo,
+  isInlineFragment,
+  resolveInfo,
+  innerSchemaType
 }) => {
   const safeVariableName = safeVar(variableName);
+  const fragmentTypeParams = isInlineFragment
+    ? derivedTypesParams(resolveInfo.schema, innerSchemaType.name)
+    : {};
+  subSelection[1] = { ...subSelection[1], ...fragmentTypeParams };
   return {
     initial: `${initial}${fieldName}: ${safeVariableName} {${
-      subSelection[0]
-    }}${skipLimit} ${commaIfTail}`,
+      isInlineFragment
+        ? `${fragmentType(nestedVariable, innerSchemaType.name)},`
+        : ''
+    }${subSelection[0]}}${skipLimit} ${commaIfTail}`,
     ...tailParams,
     variableName:
       fieldName === 'from' ? parentSelectionInfo.to : parentSelectionInfo.from
@@ -1713,7 +1727,7 @@ const temporalOrderingFieldExists = (schemaType, filterParams) => {
     orderByParam = orderByParam.value;
     if (!Array.isArray(orderByParam)) orderByParam = [orderByParam];
     return orderByParam.find(e => {
-      const fieldName = e.substring(0, e.indexOf('_'));
+      const fieldName = e.substring(0, e.lastIndexOf('_'));
       const fieldTypeName = getFieldTypeName(schemaType, fieldName);
       return isTemporalType(fieldTypeName);
     });
@@ -1727,7 +1741,7 @@ const buildSortMultiArgs = param => {
   if (!Array.isArray(values)) values = [values];
   return values
     .map(e => {
-      fieldName = e.substring(0, e.indexOf('_'));
+      fieldName = e.substring(0, e.lastIndexOf('_'));
       return e.includes('_asc') ? `'^${fieldName}'` : `'${fieldName}'`;
     })
     .join(',');
@@ -2778,7 +2792,11 @@ const buildRelatedTypeListComprehension = ({
   if (rootIsRelationType) {
     relationVariable = variableName;
   }
-  const thisTypeVariable = safeVar(lowFirstLetter(thisType));
+
+  const thisTypeVariable =
+    !rootIsRelationType && !isRelationTypeNode
+      ? safeVar(lowFirstLetter(variableName))
+      : safeVar(lowFirstLetter(thisType));
   // prevents related node variable from
   // conflicting with parent variables
   const relatedTypeVariable = safeVar(`_${relatedType.toLowerCase()}`);
