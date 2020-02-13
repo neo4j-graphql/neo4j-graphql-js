@@ -132,12 +132,25 @@ test.cb('Test augmented schema', t => {
         orderBy: [_CasedTypeOrdering]
         filter: _CasedTypeFilter
       ): [CasedType]
+      Camera(
+        type: String
+        first: Int
+        offset: Int
+        orderBy: [_CameraOrdering]
+        filter: _CameraFilter
+      ): [Camera]
       InterfaceNoScalars(
         orderBy: _InterfaceNoScalarsOrdering
         first: Int
         offset: Int
         filter: _InterfaceNoScalarsFilter
       ): [InterfaceNoScalars]
+      CustomCameras(
+        first: Int
+        offset: Int
+        orderBy: [_CameraOrdering]
+      ): [Camera] @cypher(statement: "MATCH (c:Camera) RETURN c")
+      CustomCamera: Camera @cypher(statement: "MATCH (c:Camera) RETURN c")
       Genre(
         _id: String
         name: String
@@ -196,6 +209,39 @@ test.cb('Test augmented schema', t => {
         orderBy: [_SpatialNodeOrdering]
         filter: _SpatialNodeFilter
       ): [SpatialNode] @hasScope(scopes: ["SpatialNode: Read"])
+      OldCamera(
+        id: ID
+        type: String
+        make: String
+        weight: Int
+        smell: String
+        _id: String
+        first: Int
+        offset: Int
+        orderBy: [_OldCameraOrdering]
+        filter: _OldCameraFilter
+      ): [OldCamera] @hasScope(scopes: ["OldCamera: Read"])
+      NewCamera(
+        id: ID
+        type: String
+        make: String
+        weight: Int
+        features: String
+        _id: String
+        first: Int
+        offset: Int
+        orderBy: [_NewCameraOrdering]
+        filter: _NewCameraFilter
+      ): [NewCamera] @hasScope(scopes: ["NewCamera: Read"])
+      CameraMan(
+        userId: ID
+        name: String
+        _id: String
+        first: Int
+        offset: Int
+        orderBy: [_CameraManOrdering]
+        filter: _CameraManFilter
+      ): [CameraMan] @hasScope(scopes: ["CameraMan: Read"])
     }
 
     input _Neo4jDateTimeInput {
@@ -1294,6 +1340,346 @@ test.cb('Test augmented schema', t => {
       _id: String
     }
 
+    enum _CameraOrdering {
+      id_asc
+      id_desc
+      type_asc
+      type_desc
+      make_asc
+      make_desc
+      weight_asc
+      weight_desc
+    }
+
+    input _CameraFilter {
+      AND: [_CameraFilter!]
+      OR: [_CameraFilter!]
+      id: ID
+      id_not: ID
+      id_in: [ID!]
+      id_not_in: [ID!]
+      id_contains: ID
+      id_not_contains: ID
+      id_starts_with: ID
+      id_not_starts_with: ID
+      id_ends_with: ID
+      id_not_ends_with: ID
+      type: String
+      type_not: String
+      type_in: [String!]
+      type_not_in: [String!]
+      type_contains: String
+      type_not_contains: String
+      type_starts_with: String
+      type_not_starts_with: String
+      type_ends_with: String
+      type_not_ends_with: String
+      make: String
+      make_not: String
+      make_in: [String!]
+      make_not_in: [String!]
+      make_contains: String
+      make_not_contains: String
+      make_starts_with: String
+      make_not_starts_with: String
+      make_ends_with: String
+      make_not_ends_with: String
+      weight: Int
+      weight_not: Int
+      weight_in: [Int!]
+      weight_not_in: [Int!]
+      weight_lt: Int
+      weight_lte: Int
+      weight_gt: Int
+      weight_gte: Int
+      operators: _PersonFilter
+      operators_not: _PersonFilter
+      operators_in: [_PersonFilter!]
+      operators_not_in: [_PersonFilter!]
+      operators_some: _PersonFilter
+      operators_none: _PersonFilter
+      operators_single: _PersonFilter
+      operators_every: _PersonFilter
+    }
+
+    interface Camera {
+      id: ID!
+      type: String
+      make: String
+      weight: Int
+      operators(
+        first: Int
+        offset: Int
+        orderBy: [_PersonOrdering]
+        filter: _PersonFilter
+      ): [Person] @relation(name: "cameras", direction: IN)
+      computedOperators(
+        name: String
+        first: Int
+        offset: Int
+        orderBy: [_PersonOrdering]
+      ): [Person]
+        @cypher(statement: "MATCH (this)<-[:cameras]-(p:Person) RETURN p")
+    }
+
+    enum _OldCameraOrdering {
+      id_asc
+      id_desc
+      type_asc
+      type_desc
+      make_asc
+      make_desc
+      weight_asc
+      weight_desc
+      smell_asc
+      smell_desc
+      _id_asc
+      _id_desc
+    }
+
+    input _OldCameraFilter {
+      AND: [_OldCameraFilter!]
+      OR: [_OldCameraFilter!]
+      id: ID
+      id_not: ID
+      id_in: [ID!]
+      id_not_in: [ID!]
+      id_contains: ID
+      id_not_contains: ID
+      id_starts_with: ID
+      id_not_starts_with: ID
+      id_ends_with: ID
+      id_not_ends_with: ID
+      type: String
+      type_not: String
+      type_in: [String!]
+      type_not_in: [String!]
+      type_contains: String
+      type_not_contains: String
+      type_starts_with: String
+      type_not_starts_with: String
+      type_ends_with: String
+      type_not_ends_with: String
+      make: String
+      make_not: String
+      make_in: [String!]
+      make_not_in: [String!]
+      make_contains: String
+      make_not_contains: String
+      make_starts_with: String
+      make_not_starts_with: String
+      make_ends_with: String
+      make_not_ends_with: String
+      weight: Int
+      weight_not: Int
+      weight_in: [Int!]
+      weight_not_in: [Int!]
+      weight_lt: Int
+      weight_lte: Int
+      weight_gt: Int
+      weight_gte: Int
+      smell: String
+      smell_not: String
+      smell_in: [String!]
+      smell_not_in: [String!]
+      smell_contains: String
+      smell_not_contains: String
+      smell_starts_with: String
+      smell_not_starts_with: String
+      smell_ends_with: String
+      smell_not_ends_with: String
+      operators: _PersonFilter
+      operators_not: _PersonFilter
+      operators_in: [_PersonFilter!]
+      operators_not_in: [_PersonFilter!]
+      operators_some: _PersonFilter
+      operators_none: _PersonFilter
+      operators_single: _PersonFilter
+      operators_every: _PersonFilter
+    }
+
+    type OldCamera implements Camera {
+      id: ID!
+      type: String
+      make: String
+      weight: Int
+      smell: String
+      operators(
+        first: Int
+        offset: Int
+        orderBy: [_PersonOrdering]
+        filter: _PersonFilter
+      ): [Person] @relation(name: "cameras", direction: IN)
+      computedOperators(
+        name: String
+        first: Int
+        offset: Int
+        orderBy: [_PersonOrdering]
+      ): [Person]
+        @cypher(statement: "MATCH (this)<-[:cameras]-(p:Person) RETURN p")
+      _id: String
+    }
+
+    enum _NewCameraOrdering {
+      id_asc
+      id_desc
+      type_asc
+      type_desc
+      make_asc
+      make_desc
+      weight_asc
+      weight_desc
+      _id_asc
+      _id_desc
+    }
+
+    input _NewCameraFilter {
+      AND: [_NewCameraFilter!]
+      OR: [_NewCameraFilter!]
+      id: ID
+      id_not: ID
+      id_in: [ID!]
+      id_not_in: [ID!]
+      id_contains: ID
+      id_not_contains: ID
+      id_starts_with: ID
+      id_not_starts_with: ID
+      id_ends_with: ID
+      id_not_ends_with: ID
+      type: String
+      type_not: String
+      type_in: [String!]
+      type_not_in: [String!]
+      type_contains: String
+      type_not_contains: String
+      type_starts_with: String
+      type_not_starts_with: String
+      type_ends_with: String
+      type_not_ends_with: String
+      make: String
+      make_not: String
+      make_in: [String!]
+      make_not_in: [String!]
+      make_contains: String
+      make_not_contains: String
+      make_starts_with: String
+      make_not_starts_with: String
+      make_ends_with: String
+      make_not_ends_with: String
+      weight: Int
+      weight_not: Int
+      weight_in: [Int!]
+      weight_not_in: [Int!]
+      weight_lt: Int
+      weight_lte: Int
+      weight_gt: Int
+      weight_gte: Int
+      operators: _PersonFilter
+      operators_not: _PersonFilter
+      operators_in: [_PersonFilter!]
+      operators_not_in: [_PersonFilter!]
+      operators_some: _PersonFilter
+      operators_none: _PersonFilter
+      operators_single: _PersonFilter
+      operators_every: _PersonFilter
+    }
+
+    type NewCamera implements Camera {
+      id: ID!
+      type: String
+      make: String
+      weight: Int
+      features: [String]
+      operators(
+        first: Int
+        offset: Int
+        orderBy: [_PersonOrdering]
+        filter: _PersonFilter
+      ): [Person] @relation(name: "cameras", direction: IN)
+      computedOperators(
+        name: String
+        first: Int
+        offset: Int
+        orderBy: [_PersonOrdering]
+      ): [Person]
+        @cypher(statement: "MATCH (this)<-[:cameras]-(p:Person) RETURN p")
+      _id: String
+    }
+
+    enum _CameraManOrdering {
+      userId_asc
+      userId_desc
+      name_asc
+      name_desc
+      _id_asc
+      _id_desc
+    }
+
+    input _CameraManFilter {
+      AND: [_CameraManFilter!]
+      OR: [_CameraManFilter!]
+      userId: ID
+      userId_not: ID
+      userId_in: [ID!]
+      userId_not_in: [ID!]
+      userId_contains: ID
+      userId_not_contains: ID
+      userId_starts_with: ID
+      userId_not_starts_with: ID
+      userId_ends_with: ID
+      userId_not_ends_with: ID
+      name: String
+      name_not: String
+      name_in: [String!]
+      name_not_in: [String!]
+      name_contains: String
+      name_not_contains: String
+      name_starts_with: String
+      name_not_starts_with: String
+      name_ends_with: String
+      name_not_ends_with: String
+      favoriteCamera: _CameraFilter
+      favoriteCamera_not: _CameraFilter
+      favoriteCamera_in: [_CameraFilter!]
+      favoriteCamera_not_in: [_CameraFilter!]
+      cameras: _CameraFilter
+      cameras_not: _CameraFilter
+      cameras_in: [_CameraFilter!]
+      cameras_not_in: [_CameraFilter!]
+      cameras_some: _CameraFilter
+      cameras_none: _CameraFilter
+      cameras_single: _CameraFilter
+      cameras_every: _CameraFilter
+      cameraBuddy: _PersonFilter
+      cameraBuddy_not: _PersonFilter
+      cameraBuddy_in: [_PersonFilter!]
+      cameraBuddy_not_in: [_PersonFilter!]
+    }
+
+    type CameraMan implements Person {
+      userId: ID!
+      name: String
+      favoriteCamera(filter: _CameraFilter): Camera
+        @relation(name: "favoriteCamera", direction: "OUT")
+      heaviestCamera(
+        first: Int
+        offset: Int
+        orderBy: [_CameraOrdering]
+      ): [Camera]
+        @cypher(
+          statement: "MATCH (c: Camera)--(this) RETURN c ORDER BY c.weight DESC LIMIT 1"
+        )
+      cameras(
+        first: Int
+        offset: Int
+        orderBy: [_CameraOrdering]
+        filter: _CameraFilter
+      ): [Camera!]! @relation(name: "cameras", direction: "OUT")
+      cameraBuddy(filter: _PersonFilter): Person
+        @relation(name: "cameraBuddy", direction: "OUT")
+      _id: String
+    }
+
     input _SpatialNodeFilter {
       AND: [_SpatialNodeFilter!]
       OR: [_SpatialNodeFilter!]
@@ -1344,6 +1730,14 @@ test.cb('Test augmented schema', t => {
       customWithArguments(strArg: String, strInputArg: strInput): String
         @cypher(statement: "RETURN $strInputArg.strArg")
       testPublish: Boolean @neo4j_ignore
+      CustomCamera: Camera
+        @cypher(
+          statement: "CREATE (newCamera:Camera:NewCamera {id: apoc.create.uuid(), type: 'macro'}) RETURN newCamera"
+        )
+      CustomCameras: [Camera]
+        @cypher(
+          statement: "CREATE (newCamera:Camera:NewCamera {id: apoc.create.uuid(), type: 'macro', features: ['selfie', 'zoom']}) CREATE (oldCamera:Camera:OldCamera {id: apoc.create.uuid(), type: 'floating', smell: 'rusty' }) RETURN [newCamera, oldCamera]"
+        )
       AddMovieGenres(
         from: _MovieInput!
         to: _GenreInput!
@@ -1746,6 +2140,192 @@ test.cb('Test augmented schema', t => {
         @hasScope(scopes: ["CasedType: Create"])
       DeleteCasedType(name: String!): CasedType
         @hasScope(scopes: ["CasedType: Delete"])
+      AddCameraOperators(
+        from: _PersonInput!
+        to: _CameraInput!
+      ): _AddCameraOperatorsPayload
+        @MutationMeta(relationship: "cameras", from: "Person", to: "Camera")
+        @hasScope(scopes: ["Person: Create", "Camera: Create"])
+      RemoveCameraOperators(
+        from: _PersonInput!
+        to: _CameraInput!
+      ): _RemoveCameraOperatorsPayload
+        @MutationMeta(relationship: "cameras", from: "Person", to: "Camera")
+        @hasScope(scopes: ["Person: Delete", "Camera: Delete"])
+      MergeCameraOperators(
+        from: _PersonInput!
+        to: _CameraInput!
+      ): _MergeCameraOperatorsPayload
+        @MutationMeta(relationship: "cameras", from: "Person", to: "Camera")
+        @hasScope(scopes: ["Person: Merge", "Camera: Merge"])
+      AddOldCameraOperators(
+        from: _PersonInput!
+        to: _OldCameraInput!
+      ): _AddOldCameraOperatorsPayload
+        @MutationMeta(relationship: "cameras", from: "Person", to: "OldCamera")
+        @hasScope(scopes: ["Person: Create", "OldCamera: Create"])
+      RemoveOldCameraOperators(
+        from: _PersonInput!
+        to: _OldCameraInput!
+      ): _RemoveOldCameraOperatorsPayload
+        @MutationMeta(relationship: "cameras", from: "Person", to: "OldCamera")
+        @hasScope(scopes: ["Person: Delete", "OldCamera: Delete"])
+      MergeOldCameraOperators(
+        from: _PersonInput!
+        to: _OldCameraInput!
+      ): _MergeOldCameraOperatorsPayload
+        @MutationMeta(relationship: "cameras", from: "Person", to: "OldCamera")
+        @hasScope(scopes: ["Person: Merge", "OldCamera: Merge"])
+      CreateOldCamera(
+        id: ID
+        type: String
+        make: String
+        weight: Int
+        smell: String
+      ): OldCamera @hasScope(scopes: ["OldCamera: Create"])
+      UpdateOldCamera(
+        id: ID!
+        type: String
+        make: String
+        weight: Int
+        smell: String
+      ): OldCamera @hasScope(scopes: ["OldCamera: Update"])
+      DeleteOldCamera(id: ID!): OldCamera
+        @hasScope(scopes: ["OldCamera: Delete"])
+      MergeOldCamera(
+        id: ID!
+        type: String
+        make: String
+        weight: Int
+        smell: String
+      ): OldCamera @hasScope(scopes: ["OldCamera: Merge"])
+      AddNewCameraOperators(
+        from: _PersonInput!
+        to: _NewCameraInput!
+      ): _AddNewCameraOperatorsPayload
+        @MutationMeta(relationship: "cameras", from: "Person", to: "NewCamera")
+        @hasScope(scopes: ["Person: Create", "NewCamera: Create"])
+      RemoveNewCameraOperators(
+        from: _PersonInput!
+        to: _NewCameraInput!
+      ): _RemoveNewCameraOperatorsPayload
+        @MutationMeta(relationship: "cameras", from: "Person", to: "NewCamera")
+        @hasScope(scopes: ["Person: Delete", "NewCamera: Delete"])
+      MergeNewCameraOperators(
+        from: _PersonInput!
+        to: _NewCameraInput!
+      ): _MergeNewCameraOperatorsPayload
+        @MutationMeta(relationship: "cameras", from: "Person", to: "NewCamera")
+        @hasScope(scopes: ["Person: Merge", "NewCamera: Merge"])
+      CreateNewCamera(
+        id: ID
+        type: String
+        make: String
+        weight: Int
+        features: [String]
+      ): NewCamera @hasScope(scopes: ["NewCamera: Create"])
+      UpdateNewCamera(
+        id: ID!
+        type: String
+        make: String
+        weight: Int
+        features: [String]
+      ): NewCamera @hasScope(scopes: ["NewCamera: Update"])
+      DeleteNewCamera(id: ID!): NewCamera
+        @hasScope(scopes: ["NewCamera: Delete"])
+      MergeNewCamera(
+        id: ID!
+        type: String
+        make: String
+        weight: Int
+        features: [String]
+      ): NewCamera @hasScope(scopes: ["NewCamera: Merge"])
+      AddCameraManFavoriteCamera(
+        from: _CameraManInput!
+        to: _CameraInput!
+      ): _AddCameraManFavoriteCameraPayload
+        @MutationMeta(
+          relationship: "favoriteCamera"
+          from: "CameraMan"
+          to: "Camera"
+        )
+        @hasScope(scopes: ["CameraMan: Create", "Camera: Create"])
+      RemoveCameraManFavoriteCamera(
+        from: _CameraManInput!
+        to: _CameraInput!
+      ): _RemoveCameraManFavoriteCameraPayload
+        @MutationMeta(
+          relationship: "favoriteCamera"
+          from: "CameraMan"
+          to: "Camera"
+        )
+        @hasScope(scopes: ["CameraMan: Delete", "Camera: Delete"])
+      MergeCameraManFavoriteCamera(
+        from: _CameraManInput!
+        to: _CameraInput!
+      ): _MergeCameraManFavoriteCameraPayload
+        @MutationMeta(
+          relationship: "favoriteCamera"
+          from: "CameraMan"
+          to: "Camera"
+        )
+        @hasScope(scopes: ["CameraMan: Merge", "Camera: Merge"])
+      AddCameraManCameras(
+        from: _CameraManInput!
+        to: _CameraInput!
+      ): _AddCameraManCamerasPayload
+        @MutationMeta(relationship: "cameras", from: "CameraMan", to: "Camera")
+        @hasScope(scopes: ["CameraMan: Create", "Camera: Create"])
+      RemoveCameraManCameras(
+        from: _CameraManInput!
+        to: _CameraInput!
+      ): _RemoveCameraManCamerasPayload
+        @MutationMeta(relationship: "cameras", from: "CameraMan", to: "Camera")
+        @hasScope(scopes: ["CameraMan: Delete", "Camera: Delete"])
+      MergeCameraManCameras(
+        from: _CameraManInput!
+        to: _CameraInput!
+      ): _MergeCameraManCamerasPayload
+        @MutationMeta(relationship: "cameras", from: "CameraMan", to: "Camera")
+        @hasScope(scopes: ["CameraMan: Merge", "Camera: Merge"])
+      AddCameraManCameraBuddy(
+        from: _CameraManInput!
+        to: _PersonInput!
+      ): _AddCameraManCameraBuddyPayload
+        @MutationMeta(
+          relationship: "cameraBuddy"
+          from: "CameraMan"
+          to: "Person"
+        )
+        @hasScope(scopes: ["CameraMan: Create", "Person: Create"])
+      RemoveCameraManCameraBuddy(
+        from: _CameraManInput!
+        to: _PersonInput!
+      ): _RemoveCameraManCameraBuddyPayload
+        @MutationMeta(
+          relationship: "cameraBuddy"
+          from: "CameraMan"
+          to: "Person"
+        )
+        @hasScope(scopes: ["CameraMan: Delete", "Person: Delete"])
+      MergeCameraManCameraBuddy(
+        from: _CameraManInput!
+        to: _PersonInput!
+      ): _MergeCameraManCameraBuddyPayload
+        @MutationMeta(
+          relationship: "cameraBuddy"
+          from: "CameraMan"
+          to: "Person"
+        )
+        @hasScope(scopes: ["CameraMan: Merge", "Person: Merge"])
+      CreateCameraMan(userId: ID, name: String): CameraMan
+        @hasScope(scopes: ["CameraMan: Create"])
+      UpdateCameraMan(userId: ID!, name: String): CameraMan
+        @hasScope(scopes: ["CameraMan: Update"])
+      DeleteCameraMan(userId: ID!): CameraMan
+        @hasScope(scopes: ["CameraMan: Delete"])
+      MergeCameraMan(userId: ID!, name: String): CameraMan
+        @hasScope(scopes: ["CameraMan: Merge"])
     }
 
     input _MovieInput {
@@ -2169,8 +2749,85 @@ test.cb('Test augmented schema', t => {
       to: State
     }
 
+    input _CameraManInput {
+      userId: ID!
+    }
+
+    input _CameraInput {
+      id: ID!
+    }
+
+    type _AddCameraOperatorsPayload
+      @relation(name: "cameras", from: "Person", to: "Camera") {
+      from: Person
+      to: Camera
+    }
+
+    type _RemoveCameraOperatorsPayload
+      @relation(name: "cameras", from: "Person", to: "Camera") {
+      from: Person
+      to: Camera
+    }
+
+    type _MergeCameraOperatorsPayload
+      @relation(name: "cameras", from: "Person", to: "Camera") {
+      from: Person
+      to: Camera
+    }
+
+    type _AddCameraManFavoriteCameraPayload
+      @relation(name: "favoriteCamera", from: "CameraMan", to: "Camera") {
+      from: CameraMan
+      to: Camera
+    }
+
+    type _RemoveCameraManFavoriteCameraPayload
+      @relation(name: "favoriteCamera", from: "CameraMan", to: "Camera") {
+      from: CameraMan
+      to: Camera
+    }
+    type _MergeCameraManFavoriteCameraPayload
+      @relation(name: "favoriteCamera", from: "CameraMan", to: "Camera") {
+      from: CameraMan
+      to: Camera
+    }
+    type _AddCameraManCamerasPayload
+      @relation(name: "cameras", from: "CameraMan", to: "Camera") {
+      from: CameraMan
+      to: Camera
+    }
+
+    type _RemoveCameraManCamerasPayload
+      @relation(name: "cameras", from: "CameraMan", to: "Camera") {
+      from: CameraMan
+      to: Camera
+    }
+
+    type _MergeCameraManCamerasPayload
+      @relation(name: "cameras", from: "CameraMan", to: "Camera") {
+      from: CameraMan
+      to: Camera
+    }
     input _PersonInput {
       userId: ID!
+    }
+
+    type _AddCameraManCameraBuddyPayload
+      @relation(name: "cameraBuddy", from: "CameraMan", to: "Person") {
+      from: CameraMan
+      to: Person
+    }
+
+    type _RemoveCameraManCameraBuddyPayload
+      @relation(name: "cameraBuddy", from: "CameraMan", to: "Person") {
+      from: CameraMan
+      to: Person
+    }
+
+    type _MergeCameraManCameraBuddyPayload
+      @relation(name: "cameraBuddy", from: "CameraMan", to: "Person") {
+      from: CameraMan
+      to: Person
     }
 
     type SubscriptionC {
@@ -2260,6 +2917,50 @@ test.cb('Test augmented schema', t => {
       reader
       user
       admin
+    }
+
+    input _OldCameraInput {
+      id: ID!
+    }
+
+    type _AddOldCameraOperatorsPayload
+      @relation(name: "cameras", from: "Person", to: "OldCamera") {
+      from: Person
+      to: OldCamera
+    }
+
+    type _RemoveOldCameraOperatorsPayload
+      @relation(name: "cameras", from: "Person", to: "OldCamera") {
+      from: Person
+      to: OldCamera
+    }
+
+    type _MergeOldCameraOperatorsPayload
+      @relation(name: "cameras", from: "Person", to: "OldCamera") {
+      from: Person
+      to: OldCamera
+    }
+
+    input _NewCameraInput {
+      id: ID!
+    }
+
+    type _AddNewCameraOperatorsPayload
+      @relation(name: "cameras", from: "Person", to: "NewCamera") {
+      from: Person
+      to: NewCamera
+    }
+
+    type _RemoveNewCameraOperatorsPayload
+      @relation(name: "cameras", from: "Person", to: "NewCamera") {
+      from: Person
+      to: NewCamera
+    }
+
+    type _MergeNewCameraOperatorsPayload
+      @relation(name: "cameras", from: "Person", to: "NewCamera") {
+      from: Person
+      to: NewCamera
     }
 
     type _Neo4jPoint {
