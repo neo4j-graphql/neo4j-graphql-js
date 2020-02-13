@@ -2420,5 +2420,5 @@ MATCH (`person`:`Person`) WHERE (`person`.name = $filter.name) RETURN `person` {
 ```
 
 ```cypher
-MATCH (`person`:`Person`) RETURN `person` { .name ,company: head([(`person`)-[:`WORKS_AT`]->(`person_company`:`Company`) WHERE (EXISTS((`person_company`)<-[:WORKS_AT]-(:Person)) AND ANY(`person` IN [(`person_company`)<-[:WORKS_AT]-(`_person`:Person) | `_person`] WHERE (`person`.name = $1_filter.employees_some.name))) | person_company { .name }]) } AS `person`
+MATCH (`person`:`Person`) RETURN `person` { .name ,company: head([(`person`)-[:`WORKS_AT`]->(`person_company`:`Company`) WHERE (EXISTS((`person_company`)<-[:WORKS_AT]-(:Person)) AND ANY(`person` IN [(`person_company`)<-[:WORKS_AT]-(`_person`:Person) | `_person`] WHERE (`person`.name = $1_filter.employees_some.name))) | `person_company` { .name }]) } AS `person`
 ```
