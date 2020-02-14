@@ -32,6 +32,8 @@ type Mutation {
     computedTemporal: DateTime @cypher(statement: "WITH datetime() AS now RETURN { year: now.year, month: now.month , day: now.day , hour: now.hour , minute: now.minute , second: now.second , millisecond: now.millisecond , microsecond: now.microsecond , nanosecond: now.nanosecond , timezone: now.timezone , formatted: toString(now) }")
     computedSpatial: Point @cypher(statement: "WITH point({ x: 10, y: 20, z: 15 }) AS instance RETURN { x: instance.x, y: instance.y, z: instance.z, crs: instance.crs }")
     customWithArguments(strArg: String, strInputArg: strInput): String @cypher(statement: "RETURN $strInputArg.strArg")
+    CustomCamera: Camera @cypher(statement: "CREATE (newCamera:Camera:NewCamera {id: apoc.create.uuid(), type: 'macro'}) RETURN newCamera")
+    CustomCameras: [Camera] @cypher(statement: "CREATE (newCamera:Camera:NewCamera {id: apoc.create.uuid(), type: 'macro', features: ['selfie', 'zoom']}) CREATE (oldCamera:Camera:OldCamera {id: apoc.create.uuid(), type: 'floating', smell: 'rusty' }) RETURN [newCamera, oldCamera]")
   }
 `;
 
@@ -59,6 +61,9 @@ type Mutation {
       GenresBySubstring: checkCypherQuery,
       Books: checkCypherQuery,
       State: checkCypherQuery,
+      Camera: checkCypherQuery,
+      CustomCameras: checkCypherQuery,
+      CustomCamera: checkCypherQuery,
       computedBoolean: checkCypherQuery,
       computedInt: checkCypherQuery,
       computedFloat: checkCypherQuery,
@@ -82,7 +87,9 @@ type Mutation {
       computedStringList: checkCypherMutation,
       computedTemporal: checkCypherMutation,
       computedSpatial: checkCypherMutation,
-      customWithArguments: checkCypherMutation
+      customWithArguments: checkCypherMutation,
+      CustomCamera: checkCypherMutation,
+      CustomCameras: checkCypherMutation
     }
   };
   let augmentedTypeDefs = augmentTypeDefs(testMovieSchema, { auth: true });
@@ -174,6 +181,9 @@ export function augmentedSchemaCypherTestRunner(
       SpatialNode: checkCypherQuery,
       State: checkCypherQuery,
       CasedType: checkCypherQuery,
+      Camera: checkCypherQuery,
+      CustomCameras: checkCypherQuery,
+      CustomCamera: checkCypherQuery,
       computedBoolean: checkCypherQuery,
       computedInt: checkCypherQuery,
       computedFloat: checkCypherQuery,
@@ -217,7 +227,9 @@ export function augmentedSchemaCypherTestRunner(
       computedStringList: checkCypherMutation,
       computedTemporal: checkCypherMutation,
       computedSpatial: checkCypherMutation,
-      customWithArguments: checkCypherMutation
+      customWithArguments: checkCypherMutation,
+      CustomCamera: checkCypherMutation,
+      CustomCameras: checkCypherMutation
     }
   };
 

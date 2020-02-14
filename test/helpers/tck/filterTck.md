@@ -1276,7 +1276,7 @@ MATCH (`person`:`Person`) WHERE (`person`.name = $filter.name) AND (EXISTS((`per
 ```
 
 ```cypher
-MATCH (`company`:`Company`) RETURN `company` {employees: [(`company`)<-[:`WORKS_AT`]-(`company_employees`:`Person`) WHERE (`company_employees`.name = $1_filter.name) | company_employees { .name }] } AS `company`
+MATCH (`company`:`Company`) RETURN `company` {employees: [(`company`)<-[:`WORKS_AT`]-(`company_employees`:`Person`) WHERE (`company_employees`.name = $1_filter.name) | `company_employees` { .name }] } AS `company`
 ```
 
 ### ALL related nodes matching filter given in separate OR filters
@@ -1292,7 +1292,7 @@ MATCH (`company`:`Company`) RETURN `company` {employees: [(`company`)<-[:`WORKS_
 ```
 
 ```cypher
-MATCH (`company`:`Company`) RETURN `company` {employees: [(`company`)<-[:`WORKS_AT`]-(`company_employees`:`Person`) WHERE (ANY(_OR IN $1_filter.OR WHERE (_OR.name IS NULL OR `company_employees`.name = _OR.name))) | company_employees { .name }] } AS `company`
+MATCH (`company`:`Company`) RETURN `company` {employees: [(`company`)<-[:`WORKS_AT`]-(`company_employees`:`Person`) WHERE (ANY(_OR IN $1_filter.OR WHERE (_OR.name IS NULL OR `company_employees`.name = _OR.name))) | `company_employees` { .name }] } AS `company`
 ```
 
 ### ALL related nodes matching String field in given list
@@ -1944,7 +1944,7 @@ MATCH (`company`:`Company`) WHERE (EXISTS((`company`)<-[:WORKS_AT]-(:Person)) AN
 ```
 
 ```cypher
-MATCH (`company`:`Company`) WHERE (EXISTS((`company`)<-[:WORKS_AT]-(:Person)) AND ALL(`person` IN [(`company`)<-[:WORKS_AT]-(`_person`:Person) | `_person`] WHERE ((`person`.location = point($filter.employees.location))))) RETURN `company` { .name ,employees: [(`company`)<-[:`WORKS_AT`]-(`company_employees`:`Person`) | company_employees { .name ,location: { longitude: `company_employees`.location.longitude , latitude: `company_employees`.location.latitude , height: `company_employees`.location.height }}] } AS `company`
+MATCH (`company`:`Company`) WHERE (EXISTS((`company`)<-[:WORKS_AT]-(:Person)) AND ALL(`person` IN [(`company`)<-[:WORKS_AT]-(`_person`:Person) | `_person`] WHERE ((`person`.location = point($filter.employees.location))))) RETURN `company` { .name ,employees: [(`company`)<-[:`WORKS_AT`]-(`company_employees`:`Person`) | `company_employees` { .name ,location: { longitude: `company_employees`.location.longitude , latitude: `company_employees`.location.latitude , height: `company_employees`.location.height }}] } AS `company`
 ```
 
 ### Spatial field on related node equal to given year OR does NOT exist
@@ -2347,7 +2347,7 @@ MATCH (`person`:`Person`) WHERE (EXISTS((`person`)-[:WORKS_AT]->(:Company)) AND 
 ```
 
 ```cypher
-MATCH (`person`:`Person`) WHERE (`person`.name = $filter.name) AND (EXISTS((`person`)-[:WORKS_AT]->(:Company)) AND ALL(`company` IN [(`person`)-[:WORKS_AT]->(`_company`:Company) | `_company`] WHERE (`company`.name = $filter.company.name))) RETURN `person` { .name ,company: head([(`person`)-[:`WORKS_AT`]->(`person_company`:`Company`) WHERE (`person_company`.name = $1_filter.name) AND ((`person_company`.founded = datetime($1_filter.founded))) | person_company { .name }]) } AS `person`
+MATCH (`person`:`Person`) WHERE (`person`.name = $filter.name) AND (EXISTS((`person`)-[:WORKS_AT]->(:Company)) AND ALL(`company` IN [(`person`)-[:WORKS_AT]->(`_company`:Company) | `_company`] WHERE (`company`.name = $filter.company.name))) RETURN `person` { .name ,company: head([(`person`)-[:`WORKS_AT`]->(`person_company`:`Company`) WHERE (`person_company`.name = $1_filter.name) AND ((`person_company`.founded = datetime($1_filter.founded))) | `person_company` { .name }]) } AS `person`
 ```
 
 ### Nested filter on relationship type field
@@ -2420,5 +2420,5 @@ MATCH (`person`:`Person`) WHERE (`person`.name = $filter.name) RETURN `person` {
 ```
 
 ```cypher
-MATCH (`person`:`Person`) RETURN `person` { .name ,company: head([(`person`)-[:`WORKS_AT`]->(`person_company`:`Company`) WHERE (EXISTS((`person_company`)<-[:WORKS_AT]-(:Person)) AND ANY(`person` IN [(`person_company`)<-[:WORKS_AT]-(`_person`:Person) | `_person`] WHERE (`person`.name = $1_filter.employees_some.name))) | person_company { .name }]) } AS `person`
+MATCH (`person`:`Person`) RETURN `person` { .name ,company: head([(`person`)-[:`WORKS_AT`]->(`person_company`:`Company`) WHERE (EXISTS((`person_company`)<-[:WORKS_AT]-(:Person)) AND ANY(`person` IN [(`person_company`)<-[:WORKS_AT]-(`_person`:Person) | `_person`] WHERE (`person`.name = $1_filter.employees_some.name))) | `person_company` { .name }]) } AS `person`
 ```

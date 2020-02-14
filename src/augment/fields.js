@@ -20,14 +20,17 @@ export const Neo4jSystemIDField = `_id`;
  * See: https://neo4j.com/docs/cypher-manual/current/syntax/values/#property-types
  */
 export const isPropertyTypeField = ({ kind, type }) =>
+  isScalarField({ kind, type }) ||
+  isTemporalField({ type }) ||
+  isSpatialField({ type }) ||
+  isNeo4jPropertyType({ type });
+
+export const isScalarField = ({ kind, type }) =>
   isIntegerField({ type }) ||
   isFloatField({ type }) ||
   isStringField({ kind, type }) ||
   isBooleanField({ type }) ||
-  isCustomScalarField({ kind }) ||
-  isTemporalField({ type }) ||
-  isSpatialField({ type }) ||
-  isNeo4jPropertyType({ type });
+  isCustomScalarField({ kind });
 
 export const isIntegerField = ({ type }) =>
   Neo4jDataType.PROPERTY[type] === 'Integer';

@@ -1,7 +1,6 @@
-import { isObjectType, parse, GraphQLInt } from 'graphql';
+import { isObjectType, parse, GraphQLInt, Kind } from 'graphql';
 import neo4j from 'neo4j-driver';
 import _ from 'lodash';
-import filter from 'lodash/filter';
 import { Neo4jTypeName } from './augment/types/types';
 import { SpatialType } from './augment/types/spatial';
 import { unwrapNamedType } from './augment/fields';
@@ -50,21 +49,6 @@ export const parseDirectiveSdl = sdl => {
         .directives[0]
     : {};
 };
-
-export function extractSelections(selections, fragments) {
-  // extract any fragment selection sets into a single array of selections
-  return selections.reduce((acc, cur) => {
-    if (cur.kind === 'FragmentSpread') {
-      const recursivelyExtractedSelections = extractSelections(
-        fragments[cur.name.value].selectionSet.selections,
-        fragments
-      );
-      return [...acc, ...recursivelyExtractedSelections];
-    } else {
-      return [...acc, cur];
-    }
-  }, []);
-}
 
 export function extractQueryResult({ records }, returnType) {
   const { variableName } = typeIdentifiers(returnType);
@@ -185,8 +169,16 @@ export function isGraphqlScalarType(type) {
   );
 }
 
+export function isGraphqlObjectType(type) {
+  return type.constructor.name === 'GraphQLObjectType';
+}
+
 export function isGraphqlInterfaceType(type) {
   return type.constructor.name === 'GraphQLInterfaceType';
+}
+
+export function isGraphqlUnionType(type) {
+  return type.constructor.name === 'GraphQLUnionType';
 }
 
 export function isArrayType(type) {
@@ -347,16 +339,15 @@ export const computeOrderBy = (resolveInfo, schemaType) => {
   const orderByArray = Array.isArray(orderByArgs) ? orderByArgs : [orderByArgs];
 
   let optimization = { earlyOrderBy: true };
-  let orderByStatements = [];
 
-  const orderByStatments = orderByArray.map(orderByVar => {
+  const orderByStatements = orderByArray.map(orderByVar => {
     const { orderBy, order } = splitOrderByArg(orderByVar);
     const hasNoCypherDirective = _.isEmpty(
       cypherDirective(schemaType, orderBy)
     );
     optimization.earlyOrderBy =
       optimization.earlyOrderBy && hasNoCypherDirective;
-    orderByStatements.push(orderByStatement(resolveInfo, { orderBy, order }));
+    return orderByStatement(resolveInfo, { orderBy, order });
   });
 
   return {
@@ -559,7 +550,7 @@ const serializeNeo4jIntegers = ({
 // TODO refactor to handle Query/Mutation type schema directives
 const directiveWithArgs = (directiveName, args) => (schemaType, fieldName) => {
   function fieldDirective(schemaType, fieldName, directiveName) {
-    return !isGraphqlScalarType(schemaType)
+    return !isGraphqlScalarType(schemaType) && !isGraphqlUnionType(schemaType)
       ? schemaType.getFields() &&
           schemaType.getFields()[fieldName] &&
           schemaType
@@ -630,7 +621,8 @@ export const getMutationCypherDirective = resolveInfo => {
 };
 
 function argumentValue(selection, name, variableValues) {
-  let arg = selection.arguments.find(a => a.name.value === name);
+  let args = selection ? selection.arguments : [];
+  let arg = args.find(a => a.name.value === name);
   if (!arg) {
     return null;
   } else {
@@ -820,19 +812,16 @@ export const getOuterSkipLimit = (first, offset) =>
   }`;
 
 export const getPayloadSelections = resolveInfo => {
-  const filteredFieldNodes = filter(
-    resolveInfo.fieldNodes,
-    n => n.name.value === resolveInfo.fieldName
-  );
-  if (filteredFieldNodes[0] && filteredFieldNodes[0].selectionSet) {
-    // FIXME: how to handle multiple fieldNode matches
-    const x = extractSelections(
-      filteredFieldNodes[0].selectionSet.selections,
-      resolveInfo.fragments
-    );
-    return x;
+  const filteredFieldNodes = resolveInfo.fieldNodes.filter(n => {
+    return n => n.name.value === resolveInfo.fieldName;
+  });
+  // FIXME: how to handle multiple fieldNode matches
+  const payloadTypeNode = filteredFieldNodes[0];
+  let selections = [];
+  if (payloadTypeNode && payloadTypeNode.selectionSet) {
+    selections = payloadTypeNode.selectionSet.selections;
   }
-  return [];
+  return selections;
 };
 
 export const filterNullParams = ({ offset, first, otherParams }) => {
@@ -1041,11 +1030,14 @@ export const getNeo4jTypeArguments = args => {
 
 export const removeIgnoredFields = (schemaType, selections) => {
   if (!isGraphqlScalarType(schemaType) && selections && selections.length) {
+    const schemaTypeFields = schemaType.getFields();
     let schemaTypeField = '';
-    selections = selections.filter(e => {
-      if (e.kind === 'Field') {
+    selections = selections.filter(field => {
+      const fieldKind = field.kind;
+      if (fieldKind === Kind.FIELD) {
+        const fieldName = field.name.value;
         // so check if this field is ignored
-        schemaTypeField = schemaType.getFields()[e.name.value];
+        schemaTypeField = schemaTypeFields[fieldName];
         return (
           schemaTypeField &&
           schemaTypeField.astNode &&
