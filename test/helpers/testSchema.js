@@ -8,7 +8,7 @@ export const testSchema = /* GraphQL */ `
     title: String @isAuthenticated
     someprefix_title_with_underscores: String
     year: Int
-    released: DateTime!
+    released: DateTime
     plot: String
     poster: String
     imdbRating: Float
@@ -148,6 +148,9 @@ export const testSchema = /* GraphQL */ `
       location: Point
     ): [FriendOf]
     favorites: [Movie] @relation(name: "FAVORITED", direction: "OUT")
+    movieSearch: [MovieSearch]
+    computedMovieSearch: [MovieSearch]
+      @cypher(statement: "MATCH (ms:MovieSearch) RETURN ms")
   }
 
   type FriendOf @relation {
@@ -261,6 +264,9 @@ export const testSchema = /* GraphQL */ `
     ): [InterfaceNoScalars]
     CustomCameras: [Camera] @cypher(statement: "MATCH (c:Camera) RETURN c")
     CustomCamera: Camera @cypher(statement: "MATCH (c:Camera) RETURN c")
+    MovieSearch: [MovieSearch]
+    computedMovieSearch: [MovieSearch]
+      @cypher(statement: "MATCH (ms:MovieSearch) RETURN ms")
   }
 
   type Mutation {
@@ -291,6 +297,8 @@ export const testSchema = /* GraphQL */ `
       @cypher(
         statement: "CREATE (newCamera:Camera:NewCamera {id: apoc.create.uuid(), type: 'macro', features: ['selfie', 'zoom']}) CREATE (oldCamera:Camera:OldCamera {id: apoc.create.uuid(), type: 'floating', smell: 'rusty' }) RETURN [newCamera, oldCamera]"
       )
+    computedMovieSearch: [MovieSearch]
+      @cypher(statement: "MATCH (ms:MovieSearch) RETURN ms")
   }
 
   type currentUserId {
@@ -463,6 +471,8 @@ export const testSchema = /* GraphQL */ `
     computedOperators(name: String): [Person]
       @cypher(statement: "MATCH (this)<-[:cameras]-(p:Person) RETURN p")
   }
+
+  union MovieSearch = Movie | Genre | Book | Actor | OldCamera
 
   type CameraMan implements Person {
     userId: ID!
