@@ -1248,29 +1248,103 @@ test.serial(
       })
       .catch(error => {
         t.fail(error.message);
-      })
-      .finally(async () => {
-        await client.mutate({
-          mutation: gql`
-            mutation {
-              DeleteOldCamera(id: "cam003") {
-                id
-              }
-              DeleteNewCamera(id: "cam004") {
-                id
-              }
-              DeleteUser(userId: "man004") {
-                userId
-              }
-              DeleteCameraMan(userId: "man003") {
-                userId
-              }
-            }
-          `
-        });
       });
   }
 );
+
+test.serial('query union type using complex fragments', async t => {
+  t.plan(1);
+
+  let expected = {
+    data: {
+      MovieSearch: [
+        {
+          __typename: 'Movie',
+          movieId: '12dd334d5zaaaa',
+          title: 'My Super Awesome Movie'
+        },
+        {
+          __typename: 'OldCamera',
+          id: 'cam003',
+          type: 'macro'
+        },
+        {
+          userId: 'man004',
+          name: 'Johnnie Zoooom',
+          __typename: 'User'
+        }
+      ]
+    }
+  };
+
+  await client
+    .query({
+      query: gql`
+        query {
+          MovieSearch {
+            ... on Movie {
+              movieId
+            }
+            ... on User {
+              userId
+            }
+            ... on Camera {
+              __typename
+              ... on OldCamera {
+                id
+                type
+              }
+            }
+            ...MovieFragment
+            ... on Person {
+              ... on CameraMan {
+                _id
+              }
+            }
+            ...PersonFragment
+          }
+        }
+
+        fragment MovieFragment on Movie {
+          title
+        }
+
+        fragment PersonFragment on Person {
+          ... on User {
+            userId
+            name
+          }
+          __typename
+        }
+      `
+    })
+    .then(data => {
+      t.deepEqual(data.data, expected.data);
+    })
+    .catch(error => {
+      t.fail(error.message);
+    })
+    .finally(async () => {
+      await client.mutate({
+        mutation: gql`
+          mutation {
+            DeleteOldCamera(id: "cam003") {
+              id
+            }
+            DeleteNewCamera(id: "cam004") {
+              id
+            }
+            DeleteUser(userId: "man004") {
+              userId
+            }
+            DeleteCameraMan(userId: "man003") {
+              userId
+            }
+          }
+        `
+      });
+    });
+});
 
 /*
  * Temporal type tests
