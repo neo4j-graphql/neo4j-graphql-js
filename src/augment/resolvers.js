@@ -57,10 +57,12 @@ export const augmentResolvers = (
   // must implement __resolveInfo for every Interface type
   // we use "FRAGMENT_TYPE" key to identify the Interface implementation
   // type at runtime, so grab this value
-  const interfaceTypes = Object.keys(augmentedTypeMap).filter(
-    e => augmentedTypeMap[e].kind === 'InterfaceTypeDefinition'
+  const derivedTypes = Object.keys(augmentedTypeMap).filter(
+    e =>
+      augmentedTypeMap[e].kind === 'InterfaceTypeDefinition' ||
+      augmentedTypeMap[e].kind === 'UnionTypeDefinition'
   );
-  interfaceTypes.map(e => {
+  derivedTypes.map(e => {
     resolvers[e] = {};
 
     resolvers[e]['__resolveType'] = (obj, context, info) => {
