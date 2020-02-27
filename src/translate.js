@@ -39,12 +39,13 @@ import {
   isSpatialDistanceInputType,
   isGraphqlScalarType,
   isGraphqlInterfaceType,
+  isGraphqlUnionType,
   innerType,
   relationDirective,
   typeIdentifiers,
   decideNeo4jTypeConstructor,
   getAdditionalLabels,
-  getDerivedTypeNames,
+  getInterfaceDerivedTypeNames,
   getPayloadSelections,
   isGraphqlObjectType
 } from './utils';
@@ -60,33 +61,42 @@ import {
 import {
   buildCypherSelection,
   isFragmentedSelection,
-  getComposedTypes,
+  getDerivedTypes,
   mergeSelectionFragments
 } from './selections';
 import _ from 'lodash';
 import neo4j from 'neo4j-driver';
+import { isUnionTypeDefinition } from './augment/types/types';
 
-const derivedTypesParamName = interfaceName => `${interfaceName}_derivedTypes`;
+const derivedTypesParamName = schemaTypeName =>
+  `${schemaTypeName}_derivedTypes`;
 
-export const fragmentType = (varName, interfaceName) =>
+export const fragmentType = (varName, schemaTypeName) =>
   `FRAGMENT_TYPE: head( [ label IN labels(${varName}) WHERE label IN $${derivedTypesParamName(
-    interfaceName
+    schemaTypeName
   )} ] )`;
 
 export const derivedTypesParams = ({
   isInterfaceType,
+  isUnionType,
   schema,
-  interfaceName,
+  schemaTypeName,
   usesFragments
 }) => {
-  const res = {};
-  if (isInterfaceType && !usesFragments) {
-    res[derivedTypesParamName(interfaceName)] = getDerivedTypeNames(
-      schema,
-      interfaceName
-    );
+  const params = {};
+  if (!usesFragments) {
+    if (isInterfaceType) {
+      const paramName = derivedTypesParamName(schemaTypeName);
+      params[paramName] = getInterfaceDerivedTypeNames(schema, schemaTypeName);
+    } else if (isUnionType) {
+      const paramName = derivedTypesParamName(schemaTypeName);
+      const typeMap = schema.getTypeMap();
+      const schemaType = typeMap[schemaTypeName];
+      const types = schemaType.getTypes();
+      params[paramName] = types.map(type => type.name);
+    }
   }
-  return res;
+  return params;
 };
 
 export const customCypherField = ({
@@ -94,10 +104,12 @@ export const customCypherField = ({
   cypherParams,
   paramIndex,
   schemaTypeRelation,
+  isObjectTypeField,
   isInterfaceTypeField,
+  isUnionTypeField,
   usesFragments,
   schemaTypeFields,
-  composedTypeMap,
+  derivedTypeMap,
   initial,
   fieldName,
   fieldType,
@@ -115,12 +127,14 @@ export const customCypherField = ({
   const [mapProjection, labelPredicate] = buildMapProjection({
     isComputedField: true,
     schemaType: innerSchemaType,
+    isObjectType: isObjectTypeField,
     isInterfaceType: isInterfaceTypeField,
+    isUnionType: isUnionTypeField,
     usesFragments,
     safeVariableName: nestedVariable,
     subQuery: subSelection[0],
     schemaTypeFields,
-    composedTypeMap,
+    derivedTypeMap,
     resolveInfo
   });
   const headListWrapperPrefix = `${!isArrayType(fieldType) ? 'head(' : ''}`;
@@ -159,8 +173,10 @@ export const relationFieldOnNodeType = ({
   relType,
   nestedVariable,
   schemaTypeFields,
-  composedTypeMap,
+  derivedTypeMap,
+  isObjectTypeField,
   isInterfaceTypeField,
+  isUnionTypeField,
   usesFragments,
   innerSchemaType,
   paramIndex,
@@ -216,14 +232,18 @@ export const relationFieldOnNodeType = ({
     }_${key}`;
   });
 
+  const subQuery = subSelection[0];
+
   const [mapProjection, labelPredicate] = buildMapProjection({
     schemaType: innerSchemaType,
+    isObjectType: isObjectTypeField,
     isInterfaceType: isInterfaceTypeField,
+    isUnionType: isUnionTypeField,
     usesFragments,
     safeVariableName,
-    subQuery: subSelection[0],
+    subQuery,
     schemaTypeFields,
-    composedTypeMap,
+    derivedTypeMap,
     resolveInfo
   });
 
@@ -250,9 +270,13 @@ export const relationFieldOnNodeType = ({
         : `apoc.coll.sortMulti(`
       : ''
   }[(${safeVar(variableName)})${
-    relDirection === 'in' || relDirection === 'IN' ? '<' : ''
-  }-[:${safeLabel([relType])}]-${
-    relDirection === 'out' || relDirection === 'OUT' ? '>' : ''
+    isUnionTypeField
+      ? `--`
+      : `${
+          relDirection === 'in' || relDirection === 'IN' ? '<' : ''
+        }-[:${safeLabel([relType])}]-${
+          relDirection === 'out' || relDirection === 'OUT' ? '>' : ''
+        }`
   }(${safeVariableName}${`:${safeLabel([
     innerSchemaType.name,
     ...getAdditionalLabels(
@@ -379,8 +403,10 @@ export const nodeTypeFieldOnRelationType = ({
   schemaTypeRelation,
   innerSchemaType,
   schemaTypeFields,
-  composedTypeMap,
+  derivedTypeMap,
+  isObjectTypeField,
   isInterfaceTypeField,
+  isUnionTypeField,
   usesFragments,
   paramIndex,
   parentSelectionInfo,
@@ -399,12 +425,14 @@ export const nodeTypeFieldOnRelationType = ({
   ) {
     const [mapProjection, labelPredicate] = buildMapProjection({
       schemaType: innerSchemaType,
+      isObjectType: isObjectTypeField,
       isInterfaceType: isInterfaceTypeField,
+      isUnionType: isUnionTypeField,
       usesFragments,
       safeVariableName,
       subQuery: subSelection[0],
       schemaTypeFields,
-      composedTypeMap,
+      derivedTypeMap,
       resolveInfo
     });
     const translationParams = relationTypeMutationPayloadField({
@@ -729,9 +757,10 @@ export const translateQuery = ({
   const { typeName, variableName } = typeIdentifiers(resolveInfo.returnType);
 
   const schemaType = resolveInfo.schema.getType(typeName);
-
+  const typeMap = resolveInfo.schema.getTypeMap();
   const selections = getPayloadSelections(resolveInfo);
   const isInterfaceType = isGraphqlInterfaceType(schemaType);
+  const isUnionType = isGraphqlUnionType(schemaType);
   const isObjectType = isGraphqlObjectType(schemaType);
 
   const [nullParams, nonNullParams] = filterNullParams({
@@ -766,15 +795,16 @@ export const translateQuery = ({
   let usesFragments = isFragmentedSelection({ selections });
   const isFragmentedInterfaceType = isInterfaceType && usesFragments;
   const isFragmentedObjectType = isObjectType && usesFragments;
-
-  const [schemaTypeFields, composedTypeMap] = mergeSelectionFragments({
+  const [schemaTypeFields, derivedTypeMap] = mergeSelectionFragments({
     schemaType,
     selections,
     isFragmentedObjectType,
+    isUnionType,
+    typeMap,
     resolveInfo
   });
   const hasOnlySchemaTypeFragments =
-    schemaTypeFields.length > 0 && Object.keys(composedTypeMap).length === 0;
+    schemaTypeFields.length > 0 && Object.keys(derivedTypeMap).length === 0;
   // TODO refactor
   if (hasOnlySchemaTypeFragments) usesFragments = false;
   if (queryTypeCypherDirective) {
@@ -786,11 +816,13 @@ export const translateQuery = ({
       selections,
       variableName,
       safeVariableName,
+      isObjectType,
       isInterfaceType,
+      isUnionType,
       isFragmentedInterfaceType,
       usesFragments,
       schemaTypeFields,
-      composedTypeMap,
+      derivedTypeMap,
       orderByValue,
       outerSkipLimit,
       queryTypeCypherDirective,
@@ -806,12 +838,14 @@ export const translateQuery = ({
       selections,
       variableName,
       typeName,
+      isObjectType,
       isInterfaceType,
+      isUnionType,
       isFragmentedInterfaceType,
       isFragmentedObjectType,
       usesFragments,
       schemaTypeFields,
-      composedTypeMap,
+      derivedTypeMap,
       additionalLabels,
       neo4jTypeClauses,
       orderByValue,
@@ -826,41 +860,56 @@ export const translateQuery = ({
 };
 
 const buildTypeCompositionPredicate = ({
-  schemaTypeFields,
-  composedTypeMap,
   schemaType,
+  schemaTypeFields,
+  listVariable = 'x',
+  derivedTypeMap,
   safeVariableName,
   isInterfaceType,
+  isUnionType,
+  isComputedQuery,
+  isComputedMutation,
+  isComputedField,
   usesFragments,
   resolveInfo
 }) => {
   const schemaTypeName = schemaType.name;
-  const schemaTypeAstNode = schemaType.astNode;
   const isFragmentedInterfaceType = isInterfaceType && usesFragments;
   let labelPredicate = '';
-  if (isFragmentedInterfaceType) {
-    let composedTypes = [];
+  // default remaining from current translation tests
+  if (isFragmentedInterfaceType || isUnionType) {
+    let derivedTypes = [];
     // If shared fields are selected then the translation builds
     // a type specific list comprehension for each interface implementing
     // type. Because of this, the type selecting predicate applied to
     // the interface type path pattern should allow for all possible
     // implementing types
-    if (schemaTypeFields.length) {
-      composedTypes = getComposedTypes({
+    if (schemaTypeFields.length || isUnionType) {
+      derivedTypes = getDerivedTypes({
         schemaTypeName,
-        schemaTypeAstNode,
+        derivedTypeMap,
+        isUnionType,
         isFragmentedInterfaceType,
         resolveInfo
       });
     } else {
       // Otherwise, use only those types provided in fragments
-      composedTypes = Object.keys(composedTypeMap);
+      derivedTypes = Object.keys(derivedTypeMap);
     }
-    const typeSelectionPredicates = composedTypes.map(selectedType => {
+    const typeSelectionPredicates = derivedTypes.map(selectedType => {
       return `"${selectedType}" IN labels(${safeVariableName})`;
     });
     if (typeSelectionPredicates.length) {
       labelPredicate = `(${typeSelectionPredicates.join(' OR ')})`;
+    }
+  }
+  if (labelPredicate) {
+    if (isComputedQuery) {
+      labelPredicate = `WITH [${safeVariableName} IN ${listVariable} WHERE ${labelPredicate} | ${safeVariableName}] AS ${listVariable} `;
+    } else if (isComputedMutation) {
+      labelPredicate = `UNWIND [${safeVariableName} IN ${listVariable} WHERE ${labelPredicate} | ${safeVariableName}] `;
+    } else if (isComputedField) {
+      labelPredicate = `WHERE ${labelPredicate} `;
     }
   }
   return labelPredicate;
@@ -883,10 +932,12 @@ const customQuery = ({
   argString,
   selections,
   variableName,
+  isObjectType,
   isInterfaceType,
+  isUnionType,
   usesFragments,
   schemaTypeFields,
-  composedTypeMap,
+  derivedTypeMap,
   orderByValue,
   outerSkipLimit,
   queryTypeCypherDirective,
@@ -916,8 +967,9 @@ const customQuery = ({
   const isScalarPayload = isNeo4jTypeOutput || isScalarType;
   const fragmentTypeParams = derivedTypesParams({
     isInterfaceType,
+    isUnionType,
     schema: resolveInfo.schema,
-    interfaceName: schemaType.name,
+    schemaTypeName: schemaType.name,
     usesFragments
   });
 
@@ -925,8 +977,10 @@ const customQuery = ({
     isComputedQuery: true,
     schemaType,
     schemaTypeFields,
-    composedTypeMap,
+    derivedTypeMap,
+    isObjectType,
     isInterfaceType,
+    isUnionType,
     isScalarPayload,
     usesFragments,
     safeVariableName,
@@ -954,10 +1008,12 @@ const nodeQuery = ({
   selections,
   variableName,
   typeName,
+  isObjectType,
   isInterfaceType,
+  isUnionType,
   usesFragments,
   schemaTypeFields,
-  composedTypeMap,
+  derivedTypeMap,
   additionalLabels = [],
   neo4jTypeClauses,
   orderByValue,
@@ -1016,16 +1072,19 @@ const nodeQuery = ({
 
   const fragmentTypeParams = derivedTypesParams({
     isInterfaceType,
+    isUnionType,
     schema: resolveInfo.schema,
-    interfaceName: schemaType.name,
+    schemaTypeName: schemaType.name,
     usesFragments
   });
 
   const [mapProjection, labelPredicate] = buildMapProjection({
     schemaType,
     schemaTypeFields,
-    composedTypeMap,
+    derivedTypeMap,
+    isObjectType,
     isInterfaceType,
+    isUnionType,
     usesFragments,
     safeVariableName,
     subQuery,
@@ -1060,50 +1119,70 @@ const nodeQuery = ({
 const buildMapProjection = ({
   schemaType,
   schemaTypeFields,
-  composedTypeMap,
+  listVariable,
+  derivedTypeMap,
+  isObjectType,
   isInterfaceType,
+  isUnionType,
   isScalarPayload,
   isComputedQuery,
   isComputedMutation,
   isComputedField,
   usesFragments,
   safeVariableName,
-  listVariable = 'x',
   subQuery,
   resolveInfo
 }) => {
-  let labelPredicate = buildTypeCompositionPredicate({
+  const labelPredicate = buildTypeCompositionPredicate({
     schemaType,
     schemaTypeFields,
-    composedTypeMap,
+    listVariable,
+    derivedTypeMap,
     safeVariableName,
     isInterfaceType,
+    isUnionType,
+    isComputedQuery,
+    isComputedMutation,
+    isComputedField,
     usesFragments,
     resolveInfo
   });
-  let mapProjection = `${safeVariableName} {${subQuery}}`;
-  if (isInterfaceType) {
-    if (usesFragments) {
-      mapProjection = subQuery;
-    } else {
-      mapProjection = `${safeVariableName} {${fragmentType(
-        safeVariableName,
-        schemaType.name
-      )}${subQuery ? `,${subQuery}` : ''}}`;
-    }
-  } else if (isScalarPayload) {
+  const isFragmentedInterfaceType = usesFragments && isInterfaceType;
+  const isFragmentedUnionType = usesFragments && isUnionType;
+  let mapProjection = '';
+  if (isScalarPayload) {
+    // A scalar type payload has no map projection
     mapProjection = safeVariableName;
-  }
-  if (labelPredicate) {
-    if (isComputedQuery) {
-      labelPredicate = `WITH [${safeVariableName} IN ${listVariable} WHERE ${labelPredicate} | ${safeVariableName}] AS ${listVariable} `;
-    } else if (isComputedMutation) {
-      labelPredicate = `UNWIND [${safeVariableName} IN ${listVariable} WHERE ${labelPredicate} | ${safeVariableName}] `;
-    } else if (isComputedField) {
-      labelPredicate = `WHERE ${labelPredicate} `;
-    }
+  } else if (isObjectType) {
+    mapProjection = `${safeVariableName} {${subQuery}}`;
+  } else if (isFragmentedInterfaceType || isFragmentedUnionType) {
+    // An interface type possibly uses fragments and a
+    // union type necessarily uses fragments
+    mapProjection = subQuery;
+  } else if (isInterfaceType || isUnionType) {
+    // If no fragments are used, then this is an interface type
+    // with only interface fields selected
+    mapProjection = `${safeVariableName} {${fragmentType(
+      safeVariableName,
+      schemaType.name
+    )}${subQuery ? `,${subQuery}` : ''}}`;
   }
   return [mapProjection, labelPredicate];
+};
+
+const getUnionLabels = ({ typeName = '', typeMap = {} }) => {
+  const unionLabels = [];
+  Object.keys(typeMap).map(key => {
+    const definition = typeMap[key];
+    const astNode = definition.astNode;
+    if (isUnionTypeDefinition({ definition: astNode })) {
+      const unionTypeName = astNode.name.value;
+      if (astNode.types.find(type => type.name.value === typeName)) {
+        unionLabels.push(unionTypeName);
+      }
+    }
+  });
+  return unionLabels;
 };
 
 // Mutation API root operation branch
@@ -1114,23 +1193,16 @@ export const translateMutation = ({
   offset,
   otherParams
 }) => {
+  const typeMap = resolveInfo.schema.getTypeMap();
   const { typeName, variableName } = typeIdentifiers(resolveInfo.returnType);
-
   const schemaType = resolveInfo.schema.getType(typeName);
-
   const selections = getPayloadSelections(resolveInfo);
-
   const outerSkipLimit = getOuterSkipLimit(first, offset);
   const orderByValue = computeOrderBy(resolveInfo, schemaType);
   const additionalNodeLabels = getAdditionalLabels(
     schemaType,
     getCypherParams(context)
   );
-  const interfaceLabels =
-    typeof schemaType.getInterfaces === 'function'
-      ? schemaType.getInterfaces().map(i => i.name)
-      : [];
-
   const mutationTypeCypherDirective = getMutationCypherDirective(resolveInfo);
   const mutationMeta = resolveInfo.schema
     .getMutationType()
@@ -1149,23 +1221,39 @@ export const translateMutation = ({
 
   const isInterfaceType = isGraphqlInterfaceType(schemaType);
   const isObjectType = isGraphqlObjectType(schemaType);
+  const isUnionType = isGraphqlUnionType(schemaType);
+
   const usesFragments = isFragmentedSelection({ selections });
   const isFragmentedObjectType = isObjectType && usesFragments;
 
-  const [schemaTypeFields, composedTypeMap] = mergeSelectionFragments({
+  const interfaceLabels =
+    typeof schemaType.getInterfaces === 'function'
+      ? schemaType.getInterfaces().map(i => i.name)
+      : [];
+  const unionLabels = getUnionLabels({ typeName, typeMap });
+  const additionalLabels = [
+    ...additionalNodeLabels,
+    ...interfaceLabels,
+    ...unionLabels
+  ];
+
+  const [schemaTypeFields, derivedTypeMap] = mergeSelectionFragments({
     schemaType,
     selections,
     isFragmentedObjectType,
+    isUnionType,
+    typeMap,
     resolveInfo
   });
-
   if (mutationTypeCypherDirective) {
     return customMutation({
       resolveInfo,
       schemaType,
       schemaTypeFields,
-      composedTypeMap,
+      derivedTypeMap,
+      isObjectType,
       isInterfaceType,
+      isUnionType,
       usesFragments,
       selections,
       params,
@@ -1183,7 +1271,7 @@ export const translateMutation = ({
       params,
       variableName,
       typeName,
-      additionalLabels: additionalNodeLabels.concat(interfaceLabels)
+      additionalLabels
     });
   } else if (isDeleteMutation(resolveInfo)) {
     return nodeDelete({
@@ -1192,8 +1280,7 @@ export const translateMutation = ({
       selections,
       params,
       variableName,
-      typeName,
-      additionalLabels: additionalNodeLabels
+      typeName
     });
   } else if (isAddMutation(resolveInfo)) {
     return relationshipCreate({
@@ -1225,8 +1312,8 @@ export const translateMutation = ({
         typeName,
         selections,
         schemaType,
-        params,
-        additionalLabels: additionalNodeLabels.concat(interfaceLabels)
+        additionalLabels,
+        params
       });
     }
   } else if (isRemoveMutation(resolveInfo)) {
@@ -1254,8 +1341,10 @@ const customMutation = ({
   variableName,
   schemaType,
   schemaTypeFields,
-  composedTypeMap,
+  derivedTypeMap,
+  isObjectType,
   isInterfaceType,
+  isUnionType,
   usesFragments,
   resolveInfo,
   orderByValue,
@@ -1293,8 +1382,10 @@ const customMutation = ({
     listVariable,
     schemaType,
     schemaTypeFields,
-    composedTypeMap,
+    derivedTypeMap,
+    isObjectType,
     isInterfaceType,
+    isUnionType,
     usesFragments,
     safeVariableName,
     subQuery,
@@ -1329,8 +1420,9 @@ const customMutation = ({
   }
   const fragmentTypeParams = derivedTypesParams({
     isInterfaceType,
+    isUnionType,
     schema: resolveInfo.schema,
-    interfaceName: schemaType.name,
+    schemaTypeName: schemaType.name,
     usesFragments
   });
   params = { ...params, ...subParams, ...fragmentTypeParams };
@@ -1389,11 +1481,10 @@ const nodeDelete = ({
   variableName,
   typeName,
   schemaType,
-  additionalLabels,
   params
 }) => {
   const safeVariableName = safeVar(variableName);
-  const safeLabelName = safeLabel([typeName, ...additionalLabels]);
+  const safeLabelName = safeLabel(typeName);
   const args = getMutationArguments(resolveInfo);
   const primaryKeyArg = args[0];
   const primaryKeyArgName = primaryKeyArg.name.value;
@@ -1835,7 +1926,6 @@ const nodeMergeOrUpdate = ({
   params
 }) => {
   const safeVariableName = safeVar(variableName);
-  const safeLabelName = safeLabel([typeName, ...additionalLabels]);
   const args = getMutationArguments(resolveInfo);
   const primaryKeyArg = args[0];
   const primaryKeyArgName = primaryKeyArg.name.value;
@@ -1862,7 +1952,9 @@ const nodeMergeOrUpdate = ({
     resolveInfo
   });
   let cypherOperation = '';
+  let safeLabelName = safeLabel(typeName);
   if (isMergeMutation(resolveInfo)) {
+    safeLabelName = safeLabel([typeName, ...additionalLabels]);
     cypherOperation = 'MERGE';
   } else if (isUpdateMutation(resolveInfo)) {
     cypherOperation = 'MATCH';
