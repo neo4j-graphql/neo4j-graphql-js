@@ -10,8 +10,7 @@ import {
 import {
   isNeo4jTemporalType,
   isNeo4jPointType,
-  Neo4jTypeName,
-  isQueryTypeDefinition
+  Neo4jTypeName
 } from './types/types';
 import { isCypherField } from './directives';
 import {
