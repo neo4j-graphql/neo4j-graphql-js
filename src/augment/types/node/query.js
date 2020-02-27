@@ -12,7 +12,7 @@ import {
   useAuthDirective
 } from '../../directives';
 import { shouldAugmentType } from '../../augment';
-import { OperationType } from '../../types/types';
+import { OperationType, isUnionTypeDefinition } from '../../types/types';
 import { TypeWrappers, getFieldDefinition } from '../../fields';
 import {
   FilteringArgument,
@@ -39,6 +39,7 @@ const NodeQueryArgument = {
  * generated input or output types required for translation
  */
 export const augmentNodeQueryAPI = ({
+  definition,
   typeName,
   propertyInputValues,
   nodeInputTypeMap,
@@ -52,6 +53,7 @@ export const augmentNodeQueryAPI = ({
   if (shouldAugmentType(config, queryTypeNameLower, typeName)) {
     if (queryType) {
       operationTypeMap = buildNodeQueryField({
+        definition,
         typeName,
         queryType,
         propertyInputValues,
@@ -60,17 +62,19 @@ export const augmentNodeQueryAPI = ({
         config
       });
     }
-    generatedTypeMap = buildQueryOrderingEnumType({
-      nodeInputTypeMap,
-      typeDefinitionMap,
-      generatedTypeMap
-    });
-    generatedTypeMap = buildQueryFilteringInputType({
-      typeName: `_${typeName}Filter`,
-      typeDefinitionMap,
-      generatedTypeMap,
-      inputTypeMap: nodeInputTypeMap
-    });
+    if (!isUnionTypeDefinition({ definition })) {
+      generatedTypeMap = buildQueryOrderingEnumType({
+        nodeInputTypeMap,
+        typeDefinitionMap,
+        generatedTypeMap
+      });
+      generatedTypeMap = buildQueryFilteringInputType({
+        typeName: `_${typeName}Filter`,
+        typeDefinitionMap,
+        generatedTypeMap,
+        inputTypeMap: nodeInputTypeMap
+      });
+    }
   }
   return [operationTypeMap, generatedTypeMap];
 };
@@ -135,6 +139,7 @@ export const augmentNodeQueryArgumentTypes = ({
  * a given node type
  */
 const buildNodeQueryField = ({
+  definition,
   typeName,
   queryType,
   propertyInputValues,
@@ -159,6 +164,7 @@ const buildNodeQueryField = ({
           }
         }),
         args: buildNodeQueryArguments({
+          definition,
           typeName,
           propertyInputValues,
           typeDefinitionMap
@@ -179,38 +185,41 @@ const buildNodeQueryField = ({
  * arguments of the Query type field for a given node type
  */
 const buildNodeQueryArguments = ({
+  definition,
   typeName,
   propertyInputValues,
   typeDefinitionMap
 }) => {
-  // Do not persist type wrappers
-  propertyInputValues = propertyInputValues.map(arg =>
-    buildInputValue({
-      name: buildName({ name: arg.name }),
-      type: buildNamedType({
-        name: arg.type.name
-      })
-    })
-  );
-  if (!propertyInputValues.some(field => field.name.value === '_id')) {
-    propertyInputValues.push(
+  if (!isUnionTypeDefinition({ definition })) {
+    // Do not persist type wrappers
+    propertyInputValues = propertyInputValues.map(arg =>
       buildInputValue({
-        name: buildName({ name: '_id' }),
+        name: buildName({ name: arg.name }),
         type: buildNamedType({
-          name: GraphQLString.name
+          name: arg.type.name
         })
       })
     );
+    if (!propertyInputValues.some(field => field.name.value === '_id')) {
+      propertyInputValues.push(
+        buildInputValue({
+          name: buildName({ name: '_id' }),
+          type: buildNamedType({
+            name: GraphQLString.name
+          })
+        })
+      );
+    }
+    propertyInputValues = buildQueryFieldArguments({
+      argumentMap: NodeQueryArgument,
+      fieldArguments: propertyInputValues,
+      outputType: typeName,
+      outputTypeWrappers: {
+        [TypeWrappers.LIST_TYPE]: true
+      },
+      typeDefinitionMap
+    });
   }
-  propertyInputValues = buildQueryFieldArguments({
-    argumentMap: NodeQueryArgument,
-    fieldArguments: propertyInputValues,
-    outputType: typeName,
-    outputTypeWrappers: {
-      [TypeWrappers.LIST_TYPE]: true
-    },
-    typeDefinitionMap
-  });
   return propertyInputValues;
 };
 
