@@ -151,6 +151,9 @@ test.cb('Test augmented schema', t => {
         orderBy: [_CameraOrdering]
       ): [Camera] @cypher(statement: "MATCH (c:Camera) RETURN c")
       CustomCamera: Camera @cypher(statement: "MATCH (c:Camera) RETURN c")
+      MovieSearch: [MovieSearch]
+      computedMovieSearch: [MovieSearch]
+        @cypher(statement: "MATCH (ms:MovieSearch) RETURN ms")
       Genre(
         _id: String
         name: String
@@ -798,7 +801,7 @@ test.cb('Test augmented schema', t => {
       title: String @isAuthenticated
       someprefix_title_with_underscores: String
       year: Int
-      released: _Neo4jDateTime!
+      released: _Neo4jDateTime
       plot: String
       poster: String
       imdbRating: Float
@@ -1022,6 +1025,9 @@ test.cb('Test augmented schema', t => {
         orderBy: [_MovieOrdering]
         filter: _MovieFilter
       ): [Movie] @relation(name: "FAVORITED", direction: "OUT")
+      movieSearch: [MovieSearch]
+      computedMovieSearch: [MovieSearch]
+        @cypher(statement: "MATCH (ms:MovieSearch) RETURN ms")
       _id: String
     }
 
@@ -1656,6 +1662,8 @@ test.cb('Test augmented schema', t => {
       cameraBuddy_not_in: [_PersonFilter!]
     }
 
+    union MovieSearch = Movie | Genre | Book | Actor | OldCamera
+
     type CameraMan implements Person {
       userId: ID!
       name: String
@@ -1738,6 +1746,8 @@ test.cb('Test augmented schema', t => {
         @cypher(
           statement: "CREATE (newCamera:Camera:NewCamera {id: apoc.create.uuid(), type: 'macro', features: ['selfie', 'zoom']}) CREATE (oldCamera:Camera:OldCamera {id: apoc.create.uuid(), type: 'floating', smell: 'rusty' }) RETURN [newCamera, oldCamera]"
         )
+      computedMovieSearch: [MovieSearch]
+        @cypher(statement: "MATCH (ms:MovieSearch) RETURN ms")
       AddMovieGenres(
         from: _MovieInput!
         to: _GenreInput!
@@ -1824,7 +1834,7 @@ test.cb('Test augmented schema', t => {
         title: String
         someprefix_title_with_underscores: String
         year: Int
-        released: _Neo4jDateTimeInput!
+        released: _Neo4jDateTimeInput
         plot: String
         poster: String
         imdbRating: Float
