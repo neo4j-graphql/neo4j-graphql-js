@@ -62,6 +62,7 @@ import {
   buildCypherSelection,
   isFragmentedSelection,
   getDerivedTypes,
+  getUnionDerivedTypes,
   mergeSelectionFragments
 } from './selections';
 import _ from 'lodash';
@@ -876,7 +877,6 @@ const buildTypeCompositionPredicate = ({
   const schemaTypeName = schemaType.name;
   const isFragmentedInterfaceType = isInterfaceType && usesFragments;
   let labelPredicate = '';
-  // default remaining from current translation tests
   if (isFragmentedInterfaceType || isUnionType) {
     let derivedTypes = [];
     // If shared fields are selected then the translation builds
@@ -884,7 +884,7 @@ const buildTypeCompositionPredicate = ({
     // type. Because of this, the type selecting predicate applied to
     // the interface type path pattern should allow for all possible
     // implementing types
-    if (schemaTypeFields.length || isUnionType) {
+    if (schemaTypeFields.length) {
       derivedTypes = getDerivedTypes({
         schemaTypeName,
         derivedTypeMap,
@@ -892,10 +892,16 @@ const buildTypeCompositionPredicate = ({
         isFragmentedInterfaceType,
         resolveInfo
       });
+    } else if (isUnionType) {
+      derivedTypes = getUnionDerivedTypes({
+        derivedTypeMap,
+        resolveInfo
+      });
     } else {
       // Otherwise, use only those types provided in fragments
       derivedTypes = Object.keys(derivedTypeMap);
     }
+    // TODO refactor above branch now that more specific branching was needed
     const typeSelectionPredicates = derivedTypes.map(selectedType => {
       return `"${selectedType}" IN labels(${safeVariableName})`;
     });
