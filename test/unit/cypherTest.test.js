@@ -2210,7 +2210,7 @@ test('query interfaced relation using inline fragment', t => {
       year
     }
   }`,
-    expectedCypherQuery = `MATCH (\`actor\`:\`Actor\`) RETURN \`actor\` { .name ,knows: [(\`actor\`)-[:\`KNOWS\`]->(\`actor_knows\`:\`Person\`) WHERE ("User" IN labels(\`actor_knows\`)) | head([\`actor_knows\` IN [\`actor_knows\`] WHERE [label IN labels(\`actor_knows\`) WHERE label = "User" | TRUE] | \`actor_knows\` { FRAGMENT_TYPE: "User",  .name ,favorites: [(\`actor_knows\`)-[:\`FAVORITED\`]->(\`actor_knows_favorites\`:\`Movie\`:\`u_user-id\`:\`newMovieLabel\`) | \`actor_knows_favorites\` { .movieId , .title , .year }]  }])] } AS \`actor\``;
+    expectedCypherQuery = `MATCH (\`actor\`:\`Actor\`) RETURN \`actor\` { .name ,knows: [(\`actor\`)-[:\`KNOWS\`]->(\`actor_knows\`:\`Person\`) WHERE ("User" IN labels(\`actor_knows\`)) | head([\`actor_knows\` IN [\`actor_knows\`] WHERE "User" IN labels(\`actor_knows\`) | \`actor_knows\` { FRAGMENT_TYPE: "User",  .name ,favorites: [(\`actor_knows\`)-[:\`FAVORITED\`]->(\`actor_knows_favorites\`:\`Movie\`:\`u_user-id\`:\`newMovieLabel\`) | \`actor_knows_favorites\` { .movieId , .title , .year }]  }])] } AS \`actor\``;
 
   t.plan(1);
 
@@ -5561,7 +5561,7 @@ test('query computed interface type relationship field using only an inline frag
       }
     }
   }`,
-    expectedCypherQuery = `WITH apoc.cypher.runFirstColumn("MATCH (c:Camera) RETURN c", {offset:$offset, first:$first, cypherParams: $cypherParams}, True) AS x UNWIND x AS \`camera\` RETURN \`camera\` {FRAGMENT_TYPE: head( [ label IN labels(\`camera\`) WHERE label IN $Camera_derivedTypes ] ), .id , .type , .make , .weight ,computedOperators: [camera_computedOperators IN [ camera_computedOperators IN apoc.cypher.runFirstColumn("MATCH (this)<-[:cameras]-(p:Person) RETURN p", {this: camera, cypherParams: $cypherParams}, true) WHERE ("CameraMan" IN labels(camera_computedOperators)) | camera_computedOperators] | head([\`camera_computedOperators\` IN [\`camera_computedOperators\`] WHERE [label IN labels(\`camera_computedOperators\`) WHERE label = "CameraMan" | TRUE] | \`camera_computedOperators\` { FRAGMENT_TYPE: "CameraMan",  .userId , .name  }])] } AS \`camera\``;
+    expectedCypherQuery = `WITH apoc.cypher.runFirstColumn("MATCH (c:Camera) RETURN c", {offset:$offset, first:$first, cypherParams: $cypherParams}, True) AS x UNWIND x AS \`camera\` RETURN \`camera\` {FRAGMENT_TYPE: head( [ label IN labels(\`camera\`) WHERE label IN $Camera_derivedTypes ] ), .id , .type , .make , .weight ,computedOperators: [camera_computedOperators IN [ camera_computedOperators IN apoc.cypher.runFirstColumn("MATCH (this)<-[:cameras]-(p:Person) RETURN p", {this: camera, cypherParams: $cypherParams}, true) WHERE ("CameraMan" IN labels(camera_computedOperators)) | camera_computedOperators] | head([\`camera_computedOperators\` IN [\`camera_computedOperators\`] WHERE "CameraMan" IN labels(\`camera_computedOperators\`) | \`camera_computedOperators\` { FRAGMENT_TYPE: "CameraMan",  .userId , .name  }])] } AS \`camera\``;
 
   t.plan(3);
   return Promise.all([
@@ -5584,7 +5584,7 @@ test('query only fields on an implementing type using an inline fragment', t => 
       }
     }
   }`,
-    expectedCypherQuery = `MATCH (\`camera\`:\`Camera\`) WHERE ("OldCamera" IN labels(\`camera\`)) RETURN head([\`camera\` IN [\`camera\`] WHERE [label IN labels(\`camera\`) WHERE label = "OldCamera" | TRUE] | \`camera\` { FRAGMENT_TYPE: "OldCamera",  .id , .type  }]) AS \`camera\``;
+    expectedCypherQuery = `MATCH (\`camera\`:\`Camera\`) WHERE ("OldCamera" IN labels(\`camera\`)) RETURN head([\`camera\` IN [\`camera\`] WHERE "OldCamera" IN labels(\`camera\`) | \`camera\` { FRAGMENT_TYPE: "OldCamera",  .id , .type  }]) AS \`camera\``;
 
   t.plan(3);
   return Promise.all([
@@ -5612,7 +5612,7 @@ test('pagination used on root and nested interface type field', t => {
       }
     }
   }`,
-    expectedCypherQuery = `MATCH (\`camera\`:\`Camera\`) RETURN \`camera\` {FRAGMENT_TYPE: head( [ label IN labels(\`camera\`) WHERE label IN $Camera_derivedTypes ] ), .id , .type , .make , .weight ,operators: [(\`camera\`)<-[:\`cameras\`]-(\`camera_operators\`:\`Person\`) WHERE ("Actor" IN labels(\`camera_operators\`) OR "CameraMan" IN labels(\`camera_operators\`) OR "User" IN labels(\`camera_operators\`)) | head([\`camera_operators\` IN [\`camera_operators\`] WHERE [label IN labels(\`camera_operators\`) WHERE label = "Actor" | TRUE] | \`camera_operators\` { FRAGMENT_TYPE: "Actor",  .name  }] + [\`camera_operators\` IN [\`camera_operators\`] WHERE [label IN labels(\`camera_operators\`) WHERE label = "CameraMan" | TRUE] | \`camera_operators\` { FRAGMENT_TYPE: "CameraMan",  .userId , .name  }] + [\`camera_operators\` IN [\`camera_operators\`] WHERE [label IN labels(\`camera_operators\`) WHERE label = "User" | TRUE] | \`camera_operators\` { FRAGMENT_TYPE: "User",  .name  }])][1..2] } AS \`camera\` SKIP toInteger($offset) LIMIT toInteger($first)`;
+    expectedCypherQuery = `MATCH (\`camera\`:\`Camera\`) RETURN \`camera\` {FRAGMENT_TYPE: head( [ label IN labels(\`camera\`) WHERE label IN $Camera_derivedTypes ] ), .id , .type , .make , .weight ,operators: [(\`camera\`)<-[:\`cameras\`]-(\`camera_operators\`:\`Person\`) WHERE ("Actor" IN labels(\`camera_operators\`) OR "CameraMan" IN labels(\`camera_operators\`) OR "User" IN labels(\`camera_operators\`)) | head([\`camera_operators\` IN [\`camera_operators\`] WHERE "Actor" IN labels(\`camera_operators\`) | \`camera_operators\` { FRAGMENT_TYPE: "Actor",  .name  }] + [\`camera_operators\` IN [\`camera_operators\`] WHERE "CameraMan" IN labels(\`camera_operators\`) | \`camera_operators\` { FRAGMENT_TYPE: "CameraMan",  .userId , .name  }] + [\`camera_operators\` IN [\`camera_operators\`] WHERE "User" IN labels(\`camera_operators\`) | \`camera_operators\` { FRAGMENT_TYPE: "User",  .name  }])][1..2] } AS \`camera\` SKIP toInteger($offset) LIMIT toInteger($first)`;
 
   t.plan(3);
   return Promise.all([
@@ -5643,7 +5643,7 @@ test('ordering used on root and nested interface type field', t => {
       }
     }
   }`,
-    expectedCypherQuery = `MATCH (\`camera\`:\`Camera\`) WITH \`camera\` ORDER BY camera.type ASC RETURN \`camera\` {FRAGMENT_TYPE: head( [ label IN labels(\`camera\`) WHERE label IN $Camera_derivedTypes ] ), .id , .type , .make , .weight ,operators: apoc.coll.sortMulti([(\`camera\`)<-[:\`cameras\`]-(\`camera_operators\`:\`Person\`) WHERE ("Actor" IN labels(\`camera_operators\`) OR "CameraMan" IN labels(\`camera_operators\`) OR "User" IN labels(\`camera_operators\`)) | head([\`camera_operators\` IN [\`camera_operators\`] WHERE [label IN labels(\`camera_operators\`) WHERE label = "Actor" | TRUE] | \`camera_operators\` { FRAGMENT_TYPE: "Actor",  .name  }] + [\`camera_operators\` IN [\`camera_operators\`] WHERE [label IN labels(\`camera_operators\`) WHERE label = "CameraMan" | TRUE] | \`camera_operators\` { FRAGMENT_TYPE: "CameraMan",  .userId , .name  }] + [\`camera_operators\` IN [\`camera_operators\`] WHERE [label IN labels(\`camera_operators\`) WHERE label = "User" | TRUE] | \`camera_operators\` { FRAGMENT_TYPE: "User",  .name  }])], ['name']) } AS \`camera\``;
+    expectedCypherQuery = `MATCH (\`camera\`:\`Camera\`) WITH \`camera\` ORDER BY camera.type ASC RETURN \`camera\` {FRAGMENT_TYPE: head( [ label IN labels(\`camera\`) WHERE label IN $Camera_derivedTypes ] ), .id , .type , .make , .weight ,operators: apoc.coll.sortMulti([(\`camera\`)<-[:\`cameras\`]-(\`camera_operators\`:\`Person\`) WHERE ("Actor" IN labels(\`camera_operators\`) OR "CameraMan" IN labels(\`camera_operators\`) OR "User" IN labels(\`camera_operators\`)) | head([\`camera_operators\` IN [\`camera_operators\`] WHERE "Actor" IN labels(\`camera_operators\`) | \`camera_operators\` { FRAGMENT_TYPE: "Actor",  .name  }] + [\`camera_operators\` IN [\`camera_operators\`] WHERE "CameraMan" IN labels(\`camera_operators\`) | \`camera_operators\` { FRAGMENT_TYPE: "CameraMan",  .userId , .name  }] + [\`camera_operators\` IN [\`camera_operators\`] WHERE "User" IN labels(\`camera_operators\`) | \`camera_operators\` { FRAGMENT_TYPE: "User",  .name  }])], ['name']) } AS \`camera\``;
 
   t.plan(3);
   return Promise.all([
@@ -5678,7 +5678,7 @@ test('filtering used on root and nested interface type field with only fragments
       }
     }
   }`,
-    expectedCypherQuery = `MATCH (\`camera\`:\`Camera\`) WHERE ("NewCamera" IN labels(\`camera\`)) AND ($filter._operators_not_null = TRUE AND EXISTS((\`camera\`)<-[:cameras]-(:Person))) RETURN head([\`camera\` IN [\`camera\`] WHERE [label IN labels(\`camera\`) WHERE label = "NewCamera" | TRUE] | \`camera\` { FRAGMENT_TYPE: "NewCamera", operators: [(\`camera\`)<-[:\`cameras\`]-(\`camera_operators\`:\`Person\`) WHERE ("CameraMan" IN labels(\`camera_operators\`)) AND ($1_filter._name_not_null = TRUE AND EXISTS(\`camera_operators\`.name)) | head([\`camera_operators\` IN [\`camera_operators\`] WHERE [label IN labels(\`camera_operators\`) WHERE label = "CameraMan" | TRUE] | \`camera_operators\` { FRAGMENT_TYPE: "CameraMan",  .name  }])]  }]) AS \`camera\``;
+    expectedCypherQuery = `MATCH (\`camera\`:\`Camera\`) WHERE ("NewCamera" IN labels(\`camera\`)) AND ($filter._operators_not_null = TRUE AND EXISTS((\`camera\`)<-[:cameras]-(:Person))) RETURN head([\`camera\` IN [\`camera\`] WHERE "NewCamera" IN labels(\`camera\`) | \`camera\` { FRAGMENT_TYPE: "NewCamera", operators: [(\`camera\`)<-[:\`cameras\`]-(\`camera_operators\`:\`Person\`) WHERE ("CameraMan" IN labels(\`camera_operators\`)) AND ($1_filter._name_not_null = TRUE AND EXISTS(\`camera_operators\`.name)) | head([\`camera_operators\` IN [\`camera_operators\`] WHERE "CameraMan" IN labels(\`camera_operators\`) | \`camera_operators\` { FRAGMENT_TYPE: "CameraMan",  .name  }])]  }]) AS \`camera\``;
 
   t.plan(3);
   return Promise.all([
@@ -5721,7 +5721,7 @@ test('filtering used on root and nested interface using fragments and query vari
       }
     }
   }`,
-    expectedCypherQuery = `MATCH (\`camera\`:\`Camera\` {type:$type}) WHERE ("NewCamera" IN labels(\`camera\`) OR "OldCamera" IN labels(\`camera\`)) RETURN head([\`camera\` IN [\`camera\`] WHERE [label IN labels(\`camera\`) WHERE label = "NewCamera" | TRUE] | \`camera\` { FRAGMENT_TYPE: "NewCamera", operators: [(\`camera\`)<-[:\`cameras\`]-(\`camera_operators\`:\`Person\`) WHERE (\`camera_operators\`.userId = $1_filter.userId) | \`camera_operators\` {FRAGMENT_TYPE: head( [ label IN labels(\`camera_operators\`) WHERE label IN $Person_derivedTypes ] ), .userId }] , .id , .type ,computedOperators: [ camera_computedOperators IN apoc.cypher.runFirstColumn("MATCH (this)<-[:cameras]-(p:Person) RETURN p", {this: camera, cypherParams: $cypherParams, name: $3_name}, true) | camera_computedOperators {FRAGMENT_TYPE: head( [ label IN labels(camera_computedOperators) WHERE label IN $Person_derivedTypes ] ), .userId , .name }]  }] + [\`camera\` IN [\`camera\`] WHERE [label IN labels(\`camera\`) WHERE label = "OldCamera" | TRUE] | \`camera\` { FRAGMENT_TYPE: "OldCamera", operators: [(\`camera\`)<-[:\`cameras\`]-(\`camera_operators\`:\`Person\`) WHERE (\`camera_operators\`.userId = $1_filter.userId) | \`camera_operators\` {FRAGMENT_TYPE: head( [ label IN labels(\`camera_operators\`) WHERE label IN $Person_derivedTypes ] ), .userId }] , .id , .type ,computedOperators: [ camera_computedOperators IN apoc.cypher.runFirstColumn("MATCH (this)<-[:cameras]-(p:Person) RETURN p", {this: camera, cypherParams: $cypherParams, name: $3_name}, true) | camera_computedOperators {FRAGMENT_TYPE: head( [ label IN labels(camera_computedOperators) WHERE label IN $Person_derivedTypes ] ), .userId , .name }]  }]) AS \`camera\``;
+    expectedCypherQuery = `MATCH (\`camera\`:\`Camera\` {type:$type}) WHERE ("NewCamera" IN labels(\`camera\`) OR "OldCamera" IN labels(\`camera\`)) RETURN head([\`camera\` IN [\`camera\`] WHERE "NewCamera" IN labels(\`camera\`) | \`camera\` { FRAGMENT_TYPE: "NewCamera", operators: [(\`camera\`)<-[:\`cameras\`]-(\`camera_operators\`:\`Person\`) WHERE (\`camera_operators\`.userId = $1_filter.userId) | \`camera_operators\` {FRAGMENT_TYPE: head( [ label IN labels(\`camera_operators\`) WHERE label IN $Person_derivedTypes ] ), .userId }] , .id , .type ,computedOperators: [ camera_computedOperators IN apoc.cypher.runFirstColumn("MATCH (this)<-[:cameras]-(p:Person) RETURN p", {this: camera, cypherParams: $cypherParams, name: $3_name}, true) | camera_computedOperators {FRAGMENT_TYPE: head( [ label IN labels(camera_computedOperators) WHERE label IN $Person_derivedTypes ] ), .userId , .name }]  }] + [\`camera\` IN [\`camera\`] WHERE "OldCamera" IN labels(\`camera\`) | \`camera\` { FRAGMENT_TYPE: "OldCamera", operators: [(\`camera\`)<-[:\`cameras\`]-(\`camera_operators\`:\`Person\`) WHERE (\`camera_operators\`.userId = $1_filter.userId) | \`camera_operators\` {FRAGMENT_TYPE: head( [ label IN labels(\`camera_operators\`) WHERE label IN $Person_derivedTypes ] ), .userId }] , .id , .type ,computedOperators: [ camera_computedOperators IN apoc.cypher.runFirstColumn("MATCH (this)<-[:cameras]-(p:Person) RETURN p", {this: camera, cypherParams: $cypherParams, name: $3_name}, true) | camera_computedOperators {FRAGMENT_TYPE: head( [ label IN labels(camera_computedOperators) WHERE label IN $Person_derivedTypes ] ), .userId , .name }]  }]) AS \`camera\``;
 
   t.plan(3);
   return Promise.all([
@@ -5772,7 +5772,7 @@ test('query only computed fields on an implementing type using an inline fragmen
       }
     }
   }`,
-    expectedCypherQuery = `WITH apoc.cypher.runFirstColumn("MATCH (c:Camera) RETURN c", {offset:$offset, first:$first, cypherParams: $cypherParams}, True) AS x WITH [\`camera\` IN x WHERE ("OldCamera" IN labels(\`camera\`)) | \`camera\`] AS x UNWIND x AS \`camera\` RETURN head([\`camera\` IN [\`camera\`] WHERE [label IN labels(\`camera\`) WHERE label = "OldCamera" | TRUE] | \`camera\` { FRAGMENT_TYPE: "OldCamera",  .id , .type  }]) AS \`camera\``;
+    expectedCypherQuery = `WITH apoc.cypher.runFirstColumn("MATCH (c:Camera) RETURN c", {offset:$offset, first:$first, cypherParams: $cypherParams}, True) AS x WITH [\`camera\` IN x WHERE ("OldCamera" IN labels(\`camera\`)) | \`camera\`] AS x UNWIND x AS \`camera\` RETURN head([\`camera\` IN [\`camera\`] WHERE "OldCamera" IN labels(\`camera\`) | \`camera\` { FRAGMENT_TYPE: "OldCamera",  .id , .type  }]) AS \`camera\``;
 
   t.plan(3);
   return Promise.all([
@@ -5801,7 +5801,7 @@ test('query computed interface fields using fragments on implementing types', t 
     type
     weight
   }`,
-    expectedCypherQuery = `WITH apoc.cypher.runFirstColumn("MATCH (c:Camera) RETURN c", {offset:$offset, first:$first, cypherParams: $cypherParams}, True) AS x WITH [\`camera\` IN x WHERE ("NewCamera" IN labels(\`camera\`) OR "OldCamera" IN labels(\`camera\`)) | \`camera\`] AS x UNWIND x AS \`camera\` RETURN head([\`camera\` IN [\`camera\`] WHERE [label IN labels(\`camera\`) WHERE label = "NewCamera" | TRUE] | \`camera\` { FRAGMENT_TYPE: "NewCamera",  .type , .weight , .id  }] + [\`camera\` IN [\`camera\`] WHERE [label IN labels(\`camera\`) WHERE label = "OldCamera" | TRUE] | \`camera\` { FRAGMENT_TYPE: "OldCamera",  .type , .id  }]) AS \`camera\``;
+    expectedCypherQuery = `WITH apoc.cypher.runFirstColumn("MATCH (c:Camera) RETURN c", {offset:$offset, first:$first, cypherParams: $cypherParams}, True) AS x WITH [\`camera\` IN x WHERE ("NewCamera" IN labels(\`camera\`) OR "OldCamera" IN labels(\`camera\`)) | \`camera\`] AS x UNWIND x AS \`camera\` RETURN head([\`camera\` IN [\`camera\`] WHERE "NewCamera" IN labels(\`camera\`) | \`camera\` { FRAGMENT_TYPE: "NewCamera",  .type , .weight , .id  }] + [\`camera\` IN [\`camera\`] WHERE "OldCamera" IN labels(\`camera\`) | \`camera\` { FRAGMENT_TYPE: "OldCamera",  .type , .id  }]) AS \`camera\``;
 
   t.plan(3);
   return Promise.all([
@@ -5829,7 +5829,7 @@ test('query interface type relationship field using inline fragment on implement
       }
     }
   }`,
-    expectedCypherQuery = `MATCH (\`camera\`:\`Camera\`) WHERE ("OldCamera" IN labels(\`camera\`)) RETURN head([\`camera\` IN [\`camera\`] WHERE [label IN labels(\`camera\`) WHERE label = "OldCamera" | TRUE] | \`camera\` { FRAGMENT_TYPE: "OldCamera",  .id , .type ,operators: [(\`camera\`)<-[:\`cameras\`]-(\`camera_operators\`:\`Person\`) WHERE ("Actor" IN labels(\`camera_operators\`) OR "CameraMan" IN labels(\`camera_operators\`) OR "User" IN labels(\`camera_operators\`)) | head([\`camera_operators\` IN [\`camera_operators\`] WHERE [label IN labels(\`camera_operators\`) WHERE label = "Actor" | TRUE] | \`camera_operators\` { FRAGMENT_TYPE: "Actor",  .userId  }] + [\`camera_operators\` IN [\`camera_operators\`] WHERE [label IN labels(\`camera_operators\`) WHERE label = "CameraMan" | TRUE] | \`camera_operators\` { FRAGMENT_TYPE: "CameraMan",  .name , .userId  }] + [\`camera_operators\` IN [\`camera_operators\`] WHERE [label IN labels(\`camera_operators\`) WHERE label = "User" | TRUE] | \`camera_operators\` { FRAGMENT_TYPE: "User",  .userId  }])]  }]) AS \`camera\``;
+    expectedCypherQuery = `MATCH (\`camera\`:\`Camera\`) WHERE ("OldCamera" IN labels(\`camera\`)) RETURN head([\`camera\` IN [\`camera\`] WHERE "OldCamera" IN labels(\`camera\`) | \`camera\` { FRAGMENT_TYPE: "OldCamera",  .id , .type ,operators: [(\`camera\`)<-[:\`cameras\`]-(\`camera_operators\`:\`Person\`) WHERE ("Actor" IN labels(\`camera_operators\`) OR "CameraMan" IN labels(\`camera_operators\`) OR "User" IN labels(\`camera_operators\`)) | head([\`camera_operators\` IN [\`camera_operators\`] WHERE "Actor" IN labels(\`camera_operators\`) | \`camera_operators\` { FRAGMENT_TYPE: "Actor",  .userId  }] + [\`camera_operators\` IN [\`camera_operators\`] WHERE "CameraMan" IN labels(\`camera_operators\`) | \`camera_operators\` { FRAGMENT_TYPE: "CameraMan",  .name , .userId  }] + [\`camera_operators\` IN [\`camera_operators\`] WHERE "User" IN labels(\`camera_operators\`) | \`camera_operators\` { FRAGMENT_TYPE: "User",  .userId  }])]  }]) AS \`camera\``;
 
   t.plan(3);
   return Promise.all([
@@ -5857,7 +5857,7 @@ test('query interface type relationship field using only inline fragment', t => 
       }
     }
   }`,
-    expectedCypherQuery = `MATCH (\`camera\`:\`Camera\`) WHERE ("OldCamera" IN labels(\`camera\`)) RETURN head([\`camera\` IN [\`camera\`] WHERE [label IN labels(\`camera\`) WHERE label = "OldCamera" | TRUE] | \`camera\` { FRAGMENT_TYPE: "OldCamera",  .id , .type ,operators: [(\`camera\`)<-[:\`cameras\`]-(\`camera_operators\`:\`Person\`) WHERE ("CameraMan" IN labels(\`camera_operators\`)) | head([\`camera_operators\` IN [\`camera_operators\`] WHERE [label IN labels(\`camera_operators\`) WHERE label = "CameraMan" | TRUE] | \`camera_operators\` { FRAGMENT_TYPE: "CameraMan",  .userId , .name  }])]  }]) AS \`camera\``;
+    expectedCypherQuery = `MATCH (\`camera\`:\`Camera\`) WHERE ("OldCamera" IN labels(\`camera\`)) RETURN head([\`camera\` IN [\`camera\`] WHERE "OldCamera" IN labels(\`camera\`) | \`camera\` { FRAGMENT_TYPE: "OldCamera",  .id , .type ,operators: [(\`camera\`)<-[:\`cameras\`]-(\`camera_operators\`:\`Person\`) WHERE ("CameraMan" IN labels(\`camera_operators\`)) | head([\`camera_operators\` IN [\`camera_operators\`] WHERE "CameraMan" IN labels(\`camera_operators\`) | \`camera_operators\` { FRAGMENT_TYPE: "CameraMan",  .userId , .name  }])]  }]) AS \`camera\``;
 
   t.plan(3);
   return Promise.all([
@@ -5887,7 +5887,7 @@ test('query interface __typename as only field not within fragments on implement
       }
     }
   }`,
-    expectedCypherQuery = `MATCH (\`camera\`:\`Camera\`) WHERE ("OldCamera" IN labels(\`camera\`)) RETURN head([\`camera\` IN [\`camera\`] WHERE [label IN labels(\`camera\`) WHERE label = "OldCamera" | TRUE] | \`camera\` { FRAGMENT_TYPE: "OldCamera",  .id , .type ,operators: [(\`camera\`)<-[:\`cameras\`]-(\`camera_operators\`:\`Person\`) WHERE ("CameraMan" IN labels(\`camera_operators\`)) | head([\`camera_operators\` IN [\`camera_operators\`] WHERE [label IN labels(\`camera_operators\`) WHERE label = "CameraMan" | TRUE] | \`camera_operators\` { FRAGMENT_TYPE: "CameraMan",  .userId , .name  }])]  }]) AS \`camera\``;
+    expectedCypherQuery = `MATCH (\`camera\`:\`Camera\`) WHERE ("OldCamera" IN labels(\`camera\`)) RETURN head([\`camera\` IN [\`camera\`] WHERE "OldCamera" IN labels(\`camera\`) | \`camera\` { FRAGMENT_TYPE: "OldCamera",  .id , .type ,operators: [(\`camera\`)<-[:\`cameras\`]-(\`camera_operators\`:\`Person\`) WHERE ("CameraMan" IN labels(\`camera_operators\`)) | head([\`camera_operators\` IN [\`camera_operators\`] WHERE "CameraMan" IN labels(\`camera_operators\`) | \`camera_operators\` { FRAGMENT_TYPE: "CameraMan",  .userId , .name  }])]  }]) AS \`camera\``;
 
   t.plan(3);
   return Promise.all([
@@ -5909,7 +5909,7 @@ test('query same field on implementing type using inline fragment', t => {
       }
     }
   }`,
-    expectedCypherQuery = `MATCH (\`camera\`:\`Camera\`) WHERE ("NewCamera" IN labels(\`camera\`) OR "OldCamera" IN labels(\`camera\`)) RETURN head([\`camera\` IN [\`camera\`] WHERE [label IN labels(\`camera\`) WHERE label = "NewCamera" | TRUE] | \`camera\` { FRAGMENT_TYPE: "NewCamera",  .id  }] + [\`camera\` IN [\`camera\`] WHERE [label IN labels(\`camera\`) WHERE label = "OldCamera" | TRUE] | \`camera\` { FRAGMENT_TYPE: "OldCamera",  .id  }]) AS \`camera\``;
+    expectedCypherQuery = `MATCH (\`camera\`:\`Camera\`) WHERE ("NewCamera" IN labels(\`camera\`) OR "OldCamera" IN labels(\`camera\`)) RETURN head([\`camera\` IN [\`camera\`] WHERE "NewCamera" IN labels(\`camera\`) | \`camera\` { FRAGMENT_TYPE: "NewCamera",  .id  }] + [\`camera\` IN [\`camera\`] WHERE "OldCamera" IN labels(\`camera\`) | \`camera\` { FRAGMENT_TYPE: "OldCamera",  .id  }]) AS \`camera\``;
 
   t.plan(3);
   return Promise.all([
@@ -5932,7 +5932,7 @@ test('query interface and implementing type using inline fragment', t => {
       }
     }
   }`,
-    expectedCypherQuery = `MATCH (\`camera\`:\`Camera\`) WHERE ("NewCamera" IN labels(\`camera\`) OR "OldCamera" IN labels(\`camera\`)) RETURN head([\`camera\` IN [\`camera\`] WHERE [label IN labels(\`camera\`) WHERE label = "NewCamera" | TRUE] | \`camera\` { FRAGMENT_TYPE: "NewCamera",  .id  }] + [\`camera\` IN [\`camera\`] WHERE [label IN labels(\`camera\`) WHERE label = "OldCamera" | TRUE] | \`camera\` { FRAGMENT_TYPE: "OldCamera",  .id , .type  }]) AS \`camera\``;
+    expectedCypherQuery = `MATCH (\`camera\`:\`Camera\`) WHERE ("NewCamera" IN labels(\`camera\`) OR "OldCamera" IN labels(\`camera\`)) RETURN head([\`camera\` IN [\`camera\`] WHERE "NewCamera" IN labels(\`camera\`) | \`camera\` { FRAGMENT_TYPE: "NewCamera",  .id  }] + [\`camera\` IN [\`camera\`] WHERE "OldCamera" IN labels(\`camera\`) | \`camera\` { FRAGMENT_TYPE: "OldCamera",  .id , .type  }]) AS \`camera\``;
 
   t.plan(3);
   return Promise.all([
@@ -5961,7 +5961,7 @@ test('query interface type relationship fields within inline fragment', t => {
       }
     }
   }`,
-    expectedCypherQuery = `MATCH (\`camera\`:\`Camera\`) WHERE ("NewCamera" IN labels(\`camera\`) OR "OldCamera" IN labels(\`camera\`)) RETURN head([\`camera\` IN [\`camera\`] WHERE [label IN labels(\`camera\`) WHERE label = "NewCamera" | TRUE] | \`camera\` { FRAGMENT_TYPE: "NewCamera",  .id , .type , .make , .weight  }] + [\`camera\` IN [\`camera\`] WHERE [label IN labels(\`camera\`) WHERE label = "OldCamera" | TRUE] | \`camera\` { FRAGMENT_TYPE: "OldCamera", operators: [(\`camera\`)<-[:\`cameras\`]-(\`camera_operators\`:\`Person\`) | \`camera_operators\` {FRAGMENT_TYPE: head( [ label IN labels(\`camera_operators\`) WHERE label IN $Person_derivedTypes ] ), .userId , .name }] , .id , .type , .make , .weight  }]) AS \`camera\``;
+    expectedCypherQuery = `MATCH (\`camera\`:\`Camera\`) WHERE ("NewCamera" IN labels(\`camera\`) OR "OldCamera" IN labels(\`camera\`)) RETURN head([\`camera\` IN [\`camera\`] WHERE "NewCamera" IN labels(\`camera\`) | \`camera\` { FRAGMENT_TYPE: "NewCamera",  .id , .type , .make , .weight  }] + [\`camera\` IN [\`camera\`] WHERE "OldCamera" IN labels(\`camera\`) | \`camera\` { FRAGMENT_TYPE: "OldCamera", operators: [(\`camera\`)<-[:\`cameras\`]-(\`camera_operators\`:\`Person\`) | \`camera_operators\` {FRAGMENT_TYPE: head( [ label IN labels(\`camera_operators\`) WHERE label IN $Person_derivedTypes ] ), .userId , .name }] , .id , .type , .make , .weight  }]) AS \`camera\``;
 
   t.plan(3);
   return Promise.all([
@@ -5987,7 +5987,7 @@ test('query interface and implementing type using fragment spread', t => {
     id
     type
   }`,
-    expectedCypherQuery = `MATCH (\`camera\`:\`Camera\`) WHERE ("NewCamera" IN labels(\`camera\`) OR "OldCamera" IN labels(\`camera\`)) RETURN head([\`camera\` IN [\`camera\`] WHERE [label IN labels(\`camera\`) WHERE label = "NewCamera" | TRUE] | \`camera\` { FRAGMENT_TYPE: "NewCamera",  .id , .type  }] + [\`camera\` IN [\`camera\`] WHERE [label IN labels(\`camera\`) WHERE label = "OldCamera" | TRUE] | \`camera\` { FRAGMENT_TYPE: "OldCamera",  .id  }]) AS \`camera\``;
+    expectedCypherQuery = `MATCH (\`camera\`:\`Camera\`) WHERE ("NewCamera" IN labels(\`camera\`) OR "OldCamera" IN labels(\`camera\`)) RETURN head([\`camera\` IN [\`camera\`] WHERE "NewCamera" IN labels(\`camera\`) | \`camera\` { FRAGMENT_TYPE: "NewCamera",  .id , .type  }] + [\`camera\` IN [\`camera\`] WHERE "OldCamera" IN labels(\`camera\`) | \`camera\` { FRAGMENT_TYPE: "OldCamera",  .id  }]) AS \`camera\``;
 
   t.plan(3);
   return Promise.all([
@@ -6017,7 +6017,7 @@ test('query interface and implementing types using inline fragment and fragment 
     type
     features
   }`,
-    expectedCypherQuery = `MATCH (\`camera\`:\`Camera\`) WHERE ("NewCamera" IN labels(\`camera\`) OR "OldCamera" IN labels(\`camera\`)) RETURN head([\`camera\` IN [\`camera\`] WHERE [label IN labels(\`camera\`) WHERE label = "NewCamera" | TRUE] | \`camera\` { FRAGMENT_TYPE: "NewCamera",  .id , .type , .features , .make  }] + [\`camera\` IN [\`camera\`] WHERE [label IN labels(\`camera\`) WHERE label = "OldCamera" | TRUE] | \`camera\` { FRAGMENT_TYPE: "OldCamera",  .smell , .id , .make  }]) AS \`camera\``;
+    expectedCypherQuery = `MATCH (\`camera\`:\`Camera\`) WHERE ("NewCamera" IN labels(\`camera\`) OR "OldCamera" IN labels(\`camera\`)) RETURN head([\`camera\` IN [\`camera\`] WHERE "NewCamera" IN labels(\`camera\`) | \`camera\` { FRAGMENT_TYPE: "NewCamera",  .id , .type , .features , .make  }] + [\`camera\` IN [\`camera\`] WHERE "OldCamera" IN labels(\`camera\`) | \`camera\` { FRAGMENT_TYPE: "OldCamera",  .smell , .id , .make  }]) AS \`camera\``;
 
   t.plan(3);
   return Promise.all([
@@ -6053,7 +6053,7 @@ test('query interface type relationship field on implementing types using inline
       userId
     }
   }`,
-    expectedCypherQuery = `MATCH (\`camera\`:\`Camera\`) WHERE ("NewCamera" IN labels(\`camera\`) OR "OldCamera" IN labels(\`camera\`)) RETURN head([\`camera\` IN [\`camera\`] WHERE [label IN labels(\`camera\`) WHERE label = "NewCamera" | TRUE] | \`camera\` { FRAGMENT_TYPE: "NewCamera",  .id ,operators: [(\`camera\`)<-[:\`cameras\`]-(\`camera_operators\`:\`Person\`) | \`camera_operators\` {FRAGMENT_TYPE: head( [ label IN labels(\`camera_operators\`) WHERE label IN $Person_derivedTypes ] ), .userId }] , .type , .weight  }] + [\`camera\` IN [\`camera\`] WHERE [label IN labels(\`camera\`) WHERE label = "OldCamera" | TRUE] | \`camera\` { FRAGMENT_TYPE: "OldCamera",  .id ,operators: [(\`camera\`)<-[:\`cameras\`]-(\`camera_operators\`:\`Person\`) | \`camera_operators\` {FRAGMENT_TYPE: head( [ label IN labels(\`camera_operators\`) WHERE label IN $Person_derivedTypes ] ), .userId , .name }] , .type , .weight  }]) AS \`camera\``;
+    expectedCypherQuery = `MATCH (\`camera\`:\`Camera\`) WHERE ("NewCamera" IN labels(\`camera\`) OR "OldCamera" IN labels(\`camera\`)) RETURN head([\`camera\` IN [\`camera\`] WHERE "NewCamera" IN labels(\`camera\`) | \`camera\` { FRAGMENT_TYPE: "NewCamera",  .id ,operators: [(\`camera\`)<-[:\`cameras\`]-(\`camera_operators\`:\`Person\`) | \`camera_operators\` {FRAGMENT_TYPE: head( [ label IN labels(\`camera_operators\`) WHERE label IN $Person_derivedTypes ] ), .userId }] , .type , .weight  }] + [\`camera\` IN [\`camera\`] WHERE "OldCamera" IN labels(\`camera\`) | \`camera\` { FRAGMENT_TYPE: "OldCamera",  .id ,operators: [(\`camera\`)<-[:\`cameras\`]-(\`camera_operators\`:\`Person\`) | \`camera_operators\` {FRAGMENT_TYPE: head( [ label IN labels(\`camera_operators\`) WHERE label IN $Person_derivedTypes ] ), .userId , .name }] , .type , .weight  }]) AS \`camera\``;
 
   t.plan(3);
   return Promise.all([
@@ -6109,7 +6109,7 @@ test('query interface type list payload of @cypher mutation field using fragment
   }`,
     expectedCypherQuery = `CALL apoc.cypher.doIt("CREATE (newCamera:Camera:NewCamera {id: apoc.create.uuid(), type: 'macro', features: ['selfie', 'zoom']}) CREATE (oldCamera:Camera:OldCamera {id: apoc.create.uuid(), type: 'floating', smell: 'rusty' }) RETURN [newCamera, oldCamera]", {first:$first, offset:$offset, cypherParams: $cypherParams}) YIELD value
     UNWIND [\`camera\` IN apoc.map.values(value, [keys(value)[0]])[0]  WHERE ("NewCamera" IN labels(\`camera\`) OR "OldCamera" IN labels(\`camera\`)) | \`camera\`] AS \`camera\`
-    RETURN head([\`camera\` IN [\`camera\`] WHERE [label IN labels(\`camera\`) WHERE label = "NewCamera" | TRUE] | \`camera\` { FRAGMENT_TYPE: "NewCamera",  .features , .id , .type  }] + [\`camera\` IN [\`camera\`] WHERE [label IN labels(\`camera\`) WHERE label = "OldCamera" | TRUE] | \`camera\` { FRAGMENT_TYPE: "OldCamera",  .smell , .id , .type  }]) AS \`camera\``;
+    RETURN head([\`camera\` IN [\`camera\`] WHERE "NewCamera" IN labels(\`camera\`) | \`camera\` { FRAGMENT_TYPE: "NewCamera",  .features , .id , .type  }] + [\`camera\` IN [\`camera\`] WHERE "OldCamera" IN labels(\`camera\`) | \`camera\` { FRAGMENT_TYPE: "OldCamera",  .smell , .id , .type  }]) AS \`camera\``;
 
   t.plan(3);
   return Promise.all([
@@ -6137,7 +6137,7 @@ test('query interface type list payload of @cypher mutation field using only fra
   }`,
     expectedCypherQuery = `CALL apoc.cypher.doIt("CREATE (newCamera:Camera:NewCamera {id: apoc.create.uuid(), type: 'macro', features: ['selfie', 'zoom']}) CREATE (oldCamera:Camera:OldCamera {id: apoc.create.uuid(), type: 'floating', smell: 'rusty' }) RETURN [newCamera, oldCamera]", {first:$first, offset:$offset, cypherParams: $cypherParams}) YIELD value
     UNWIND [\`camera\` IN apoc.map.values(value, [keys(value)[0]])[0]  WHERE ("NewCamera" IN labels(\`camera\`) OR "OldCamera" IN labels(\`camera\`)) | \`camera\`] AS \`camera\`
-    RETURN head([\`camera\` IN [\`camera\`] WHERE [label IN labels(\`camera\`) WHERE label = "NewCamera" | TRUE] | \`camera\` { FRAGMENT_TYPE: "NewCamera",  .features  }] + [\`camera\` IN [\`camera\`] WHERE [label IN labels(\`camera\`) WHERE label = "OldCamera" | TRUE] | \`camera\` { FRAGMENT_TYPE: "OldCamera",  .smell  }]) AS \`camera\``;
+    RETURN head([\`camera\` IN [\`camera\`] WHERE "NewCamera" IN labels(\`camera\`) | \`camera\` { FRAGMENT_TYPE: "NewCamera",  .features  }] + [\`camera\` IN [\`camera\`] WHERE "OldCamera" IN labels(\`camera\`) | \`camera\` { FRAGMENT_TYPE: "OldCamera",  .smell  }]) AS \`camera\``;
 
   t.plan(3);
   return Promise.all([
@@ -6168,7 +6168,7 @@ test('query interfaced relationship mutation payload using fragments', t => {
       MATCH (\`actor_from\`:\`Actor\` {userId: $from.userId})
       MATCH (\`person_to\`:\`Person\` {userId: $to.userId})
       CREATE (\`actor_from\`)-[\`knows_relation\`:\`KNOWS\`]->(\`person_to\`)
-      RETURN \`knows_relation\` { from: \`actor_from\` { .name } ,to: head([\`person_to\` IN [\`person_to\`] WHERE [label IN labels(\`person_to\`) WHERE label = "Actor" | TRUE] | \`person_to\` { FRAGMENT_TYPE: "Actor",  .name  }] + [\`person_to\` IN [\`person_to\`] WHERE [label IN labels(\`person_to\`) WHERE label = "CameraMan" | TRUE] | \`person_to\` { FRAGMENT_TYPE: "CameraMan",  .name  }] + [\`person_to\` IN [\`person_to\`] WHERE [label IN labels(\`person_to\`) WHERE label = "User" | TRUE] | \`person_to\` { FRAGMENT_TYPE: "User",  .userId , .name  }])  } AS \`_AddActorKnowsPayload\`;
+      RETURN \`knows_relation\` { from: \`actor_from\` { .name } ,to: head([\`person_to\` IN [\`person_to\`] WHERE "Actor" IN labels(\`person_to\`) | \`person_to\` { FRAGMENT_TYPE: "Actor",  .name  }] + [\`person_to\` IN [\`person_to\`] WHERE "CameraMan" IN labels(\`person_to\`) | \`person_to\` { FRAGMENT_TYPE: "CameraMan",  .name  }] + [\`person_to\` IN [\`person_to\`] WHERE "User" IN labels(\`person_to\`) | \`person_to\` { FRAGMENT_TYPE: "User",  .userId , .name  }])  } AS \`_AddActorKnowsPayload\`;
     `;
 
   t.plan(1);
@@ -6203,7 +6203,7 @@ test('query interfaced relationship mutation payload using only fragments', t =>
       MATCH (\`actor_from\`:\`Actor\` {userId: $from.userId})
       MATCH (\`person_to\`:\`Person\` {userId: $to.userId})
       CREATE (\`actor_from\`)-[\`knows_relation\`:\`KNOWS\`]->(\`person_to\`)
-      RETURN \`knows_relation\` { from: \`actor_from\` { .name } ,to: head([\`person_to\` IN [\`person_to\`] WHERE [label IN labels(\`person_to\`) WHERE label = "User" | TRUE] | \`person_to\` { FRAGMENT_TYPE: "User",  .userId  }])  } AS \`_AddActorKnowsPayload\`;
+      RETURN \`knows_relation\` { from: \`actor_from\` { .name } ,to: head([\`person_to\` IN [\`person_to\`] WHERE "User" IN labels(\`person_to\`) | \`person_to\` { FRAGMENT_TYPE: "User",  .userId  }])  } AS \`_AddActorKnowsPayload\`;
     `;
 
   t.plan(1);
@@ -6249,7 +6249,7 @@ test('query interface using multiple fragments on the same implementing type', t
       __typename
     }
   }`,
-    expectedCypherQuery = `MATCH (\`camera\`:\`Camera\`) WHERE ("NewCamera" IN labels(\`camera\`) OR "OldCamera" IN labels(\`camera\`)) RETURN head([\`camera\` IN [\`camera\`] WHERE [label IN labels(\`camera\`) WHERE label = "NewCamera" | TRUE] | \`camera\` { FRAGMENT_TYPE: "NewCamera",  .id ,operators: [(\`camera\`)<-[:\`cameras\`]-(\`camera_operators\`:\`Person\`) | \`camera_operators\` {FRAGMENT_TYPE: head( [ label IN labels(\`camera_operators\`) WHERE label IN $Person_derivedTypes ] ), .name , .userId }] , .type , .weight  }] + [\`camera\` IN [\`camera\`] WHERE [label IN labels(\`camera\`) WHERE label = "OldCamera" | TRUE] | \`camera\` { FRAGMENT_TYPE: "OldCamera",  .weight  }]) AS \`camera\``;
+    expectedCypherQuery = `MATCH (\`camera\`:\`Camera\`) WHERE ("NewCamera" IN labels(\`camera\`) OR "OldCamera" IN labels(\`camera\`)) RETURN head([\`camera\` IN [\`camera\`] WHERE "NewCamera" IN labels(\`camera\`) | \`camera\` { FRAGMENT_TYPE: "NewCamera",  .id ,operators: [(\`camera\`)<-[:\`cameras\`]-(\`camera_operators\`:\`Person\`) | \`camera_operators\` {FRAGMENT_TYPE: head( [ label IN labels(\`camera_operators\`) WHERE label IN $Person_derivedTypes ] ), .name , .userId }] , .type , .weight  }] + [\`camera\` IN [\`camera\`] WHERE "OldCamera" IN labels(\`camera\`) | \`camera\` { FRAGMENT_TYPE: "OldCamera",  .weight  }]) AS \`camera\``;
 
   t.plan(3);
   return Promise.all([
@@ -6351,7 +6351,7 @@ test('query union type using fragments', t => {
   fragment MovieSearchGenre on Genre {
     name
   }`,
-    expectedCypherQuery = `MATCH (\`movieSearch\`:\`MovieSearch\`) WHERE ("Genre" IN labels(\`movieSearch\`) OR "Movie" IN labels(\`movieSearch\`)) RETURN head([\`movieSearch\` IN [\`movieSearch\`] WHERE [label IN labels(\`movieSearch\`) WHERE label = "Genre" | TRUE] | \`movieSearch\` { FRAGMENT_TYPE: "Genre",  .name  }] + [\`movieSearch\` IN [\`movieSearch\`] WHERE [label IN labels(\`movieSearch\`) WHERE label = "Movie" | TRUE] | \`movieSearch\` { FRAGMENT_TYPE: "Movie",  .movieId , .title  }]) AS \`movieSearch\``;
+    expectedCypherQuery = `MATCH (\`movieSearch\`:\`MovieSearch\`) WHERE ("Genre" IN labels(\`movieSearch\`) OR "Movie" IN labels(\`movieSearch\`)) RETURN head([\`movieSearch\` IN [\`movieSearch\`] WHERE "Genre" IN labels(\`movieSearch\`) | \`movieSearch\` { FRAGMENT_TYPE: "Genre",  .name  }] + [\`movieSearch\` IN [\`movieSearch\`] WHERE "Movie" IN labels(\`movieSearch\`) | \`movieSearch\` { FRAGMENT_TYPE: "Movie",  .movieId , .title  }]) AS \`movieSearch\``;
 
   t.plan(3);
   return Promise.all([
@@ -6378,7 +6378,7 @@ test('query computed union type using fragments', t => {
   fragment MovieSearchGenre on Genre {
     name
   }`,
-    expectedCypherQuery = `WITH apoc.cypher.runFirstColumn("MATCH (ms:MovieSearch) RETURN ms", {offset:$offset, first:$first, cypherParams: $cypherParams}, True) AS x WITH [\`movieSearch\` IN x WHERE ("Genre" IN labels(\`movieSearch\`) OR "Movie" IN labels(\`movieSearch\`)) | \`movieSearch\`] AS x UNWIND x AS \`movieSearch\` RETURN head([\`movieSearch\` IN [\`movieSearch\`] WHERE [label IN labels(\`movieSearch\`) WHERE label = "Genre" | TRUE] | \`movieSearch\` { FRAGMENT_TYPE: "Genre",  .name  }] + [\`movieSearch\` IN [\`movieSearch\`] WHERE [label IN labels(\`movieSearch\`) WHERE label = "Movie" | TRUE] | \`movieSearch\` { FRAGMENT_TYPE: "Movie",  .movieId , .title  }]) AS \`movieSearch\``;
+    expectedCypherQuery = `WITH apoc.cypher.runFirstColumn("MATCH (ms:MovieSearch) RETURN ms", {offset:$offset, first:$first, cypherParams: $cypherParams}, True) AS x WITH [\`movieSearch\` IN x WHERE ("Genre" IN labels(\`movieSearch\`) OR "Movie" IN labels(\`movieSearch\`)) | \`movieSearch\`] AS x UNWIND x AS \`movieSearch\` RETURN head([\`movieSearch\` IN [\`movieSearch\`] WHERE "Genre" IN labels(\`movieSearch\`) | \`movieSearch\` { FRAGMENT_TYPE: "Genre",  .name  }] + [\`movieSearch\` IN [\`movieSearch\`] WHERE "Movie" IN labels(\`movieSearch\`) | \`movieSearch\` { FRAGMENT_TYPE: "Movie",  .movieId , .title  }]) AS \`movieSearch\``;
 
   t.plan(3);
   return Promise.all([
@@ -6407,7 +6407,7 @@ test('query union type relationship using fragments', t => {
   fragment MovieSearchGenre on Genre {
     name
   }`,
-    expectedCypherQuery = `MATCH (\`user\`:\`User\`) RETURN \`user\` {movieSearch: [(\`user\`)--(\`user_movieSearch\`:\`MovieSearch\`) WHERE ("Genre" IN labels(\`user_movieSearch\`) OR "Movie" IN labels(\`user_movieSearch\`)) | head([\`user_movieSearch\` IN [\`user_movieSearch\`] WHERE [label IN labels(\`user_movieSearch\`) WHERE label = "Genre" | TRUE] | \`user_movieSearch\` { FRAGMENT_TYPE: "Genre",  .name  }] + [\`user_movieSearch\` IN [\`user_movieSearch\`] WHERE [label IN labels(\`user_movieSearch\`) WHERE label = "Movie" | TRUE] | \`user_movieSearch\` { FRAGMENT_TYPE: "Movie",  .title ,_id: ID(\`user_movieSearch\`) }])] } AS \`user\``;
+    expectedCypherQuery = `MATCH (\`user\`:\`User\`) RETURN \`user\` {movieSearch: [(\`user\`)--(\`user_movieSearch\`:\`MovieSearch\`) WHERE ("Genre" IN labels(\`user_movieSearch\`) OR "Movie" IN labels(\`user_movieSearch\`)) | head([\`user_movieSearch\` IN [\`user_movieSearch\`] WHERE "Genre" IN labels(\`user_movieSearch\`) | \`user_movieSearch\` { FRAGMENT_TYPE: "Genre",  .name  }] + [\`user_movieSearch\` IN [\`user_movieSearch\`] WHERE "Movie" IN labels(\`user_movieSearch\`) | \`user_movieSearch\` { FRAGMENT_TYPE: "Movie",  .title ,_id: ID(\`user_movieSearch\`) }])] } AS \`user\``;
 
   t.plan(3);
   return Promise.all([
@@ -6497,7 +6497,7 @@ test('query computed union type relationship using fragments', t => {
   fragment MovieSearchGenre on Genre {
     name
   }`,
-    expectedCypherQuery = `MATCH (\`user\`:\`User\`) RETURN \`user\` {computedMovieSearch: [user_computedMovieSearch IN [ user_computedMovieSearch IN apoc.cypher.runFirstColumn("MATCH (ms:MovieSearch) RETURN ms", {this: user, cypherParams: $cypherParams}, true) WHERE ("Genre" IN labels(user_computedMovieSearch) OR "Movie" IN labels(user_computedMovieSearch)) | user_computedMovieSearch] | head([\`user_computedMovieSearch\` IN [\`user_computedMovieSearch\`] WHERE [label IN labels(\`user_computedMovieSearch\`) WHERE label = "Genre" | TRUE] | \`user_computedMovieSearch\` { FRAGMENT_TYPE: "Genre",  .name  }] + [\`user_computedMovieSearch\` IN [\`user_computedMovieSearch\`] WHERE [label IN labels(\`user_computedMovieSearch\`) WHERE label = "Movie" | TRUE] | \`user_computedMovieSearch\` { FRAGMENT_TYPE: "Movie",  .movieId , .title  }])] } AS \`user\``;
+    expectedCypherQuery = `MATCH (\`user\`:\`User\`) RETURN \`user\` {computedMovieSearch: [user_computedMovieSearch IN [ user_computedMovieSearch IN apoc.cypher.runFirstColumn("MATCH (ms:MovieSearch) RETURN ms", {this: user, cypherParams: $cypherParams}, true) WHERE ("Genre" IN labels(user_computedMovieSearch) OR "Movie" IN labels(user_computedMovieSearch)) | user_computedMovieSearch] | head([\`user_computedMovieSearch\` IN [\`user_computedMovieSearch\`] WHERE "Genre" IN labels(\`user_computedMovieSearch\`) | \`user_computedMovieSearch\` { FRAGMENT_TYPE: "Genre",  .name  }] + [\`user_computedMovieSearch\` IN [\`user_computedMovieSearch\`] WHERE "Movie" IN labels(\`user_computedMovieSearch\`) | \`user_computedMovieSearch\` { FRAGMENT_TYPE: "Movie",  .movieId , .title  }])] } AS \`user\``;
 
   t.plan(3);
   return Promise.all([
@@ -6520,7 +6520,7 @@ test('query union type payload of computed mutation field', t => {
   }`,
     expectedCypherQuery = `CALL apoc.cypher.doIt("MATCH (ms:MovieSearch) RETURN ms", {first:$first, offset:$offset, cypherParams: $cypherParams}) YIELD value
     UNWIND [\`movieSearch\` IN apoc.map.values(value, [keys(value)[0]])[0]  WHERE ("Movie" IN labels(\`movieSearch\`)) | \`movieSearch\`] AS \`movieSearch\`
-    RETURN head([\`movieSearch\` IN [\`movieSearch\`] WHERE [label IN labels(\`movieSearch\`) WHERE label = "Movie" | TRUE] | \`movieSearch\` { FRAGMENT_TYPE: "Movie",  .title  }]) AS \`movieSearch\``;
+    RETURN head([\`movieSearch\` IN [\`movieSearch\`] WHERE "Movie" IN labels(\`movieSearch\`) | \`movieSearch\` { FRAGMENT_TYPE: "Movie",  .title  }]) AS \`movieSearch\``;
 
   t.plan(3);
   return Promise.all([
@@ -6572,7 +6572,7 @@ test('query union type using multiple fragments on the same interfaced object ty
       }
     }
   }`,
-    expectedCypherQuery = `MATCH (\`movieSearch\`:\`MovieSearch\`) WHERE ("Genre" IN labels(\`movieSearch\`) OR "Movie" IN labels(\`movieSearch\`) OR "Person" IN labels(\`movieSearch\`)) RETURN head([\`movieSearch\` IN [\`movieSearch\`] WHERE [label IN labels(\`movieSearch\`) WHERE label = "Genre" | TRUE] | \`movieSearch\` { FRAGMENT_TYPE: "Genre",  .name  }] + [\`movieSearch\` IN [\`movieSearch\`] WHERE [label IN labels(\`movieSearch\`) WHERE label = "Movie" | TRUE] | \`movieSearch\` { FRAGMENT_TYPE: "Movie",  .movieId , .title  }] + [\`movieSearch\` IN [\`movieSearch\`] WHERE [label IN labels(\`movieSearch\`) WHERE label = "Person" | TRUE] | head([\`movieSearch\` IN [\`movieSearch\`] WHERE [label IN labels(\`movieSearch\`) WHERE label = "Actor" | TRUE] | \`movieSearch\` { FRAGMENT_TYPE: "Actor",  .userId ,movies: [(\`movieSearch\`)-[:\`ACTED_IN\`]->(\`movieSearch_movies\`:\`Movie\`:\`u_user-id\`:\`newMovieLabel\`) | \`movieSearch_movies\` { .movieId ,genres: [(\`movieSearch_movies\`)-[:\`IN_GENRE\`]->(\`movieSearch_movies_genres\`:\`Genre\`) | \`movieSearch_movies_genres\` {_id: ID(\`movieSearch_movies_genres\`), .name }] , .title }] , .name  }] + [\`movieSearch\` IN [\`movieSearch\`] WHERE [label IN labels(\`movieSearch\`) WHERE label = "CameraMan" | TRUE] | \`movieSearch\` { FRAGMENT_TYPE: "CameraMan",  .name  }] + [\`movieSearch\` IN [\`movieSearch\`] WHERE [label IN labels(\`movieSearch\`) WHERE label = "User" | TRUE] | \`movieSearch\` { FRAGMENT_TYPE: "User",  .name  }])]) AS \`movieSearch\``;
+    expectedCypherQuery = `MATCH (\`movieSearch\`:\`MovieSearch\`) WHERE ("Genre" IN labels(\`movieSearch\`) OR "Movie" IN labels(\`movieSearch\`) OR "Person" IN labels(\`movieSearch\`)) RETURN head([\`movieSearch\` IN [\`movieSearch\`] WHERE "Genre" IN labels(\`movieSearch\`) | \`movieSearch\` { FRAGMENT_TYPE: "Genre",  .name  }] + [\`movieSearch\` IN [\`movieSearch\`] WHERE "Movie" IN labels(\`movieSearch\`) | \`movieSearch\` { FRAGMENT_TYPE: "Movie",  .movieId , .title  }] + [\`movieSearch\` IN [\`movieSearch\`] WHERE "Person" IN labels(\`movieSearch\`) | head([\`movieSearch\` IN [\`movieSearch\`] WHERE "Actor" IN labels(\`movieSearch\`) | \`movieSearch\` { FRAGMENT_TYPE: "Actor",  .userId ,movies: [(\`movieSearch\`)-[:\`ACTED_IN\`]->(\`movieSearch_movies\`:\`Movie\`:\`u_user-id\`:\`newMovieLabel\`) | \`movieSearch_movies\` { .movieId ,genres: [(\`movieSearch_movies\`)-[:\`IN_GENRE\`]->(\`movieSearch_movies_genres\`:\`Genre\`) | \`movieSearch_movies_genres\` {_id: ID(\`movieSearch_movies_genres\`), .name }] , .title }] , .name  }] + [\`movieSearch\` IN [\`movieSearch\`] WHERE "CameraMan" IN labels(\`movieSearch\`) | \`movieSearch\` { FRAGMENT_TYPE: "CameraMan",  .name  }] + [\`movieSearch\` IN [\`movieSearch\`] WHERE "User" IN labels(\`movieSearch\`) | \`movieSearch\` { FRAGMENT_TYPE: "User",  .name  }])]) AS \`movieSearch\``;
 
   t.plan(3);
   return Promise.all([
@@ -6639,7 +6639,7 @@ test('query union type relationship using multiple fragments and interfaced obje
       }
     }
   }`,
-    expectedCypherQuery = `MATCH (\`user\`:\`User\`) RETURN \`user\` { .userId , .name ,movieSearch: [(\`user\`)--(\`user_movieSearch\`:\`MovieSearch\`) WHERE ("Camera" IN labels(\`user_movieSearch\`) OR "Genre" IN labels(\`user_movieSearch\`) OR "Movie" IN labels(\`user_movieSearch\`) OR "Person" IN labels(\`user_movieSearch\`)) | head([\`user_movieSearch\` IN [\`user_movieSearch\`] WHERE [label IN labels(\`user_movieSearch\`) WHERE label = "Camera" | TRUE] | \`user_movieSearch\` { FRAGMENT_TYPE: head( [ label IN labels(\`user_movieSearch\`) WHERE label IN $Camera_derivedTypes ] ),  .id , .type  }] + [\`user_movieSearch\` IN [\`user_movieSearch\`] WHERE [label IN labels(\`user_movieSearch\`) WHERE label = "Genre" | TRUE] | \`user_movieSearch\` { FRAGMENT_TYPE: "Genre",  .name  }] + [\`user_movieSearch\` IN [\`user_movieSearch\`] WHERE [label IN labels(\`user_movieSearch\`) WHERE label = "Movie" | TRUE] | \`user_movieSearch\` { FRAGMENT_TYPE: "Movie",  .movieId , .title ,released: { year: \`user_movieSearch\`.released.year } }] + [\`user_movieSearch\` IN [\`user_movieSearch\`] WHERE [label IN labels(\`user_movieSearch\`) WHERE label = "Person" | TRUE] | head([\`user_movieSearch\` IN [\`user_movieSearch\`] WHERE [label IN labels(\`user_movieSearch\`) WHERE label = "Actor" | TRUE] | \`user_movieSearch\` { FRAGMENT_TYPE: "Actor",  .userId , .name ,movies: [(\`user_movieSearch\`)-[:\`ACTED_IN\`]->(\`user_movieSearch_movies\`:\`Movie\`:\`u_user-id\`:\`newMovieLabel\`) | \`user_movieSearch_movies\` { .movieId ,genres: [(\`user_movieSearch_movies\`)-[:\`IN_GENRE\`]->(\`user_movieSearch_movies_genres\`:\`Genre\`) | \`user_movieSearch_movies_genres\` {_id: ID(\`user_movieSearch_movies_genres\`), .name }] , .title }]  }])])] ,favorites: [(\`user\`)-[:\`FAVORITED\`]->(\`user_favorites\`:\`Movie\`:\`u_user-id\`:\`newMovieLabel\`) | \`user_favorites\` { .movieId }] } AS \`user\``;
+    expectedCypherQuery = `MATCH (\`user\`:\`User\`) RETURN \`user\` { .userId , .name ,movieSearch: [(\`user\`)--(\`user_movieSearch\`:\`MovieSearch\`) WHERE ("Actor" IN labels(\`user_movieSearch\`) OR "Camera" IN labels(\`user_movieSearch\`) OR "Genre" IN labels(\`user_movieSearch\`) OR "Movie" IN labels(\`user_movieSearch\`)) | head([\`user_movieSearch\` IN [\`user_movieSearch\`] WHERE "Camera" IN labels(\`user_movieSearch\`) | \`user_movieSearch\` { FRAGMENT_TYPE: head( [ label IN labels(\`user_movieSearch\`) WHERE label IN $Camera_derivedTypes ] ),  .id , .type  }] + [\`user_movieSearch\` IN [\`user_movieSearch\`] WHERE "Genre" IN labels(\`user_movieSearch\`) | \`user_movieSearch\` { FRAGMENT_TYPE: "Genre",  .name  }] + [\`user_movieSearch\` IN [\`user_movieSearch\`] WHERE "Movie" IN labels(\`user_movieSearch\`) | \`user_movieSearch\` { FRAGMENT_TYPE: "Movie",  .movieId , .title ,released: { year: \`user_movieSearch\`.released.year } }] + [\`user_movieSearch\` IN [\`user_movieSearch\`] WHERE "Person" IN labels(\`user_movieSearch\`) | head([\`user_movieSearch\` IN [\`user_movieSearch\`] WHERE "Actor" IN labels(\`user_movieSearch\`) | \`user_movieSearch\` { FRAGMENT_TYPE: "Actor",  .userId , .name ,movies: [(\`user_movieSearch\`)-[:\`ACTED_IN\`]->(\`user_movieSearch_movies\`:\`Movie\`:\`u_user-id\`:\`newMovieLabel\`) | \`user_movieSearch_movies\` { .movieId ,genres: [(\`user_movieSearch_movies\`)-[:\`IN_GENRE\`]->(\`user_movieSearch_movies_genres\`:\`Genre\`) | \`user_movieSearch_movies_genres\` {_id: ID(\`user_movieSearch_movies_genres\`), .name }] , .title }]  }])])] ,favorites: [(\`user\`)-[:\`FAVORITED\`]->(\`user_favorites\`:\`Movie\`:\`u_user-id\`:\`newMovieLabel\`) | \`user_favorites\` { .movieId }] } AS \`user\``;
 
   t.plan(3);
   return Promise.all([
