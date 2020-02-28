@@ -593,10 +593,7 @@ const buildFragmentMaps = ({
     const fieldKind = selection.kind;
     if (fieldKind === Kind.FIELD) {
       schemaTypeFields.push(selection);
-    } else if (
-      fieldKind === Kind.INLINE_FRAGMENT ||
-      fieldKind === Kind.FRAGMENT_SPREAD
-    ) {
+    } else if (isSelectionFragment({ kind: fieldKind })) {
       [
         schemaTypeFields,
         interfaceFragmentMap,
@@ -616,6 +613,7 @@ const buildFragmentMaps = ({
       });
     }
   });
+  // move into any interface type fragment, any fragments on object types implmenting it
   const derivedTypeMap = mergeInterfacedObjectFragments({
     schemaTypeName,
     schemaTypeFields,
@@ -625,6 +623,7 @@ const buildFragmentMaps = ({
     interfaceFragmentMap,
     resolveInfo
   });
+  // deduplicate relationship fields within fragments on the same type
   Object.keys(derivedTypeMap).forEach(typeName => {
     const allSelections = [...derivedTypeMap[typeName], ...schemaTypeFields];
     derivedTypeMap[typeName] = mergeFragmentedSelections({
@@ -649,17 +648,16 @@ const aggregateFragmentedSelections = ({
   fragmentDefinitions,
   typeMap
 }) => {
-  let fragmentSelections = [];
-  let typeCondition = '';
-  if (fieldKind === Kind.FRAGMENT_SPREAD) {
-    const fragmentDefinition = fragmentDefinitions[selection.name.value];
-    typeCondition = fragmentDefinition.typeCondition;
-    fragmentSelections = fragmentDefinition.selectionSet.selections;
-  } else {
-    typeCondition = selection.typeCondition;
-    fragmentSelections = selection.selectionSet.selections;
-  }
-  const typeName = typeCondition ? typeCondition.name.value : '';
+  const typeName = getFragmentTypeName({
+    selection,
+    kind: fieldKind,
+    fragmentDefinitions
+  });
+  const fragmentSelections = getFragmentSelections({
+    selection,
+    kind: fieldKind,
+    fragmentDefinitions
+  });
   if (typeName) {
     if (fragmentSelections && fragmentSelections.length) {
       const definition = typeMap[typeName] ? typeMap[typeName].astNode : {};
@@ -793,19 +791,86 @@ export const getDerivedTypes = ({
       schemaTypeName
     );
   } else if (isUnionType) {
-    // Use only those type names for which fragments have been used
-    derivedTypes = Object.keys(derivedTypeMap);
-    derivedTypes = derivedTypes.sort();
+    derivedTypes = Object.keys(derivedTypeMap).sort();
   }
   return derivedTypes;
 };
 
-export const isFragmentedSelection = ({ selections }) => {
-  return selections.find(
-    selection =>
-      selection.kind === Kind.INLINE_FRAGMENT ||
-      selection.kind === Kind.FRAGMENT_SPREAD
+export const getUnionDerivedTypes = ({ derivedTypeMap = {}, resolveInfo }) => {
+  const typeMap = resolveInfo.schema.getTypeMap();
+  const fragmentDefinitions = resolveInfo.fragments;
+  const uniqueFragmentTypeMap = Object.entries(derivedTypeMap).reduce(
+    (uniqueFragmentTypeMap, [typeName, selections]) => {
+      const definition = typeMap[typeName].astNode;
+      if (isObjectTypeDefinition({ definition })) {
+        uniqueFragmentTypeMap[typeName] = true;
+      } else if (isInterfaceTypeDefinition({ definition })) {
+        if (hasFieldSelection({ selections })) {
+          // then use the interface name in the label predicate,
+          // as this is a case of a dynamic FRAGMENT_TYPE
+          uniqueFragmentTypeMap[typeName] = true;
+        } else if (isFragmentedSelection({ selections })) {
+          selections.forEach(selection => {
+            const kind = selection.kind;
+            if (isSelectionFragment({ kind })) {
+              const derivedTypeName = getFragmentTypeName({
+                selection,
+                kind,
+                fragmentDefinitions
+              });
+              if (derivedTypeName) {
+                uniqueFragmentTypeMap[derivedTypeName] = true;
+              }
+            }
+          });
+        }
+      }
+      return uniqueFragmentTypeMap;
+    },
+    {}
   );
+  const typeNames = Object.keys(uniqueFragmentTypeMap);
+  return typeNames.sort();
+};
+
+const hasFieldSelection = ({ selections = [] }) => {
+  return selections.some(selection => {
+    const kind = selection.kind;
+    const name = selection.name ? selection.name.value : '';
+    const isFieldSelection =
+      kind === Kind.FIELD ||
+      (kind === Kind.INLINE_FRAGMENT && !selection.typeCondition);
+    return isFieldSelection && name !== '__typename';
+  });
+};
+
+export const isFragmentedSelection = ({ selections }) => {
+  return selections.find(selection =>
+    isSelectionFragment({ kind: selection.kind })
+  );
+};
+
+const isSelectionFragment = ({ kind = '' }) =>
+  kind === Kind.INLINE_FRAGMENT || kind === Kind.FRAGMENT_SPREAD;
+
+const getFragmentTypeName = ({ selection, kind, fragmentDefinitions }) => {
+  let typeCondition = {};
+  if (kind === Kind.FRAGMENT_SPREAD) {
+    const fragmentDefinition = fragmentDefinitions[selection.name.value];
+    typeCondition = fragmentDefinition.typeCondition;
+  } else typeCondition = selection.typeCondition;
+  return typeCondition && typeCondition.name ? typeCondition.name.value : '';
+};
+
+const getFragmentSelections = ({ selection, kind, fragmentDefinitions }) => {
+  let fragmentSelections = [];
+  if (kind === Kind.FRAGMENT_SPREAD) {
+    const fragmentDefinition = fragmentDefinitions[selection.name.value];
+    fragmentSelections = fragmentDefinition.selectionSet.selections;
+  } else {
+    fragmentSelections = selection.selectionSet.selections;
+  }
+  return fragmentSelections;
 };
 
 const buildComposedTypeListComprehension = ({
@@ -815,14 +880,15 @@ const buildComposedTypeListComprehension = ({
   mergedTypeSelections,
   queryParams,
   isInterfaceTypeFragment,
-  fragmentedQuery,
+  fragmentedQuery = '',
   resolveInfo
 }) => {
-  let typeMapProjection = `${safeVariableName} { FRAGMENT_TYPE: "${derivedType}"${
-    // When __typename is the only field selected not within a fragment,
-    // fragmentedQuery is undefined, so that we only provide the FRAGMENT_TYPE
-    fragmentedQuery ? `, ${fragmentedQuery}` : ''
-  } }`;
+  const staticFragmentTypeField = `FRAGMENT_TYPE: "${derivedType}"`;
+  let typeMapProjection = `${safeVariableName} { ${[
+    staticFragmentTypeField,
+    fragmentedQuery
+  ].join(', ')} }`;
+  // For fragments on interface types implemented by unioned object types
   if (isUnionType && isInterfaceTypeFragment) {
     const usesFragments = isFragmentedSelection({
       selections: mergedTypeSelections
@@ -830,25 +896,26 @@ const buildComposedTypeListComprehension = ({
     if (usesFragments) {
       typeMapProjection = fragmentedQuery;
     } else {
-      typeMapProjection = `${safeVariableName} { ${fragmentType(
+      const dynamicFragmentTypeField = fragmentType(
         safeVariableName,
         derivedType
-      )}${
-        // When __typename is the only field selected not within a fragment,
-        // fragmentedQuery is undefined, so that we only provide the FRAGMENT_TYPE
-        fragmentedQuery ? `, ${fragmentedQuery}` : ''
-      } }`;
+      );
+      typeMapProjection = `${safeVariableName} { ${[
+        dynamicFragmentTypeField,
+        fragmentedQuery
+      ].join(', ')} }`;
+      // set param for dynamic fragment field
       const fragmentTypeParams = derivedTypesParams({
-        isInterfaceType: true,
-        usesFragments: false,
+        isInterfaceType: isInterfaceTypeFragment,
         schema: resolveInfo.schema,
         schemaTypeName: derivedType
       });
       queryParams = { ...queryParams, ...fragmentTypeParams };
     }
   }
-  fragmentedQuery = `[${safeVariableName} IN [${safeVariableName}] WHERE [label IN labels(${safeVariableName}) WHERE label = "${derivedType}" | TRUE] | ${typeMapProjection}]`;
-  return [fragmentedQuery, queryParams];
+  const labelFilteringPredicate = `WHERE "${derivedType}" IN labels(${safeVariableName})`;
+  const typeSpecificListComprehension = `[${safeVariableName} IN [${safeVariableName}] ${labelFilteringPredicate} | ${typeMapProjection}]`;
+  return [typeSpecificListComprehension, queryParams];
 };
 
 // See: https://neo4j.com/docs/cypher-manual/current/syntax/operators/#syntax-concatenating-two-lists
