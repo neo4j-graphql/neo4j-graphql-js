@@ -1,9 +1,10 @@
-import { isObjectType, parse, GraphQLInt, Kind } from 'graphql';
+import { parse, GraphQLInt, Kind } from 'graphql';
 import neo4j from 'neo4j-driver';
 import _ from 'lodash';
 import { Neo4jTypeName } from './augment/types/types';
 import { SpatialType } from './augment/types/spatial';
 import { unwrapNamedType } from './augment/fields';
+import { Neo4jTypeFormatted } from './augment/types/types';
 
 function parseArg(arg, variableValues) {
   switch (arg.value.kind) {
@@ -984,7 +985,7 @@ export const neo4jTypePredicateClauses = (
       const paramValue = neo4jTypeParam.value;
       // If it is, set and use its .value
       if (paramValue) neo4jTypeParam = paramValue;
-      if (neo4jTypeParam['formatted']) {
+      if (neo4jTypeParam[Neo4jTypeFormatted.FORMATTED]) {
         // Only the dedicated 'formatted' arg is used if it is provided
         const type = t ? _getNamedType(t.type).name.value : '';
         acc.push(
@@ -1028,6 +1029,7 @@ export const getNeo4jTypeArguments = args => {
     : [];
 };
 
+// TODO rename and add logic for @skip and @include directives?
 export const removeIgnoredFields = (schemaType, selections) => {
   if (!isGraphqlScalarType(schemaType) && selections && selections.length) {
     const schemaTypeFields = schemaType.getFields();
@@ -1058,9 +1060,12 @@ const _getNamedType = type => {
   return type;
 };
 
-export const getDerivedTypeNames = (schema, interfaceName) => {
-  return Object.values(schema.getTypeMap())
-    .filter(t => isObjectType(t))
-    .filter(t => t.getInterfaces().some(i => i.name === interfaceName))
-    .map(t => t.name);
+export const getInterfaceDerivedTypeNames = (schema, interfaceName) => {
+  const implementingTypeMap = schema._implementations
+    ? schema._implementations[interfaceName]
+    : {};
+  const implementingTypes = Object.values(implementingTypeMap).map(
+    type => type.name
+  );
+  return implementingTypes.sort();
 };

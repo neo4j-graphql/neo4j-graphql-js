@@ -1272,6 +1272,107 @@ test.serial(
   }
 );
 
+test.serial('query union type using complex fragments', async t => {
+  t.plan(1);
+
+  await client.mutate({
+    mutation: gql`
+      mutation {
+        CreateOldCamera(id: "cam009", type: "macro", weight: 99) {
+          id
+        }
+        CreateUser(userId: "man009", name: "Johnnie Zoooooooom") {
+          userId
+        }
+      }
+    `
+  });
+
+  let expected = {
+    data: {
+      MovieSearch: [
+        {
+          __typename: 'Movie',
+          movieId: '12dd334d5zaaaa',
+          title: 'My Super Awesome Movie'
+        },
+        {
+          __typename: 'OldCamera',
+          id: 'cam009',
+          type: 'macro'
+        },
+        {
+          userId: 'man009',
+          name: 'Johnnie Zoooooooom',
+          __typename: 'User'
+        }
+      ]
+    }
+  };
+
+  await client
+    .query({
+      query: gql`
+        query {
+          MovieSearch {
+            ... on Movie {
+              movieId
+            }
+            ... on User {
+              userId
+            }
+            ... on Camera {
+              __typename
+              ... on OldCamera {
+                id
+                type
+              }
+            }
+            ...MovieFragment
+            ... on Person {
+              ... on CameraMan {
+                _id
+              }
+            }
+            ...PersonFragment
+          }
+        }
+
+        fragment MovieFragment on Movie {
+          title
+        }
+
+        fragment PersonFragment on Person {
+          ... on User {
+            userId
+            name
+          }
+          __typename
+        }
+      `
+    })
+    .then(data => {
+      t.deepEqual(data.data, expected.data);
+    })
+    .catch(error => {
+      t.fail(error.message);
+    })
+    .finally(async () => {
+      await client.mutate({
+        mutation: gql`
+          mutation {
+            DeleteOldCamera(id: "cam009") {
+              id
+            }
+            DeleteUser(userId: "man009") {
+              userId
+            }
+          }
+        `
+      });
+    });
+});
+
 /*
  * Temporal type tests
  */

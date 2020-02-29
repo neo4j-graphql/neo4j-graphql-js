@@ -38,7 +38,8 @@ import {
   isRelationshipType,
   isObjectTypeDefinition,
   isOperationTypeDefinition,
-  isQueryTypeDefinition
+  isQueryTypeDefinition,
+  isUnionTypeDefinition
 } from '../../types/types';
 import { getPrimaryKey } from '../../../utils';
 
@@ -56,7 +57,8 @@ export const augmentNodeType = ({
 }) => {
   if (
     isObjectTypeDefinition({ definition }) ||
-    isInterfaceTypeDefinition({ definition })
+    isInterfaceTypeDefinition({ definition }) ||
+    isUnionTypeDefinition({ definition })
   ) {
     let [
       nodeInputTypeMap,
@@ -75,7 +77,8 @@ export const augmentNodeType = ({
     if (!isIgnoredType) {
       if (
         !isOperationTypeDefinition({ definition, operationTypeMap }) &&
-        !isInterfaceTypeDefinition({ definition })
+        !isInterfaceTypeDefinition({ definition }) &&
+        !isUnionTypeDefinition({ definition })
       ) {
         [propertyOutputFields, nodeInputTypeMap] = buildNeo4jSystemIDField({
           definition,
@@ -121,115 +124,121 @@ export const augmentNodeTypeFields = ({
   operationTypeMap,
   config
 }) => {
-  const fields = definition.fields;
-  let isIgnoredType = true;
-  const propertyInputValues = [];
   let nodeInputTypeMap = {};
-  if (
-    !isQueryTypeDefinition({
-      definition,
-      operationTypeMap
-    })
-  ) {
-    nodeInputTypeMap[FilteringArgument.FILTER] = {
-      name: `_${typeName}Filter`,
-      fields: []
-    };
-    nodeInputTypeMap[OrderingArgument.ORDER_BY] = {
-      name: `_${typeName}Ordering`,
-      values: []
-    };
-  }
-  let propertyOutputFields = fields.reduce((outputFields, field) => {
-    let fieldType = field.type;
-    let fieldArguments = field.arguments;
-    const fieldDirectives = field.directives;
-    if (!isIgnoredField({ directives: fieldDirectives })) {
-      isIgnoredType = false;
-      const fieldName = field.name.value;
-      const unwrappedType = unwrapNamedType({ type: fieldType });
-      const outputType = unwrappedType.name;
-      const outputDefinition = typeDefinitionMap[outputType];
-      const outputKind = outputDefinition ? outputDefinition.kind : '';
-      const outputTypeWrappers = unwrappedType.wrappers;
-      const relationshipDirective = getDirective({
-        directives: fieldDirectives,
-        name: DirectiveDefinition.RELATION
-      });
-      if (
-        isPropertyTypeField({
-          kind: outputKind,
-          type: outputType
-        })
-      ) {
-        nodeInputTypeMap = augmentInputTypePropertyFields({
-          inputTypeMap: nodeInputTypeMap,
-          fieldName,
-          fieldDirectives,
-          outputType,
-          outputKind,
-          outputTypeWrappers
-        });
-        propertyInputValues.push({
-          name: fieldName,
-          type: unwrappedType,
-          directives: fieldDirectives
-        });
-      } else if (isNodeType({ definition: outputDefinition })) {
-        [
-          fieldArguments,
-          nodeInputTypeMap,
-          typeDefinitionMap,
-          generatedTypeMap,
-          operationTypeMap
-        ] = augmentNodeTypeField({
-          typeName,
-          definition,
-          fieldArguments,
-          fieldDirectives,
-          fieldName,
-          outputType,
-          nodeInputTypeMap,
-          typeDefinitionMap,
-          generatedTypeMap,
-          operationTypeMap,
-          config,
-          relationshipDirective,
-          outputTypeWrappers
-        });
-      } else if (isRelationshipType({ definition: outputDefinition })) {
-        [
-          fieldType,
-          fieldArguments,
-          nodeInputTypeMap,
-          typeDefinitionMap,
-          generatedTypeMap,
-          operationTypeMap
-        ] = augmentRelationshipTypeField({
-          typeName,
-          definition,
-          fieldType,
-          fieldArguments,
-          fieldDirectives,
-          fieldName,
-          outputTypeWrappers,
-          outputType,
-          outputDefinition,
-          nodeInputTypeMap,
-          typeDefinitionMap,
-          generatedTypeMap,
-          operationTypeMap,
-          config
-        });
-      }
+  let propertyOutputFields = [];
+  const propertyInputValues = [];
+  let isIgnoredType = true;
+  if (!isUnionTypeDefinition({ definition })) {
+    const fields = definition.fields;
+    if (
+      !isQueryTypeDefinition({
+        definition,
+        operationTypeMap
+      })
+    ) {
+      nodeInputTypeMap[FilteringArgument.FILTER] = {
+        name: `_${typeName}Filter`,
+        fields: []
+      };
+      nodeInputTypeMap[OrderingArgument.ORDER_BY] = {
+        name: `_${typeName}Ordering`,
+        values: []
+      };
     }
-    outputFields.push({
-      ...field,
-      type: fieldType,
-      arguments: fieldArguments
-    });
-    return outputFields;
-  }, []);
+    propertyOutputFields = fields.reduce((outputFields, field) => {
+      let fieldType = field.type;
+      let fieldArguments = field.arguments;
+      const fieldDirectives = field.directives;
+      if (!isIgnoredField({ directives: fieldDirectives })) {
+        isIgnoredType = false;
+        const fieldName = field.name.value;
+        const unwrappedType = unwrapNamedType({ type: fieldType });
+        const outputType = unwrappedType.name;
+        const outputDefinition = typeDefinitionMap[outputType];
+        const outputKind = outputDefinition ? outputDefinition.kind : '';
+        const outputTypeWrappers = unwrappedType.wrappers;
+        const relationshipDirective = getDirective({
+          directives: fieldDirectives,
+          name: DirectiveDefinition.RELATION
+        });
+        if (
+          isPropertyTypeField({
+            kind: outputKind,
+            type: outputType
+          })
+        ) {
+          nodeInputTypeMap = augmentInputTypePropertyFields({
+            inputTypeMap: nodeInputTypeMap,
+            fieldName,
+            fieldDirectives,
+            outputType,
+            outputKind,
+            outputTypeWrappers
+          });
+          propertyInputValues.push({
+            name: fieldName,
+            type: unwrappedType,
+            directives: fieldDirectives
+          });
+        } else if (isNodeType({ definition: outputDefinition })) {
+          [
+            fieldArguments,
+            nodeInputTypeMap,
+            typeDefinitionMap,
+            generatedTypeMap,
+            operationTypeMap
+          ] = augmentNodeTypeField({
+            typeName,
+            definition,
+            outputDefinition,
+            fieldArguments,
+            fieldDirectives,
+            fieldName,
+            outputType,
+            nodeInputTypeMap,
+            typeDefinitionMap,
+            generatedTypeMap,
+            operationTypeMap,
+            config,
+            relationshipDirective,
+            outputTypeWrappers
+          });
+        } else if (isRelationshipType({ definition: outputDefinition })) {
+          [
+            fieldType,
+            fieldArguments,
+            nodeInputTypeMap,
+            typeDefinitionMap,
+            generatedTypeMap,
+            operationTypeMap
+          ] = augmentRelationshipTypeField({
+            typeName,
+            definition,
+            fieldType,
+            fieldArguments,
+            fieldDirectives,
+            fieldName,
+            outputTypeWrappers,
+            outputType,
+            outputDefinition,
+            nodeInputTypeMap,
+            typeDefinitionMap,
+            generatedTypeMap,
+            operationTypeMap,
+            config
+          });
+        }
+      }
+      outputFields.push({
+        ...field,
+        type: fieldType,
+        arguments: fieldArguments
+      });
+      return outputFields;
+    }, []);
+  } else {
+    isIgnoredType = false;
+  }
   return [
     nodeInputTypeMap,
     propertyOutputFields,
@@ -245,6 +254,7 @@ export const augmentNodeTypeFields = ({
 const augmentNodeTypeField = ({
   typeName,
   definition,
+  outputDefinition,
   fieldArguments,
   fieldDirectives,
   fieldName,
@@ -257,52 +267,55 @@ const augmentNodeTypeField = ({
   relationshipDirective,
   outputTypeWrappers
 }) => {
-  fieldArguments = augmentNodeTypeFieldArguments({
-    fieldArguments,
-    fieldDirectives,
-    outputType,
-    outputTypeWrappers,
-    typeDefinitionMap,
-    config
-  });
-  if (
-    relationshipDirective &&
-    !isQueryTypeDefinition({ definition, operationTypeMap })
-  ) {
-    nodeInputTypeMap = augmentNodeQueryArgumentTypes({
-      typeName,
-      fieldName,
+  if (!isUnionTypeDefinition({ definition: outputDefinition })) {
+    fieldArguments = augmentNodeTypeFieldArguments({
+      definition,
+      fieldArguments,
+      fieldDirectives,
       outputType,
       outputTypeWrappers,
-      nodeInputTypeMap,
+      typeDefinitionMap,
       config
     });
-    const relationshipName = getRelationName(relationshipDirective);
-    const relationshipDirection = getRelationDirection(relationshipDirective);
-    // Assume direction OUT
-    let fromType = typeName;
-    let toType = outputType;
-    if (relationshipDirection === 'IN') {
-      let temp = fromType;
-      fromType = outputType;
-      toType = temp;
+    if (
+      relationshipDirective &&
+      !isQueryTypeDefinition({ definition, operationTypeMap })
+    ) {
+      nodeInputTypeMap = augmentNodeQueryArgumentTypes({
+        typeName,
+        fieldName,
+        outputType,
+        outputTypeWrappers,
+        nodeInputTypeMap,
+        config
+      });
+      const relationshipName = getRelationName(relationshipDirective);
+      const relationshipDirection = getRelationDirection(relationshipDirective);
+      // Assume direction OUT
+      let fromType = typeName;
+      let toType = outputType;
+      if (relationshipDirection === 'IN') {
+        let temp = fromType;
+        fromType = outputType;
+        toType = temp;
+      }
+      [
+        typeDefinitionMap,
+        generatedTypeMap,
+        operationTypeMap
+      ] = augmentRelationshipMutationAPI({
+        typeName,
+        fieldName,
+        outputType,
+        fromType,
+        toType,
+        relationshipName,
+        typeDefinitionMap,
+        generatedTypeMap,
+        operationTypeMap,
+        config
+      });
     }
-    [
-      typeDefinitionMap,
-      generatedTypeMap,
-      operationTypeMap
-    ] = augmentRelationshipMutationAPI({
-      typeName,
-      fieldName,
-      outputType,
-      fromType,
-      toType,
-      relationshipName,
-      typeDefinitionMap,
-      generatedTypeMap,
-      operationTypeMap,
-      config
-    });
   }
   return [
     fieldArguments,
@@ -328,28 +341,31 @@ const augmentNodeTypeAPI = ({
   operationTypeMap,
   config
 }) => {
-  [operationTypeMap, generatedTypeMap] = augmentNodeMutationAPI({
-    definition,
-    typeName,
-    propertyInputValues,
-    generatedTypeMap,
-    operationTypeMap,
-    config
-  });
+  if (!isUnionTypeDefinition({ definition })) {
+    [operationTypeMap, generatedTypeMap] = augmentNodeMutationAPI({
+      definition,
+      typeName,
+      propertyInputValues,
+      generatedTypeMap,
+      operationTypeMap,
+      config
+    });
+    generatedTypeMap = buildNodeSelectionInputType({
+      definition,
+      typeName,
+      propertyInputValues,
+      generatedTypeMap,
+      config
+    });
+  }
   [operationTypeMap, generatedTypeMap] = augmentNodeQueryAPI({
+    definition,
     typeName,
     propertyInputValues,
     nodeInputTypeMap,
     typeDefinitionMap,
     generatedTypeMap,
     operationTypeMap,
-    config
-  });
-  generatedTypeMap = buildNodeSelectionInputType({
-    definition,
-    typeName,
-    propertyInputValues,
-    generatedTypeMap,
     config
   });
   return [

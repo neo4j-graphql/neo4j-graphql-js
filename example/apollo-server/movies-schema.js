@@ -121,6 +121,8 @@ type CameraMan implements Person {
   cameraBuddy: Person @relation(name: "cameraBuddy", direction: "OUT")
 }
 
+union MovieSearch = Movie | Genre | Book | User | OldCamera
+
 type Query {
   Movie(movieId: ID, title: String, year: Int, plot: String, poster: String, imdbRating: Float): [Movie]
   MoviesByYear(year: Int, first: Int = 10, offset: Int = 0): [Movie]

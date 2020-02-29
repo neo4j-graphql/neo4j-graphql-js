@@ -64,7 +64,7 @@ export const Neo4jTypeName = `_Neo4j`;
  * An enum describing the names of fields computed and added to the input
  * and output type definitions representing non-scalar Neo4j property types
  */
-const Neo4jTypeFormatted = {
+export const Neo4jTypeFormatted = {
   FORMATTED: 'formatted'
 };
 
@@ -87,9 +87,11 @@ export const Neo4jDataType = {
     [TemporalType.LOCALDATETIME]: 'Temporal',
     [SpatialType.POINT]: 'Spatial'
   },
+  // TODO probably revise and remove...
   STRUCTURAL: {
     [Kind.OBJECT_TYPE_DEFINITION]: Neo4jStructuralType,
-    [Kind.INTERFACE_TYPE_DEFINITION]: Neo4jStructuralType
+    [Kind.INTERFACE_TYPE_DEFINITION]: Neo4jStructuralType,
+    [Kind.UNION_TYPE_DEFINITION]: Neo4jStructuralType
   }
 };
 

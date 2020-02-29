@@ -16,7 +16,7 @@ import {
   isNeo4jTypeField,
   getNeo4jTypeArguments,
   removeIgnoredFields,
-  getDerivedTypeNames
+  getInterfaceDerivedTypeNames
 } from './utils';
 import {
   customCypherField,
@@ -25,7 +25,8 @@ import {
   nodeTypeFieldOnRelationType,
   neo4jType,
   neo4jTypeField,
-  derivedTypesParams
+  derivedTypesParams,
+  fragmentType
 } from './translate';
 import { Kind } from 'graphql';
 import {
@@ -51,7 +52,15 @@ export function buildCypherSelection({
   secondParentSelectionInfo = {}
 }) {
   if (!selections.length) return [initial, {}];
-  selections = removeIgnoredFields(schemaType, selections);
+  const typeMap = resolveInfo.schema.getTypeMap();
+  const schemaTypeName = schemaType.name;
+  const schemaTypeAstNode = typeMap[schemaTypeName].astNode;
+  const isUnionType = isUnionTypeDefinition({
+    definition: schemaTypeAstNode
+  });
+  if (!isUnionType) {
+    selections = removeIgnoredFields(schemaType, selections);
+  }
   let selectionFilters = filtersFromSelections(
     selections,
     resolveInfo.variableValues
@@ -94,24 +103,17 @@ export function buildCypherSelection({
   const [headSelection, ...tailSelections] = selections;
   const fieldName =
     headSelection && headSelection.name ? headSelection.name.value : '';
-  const typeMap = resolveInfo.schema.getTypeMap();
-  const schemaTypeName = schemaType.name;
-  const schemaTypeAstNode = typeMap[schemaType].astNode;
   const safeVariableName = safeVar(variableName);
 
   const usesFragments = isFragmentedSelection({ selections });
   const isScalarType = isGraphqlScalarType(schemaType);
-  const schemaTypeField = !isScalarType
-    ? schemaType.getFields()[fieldName]
-    : {};
+  const schemaTypeField =
+    !isScalarType && !isUnionType ? schemaType.getFields()[fieldName] : {};
 
   const isInterfaceType = isInterfaceTypeDefinition({
     definition: schemaTypeAstNode
   });
   const isObjectType = isObjectTypeDefinition({
-    definition: schemaTypeAstNode
-  });
-  const isUnionType = isUnionTypeDefinition({
     definition: schemaTypeAstNode
   });
   const isFragmentedInterfaceType = usesFragments && isInterfaceType;
@@ -136,41 +138,46 @@ export function buildCypherSelection({
   let translationConfig = undefined;
 
   if (isFragmentedInterfaceType || isUnionType || isFragmentedObjectType) {
-    const [schemaTypeFields, composedTypeMap] = mergeSelectionFragments({
+    const [schemaTypeFields, derivedTypeMap] = mergeSelectionFragments({
       schemaType,
       selections,
       isFragmentedObjectType,
+      isUnionType,
+      typeMap,
       resolveInfo
     });
     const hasOnlySchemaTypeFragments =
-      schemaTypeFields.length > 0 && Object.keys(composedTypeMap).length === 0;
+      schemaTypeFields.length > 0 && Object.keys(derivedTypeMap).length === 0;
     if (hasOnlySchemaTypeFragments || isFragmentedObjectType) {
       tailParams.selections = schemaTypeFields;
       translationConfig = tailParams;
     } else if (isFragmentedInterfaceType || isUnionType) {
-      const implementingTypes = getComposedTypes({
+      const derivedTypes = getDerivedTypes({
         schemaTypeName,
-        schemaTypeAstNode,
+        derivedTypeMap,
         isFragmentedInterfaceType,
         isUnionType,
-        isFragmentedObjectType,
         resolveInfo
       });
       // TODO Make this a new function once recurse is moved out of buildCypherSelection
       // so that we don't have to start passing recurse as an argument
-      const [fragmentedQuery, queryParams] = implementingTypes.reduce(
-        ([listComprehensions, params], implementingType) => {
+      const [fragmentedQuery, queryParams] = derivedTypes.reduce(
+        ([listComprehensions, params], derivedType) => {
           // Get merged selections of this implementing type
-          let mergedTypeSelections = composedTypeMap[implementingType];
-          if (!mergedTypeSelections) {
+          if (!derivedTypeMap[derivedType]) {
             // If no fields of this implementing type were selected,
             // use at least any interface fields selected generally
-            mergedTypeSelections = schemaTypeFields;
+            derivedTypeMap[derivedType] = schemaTypeFields;
           }
+          const mergedTypeSelections = derivedTypeMap[derivedType];
           if (mergedTypeSelections.length) {
+            const composedTypeDefinition = typeMap[derivedType].astNode;
+            const isInterfaceTypeFragment = isInterfaceTypeDefinition({
+              definition: composedTypeDefinition
+            });
             // If selections have been made for this type after merging
             if (isFragmentedInterfaceType || isUnionType) {
-              schemaType = resolveInfo.schema.getType(implementingType);
+              schemaType = resolveInfo.schema.getType(derivedType);
             }
             // TODO Refactor when recurse is moved out buildCypherSelection
             // Build the map projection for this implementing type
@@ -183,10 +190,18 @@ export function buildCypherSelection({
             if (isFragmentedInterfaceType || isUnionType) {
               // Build a more complex list comprehension for
               // this type, to be aggregated together later
-              fragmentedQuery = buildComposedTypeListComprehension({
-                implementingType,
+              [
+                fragmentedQuery,
+                queryParams
+              ] = buildComposedTypeListComprehension({
+                derivedType,
+                isUnionType,
+                mergedTypeSelections,
+                queryParams,
                 safeVariableName,
-                fragmentedQuery
+                isInterfaceTypeFragment,
+                fragmentedQuery,
+                resolveInfo
               });
             }
             listComprehensions.push(fragmentedQuery);
@@ -227,6 +242,9 @@ export function buildCypherSelection({
       definition: innerSchemaTypeAstNode
     });
     const isInterfaceTypeField = isInterfaceTypeDefinition({
+      definition: innerSchemaTypeAstNode
+    });
+    const isUnionTypeField = isUnionTypeDefinition({
       definition: innerSchemaTypeAstNode
     });
     if (isIntrospectionField) {
@@ -307,21 +325,26 @@ export function buildCypherSelection({
         schemaType,
         fieldName
       );
+      const isRelationshipField = relType && relDirection;
+      const isRelationshipTypeField = innerSchemaTypeRelation !== undefined;
 
       const usesFragments = isFragmentedSelection({
         selections: fieldSelectionSet
       });
       const isFragmentedObjectTypeField = isObjectTypeField && usesFragments;
-      const [schemaTypeFields, composedTypeMap] = mergeSelectionFragments({
+      const [schemaTypeFields, derivedTypeMap] = mergeSelectionFragments({
         schemaType: innerSchemaType,
         selections: fieldSelectionSet,
         isFragmentedObjectType: isFragmentedObjectTypeField,
+        isUnionType: isUnionTypeField,
+        typeMap,
         resolveInfo
       });
       const fragmentTypeParams = derivedTypesParams({
         isInterfaceType: isInterfaceTypeField,
+        isUnionType: isUnionTypeField,
         schema: resolveInfo.schema,
-        interfaceName: innerSchemaType.name,
+        schemaTypeName: innerSchemaType.name,
         usesFragments
       });
       subSelection[1] = { ...subSelection[1], ...fragmentTypeParams };
@@ -333,9 +356,11 @@ export function buildCypherSelection({
           paramIndex,
           schemaTypeRelation,
           isInterfaceTypeField,
+          isUnionTypeField,
+          isObjectTypeField,
           usesFragments,
           schemaTypeFields,
-          composedTypeMap,
+          derivedTypeMap,
           initial,
           fieldName,
           fieldType,
@@ -365,7 +390,7 @@ export function buildCypherSelection({
           schemaTypeRelation,
           parentSelectionInfo
         });
-      } else if (relType && relDirection) {
+      } else if (isRelationshipField || isUnionTypeField) {
         // Object type field with relation directive
         [translationConfig, subSelection] = relationFieldOnNodeType({
           initial,
@@ -376,8 +401,10 @@ export function buildCypherSelection({
           relType,
           nestedVariable,
           schemaTypeFields,
-          composedTypeMap,
+          derivedTypeMap,
           isInterfaceTypeField,
+          isUnionTypeField,
+          isObjectTypeField,
           usesFragments,
           innerSchemaType,
           paramIndex,
@@ -413,8 +440,10 @@ export function buildCypherSelection({
           schemaTypeRelation,
           innerSchemaType,
           schemaTypeFields,
-          composedTypeMap,
+          derivedTypeMap,
+          isObjectTypeField,
           isInterfaceTypeField,
+          isUnionTypeField,
           usesFragments,
           paramIndex,
           parentSelectionInfo,
@@ -423,7 +452,7 @@ export function buildCypherSelection({
           fieldArgs,
           cypherParams
         });
-      } else if (innerSchemaTypeRelation) {
+      } else if (isRelationshipTypeField) {
         // Relation type field on node type (field payload types...)
         // and set subSelection to update field argument params
         [translationConfig, subSelection] = relationTypeFieldOnNodeType({
@@ -519,63 +548,20 @@ export const mergeSelectionFragments = ({
   schemaType,
   selections,
   isFragmentedObjectType,
+  isUnionType,
+  typeMap,
   resolveInfo
 }) => {
-  let schemaTypeFields = [];
-  const composedTypeMap = {};
   const schemaTypeName = schemaType.name;
   const fragmentDefinitions = resolveInfo.fragments;
-  selections.forEach(selection => {
-    let fieldKind = selection.kind;
-    if (fieldKind === Kind.FIELD) {
-      schemaTypeFields.push(selection);
-    } else if (
-      fieldKind === Kind.INLINE_FRAGMENT ||
-      fieldKind === Kind.FRAGMENT_SPREAD
-    ) {
-      let fragmentSelections = [];
-      let typeCondition = '';
-      if (fieldKind === Kind.FRAGMENT_SPREAD) {
-        const fragmentDefinition = fragmentDefinitions[selection.name.value];
-        fragmentSelections = fragmentDefinition.selectionSet.selections;
-        typeCondition = fragmentDefinition.typeCondition;
-      } else {
-        fragmentSelections = selection.selectionSet.selections;
-        typeCondition = selection.typeCondition;
-      }
-      const typeName = typeCondition ? typeCondition.name.value : '';
-      if (typeName) {
-        // For fragments on the same type containing the fragment or
-        // for inline fragments without type conditions
-        if (typeName === schemaTypeName) {
-          schemaTypeFields.push(...fragmentSelections);
-        } else {
-          const typeSelections = composedTypeMap[typeName];
-          // Initialize selection set array for this type
-          if (!typeSelections) {
-            composedTypeMap[typeName] = fragmentSelections;
-          } else {
-            // for aggregation of multiple fragments on the same type
-            composedTypeMap[typeName].push(...fragmentSelections);
-          }
-        }
-      } else {
-        // For inline untyped fragments on the same type, ex: ...{ title }
-        schemaTypeFields.push(...fragmentSelections);
-      }
-    }
-  });
-  if (isFragmentedObjectType) {
-    // Composed object queries still only use a single map projection
-    composedTypeMap[schemaTypeName] = schemaTypeFields;
-  }
-  Object.keys(composedTypeMap).forEach(typeName => {
-    composedTypeMap[typeName] = mergeFragmentedSelections({
-      selections: [...composedTypeMap[typeName], ...schemaTypeFields]
-    });
-  });
-  schemaTypeFields = mergeFragmentedSelections({
-    selections: schemaTypeFields
+  let [schemaTypeFields, derivedTypeMap] = buildFragmentMaps({
+    selections,
+    schemaTypeName,
+    isFragmentedObjectType,
+    fragmentDefinitions,
+    isUnionType,
+    typeMap,
+    resolveInfo
   });
   // When querying an interface type using fragments, queries are made
   // more specific if there is not at least 1 interface field selected.
@@ -587,69 +573,351 @@ export const mergeSelectionFragments = ({
     field => field.name && field.name.value === '__typename'
   );
   if (typeNameFieldIndex !== -1) schemaTypeFields.splice(typeNameFieldIndex, 1);
-  return [schemaTypeFields, composedTypeMap];
+  return [schemaTypeFields, derivedTypeMap];
+};
+
+const buildFragmentMaps = ({
+  selections = [],
+  schemaTypeName,
+  isFragmentedObjectType,
+  fragmentDefinitions,
+  isUnionType,
+  typeMap = {},
+  resolveInfo
+}) => {
+  let schemaTypeFields = [];
+  let interfaceFragmentMap = {};
+  let objectSelectionMap = {};
+  let objectFragmentMap = {};
+  selections.forEach(selection => {
+    const fieldKind = selection.kind;
+    if (fieldKind === Kind.FIELD) {
+      schemaTypeFields.push(selection);
+    } else if (isSelectionFragment({ kind: fieldKind })) {
+      [
+        schemaTypeFields,
+        interfaceFragmentMap,
+        objectSelectionMap,
+        objectFragmentMap
+      ] = aggregateFragmentedSelections({
+        schemaTypeName,
+        selection,
+        fieldKind,
+        isUnionType,
+        schemaTypeFields,
+        objectFragmentMap,
+        interfaceFragmentMap,
+        objectSelectionMap,
+        fragmentDefinitions,
+        typeMap
+      });
+    }
+  });
+  // move into any interface type fragment, any fragments on object types implmenting it
+  const derivedTypeMap = mergeInterfacedObjectFragments({
+    schemaTypeName,
+    schemaTypeFields,
+    isFragmentedObjectType,
+    objectSelectionMap,
+    objectFragmentMap,
+    interfaceFragmentMap,
+    resolveInfo
+  });
+  // deduplicate relationship fields within fragments on the same type
+  Object.keys(derivedTypeMap).forEach(typeName => {
+    const allSelections = [...derivedTypeMap[typeName], ...schemaTypeFields];
+    derivedTypeMap[typeName] = mergeFragmentedSelections({
+      selections: allSelections
+    });
+  });
+  schemaTypeFields = mergeFragmentedSelections({
+    selections: schemaTypeFields
+  });
+  return [schemaTypeFields, derivedTypeMap];
+};
+
+const aggregateFragmentedSelections = ({
+  schemaTypeName,
+  selection,
+  fieldKind,
+  isUnionType,
+  schemaTypeFields,
+  objectFragmentMap,
+  interfaceFragmentMap,
+  objectSelectionMap,
+  fragmentDefinitions,
+  typeMap
+}) => {
+  const typeName = getFragmentTypeName({
+    selection,
+    kind: fieldKind,
+    fragmentDefinitions
+  });
+  const fragmentSelections = getFragmentSelections({
+    selection,
+    kind: fieldKind,
+    fragmentDefinitions
+  });
+  if (typeName) {
+    if (fragmentSelections && fragmentSelections.length) {
+      const definition = typeMap[typeName] ? typeMap[typeName].astNode : {};
+      if (isObjectTypeDefinition({ definition })) {
+        if (typeName === schemaTypeName) {
+          // fragmented selections on the same type for which this is
+          // a selection set are aggregated into schemaTypeFields
+          schemaTypeFields.push(...fragmentSelections);
+        } else {
+          if (!objectSelectionMap[typeName]) objectSelectionMap[typeName] = [];
+          // prepare an aggregation of fragmented selections used on object type
+          // if querying a union type, fragments on object types are merged with
+          // any interface type fragment implemented by them
+          objectSelectionMap[typeName].push(selection);
+          // initializes an array for the below progressive aggregation
+          if (!objectFragmentMap[typeName]) objectFragmentMap[typeName] = [];
+          // aggregates together all fragmented selections on this object type
+          objectFragmentMap[typeName].push(...fragmentSelections);
+        }
+      } else if (isInterfaceTypeDefinition({ definition })) {
+        if (typeName === schemaTypeName) {
+          // aggregates together all fragmented selections on this interface type
+          // to be multiplied over and deduplicated with any fragments on object
+          // types implementing the interface, within its selection set
+          schemaTypeFields.push(...fragmentSelections);
+        } else if (isUnionType) {
+          // only for interface fragments on union types, initializes an array
+          // for the below progressive aggregation
+          if (!interfaceFragmentMap[typeName])
+            interfaceFragmentMap[typeName] = [];
+          // aggregates together all fragmented selections on this object type
+          interfaceFragmentMap[typeName].push(...fragmentSelections);
+        }
+      }
+    }
+  } else {
+    // For inline untyped fragments on the same type, ex: ...{ title }
+    schemaTypeFields.push(...fragmentSelections);
+  }
+  return [
+    schemaTypeFields,
+    interfaceFragmentMap,
+    objectSelectionMap,
+    objectFragmentMap
+  ];
+};
+
+const mergeInterfacedObjectFragments = ({
+  schemaTypeName,
+  schemaTypeFields,
+  isFragmentedObjectType,
+  objectSelectionMap,
+  objectFragmentMap,
+  interfaceFragmentMap,
+  resolveInfo
+}) => {
+  Object.keys(interfaceFragmentMap).forEach(interfaceName => {
+    const derivedTypes = getInterfaceDerivedTypeNames(
+      resolveInfo.schema,
+      interfaceName
+    );
+    derivedTypes.forEach(typeName => {
+      const implementingTypeFragments = objectSelectionMap[typeName];
+      if (implementingTypeFragments) {
+        // aggregate into the selections in this aggregated interface type fragment,
+        // the aggregated selections of fragments on object types implmementing it
+        interfaceFragmentMap[interfaceName].push(...implementingTypeFragments);
+        // given the above aggregation into the interface type selections,
+        // remove the fragment on this implementing type that existed
+        // within the same selection set
+        delete objectFragmentMap[typeName];
+      }
+    });
+    return interfaceFragmentMap;
+  });
+  const derivedTypeMap = { ...objectFragmentMap, ...interfaceFragmentMap };
+  if (isFragmentedObjectType) {
+    derivedTypeMap[schemaTypeName] = schemaTypeFields;
+  }
+  return derivedTypeMap;
 };
 
 const mergeFragmentedSelections = ({ selections = [] }) => {
-  const mergedSelections = selections.reduce((merged, selection) => {
-    const fieldName = selection.name.value;
-    if (!merged[fieldName]) {
-      // initialize entry for this composing type
-      merged[fieldName] = selection;
+  const subSelecionFieldMap = {};
+  const fragments = [];
+  selections.forEach(selection => {
+    const fieldKind = selection.kind;
+    if (fieldKind === Kind.FIELD) {
+      const fieldName = selection.name.value;
+      if (!subSelecionFieldMap[fieldName]) {
+        // initialize entry for this composing type
+        subSelecionFieldMap[fieldName] = selection;
+      } else {
+        const alreadySelected = subSelecionFieldMap[fieldName].selectionSet
+          ? subSelecionFieldMap[fieldName].selectionSet.selections
+          : [];
+        const selected = selection.selectionSet
+          ? selection.selectionSet.selections
+          : [];
+        // If the field has a subselection (relationship field)
+        if (alreadySelected.length && selected.length) {
+          const selections = [...alreadySelected, ...selected];
+          subSelecionFieldMap[
+            fieldName
+          ].selectionSet.selections = mergeFragmentedSelections({
+            selections
+          });
+        }
+      }
     } else {
-      // FIXME Deeply merge selection sets of fragments on the same type
+      // Persist all fragments, to be merged later
+      fragments.push(selection);
     }
-    return merged;
-  }, {});
-  return Object.values(mergedSelections);
+  });
+  // Return the aggregation of all fragments and merged relationship fields
+  return [...Object.values(subSelecionFieldMap), ...fragments];
 };
 
-export const getComposedTypes = ({
+export const getDerivedTypes = ({
   schemaTypeName,
-  schemaTypeAstNode,
+  derivedTypeMap,
   isFragmentedInterfaceType,
   isUnionType,
-  isFragmentedObjectType,
   resolveInfo
 }) => {
-  let implementingTypes = [];
+  let derivedTypes = [];
   if (isFragmentedInterfaceType) {
     // Get an array of all types implementing this interface type
-    implementingTypes = getDerivedTypeNames(resolveInfo.schema, schemaTypeName);
+    derivedTypes = getInterfaceDerivedTypeNames(
+      resolveInfo.schema,
+      schemaTypeName
+    );
   } else if (isUnionType) {
-    implementingTypes = schemaTypeAstNode.types.reduce((types, type) => {
-      types.push(type.name.value);
-      return types;
-    }, []);
-  } else if (isFragmentedObjectType) {
-    implementingTypes.push(schemaTypeName);
+    derivedTypes = Object.keys(derivedTypeMap).sort();
   }
-  return implementingTypes;
+  return derivedTypes;
+};
+
+export const getUnionDerivedTypes = ({ derivedTypeMap = {}, resolveInfo }) => {
+  const typeMap = resolveInfo.schema.getTypeMap();
+  const fragmentDefinitions = resolveInfo.fragments;
+  const uniqueFragmentTypeMap = Object.entries(derivedTypeMap).reduce(
+    (uniqueFragmentTypeMap, [typeName, selections]) => {
+      const definition = typeMap[typeName].astNode;
+      if (isObjectTypeDefinition({ definition })) {
+        uniqueFragmentTypeMap[typeName] = true;
+      } else if (isInterfaceTypeDefinition({ definition })) {
+        if (hasFieldSelection({ selections })) {
+          // then use the interface name in the label predicate,
+          // as this is a case of a dynamic FRAGMENT_TYPE
+          uniqueFragmentTypeMap[typeName] = true;
+        } else if (isFragmentedSelection({ selections })) {
+          selections.forEach(selection => {
+            const kind = selection.kind;
+            if (isSelectionFragment({ kind })) {
+              const derivedTypeName = getFragmentTypeName({
+                selection,
+                kind,
+                fragmentDefinitions
+              });
+              if (derivedTypeName) {
+                uniqueFragmentTypeMap[derivedTypeName] = true;
+              }
+            }
+          });
+        }
+      }
+      return uniqueFragmentTypeMap;
+    },
+    {}
+  );
+  const typeNames = Object.keys(uniqueFragmentTypeMap);
+  return typeNames.sort();
+};
+
+const hasFieldSelection = ({ selections = [] }) => {
+  return selections.some(selection => {
+    const kind = selection.kind;
+    const name = selection.name ? selection.name.value : '';
+    const isFieldSelection =
+      kind === Kind.FIELD ||
+      (kind === Kind.INLINE_FRAGMENT && !selection.typeCondition);
+    return isFieldSelection && name !== '__typename';
+  });
 };
 
 export const isFragmentedSelection = ({ selections }) => {
-  return selections.find(
-    selection =>
-      selection.kind === Kind.INLINE_FRAGMENT ||
-      selection.kind === Kind.FRAGMENT_SPREAD
+  return selections.find(selection =>
+    isSelectionFragment({ kind: selection.kind })
   );
 };
 
+const isSelectionFragment = ({ kind = '' }) =>
+  kind === Kind.INLINE_FRAGMENT || kind === Kind.FRAGMENT_SPREAD;
+
+const getFragmentTypeName = ({ selection, kind, fragmentDefinitions }) => {
+  let typeCondition = {};
+  if (kind === Kind.FRAGMENT_SPREAD) {
+    const fragmentDefinition = fragmentDefinitions[selection.name.value];
+    typeCondition = fragmentDefinition.typeCondition;
+  } else typeCondition = selection.typeCondition;
+  return typeCondition && typeCondition.name ? typeCondition.name.value : '';
+};
+
+const getFragmentSelections = ({ selection, kind, fragmentDefinitions }) => {
+  let fragmentSelections = [];
+  if (kind === Kind.FRAGMENT_SPREAD) {
+    const fragmentDefinition = fragmentDefinitions[selection.name.value];
+    fragmentSelections = fragmentDefinition.selectionSet.selections;
+  } else {
+    fragmentSelections = selection.selectionSet.selections;
+  }
+  return fragmentSelections;
+};
+
 const buildComposedTypeListComprehension = ({
-  implementingType,
+  derivedType,
+  isUnionType,
   safeVariableName,
-  fragmentedQuery
+  mergedTypeSelections,
+  queryParams,
+  isInterfaceTypeFragment,
+  fragmentedQuery = '',
+  resolveInfo
 }) => {
-  const fragmentTypeField = `FRAGMENT_TYPE: "${implementingType}"`;
-  const typeMapProjection = `${safeVariableName} { ${fragmentTypeField}${
-    // When __typename is the only field selected not within a fragment,
-    // fragmentedQuery is undefined, so that we only provide the FRAGMENT_TYPE
-    fragmentedQuery ? `, ${fragmentedQuery}` : ''
-  } }`;
-  const typeListComprehension = `${safeVariableName} IN [${safeVariableName}] WHERE [label IN labels(${safeVariableName}) WHERE label = "${implementingType}" | TRUE]`;
-  return `[${typeListComprehension} | ${typeMapProjection}]`;
+  const staticFragmentTypeField = `FRAGMENT_TYPE: "${derivedType}"`;
+  let typeMapProjection = `${safeVariableName} { ${[
+    staticFragmentTypeField,
+    fragmentedQuery
+  ].join(', ')} }`;
+  // For fragments on interface types implemented by unioned object types
+  if (isUnionType && isInterfaceTypeFragment) {
+    const usesFragments = isFragmentedSelection({
+      selections: mergedTypeSelections
+    });
+    if (usesFragments) {
+      typeMapProjection = fragmentedQuery;
+    } else {
+      const dynamicFragmentTypeField = fragmentType(
+        safeVariableName,
+        derivedType
+      );
+      typeMapProjection = `${safeVariableName} { ${[
+        dynamicFragmentTypeField,
+        fragmentedQuery
+      ].join(', ')} }`;
+      // set param for dynamic fragment field
+      const fragmentTypeParams = derivedTypesParams({
+        isInterfaceType: isInterfaceTypeFragment,
+        schema: resolveInfo.schema,
+        schemaTypeName: derivedType
+      });
+      queryParams = { ...queryParams, ...fragmentTypeParams };
+    }
+  }
+  const labelFilteringPredicate = `WHERE "${derivedType}" IN labels(${safeVariableName})`;
+  const typeSpecificListComprehension = `[${safeVariableName} IN [${safeVariableName}] ${labelFilteringPredicate} | ${typeMapProjection}]`;
+  return [typeSpecificListComprehension, queryParams];
 };
 
 // See: https://neo4j.com/docs/cypher-manual/current/syntax/operators/#syntax-concatenating-two-lists
 const concatenateComposedTypeLists = ({ fragmentedQuery }) =>
-  `head(${fragmentedQuery.join(` + `)})`;
+  fragmentedQuery.length ? `head(${fragmentedQuery.join(` + `)})` : '';

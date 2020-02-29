@@ -126,12 +126,12 @@ references:
   env_neo4j40ce: &env_neo4j40ce
       NEO4J_DIST: 'community'
       NEO4J_VERSION: '4.0.0'
-      APOC_VERSION: '4.0.0-rc01'
+      APOC_VERSION: '4.0.0.4'
       DATASTORE_VERSION: '4_0'
   env_neo4j40ee: &env_neo4j40ee
       NEO4J_DIST: 'enterprise'
       NEO4J_VERSION: '4.0.0'
-      APOC_VERSION: '4.0.0-rc01'
+      APOC_VERSION: '4.0.0.4'
       DATASTORE_VERSION: '4_0'
 
   install_neo4j_steps: &install_neo4j_steps
