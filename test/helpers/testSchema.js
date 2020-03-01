@@ -255,7 +255,6 @@ export const testSchema = /* GraphQL */ `
     Camera(
       type: String
       first: Int
-      offset: Int
       orderBy: _CameraOrdering
       filter: _CameraFilter
     ): [Camera]
@@ -264,7 +263,7 @@ export const testSchema = /* GraphQL */ `
     ): [InterfaceNoScalars]
     CustomCameras: [Camera] @cypher(statement: "MATCH (c:Camera) RETURN c")
     CustomCamera: Camera @cypher(statement: "MATCH (c:Camera) RETURN c")
-    MovieSearch: [MovieSearch]
+    MovieSearch(first: Int): [MovieSearch]
     computedMovieSearch: [MovieSearch]
       @cypher(statement: "MATCH (ms:MovieSearch) RETURN ms")
   }

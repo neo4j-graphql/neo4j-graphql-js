@@ -249,11 +249,21 @@ export const augmentTypes = ({
     ...typeDefinitionMap,
     ...operationTypeMap
   }).forEach(([typeName, definition]) => {
-    if (isOperationTypeDefinition({ definition, operationTypeMap })) {
+    const isObjectType = isObjectTypeDefinition({ definition });
+    const isInterfaceType = isInterfaceTypeDefinition({ definition });
+    const isUnionType = isUnionTypeDefinition({ definition });
+    const isOperationType = isOperationTypeDefinition({
+      definition,
+      operationTypeMap
+    });
+    const isQueryType = isQueryTypeDefinition({ definition, operationTypeMap });
+    if (isOperationType) {
       // Overwrite existing operation map entry with augmented type
       operationTypeMap[typeName] = augmentOperationType({
         typeName,
         definition,
+        isQueryType,
+        isObjectType,
         typeDefinitionMap,
         generatedTypeMap,
         operationTypeMap,
@@ -263,6 +273,11 @@ export const augmentTypes = ({
       [definition, generatedTypeMap, operationTypeMap] = augmentNodeType({
         typeName,
         definition,
+        isObjectType,
+        isInterfaceType,
+        isUnionType,
+        isOperationType,
+        isQueryType,
         typeDefinitionMap,
         generatedTypeMap,
         operationTypeMap,
@@ -559,29 +574,29 @@ const buildAugmentationTypeMaps = ({
 const augmentOperationType = ({
   typeName,
   definition,
+  isQueryType,
+  isObjectType,
   typeDefinitionMap,
   generatedTypeMap,
   operationTypeMap,
   config
 }) => {
-  if (isObjectTypeDefinition({ definition })) {
-    if (isQueryTypeDefinition({ definition, operationTypeMap })) {
-      let [
-        nodeInputTypeMap,
-        propertyOutputFields,
-        propertyInputValues,
-        isIgnoredType
-      ] = augmentNodeTypeFields({
-        typeName,
-        definition,
-        typeDefinitionMap,
-        generatedTypeMap,
-        operationTypeMap,
-        config
-      });
-      if (!isIgnoredType) {
-        definition.fields = propertyOutputFields;
-      }
+  if (isQueryType && isObjectType) {
+    let [
+      nodeInputTypeMap,
+      propertyOutputFields,
+      propertyInputValues,
+      isIgnoredType
+    ] = augmentNodeTypeFields({
+      typeName,
+      definition,
+      typeDefinitionMap,
+      generatedTypeMap,
+      operationTypeMap,
+      config
+    });
+    if (!isIgnoredType) {
+      definition.fields = propertyOutputFields;
     }
   }
   return definition;

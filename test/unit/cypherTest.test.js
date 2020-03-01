@@ -5614,18 +5614,13 @@ test('pagination used on root and nested interface type field', t => {
   }`,
     expectedCypherQuery = `MATCH (\`camera\`:\`Camera\`) RETURN \`camera\` {FRAGMENT_TYPE: head( [ label IN labels(\`camera\`) WHERE label IN $Camera_derivedTypes ] ), .id , .type , .make , .weight ,operators: [(\`camera\`)<-[:\`cameras\`]-(\`camera_operators\`:\`Person\`) WHERE ("Actor" IN labels(\`camera_operators\`) OR "CameraMan" IN labels(\`camera_operators\`) OR "User" IN labels(\`camera_operators\`)) | head([\`camera_operators\` IN [\`camera_operators\`] WHERE "Actor" IN labels(\`camera_operators\`) | \`camera_operators\` { FRAGMENT_TYPE: "Actor",  .name  }] + [\`camera_operators\` IN [\`camera_operators\`] WHERE "CameraMan" IN labels(\`camera_operators\`) | \`camera_operators\` { FRAGMENT_TYPE: "CameraMan",  .userId , .name  }] + [\`camera_operators\` IN [\`camera_operators\`] WHERE "User" IN labels(\`camera_operators\`) | \`camera_operators\` { FRAGMENT_TYPE: "User",  .name  }])][1..2] } AS \`camera\` SKIP toInteger($offset) LIMIT toInteger($first)`;
 
-  t.plan(3);
-  return Promise.all([
-    cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery, {
-      offset: 1,
-      first: 2,
-      '1_first': 1,
-      '1_offset': 1,
-      cypherParams: CYPHER_PARAMS,
-      Camera_derivedTypes: ['NewCamera', 'OldCamera']
-    }),
-    augmentedSchemaCypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery)
-  ]);
+  t.plan(1);
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {},
+    expectedCypherQuery
+  );
 });
 
 test('ordering used on root and nested interface type field', t => {
@@ -6651,4 +6646,106 @@ test('query union type relationship using multiple fragments and interfaced obje
     }),
     augmentedSchemaCypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery)
   ]);
+});
+
+test('query union type using pagination', t => {
+  const graphQLQuery = `query {
+    MovieSearch(first: 10) {
+      __typename
+      ... on Movie {
+        movieId
+        title
+      }
+      ...MovieSearchGenre
+      ... on Person {
+        name
+        ... on Actor {
+          userId
+          movies {
+            movieId
+            genres {
+              _id
+            }
+          }
+        }
+      }
+      ...MovieSearchActor
+    }
+  }
+  
+  fragment MovieSearchGenre on Genre {
+    name
+  }
+  
+  fragment MovieSearchActor on Actor {
+    userId
+    movies {
+      movieId
+      title
+      genres {
+        name
+      }
+    }
+  }`,
+    expectedCypherQuery = `MATCH (\`movieSearch\`:\`MovieSearch\`) WHERE ("Genre" IN labels(\`movieSearch\`) OR "Movie" IN labels(\`movieSearch\`) OR "Person" IN labels(\`movieSearch\`)) RETURN head([\`movieSearch\` IN [\`movieSearch\`] WHERE "Genre" IN labels(\`movieSearch\`) | \`movieSearch\` { FRAGMENT_TYPE: "Genre",  .name  }] + [\`movieSearch\` IN [\`movieSearch\`] WHERE "Movie" IN labels(\`movieSearch\`) | \`movieSearch\` { FRAGMENT_TYPE: "Movie",  .movieId , .title  }] + [\`movieSearch\` IN [\`movieSearch\`] WHERE "Person" IN labels(\`movieSearch\`) | head([\`movieSearch\` IN [\`movieSearch\`] WHERE "Actor" IN labels(\`movieSearch\`) | \`movieSearch\` { FRAGMENT_TYPE: "Actor",  .userId ,movies: [(\`movieSearch\`)-[:\`ACTED_IN\`]->(\`movieSearch_movies\`:\`Movie\`:\`u_user-id\`:\`newMovieLabel\`) | \`movieSearch_movies\` { .movieId ,genres: [(\`movieSearch_movies\`)-[:\`IN_GENRE\`]->(\`movieSearch_movies_genres\`:\`Genre\`) | \`movieSearch_movies_genres\` {_id: ID(\`movieSearch_movies_genres\`), .name }] , .title }] , .name  }] + [\`movieSearch\` IN [\`movieSearch\`] WHERE "CameraMan" IN labels(\`movieSearch\`) | \`movieSearch\` { FRAGMENT_TYPE: "CameraMan",  .name  }] + [\`movieSearch\` IN [\`movieSearch\`] WHERE "User" IN labels(\`movieSearch\`) | \`movieSearch\` { FRAGMENT_TYPE: "User",  .name  }])]) AS \`movieSearch\` LIMIT toInteger($first)`;
+  return Promise.all([
+    cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery, {
+      offset: 0,
+      first: 10,
+      cypherParams: CYPHER_PARAMS
+    }),
+    augmentedSchemaCypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery)
+  ]);
+});
+
+test('query union type relationship using pagination', t => {
+  const graphQLQuery = `query {
+    User {
+      movieSearch(first: 2, offset: 1) {
+        ... on Movie {
+          title
+          _id
+        }
+        ...MovieSearchGenre
+      }
+    }
+  }
+  
+  fragment MovieSearchGenre on Genre {
+    name
+  }`,
+    expectedCypherQuery = `MATCH (\`user\`:\`User\`) RETURN \`user\` {movieSearch: [(\`user\`)--(\`user_movieSearch\`:\`MovieSearch\`) WHERE ("Genre" IN labels(\`user_movieSearch\`) OR "Movie" IN labels(\`user_movieSearch\`)) | head([\`user_movieSearch\` IN [\`user_movieSearch\`] WHERE "Genre" IN labels(\`user_movieSearch\`) | \`user_movieSearch\` { FRAGMENT_TYPE: "Genre",  .name  }] + [\`user_movieSearch\` IN [\`user_movieSearch\`] WHERE "Movie" IN labels(\`user_movieSearch\`) | \`user_movieSearch\` { FRAGMENT_TYPE: "Movie",  .title ,_id: ID(\`user_movieSearch\`) }])][1..3] } AS \`user\``;
+
+  t.plan(1);
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {},
+    expectedCypherQuery
+  );
+});
+
+test('query computed union type relationship using pagination', t => {
+  const graphQLQuery = `query {
+    computedMovieSearch(first: 5, offset: 2) {
+      ... on Movie {
+        movieId
+        title
+      }
+      ...MovieSearchGenre
+    }
+  }
+  
+  fragment MovieSearchGenre on Genre {
+    name
+  }`,
+    expectedCypherQuery = `WITH apoc.cypher.runFirstColumn("MATCH (ms:MovieSearch) RETURN ms", {offset:$offset, first:$first, cypherParams: $cypherParams}, True) AS x WITH [\`movieSearch\` IN x WHERE ("Genre" IN labels(\`movieSearch\`) OR "Movie" IN labels(\`movieSearch\`)) | \`movieSearch\`] AS x UNWIND x AS \`movieSearch\` RETURN head([\`movieSearch\` IN [\`movieSearch\`] WHERE "Genre" IN labels(\`movieSearch\`) | \`movieSearch\` { FRAGMENT_TYPE: "Genre",  .name  }] + [\`movieSearch\` IN [\`movieSearch\`] WHERE "Movie" IN labels(\`movieSearch\`) | \`movieSearch\` { FRAGMENT_TYPE: "Movie",  .movieId , .title  }]) AS \`movieSearch\` SKIP toInteger($offset) LIMIT toInteger($first)`;
+
+  t.plan(1);
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {},
+    expectedCypherQuery
+  );
 });

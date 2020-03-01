@@ -99,6 +99,7 @@ export const buildQueryFieldArguments = ({
   fieldDirectives,
   outputType,
   outputTypeWrappers,
+  isUnionType,
   typeDefinitionMap
 }) => {
   Object.values(argumentMap).forEach(name => {
@@ -131,7 +132,7 @@ export const buildQueryFieldArguments = ({
             })
           );
         }
-      } else if (name === OrderingArgument.ORDER_BY) {
+      } else if (name === OrderingArgument.ORDER_BY && !isUnionType) {
         const argumentIndex = fieldArguments.findIndex(
           arg => arg.name.value === OrderingArgument.ORDER_BY
         );
@@ -161,7 +162,7 @@ export const buildQueryFieldArguments = ({
         }
       }
     }
-    if (name === FilteringArgument.FILTER) {
+    if (name === FilteringArgument.FILTER && !isUnionType) {
       if (!isCypherField({ directives: fieldDirectives })) {
         const argumentIndex = fieldArguments.findIndex(
           arg => arg.name.value === FilteringArgument.FILTER

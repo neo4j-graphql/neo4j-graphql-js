@@ -33,11 +33,8 @@ import {
 } from '../../ast';
 import {
   OperationType,
-  isInterfaceTypeDefinition,
   isNodeType,
   isRelationshipType,
-  isObjectTypeDefinition,
-  isOperationTypeDefinition,
   isQueryTypeDefinition,
   isUnionTypeDefinition
 } from '../../types/types';
@@ -50,16 +47,17 @@ import { getPrimaryKey } from '../../../utils';
 export const augmentNodeType = ({
   typeName,
   definition,
+  isObjectType,
+  isInterfaceType,
+  isUnionType,
+  isOperationType,
+  isQueryType,
   typeDefinitionMap,
   generatedTypeMap,
   operationTypeMap,
   config
 }) => {
-  if (
-    isObjectTypeDefinition({ definition }) ||
-    isInterfaceTypeDefinition({ definition }) ||
-    isUnionTypeDefinition({ definition })
-  ) {
+  if (isObjectType || isInterfaceType || isUnionType) {
     let [
       nodeInputTypeMap,
       propertyOutputFields,
@@ -68,6 +66,8 @@ export const augmentNodeType = ({
     ] = augmentNodeTypeFields({
       typeName,
       definition,
+      isUnionType,
+      isQueryType,
       typeDefinitionMap,
       generatedTypeMap,
       operationTypeMap,
@@ -75,11 +75,7 @@ export const augmentNodeType = ({
     });
     // A type is ignored when all its fields use @neo4j_ignore
     if (!isIgnoredType) {
-      if (
-        !isOperationTypeDefinition({ definition, operationTypeMap }) &&
-        !isInterfaceTypeDefinition({ definition }) &&
-        !isUnionTypeDefinition({ definition })
-      ) {
+      if (!isOperationType && !isInterfaceType && !isUnionType) {
         [propertyOutputFields, nodeInputTypeMap] = buildNeo4jSystemIDField({
           definition,
           typeName,
@@ -96,6 +92,11 @@ export const augmentNodeType = ({
         operationTypeMap
       ] = augmentNodeTypeAPI({
         definition,
+        isObjectType,
+        isInterfaceType,
+        isUnionType,
+        isOperationType,
+        isQueryType,
         typeName,
         propertyOutputFields,
         propertyInputValues,
@@ -119,6 +120,8 @@ export const augmentNodeType = ({
 export const augmentNodeTypeFields = ({
   typeName,
   definition,
+  isUnionType,
+  isQueryType,
   typeDefinitionMap,
   generatedTypeMap,
   operationTypeMap,
@@ -128,14 +131,9 @@ export const augmentNodeTypeFields = ({
   let propertyOutputFields = [];
   const propertyInputValues = [];
   let isIgnoredType = true;
-  if (!isUnionTypeDefinition({ definition })) {
+  if (!isUnionType) {
     const fields = definition.fields;
-    if (
-      !isQueryTypeDefinition({
-        definition,
-        operationTypeMap
-      })
-    ) {
+    if (!isQueryType) {
       nodeInputTypeMap[FilteringArgument.FILTER] = {
         name: `_${typeName}Filter`,
         fields: []
@@ -267,16 +265,17 @@ const augmentNodeTypeField = ({
   relationshipDirective,
   outputTypeWrappers
 }) => {
-  if (!isUnionTypeDefinition({ definition: outputDefinition })) {
-    fieldArguments = augmentNodeTypeFieldArguments({
-      definition,
-      fieldArguments,
-      fieldDirectives,
-      outputType,
-      outputTypeWrappers,
-      typeDefinitionMap,
-      config
-    });
+  const isUnionType = isUnionTypeDefinition({ definition: outputDefinition });
+  fieldArguments = augmentNodeTypeFieldArguments({
+    fieldArguments,
+    fieldDirectives,
+    isUnionType,
+    outputType,
+    outputTypeWrappers,
+    typeDefinitionMap,
+    config
+  });
+  if (!isUnionType) {
     if (
       relationshipDirective &&
       !isQueryTypeDefinition({ definition, operationTypeMap })
@@ -333,6 +332,11 @@ const augmentNodeTypeField = ({
 const augmentNodeTypeAPI = ({
   definition,
   typeName,
+  isObjectType,
+  isInterfaceType,
+  isUnionType,
+  isOperationType,
+  isQueryType,
   propertyOutputFields,
   propertyInputValues,
   nodeInputTypeMap,
@@ -341,10 +345,11 @@ const augmentNodeTypeAPI = ({
   operationTypeMap,
   config
 }) => {
-  if (!isUnionTypeDefinition({ definition })) {
+  if (!isUnionType) {
     [operationTypeMap, generatedTypeMap] = augmentNodeMutationAPI({
       definition,
       typeName,
+      isInterfaceType,
       propertyInputValues,
       generatedTypeMap,
       operationTypeMap,
@@ -359,8 +364,12 @@ const augmentNodeTypeAPI = ({
     });
   }
   [operationTypeMap, generatedTypeMap] = augmentNodeQueryAPI({
-    definition,
     typeName,
+    isObjectType,
+    isInterfaceType,
+    isUnionType,
+    isOperationType,
+    isQueryType,
     propertyInputValues,
     nodeInputTypeMap,
     typeDefinitionMap,
