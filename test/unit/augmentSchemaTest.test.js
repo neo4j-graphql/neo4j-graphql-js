@@ -135,9 +135,9 @@ test.cb('Test augmented schema', t => {
       Camera(
         type: String
         first: Int
-        offset: Int
         orderBy: [_CameraOrdering]
         filter: _CameraFilter
+        offset: Int
       ): [Camera]
       InterfaceNoScalars(
         orderBy: _InterfaceNoScalarsOrdering
@@ -151,8 +151,8 @@ test.cb('Test augmented schema', t => {
         orderBy: [_CameraOrdering]
       ): [Camera] @cypher(statement: "MATCH (c:Camera) RETURN c")
       CustomCamera: Camera @cypher(statement: "MATCH (c:Camera) RETURN c")
-      MovieSearch: [MovieSearch]
-      computedMovieSearch: [MovieSearch]
+      MovieSearch(first: Int, offset: Int): [MovieSearch]
+      computedMovieSearch(first: Int, offset: Int): [MovieSearch]
         @cypher(statement: "MATCH (ms:MovieSearch) RETURN ms")
       Genre(
         _id: String
@@ -1025,8 +1025,8 @@ test.cb('Test augmented schema', t => {
         orderBy: [_MovieOrdering]
         filter: _MovieFilter
       ): [Movie] @relation(name: "FAVORITED", direction: "OUT")
-      movieSearch: [MovieSearch]
-      computedMovieSearch: [MovieSearch]
+      movieSearch(first: Int, offset: Int): [MovieSearch]
+      computedMovieSearch(first: Int, offset: Int): [MovieSearch]
         @cypher(statement: "MATCH (ms:MovieSearch) RETURN ms")
       _id: String
     }
