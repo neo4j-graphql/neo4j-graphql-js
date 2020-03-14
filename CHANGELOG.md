@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.13.0
+
+- [Translating fragments on interface types](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/394)
+- [Initial support for union types](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/397)
+- [Generated pagination for union type fields](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/398)
+- [Bump graphql-auth-directives version](https://github.com/neo4j-graphql/neo4j-graphql-js/commit/dbff65b0e7e947c1ba722f7edc2a03bd26608f03)
+- [Use latest APOC release in integration tests](https://github.com/neo4j-graphql/neo4j-graphql-js/commit/677d7d3a925f45fb96ae01ba4208357011b3d48e)
+
 ## 2.12.1
 
 - [Fix nested fragments on relations](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/385)
