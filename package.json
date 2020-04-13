@@ -35,7 +35,6 @@
     "url": "git+https://github.com/neo4j-graphql/neo4j-graphql-js"
   },
   "devDependencies": {
-    "@apollo/federation": "^0.13.2",
     "@babel/cli": "^7.0.0",
     "@babel/core": "^7.0.0",
     "@babel/node": "^7.0.0",
@@ -62,14 +61,15 @@
     "sinon": "^7.3.1"
   },
   "dependencies": {
-    "@apollo/gateway": "^0.13.2",
     "@babel/runtime": "^7.5.5",
     "@babel/runtime-corejs2": "^7.5.5",
     "debug": "^4.1.1",
     "graphql": "^14.6.0",
     "graphql-auth-directives": "^2.2.0",
     "lodash": "^4.17.15",
-    "neo4j-driver": "^4.0.1"
+    "neo4j-driver": "^4.0.1",
+    "@apollo/federation": "^0.13.2",
+    "@apollo/gateway": "^0.13.2"
   },
   "ava": {
     "require": [
