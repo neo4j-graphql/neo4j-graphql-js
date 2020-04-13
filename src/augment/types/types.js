@@ -154,8 +154,6 @@ export const isOperationTypeDefinition = ({
  * A predicate function for identifying the GraphQL Query type definition
  */
 export const isQueryTypeDefinition = ({ definition, operationTypeMap }) => {
-  // console.log("\nisQueryTypeDefinition -> definition: "+JSON.stringify(definition, null, 2));
-  // console.log("operationTypeMap[OperationType.QUERY]: "+JSON.stringify(operationTypeMap[OperationType.QUERY], null, 2));
   return definition.name && operationTypeMap[OperationType.QUERY]
     ? definition.name.value === operationTypeMap[OperationType.QUERY].name.value
     : false;
