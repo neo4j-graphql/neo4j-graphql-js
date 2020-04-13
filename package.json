@@ -47,6 +47,8 @@
     "apollo-link-http": "^1.5.16",
     "apollo-server": "^2.9.7",
     "apollo-server-express": "^2.9.7",
+    "@apollo/federation": "^0.13.2",
+    "@apollo/gateway": "^0.13.2",
     "ava": "^2.2.0",
     "body-parser": "^1.18.3",
     "express": "^4.17.1",
@@ -67,9 +69,7 @@
     "graphql": "^14.6.0",
     "graphql-auth-directives": "^2.2.0",
     "lodash": "^4.17.15",
-    "neo4j-driver": "^4.0.1",
-    "@apollo/federation": "^0.13.2",
-    "@apollo/gateway": "^0.13.2"
+    "neo4j-driver": "^4.0.1"
   },
   "ava": {
     "require": [
