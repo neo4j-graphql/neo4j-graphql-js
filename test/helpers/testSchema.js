@@ -1,4 +1,6 @@
-export const testSchema = /* GraphQL */ `
+import { gql } from 'apollo-server';
+
+export const testSchema = `
   type Movie
     @additionalLabels(
       labels: ["u_<%= $cypherParams.userId %>", "newMovieLabel"]

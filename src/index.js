@@ -19,6 +19,13 @@ import {
 import { augmentTypes, transformNeo4jTypes } from './augment/types/types';
 import { buildDocument } from './augment/ast';
 import { augmentDirectiveDefinitions } from './augment/directives';
+import {
+  isFederatedOperation,
+  buildFederatedOperation,
+  executeFederatedOperation,
+  decideOperationTypeName,
+  getEntityQueryField
+} from './federation';
 
 const neo4jGraphQLVersion = require('../package.json').version;
 
@@ -31,78 +38,123 @@ export async function neo4jgraphql(
   resolveInfo,
   debugFlag
 ) {
-  // throw error if context.req.error exists
-  if (checkRequestError(context)) {
-    throw new Error(checkRequestError(context));
-  }
+  const [isRootOperation, isRelationshipOperation] = isFederatedOperation({
+    resolveInfo
+  });
+  if (isRootOperation || isRelationshipOperation) {
+    let [typeName, serviceKeys, hasCustomTypeName] = decideOperationTypeName({
+      object,
+      resolveInfo,
+      isRootOperation,
+      isRelationshipOperation
+    });
 
-  if (!context.driver) {
-    throw new Error(
-      "No Neo4j JavaScript driver instance provided. Please ensure a Neo4j JavaScript driver instance is injected into the context object at the key 'driver'."
+    const operationField = getEntityQueryField({
+      typeName,
+      resolveInfo,
+      isRootOperation,
+      isRelationshipOperation
+    });
+    // console.log("operationField: ", operationField);
+    // console.log('resolveInfo: ', resolveInfo)
+    const federatedOperation = buildFederatedOperation({
+      object,
+      params,
+      context,
+      serviceKeys,
+      resolveInfo,
+      typeName,
+      operationField,
+      hasCustomTypeName,
+      isRootOperation,
+      isRelationshipOperation
+    });
+    return await executeFederatedOperation({
+      typeName,
+      operationField,
+      isRootOperation,
+      isRelationshipOperation,
+      federatedOperation,
+      hasCustomTypeName,
+      resolveInfo,
+      debugFlag
+    });
+  } else {
+    // throw error if context.req.error exists
+    if (checkRequestError(context)) {
+      throw new Error(checkRequestError(context));
+    }
+
+    if (!context.driver) {
+      throw new Error(
+        "No Neo4j JavaScript driver instance provided. Please ensure a Neo4j JavaScript driver instance is injected into the context object at the key 'driver'."
+      );
+    }
+
+    let query;
+    let cypherParams;
+
+    const cypherFunction = isMutation(resolveInfo)
+      ? cypherMutation
+      : cypherQuery;
+    [query, cypherParams] = cypherFunction(
+      params,
+      context,
+      resolveInfo,
+      debugFlag
     );
-  }
 
-  let query;
-  let cypherParams;
+    if (debugFlag) {
+      console.log(`
+  Deprecation Warning: Remove \`debug\` parameter and use an environment variable
+  instead: \`DEBUG=neo4j-graphql-js\`.
+      `);
+      console.log(query);
+      console.log(JSON.stringify(cypherParams, null, 2));
+    }
 
-  const cypherFunction = isMutation(resolveInfo) ? cypherMutation : cypherQuery;
-  [query, cypherParams] = cypherFunction(
-    params,
-    context,
-    resolveInfo,
-    debugFlag
-  );
+    debug('%s', query);
+    debug('%s', JSON.stringify(cypherParams, null, 2));
 
-  if (debugFlag) {
-    console.log(`
-Deprecation Warning: Remove \`debug\` parameter and use an environment variable
-instead: \`DEBUG=neo4j-graphql-js\`.
-    `);
-    console.log(query);
-    console.log(JSON.stringify(cypherParams, null, 2));
-  }
+    context.driver._userAgent = `neo4j-graphql-js/${neo4jGraphQLVersion}`;
 
-  debug('%s', query);
-  debug('%s', JSON.stringify(cypherParams, null, 2));
+    let session;
 
-  context.driver._userAgent = `neo4j-graphql-js/${neo4jGraphQLVersion}`;
-
-  let session;
-
-  if (context.neo4jDatabase) {
-    // database is specified in context object
-    try {
-      // connect to the specified database
-      // must be using 4.x version of driver
-      session = context.driver.session({
-        database: context.neo4jDatabase
-      });
-    } catch (e) {
-      // error - not using a 4.x version of driver!
-      // fall back to default database
+    if (context.neo4jDatabase) {
+      // database is specified in context object
+      try {
+        // connect to the specified database
+        // must be using 4.x version of driver
+        session = context.driver.session({
+          database: context.neo4jDatabase
+        });
+      } catch (e) {
+        // error - not using a 4.x version of driver!
+        // fall back to default database
+        session = context.driver.session();
+      }
+    } else {
+      // no database specified
       session = context.driver.session();
     }
-  } else {
-    // no database specified
-    session = context.driver.session();
-  }
 
-  let result;
+    let result;
 
-  try {
-    if (isMutation(resolveInfo)) {
-      result = await session.writeTransaction(tx => {
-        return tx.run(query, cypherParams);
-      });
-    } else {
-      result = await session.readTransaction(tx => {
-        return tx.run(query, cypherParams);
-      });
+    try {
+      if (isMutation(resolveInfo)) {
+        result = await session.writeTransaction(tx => {
+          return tx.run(query, cypherParams);
+        });
+      } else {
+        result = await session.readTransaction(tx => {
+          return tx.run(query, cypherParams);
+        });
+      }
+    } finally {
+      session.close();
     }
-  } finally {
-    session.close();
+    return extractQueryResult(result, resolveInfo.returnType);
   }
-  return extractQueryResult(result, resolveInfo.returnType);
 }
 
 export function cypherQuery(
@@ -152,6 +204,7 @@ export function cypherMutation(
 export const augmentTypeDefs = (typeDefs, config = {}) => {
   config.query = false;
   config.mutation = false;
+  if (config.isFederated === undefined) config.isFederated = false;
   const definitions = parse(typeDefs).definitions;
   let generatedTypeMap = {};
   let [
@@ -242,4 +295,20 @@ export const inferSchema = (driver, config = {}) => {
   const tree = new Neo4jSchemaTree(driver, config);
 
   return tree.initialize().then(graphQLMapper);
+};
+
+export const cypher = (statement, ...substitutions) => {
+  // Get the array of string literals
+  const literals = statement.raw;
+  // Add each substitution inbetween all
+  const composed = substitutions.reduce((composed, substitution, index) => {
+    // Add the string literal
+    composed.push(literals[index]);
+    // Add the substution proceeding it
+    composed.push(substitution);
+    return composed;
+  }, []);
+  // Add the last literal
+  composed.push(literals[literals.length - 1]);
+  return `statement: """${composed.join('')}"""`;
 };

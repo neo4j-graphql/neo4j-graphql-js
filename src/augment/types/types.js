@@ -96,6 +96,12 @@ export const Neo4jDataType = {
 };
 
 /**
+ * A predicate function for identifying a Document AST resulting
+ * from the parsing of SDL type definitions
+ */
+export const isSchemaDocument = ({ definition = {} }) =>
+  typeof definition === 'object' && definition.kind === Kind.DOCUMENT;
+/**
  * A predicate function for identifying type definitions representing
  * a Neo4j node entity
  */
@@ -147,10 +153,13 @@ export const isOperationTypeDefinition = ({
 /**
  * A predicate function for identifying the GraphQL Query type definition
  */
-export const isQueryTypeDefinition = ({ definition, operationTypeMap }) =>
-  definition.name && operationTypeMap[OperationType.QUERY]
+export const isQueryTypeDefinition = ({ definition, operationTypeMap }) => {
+  // console.log("\nisQueryTypeDefinition -> definition: "+JSON.stringify(definition, null, 2));
+  // console.log("operationTypeMap[OperationType.QUERY]: "+JSON.stringify(operationTypeMap[OperationType.QUERY], null, 2));
+  return definition.name && operationTypeMap[OperationType.QUERY]
     ? definition.name.value === operationTypeMap[OperationType.QUERY].name.value
     : false;
+};
 
 /**
  * A predicate function for identifying the GraphQL Mutation type definition
@@ -245,10 +254,20 @@ export const augmentTypes = ({
   operationTypeMap = {},
   config = {}
 }) => {
-  Object.entries({
-    ...typeDefinitionMap,
-    ...operationTypeMap
-  }).forEach(([typeName, definition]) => {
+  const queryType = operationTypeMap[OperationType.QUERY];
+  const queryTypeName = queryType ? queryType.name.value : '';
+  const queryTypeExtensions = typeExtensionDefinitionMap[queryTypeName] || [];
+  const mutationType = operationTypeMap[OperationType.MUTATION];
+  const mutationTypeName = mutationType ? mutationType.name.value : '';
+  const mutationTypeExtensions =
+    typeExtensionDefinitionMap[mutationTypeName] || [];
+  const augmentationDefinitions = [
+    ...Object.entries({
+      ...typeDefinitionMap,
+      ...operationTypeMap
+    })
+  ];
+  augmentationDefinitions.forEach(([typeName, definition]) => {
     const isObjectType = isObjectTypeDefinition({ definition });
     const isInterfaceType = isInterfaceTypeDefinition({ definition });
     const isUnionType = isUnionTypeDefinition({ definition });
@@ -281,6 +300,7 @@ export const augmentTypes = ({
         typeDefinitionMap,
         generatedTypeMap,
         operationTypeMap,
+        typeExtensionDefinitionMap,
         config
       });
       // Add augmented type to generated type map
@@ -290,6 +310,19 @@ export const augmentTypes = ({
       generatedTypeMap[typeName] = definition;
     }
     return definition;
+  });
+  queryTypeExtensions.forEach(extension => {
+    const typeName = extension.name.value;
+    return augmentOperationType({
+      typeName,
+      definition: extension,
+      isQueryType: true,
+      isObjectType: true,
+      typeDefinitionMap,
+      generatedTypeMap,
+      operationTypeMap,
+      config
+    });
   });
   generatedTypeMap = augmentNeo4jTypes({
     generatedTypeMap,
@@ -451,6 +484,7 @@ export const transformNeo4jTypes = ({ definitions = [], config }) => {
 export const initializeOperationTypes = ({
   typeDefinitionMap,
   schemaTypeDefinition,
+  typeExtensionDefinitionMap,
   config = {}
 }) => {
   let queryTypeName = OperationType.QUERY;
@@ -489,8 +523,11 @@ export const initializeOperationTypes = ({
     queryTypeName,
     mutationTypeName,
     subscriptionTypeName,
-    typeDefinitionMap
+    typeDefinitionMap,
+    typeExtensionDefinitionMap
   });
+  const queryTypeExtensions = typeExtensionDefinitionMap[queryTypeName];
+  const mutationTypeExtensions = typeExtensionDefinitionMap[mutationTypeName];
   return [typeDefinitionMap, operationTypeMap];
 };
 

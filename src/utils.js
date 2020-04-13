@@ -946,8 +946,18 @@ export const isSpatialField = (schemaType, name) => {
 
 export const isSpatialInputType = name => name === '_Neo4jPointInput';
 
-export const isSpatialDistanceInputType = name =>
-  name === `${Neo4jTypeName}${SpatialType.POINT}DistanceFilter`;
+export const isSpatialDistanceInputType = ({ filterOperationType = '' }) => {
+  switch (filterOperationType) {
+    case 'distance':
+    case 'distance_lt':
+    case 'distance_lte':
+    case 'distance_gt':
+    case 'distance_gte':
+      return true;
+    default:
+      return false;
+  }
+};
 
 export const decideNeo4jTypeConstructor = typeName => {
   switch (typeName) {

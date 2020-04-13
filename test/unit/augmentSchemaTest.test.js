@@ -4,10 +4,14 @@ import { printSchemaDocument } from '../../src/augment/augment';
 import { makeAugmentedSchema } from '../../src/index';
 import { testSchema } from '../helpers/testSchema';
 import { Kind } from 'graphql/language';
+import { gql } from 'apollo-server';
 
 test.cb('Test augmented schema', t => {
+  const parseTypeDefs = gql`
+    ${testSchema}
+  `;
   const sourceSchema = makeAugmentedSchema({
-    typeDefs: testSchema,
+    typeDefs: parseTypeDefs,
     config: {
       auth: true
     }

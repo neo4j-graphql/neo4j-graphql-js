@@ -55,6 +55,7 @@ export const augmentNodeType = ({
   typeDefinitionMap,
   generatedTypeMap,
   operationTypeMap,
+  typeExtensionDefinitionMap,
   config
 }) => {
   if (isObjectType || isInterfaceType || isUnionType) {
@@ -102,6 +103,7 @@ export const augmentNodeType = ({
         propertyInputValues,
         nodeInputTypeMap,
         typeDefinitionMap,
+        typeExtensionDefinitionMap,
         generatedTypeMap,
         operationTypeMap,
         config
@@ -341,6 +343,7 @@ const augmentNodeTypeAPI = ({
   propertyInputValues,
   nodeInputTypeMap,
   typeDefinitionMap,
+  typeExtensionDefinitionMap,
   generatedTypeMap,
   operationTypeMap,
   config
@@ -353,6 +356,7 @@ const augmentNodeTypeAPI = ({
       propertyInputValues,
       generatedTypeMap,
       operationTypeMap,
+      typeExtensionDefinitionMap,
       config
     });
     generatedTypeMap = buildNodeSelectionInputType({
@@ -373,6 +377,7 @@ const augmentNodeTypeAPI = ({
     propertyInputValues,
     nodeInputTypeMap,
     typeDefinitionMap,
+    typeExtensionDefinitionMap,
     generatedTypeMap,
     operationTypeMap,
     config
