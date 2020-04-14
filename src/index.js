@@ -55,8 +55,6 @@ export async function neo4jgraphql(
       isRootOperation,
       isRelationshipOperation
     });
-    // console.log("operationField: ", operationField);
-    // console.log('resolveInfo: ', resolveInfo)
     const federatedOperation = buildFederatedOperation({
       object,
       params,
