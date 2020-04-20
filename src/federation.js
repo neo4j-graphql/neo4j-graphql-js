@@ -181,16 +181,14 @@ export const setEntityQueryFilter = ({ params = {}, compoundKeys = {} }) => {
 export const getFederatedOperationData = ({ context }) => {
   const [entityKeys, requiredData, params] = context[CONTEXT_KEYS_PATH] || {};
   const compoundKeys = {};
-  const scalarKeys = Object.entries(entityKeys).forEach(
-    ([serviceParam, value]) => {
-      if (typeof value === 'object') {
-        compoundKeys[serviceParam] = value;
-      } else {
-        scalarKeys[serviceParam] = value;
-      }
-      return scalarKeys;
+  const scalarKeys = {};
+  Object.entries(entityKeys).forEach(([serviceParam, value]) => {
+    if (typeof value === 'object') {
+      compoundKeys[serviceParam] = value;
+    } else {
+      scalarKeys[serviceParam] = value;
     }
-  );
+  });
   return {
     scalarKeys,
     compoundKeys,
