@@ -49,7 +49,9 @@ export function buildCypherSelection({
   resolveInfo,
   paramIndex = 1,
   parentSelectionInfo = {},
-  secondParentSelectionInfo = {}
+  secondParentSelectionInfo = {},
+  isFederatedOperation = false,
+  context
 }) {
   if (!selections.length) return [initial, {}];
   const typeMap = resolveInfo.schema.getTypeMap();
@@ -132,7 +134,9 @@ export function buildCypherSelection({
     resolveInfo,
     shallowFilterParams,
     parentSelectionInfo,
-    secondParentSelectionInfo
+    secondParentSelectionInfo,
+    isFederatedOperation,
+    context
   };
 
   let translationConfig = undefined;
@@ -270,7 +274,9 @@ export function buildCypherSelection({
         paramIndex,
         cypherParams,
         parentSelectionInfo,
-        secondParentSelectionInfo
+        secondParentSelectionInfo,
+        isFederatedOperation,
+        context
       });
     } else if (isObjectType || isInterfaceType) {
       const schemaTypeRelation = getRelationTypeDirective(schemaTypeAstNode);
@@ -306,7 +312,9 @@ export function buildCypherSelection({
           selections,
           paramIndex
         },
-        secondParentSelectionInfo: parentSelectionInfo
+        secondParentSelectionInfo: parentSelectionInfo,
+        isFederatedOperation,
+        context
       });
 
       const fieldArgs =
@@ -374,7 +382,9 @@ export function buildCypherSelection({
           subSelection,
           skipLimit,
           commaIfTail,
-          tailParams
+          tailParams,
+          isFederatedOperation,
+          context
         });
       } else if (isNeo4jType(fieldTypeName)) {
         translationConfig = neo4jType({
@@ -500,7 +510,9 @@ const translateScalarTypeField = ({
   paramIndex,
   cypherParams,
   parentSelectionInfo,
-  secondParentSelectionInfo
+  secondParentSelectionInfo,
+  isFederatedOperation,
+  context
 }) => {
   if (fieldName === Neo4jSystemIDField) {
     return {
@@ -521,7 +533,9 @@ const translateScalarTypeField = ({
           cypherParams,
           schemaType,
           resolveInfo,
-          paramIndex
+          paramIndex,
+          isFederatedOperation,
+          context
         )}}, false)${commaIfTail}`,
         ...tailParams
       };

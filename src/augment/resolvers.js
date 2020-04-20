@@ -1,5 +1,6 @@
 import { neo4jgraphql } from '../index';
 import { OperationType } from '../augment/types/types';
+import { isNonLocalType } from '../federation';
 
 /**
  * The main export for the generation of resolvers for the
@@ -15,6 +16,9 @@ export const augmentResolvers = ({
   const isFederated = config.isFederated;
   // Persist and generate Query resolvers
   let queryTypeName = OperationType.QUERY;
+  let mutationTypeName = OperationType.MUTATION;
+  let subscriptionTypeName = OperationType.SUBSCRIPTION;
+
   const queryType = operationTypeMap[queryTypeName];
   if (queryType) queryTypeName = queryType.name.value;
   const queryTypeExtensions = typeExtensionDefinitionMap[queryTypeName];
@@ -28,20 +32,21 @@ export const augmentResolvers = ({
       config,
       isFederated
     });
-    if (Object.keys(queryResolvers).length > 0) {
+
+    if (Object.keys(queryResolvers).length) {
       resolvers[queryTypeName] = queryResolvers;
       if (isFederated) {
-        Object.keys(queryResolvers).forEach(name => {
+        Object.keys(queryResolvers).forEach(typeName => {
           // Initialize type resolver object
-          if (resolvers[name] === undefined) resolvers[name] = {};
+          if (resolvers[typeName] === undefined) resolvers[typeName] = {};
           // If not provided
-          if (resolvers[name]['__resolveReference'] === undefined) {
-            resolvers[name]['__resolveReference'] = function(
+          if (resolvers[typeName]['__resolveReference'] === undefined) {
+            resolvers[typeName]['__resolveReference'] = async function(
               object,
               context,
               resolveInfo
             ) {
-              return neo4jgraphql(
+              return await neo4jgraphql(
                 object,
                 {},
                 context,
@@ -55,8 +60,55 @@ export const augmentResolvers = ({
     }
   }
 
+  if (Object.values(typeExtensionDefinitionMap).length) {
+    if (isFederated) {
+      Object.keys(typeExtensionDefinitionMap).forEach(typeName => {
+        if (
+          typeName !== queryTypeName &&
+          typeName !== mutationTypeName &&
+          typeName !== subscriptionTypeName
+        ) {
+          if (
+            isNonLocalType({
+              generatedTypeMap,
+              typeName
+            })
+          ) {
+            // Initialize type resolver object
+            if (resolvers[typeName] === undefined) resolvers[typeName] = {};
+            // If not provided
+            if (resolvers[typeName]['__resolveReference'] === undefined) {
+              console.log(
+                '\ngenerating reference resolver for nonlocal type: ',
+                typeName
+              );
+              resolvers[typeName]['__resolveReference'] = async function(
+                object,
+                context,
+                resolveInfo
+              ) {
+                const entityData = await neo4jgraphql(
+                  object,
+                  {},
+                  context,
+                  resolveInfo,
+                  config.debug
+                );
+                return {
+                  // Data for this entity type possibly previously fetched from other services
+                  ...object,
+                  // Data now fetched for the fields this service resolves for the entity type
+                  ...entityData
+                };
+              };
+            }
+          }
+        }
+      });
+    }
+  }
+
   // Persist and generate Mutation resolvers
-  let mutationTypeName = OperationType.MUTATION;
   const mutationType = operationTypeMap[mutationTypeName];
   if (mutationType) mutationTypeName = mutationType.name.value;
   const mutationTypeExtensions = typeExtensionDefinitionMap[mutationTypeName];
@@ -78,8 +130,8 @@ export const augmentResolvers = ({
       resolvers[mutationTypeName] = mutationResolvers;
     }
   }
+
   // Persist Subscription resolvers
-  let subscriptionTypeName = OperationType.SUBSCRIPTION;
   const subscriptionType = operationTypeMap[subscriptionTypeName];
   if (subscriptionType) {
     subscriptionTypeName = subscriptionType.name.value;
@@ -91,6 +143,7 @@ export const augmentResolvers = ({
       resolvers[subscriptionTypeName] = subscriptionResolvers;
     }
   }
+
   // must implement __resolveInfo for every Interface type
   // we use "FRAGMENT_TYPE" key to identify the Interface implementation
   // type at runtime, so grab this value
@@ -106,6 +159,7 @@ export const augmentResolvers = ({
       return obj['FRAGMENT_TYPE'];
     };
   });
+
   return resolvers;
 };
 
@@ -140,8 +194,8 @@ const possiblyAddResolvers = ({
   Object.keys(fieldMap).forEach(name => {
     // If not provided
     if (resolvers[name] === undefined) {
-      resolvers[name] = function(...args) {
-        return neo4jgraphql(...args, config.debug);
+      resolvers[name] = async function(...args) {
+        return await neo4jgraphql(...args, config.debug);
       };
     }
   });

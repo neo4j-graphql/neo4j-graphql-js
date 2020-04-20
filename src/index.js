@@ -19,13 +19,7 @@ import {
 import { augmentTypes, transformNeo4jTypes } from './augment/types/types';
 import { buildDocument } from './augment/ast';
 import { augmentDirectiveDefinitions } from './augment/directives';
-import {
-  isFederatedOperation,
-  buildFederatedOperation,
-  executeFederatedOperation,
-  decideOperationTypeName,
-  getEntityQueryField
-} from './federation';
+import { isFederatedOperation, executeFederatedOperation } from './federation';
 
 const neo4jGraphQLVersion = require('../package.json').version;
 
@@ -38,43 +32,17 @@ export async function neo4jgraphql(
   resolveInfo,
   debugFlag
 ) {
-  const [isRootOperation, isRelationshipOperation] = isFederatedOperation({
+  const [isBaseTypeOperation, isExtendedTypeOperation] = isFederatedOperation({
     resolveInfo
   });
-  if (isRootOperation || isRelationshipOperation) {
-    let [typeName, serviceKeys, hasCustomTypeName] = decideOperationTypeName({
-      object,
-      resolveInfo,
-      isRootOperation,
-      isRelationshipOperation
-    });
-
-    const operationField = getEntityQueryField({
-      typeName,
-      resolveInfo,
-      isRootOperation,
-      isRelationshipOperation
-    });
-    const federatedOperation = buildFederatedOperation({
+  if (isBaseTypeOperation || isExtendedTypeOperation) {
+    return await executeFederatedOperation({
       object,
       params,
       context,
-      serviceKeys,
       resolveInfo,
-      typeName,
-      operationField,
-      hasCustomTypeName,
-      isRootOperation,
-      isRelationshipOperation
-    });
-    return await executeFederatedOperation({
-      typeName,
-      operationField,
-      isRootOperation,
-      isRelationshipOperation,
-      federatedOperation,
-      hasCustomTypeName,
-      resolveInfo,
+      isBaseTypeOperation,
+      isExtendedTypeOperation,
       debugFlag
     });
   } else {

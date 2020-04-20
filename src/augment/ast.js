@@ -220,7 +220,7 @@ export const buildFieldSelection = ({
   };
 };
 
-const buildArgument = ({ name = {}, value }) => {
+export const buildArgument = ({ name = {}, value }) => {
   return {
     kind: Kind.ARGUMENT,
     name,

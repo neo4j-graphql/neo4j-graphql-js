@@ -64,7 +64,7 @@ import _ from 'lodash';
 import neo4j from 'neo4j-driver';
 import { isUnionTypeDefinition } from './augment/types/types';
 import {
-  getEntityKeys,
+  getFederatedOperationData,
   setEntityQueryFilter,
   NEO4j_GRAPHQL_SERVICE
 } from './federation';
@@ -124,7 +124,9 @@ export const customCypherField = ({
   subSelection,
   skipLimit,
   commaIfTail,
-  tailParams
+  tailParams,
+  isFederatedOperation,
+  context
 }) => {
   const [mapProjection, labelPredicate] = buildMapProjection({
     isComputedField: true,
@@ -158,7 +160,9 @@ export const customCypherField = ({
       cypherParams,
       schemaType,
       resolveInfo,
-      cypherFieldParamsIndex
+      cypherFieldParamsIndex,
+      isFederatedOperation,
+      context
     )}}, true) ${labelPredicate}| ${
       labelPredicate ? `${nestedVariable}] | ` : ''
     }${mapProjection}]${headListWrapperSuffix}${skipLimit} ${commaIfTail}`,
@@ -764,32 +768,41 @@ export const translateQuery = ({
     otherParams
   });
 
-  const queryTypeCypherDirective = getQueryCypherDirective(resolveInfo);
-
   // Check is this is a federated operation, in which case get the lookup keys
   const operation = resolveInfo.operation || {};
   // check if the operation name is the name used for generated queries
   const isFederatedOperation =
     operation.name && operation.name.value === NEO4j_GRAPHQL_SERVICE;
+  const queryTypeCypherDirective = getQueryCypherDirective(
+    resolveInfo,
+    isFederatedOperation
+  );
   let scalarKeys = {};
   let compoundKeys = {};
+  let requiredData = {};
   if (isFederatedOperation) {
-    [scalarKeys, compoundKeys] = getEntityKeys({ context });
+    const operationData = getFederatedOperationData({ context });
+    scalarKeys = operationData.scalarKeys;
+    compoundKeys = operationData.compoundKeys;
+    requiredData = operationData.requiredData;
     if (queryTypeCypherDirective) {
       // all nonnull keys become available as cypher variables
       nonNullParams = {
         ...scalarKeys,
-        ...compoundKeys
+        ...compoundKeys,
+        ...requiredData
       };
     } else {
       // all scalar keys get used as field arguments, while relationship
       // field keys being translated as a filter argument
-      nonNullParams = scalarKeys;
+      nonNullParams = {
+        ...scalarKeys
+      };
     }
   }
 
   let filterParams = getFilterParams(nonNullParams);
-  const queryArgs = getQueryArguments(resolveInfo);
+  const queryArgs = getQueryArguments(resolveInfo, isFederatedOperation);
   const neo4jTypeArgs = getNeo4jTypeArguments(queryArgs);
   const cypherParams = getCypherParams(context);
   const queryParams = paramsToString(
@@ -853,10 +866,16 @@ export const translateQuery = ({
         params: nonNullParams,
         compoundKeys
       });
+      nonNullParams = {
+        ...nonNullParams,
+        ...otherParams,
+        ...requiredData
+      };
     }
     return nodeQuery({
       resolveInfo,
       isFederatedOperation,
+      context,
       cypherParams,
       schemaType,
       argString: queryParams,
@@ -1034,6 +1053,7 @@ const customQuery = ({
 const nodeQuery = ({
   resolveInfo,
   isFederatedOperation,
+  context,
   cypherParams,
   schemaType,
   selections,
@@ -1064,9 +1084,11 @@ const nodeQuery = ({
     variableName,
     schemaType,
     resolveInfo,
-    paramIndex: rootParamIndex
+    paramIndex: rootParamIndex,
+    isFederatedOperation,
+    context
   });
-  const fieldArgs = getQueryArguments(resolveInfo);
+  const fieldArgs = getQueryArguments(resolveInfo, isFederatedOperation);
   const [filterPredicates, serializedFilter] = processFilterArgument({
     fieldArgs,
     isFederatedOperation,

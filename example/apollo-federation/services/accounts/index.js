@@ -1,6 +1,26 @@
 import { gql } from 'apollo-server';
 import { buildFederatedSchema } from '@apollo/federation';
-import { makeAugmentedSchema } from '../../../../src';
+import { makeAugmentedSchema, neo4jgraphql, cypher } from '../../../../src';
+
+export const accountsSchema = buildFederatedSchema([
+  makeAugmentedSchema({
+    typeDefs: gql`
+      extend type Query {
+        me: User
+      }
+
+      type User @key(fields: "id") {
+        id: ID!
+        name: String
+        username: String
+      }
+    `,
+    config: {
+      isFederated: true
+      // debug: true
+    }
+  })
+]);
 
 export const users = [
   {
@@ -16,40 +36,3 @@ export const users = [
     username: '@complete'
   }
 ];
-
-export const accountsSchema = buildFederatedSchema([
-  makeAugmentedSchema({
-    typeDefs: gql`
-      extend type Query {
-        me: User
-      }
-
-      type Mutation {
-        CreateUser(myTime: DateTime): User
-          @cypher(statement: "MATCH (u:User) RETURN u")
-      }
-
-      type User @key(fields: "id") {
-        id: ID!
-        name: String
-        username: String
-      }
-    `,
-    resolvers: {
-      Query: {
-        me() {
-          return users[0];
-        }
-      },
-      User: {
-        __resolveReference(object) {
-          return users.find(user => user.id === object.id);
-        }
-      }
-    },
-    config: {
-      isFederated: true,
-      debug: true
-    }
-  })
-]);

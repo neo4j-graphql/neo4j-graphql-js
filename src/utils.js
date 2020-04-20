@@ -5,6 +5,7 @@ import { Neo4jTypeName } from './augment/types/types';
 import { SpatialType } from './augment/types/spatial';
 import { unwrapNamedType } from './augment/fields';
 import { Neo4jTypeFormatted } from './augment/types/types';
+import { getFederatedOperationData } from './federation';
 
 function parseArg(arg, variableValues) {
   switch (arg.value.kind) {
@@ -97,7 +98,9 @@ export function cypherDirectiveArgs(
   cypherParams,
   schemaType,
   resolveInfo,
-  paramIndex
+  paramIndex,
+  isFederatedOperation,
+  context
 ) {
   // Get any default arguments or an empty object
   const defaultArgs = getDefaultArguments(headSelection.name.value, schemaType);
@@ -105,6 +108,17 @@ export function cypherDirectiveArgs(
   let args = [`this: ${variable}`];
   // If cypherParams are provided, add the parameter
   if (cypherParams) args.push(`cypherParams: $cypherParams`);
+  let federatedOperationParams = {};
+  if (isFederatedOperation) {
+    const { requiredData, params } = getFederatedOperationData({ context });
+    federatedOperationParams = {
+      ...requiredData,
+      ...params
+    };
+    Object.keys(federatedOperationParams).forEach(name => {
+      args.push(`${name}: $${name}`);
+    });
+  }
   // Parse field argument values
   const queryArgs = parseArgs(
     headSelection.arguments,
@@ -113,7 +127,11 @@ export function cypherDirectiveArgs(
   // Add arguments that have default values, if no value is provided
   Object.keys(defaultArgs).forEach(e => {
     // Use only if default value exists and no value has been provided
-    if (defaultArgs[e] !== undefined && queryArgs[e] === undefined) {
+    if (
+      defaultArgs[e] !== undefined &&
+      queryArgs[e] === undefined &&
+      federatedOperationParams[e] === undefined
+    ) {
       // Values are inlined
       const inlineDefaultValue = JSON.stringify(defaultArgs[e]);
       args.push(`${e}: ${inlineDefaultValue}`);
@@ -121,7 +139,10 @@ export function cypherDirectiveArgs(
   });
   // Add arguments that have provided values
   Object.keys(queryArgs).forEach(e => {
-    if (queryArgs[e] !== undefined) {
+    if (
+      queryArgs[e] !== undefined &&
+      federatedOperationParams[e] === undefined
+    ) {
       // Use only if value exists
       args.push(`${e}: $${paramIndex}_${e}`);
     }
@@ -367,8 +388,8 @@ export const possiblySetFirstId = ({ args, statements = [], params }) => {
   return statements;
 };
 
-export const getQueryArguments = resolveInfo => {
-  if (resolveInfo.fieldName === '_entities') return [];
+export const getQueryArguments = (resolveInfo, isFederatedOperation) => {
+  if (resolveInfo.fieldName === '_entities' || isFederatedOperation) return [];
   return resolveInfo.schema.getQueryType().getFields()[resolveInfo.fieldName]
     .astNode.arguments;
 };
@@ -602,8 +623,8 @@ export const getFieldDirective = (field, directive) => {
   );
 };
 
-export const getQueryCypherDirective = resolveInfo => {
-  if (resolveInfo.fieldName === '_entities') return;
+export const getQueryCypherDirective = (resolveInfo, isFederatedOperation) => {
+  if (resolveInfo.fieldName === '_entities' || isFederatedOperation) return;
   return resolveInfo.schema
     .getQueryType()
     .getFields()

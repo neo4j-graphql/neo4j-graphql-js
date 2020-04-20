@@ -1,6 +1,64 @@
 import { gql } from 'apollo-server';
 import { buildFederatedSchema } from '@apollo/federation';
-import { makeAugmentedSchema, cypher } from '../../../../src';
+import { makeAugmentedSchema, neo4jgraphql, cypher } from '../../../../src';
+
+export const reviewsSchema = buildFederatedSchema([
+  makeAugmentedSchema({
+    typeDefs: gql`
+      type Review @key(fields: "id") {
+        id: ID!
+        body: String
+        author: User
+          @cypher(statement: "MATCH (this)<-[:AUTHOR_OF]-(user:User) RETURN user")
+        product: Product
+          @relation(name: "REVIEW_OF", direction: OUT)
+      }
+
+      extend type User @key(fields: "id") {
+        id: ID! @external
+        reviews: [Review]
+          @relation(name: "AUTHOR_OF", direction: OUT)
+        numberOfReviews: Int
+          @cypher(${cypher`
+            MATCH (this)-[:AUTHOR_OF]->(review:Review)
+            RETURN count(review)
+          `})
+      }
+
+      extend type Product @key(fields: "upc") {
+        upc: String! @external
+        reviews: [Review]
+          @relation(name: "REVIEW_OF", direction: IN)
+      }
+    `,
+    resolvers: {
+      User: {
+        // Generated
+        // async __resolveReference(object, context, resolveInfo) {
+        //   const data = await neo4jgraphql(object, {}, context, resolveInfo);
+        //   return {
+        //     ...object,
+        //     ...data
+        //   };
+        // }
+      },
+      Product: {
+        // Generated
+        // async __resolveReference(object, context, resolveInfo) {
+        //   const data = await neo4jgraphql(object, {}, context, resolveInfo);
+        //   return {
+        //     ...object,
+        //     ...data
+        //   };
+        // }
+      }
+    },
+    config: {
+      isFederated: true
+      // debug: true
+    }
+  })
+]);
 
 export const reviews = [
   {
@@ -28,74 +86,3 @@ export const reviews = [
     body: 'Prefer something else.'
   }
 ];
-
-export const reviewsSchema = buildFederatedSchema([
-  makeAugmentedSchema({
-    typeDefs: gql`
-      type Review @key(fields: "id") {
-        id: ID!
-        body: String
-        author: User
-          @relation(name: "AUTHOR_OF", direction: IN)
-          @provides(fields: "username")
-        product: Product @relation(name: "REVIEW_OF", direction: OUT)
-      }
-
-      extend type User @key(fields: "id") {
-        id: ID! @external
-        username: String @external
-        reviews: [Review]
-      }
-
-      extend type Product @key(fields: "upc") {
-        upc: String! @external
-        reviews: [Review]
-      }
-    `,
-    resolvers: {
-      Query: {
-        //! will be generated
-        Review(object, params, context, resolveInfo) {
-          return reviews;
-        }
-      },
-      Review: {
-        author(review) {
-          return { __typename: 'User', id: review.authorID };
-        }
-      },
-      User: {
-        reviews(user) {
-          return reviews.filter(review => review.authorID === user.id);
-        },
-        numberOfReviews(user) {
-          return reviews.filter(review => review.authorID === user.id).length;
-        },
-        username(user) {
-          //? usernames is missing from demo repo
-          const usernames = [
-            {
-              id: '1',
-              username: '@ada'
-            },
-            {
-              id: '2',
-              username: '@complete'
-            }
-          ];
-          const found = usernames.find(username => username.id === user.id);
-          return found ? found.username : null;
-        }
-      },
-      Product: {
-        reviews(product) {
-          return reviews.filter(review => review.product.upc === product.upc);
-        }
-      }
-    },
-    config: {
-      isFederated: true,
-      debug: true
-    }
-  })
-]);

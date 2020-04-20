@@ -1,17 +1,23 @@
-import { print, graphql, Kind } from 'graphql';
+import {
+  print,
+  parse,
+  isScalarType,
+  GraphQLList,
+  isEnumType,
+  isListType
+} from 'graphql';
 import { ApolloError } from 'apollo-server';
 import {
   buildSelectionSet,
   buildFieldSelection,
   buildName,
-  buildNamedType,
   buildVariableDefinition,
-  buildVariable
+  buildVariable,
+  buildArgument
 } from './augment/ast';
-import { unwrapNamedType, TypeWrappers } from './augment/fields';
-import { innerType } from './utils';
 import { checkRequestError } from './auth';
 import Debug from 'debug';
+import { neo4jgraphql } from './index';
 
 const debug = Debug('neo4j-graphql-js');
 
@@ -33,81 +39,122 @@ const INTROSPECTION_FIELD = {
   TYPENAME: '__typename'
 };
 
-export const buildFederatedOperation = ({
+const buildFederatedOperation = ({
   object,
-  params = {},
-  context,
-  serviceKeys,
+  params,
   resolveInfo,
+  entityType,
+  schema,
   typeName,
-  operationField,
   hasCustomTypeName,
-  isRootOperation,
-  isRelationshipOperation
+  isBaseTypeOperation,
+  isExtendedTypeOperation
 }) => {
-  const requestError = checkRequestError(context);
-  if (requestError) throw new Error(requestError);
-  const [source, variableValues] = buildEntityQuery({
-    typeName,
+  const [
+    keyFieldArguments,
+    variableDefinitions,
+    variableValues
+  ] = buildEntityQueryArguments({
+    entityType,
     object,
-    params,
-    hasCustomTypeName,
-    isRootOperation,
-    isRelationshipOperation,
-    operationField,
+    // params,
     resolveInfo
   });
-  const contextValue = setContextKeyParams({
-    context,
-    serviceKeys,
-    params
+  const selectionSet = buildEntityQuerySelectionSet({
+    typeName,
+    entityType,
+    hasCustomTypeName,
+    keyFieldArguments,
+    isBaseTypeOperation,
+    isExtendedTypeOperation,
+    resolveInfo
   });
-  return {
-    schema: resolveInfo.schema,
-    source,
-    contextValue,
-    variableValues
+  const source = printEntityQuerySource({
+    variableDefinitions,
+    selectionSet
+  });
+  const fieldName = typeName;
+  const path = {
+    key: typeName,
+    prev: undefined
   };
+  const returnType = new GraphQLList(entityType);
+  const parsedSource = parse(source);
+  const operation = parsedSource.definitions[0];
+  const fieldNodes = operation.selectionSet.selections;
+  const operationResolveInfo = {
+    fieldName,
+    fieldNodes,
+    returnType,
+    path,
+    schema,
+    operation,
+    variableValues
+    // parentType: undefined,
+    // fragments: undefined,
+    // rootValue: undefined
+  };
+  return operationResolveInfo;
 };
 
 export const executeFederatedOperation = async ({
-  typeName,
-  operationField = {},
-  isRootOperation,
-  isRelationshipOperation,
-  federatedOperation = {},
-  hasCustomTypeName,
+  object,
+  params,
+  context,
   resolveInfo,
-  // FIXME temporary
-  debugFlag = true
+  isBaseTypeOperation,
+  isExtendedTypeOperation,
+  debugFlag
 }) => {
-  const astNode = operationField.astNode;
-  const type = astNode ? astNode.type : {};
-  const unwrappedType = unwrapNamedType({ type });
-  const typeWrappers = unwrappedType.wrappers;
-  const isListTypeEntityQuery = typeWrappers[TypeWrappers.LIST_TYPE];
-  const source = federatedOperation.source;
-  const variableValues = federatedOperation.variableValues;
-
-  if (debugFlag) {
-    console.log(source);
-    console.log(JSON.stringify(variableValues, null, 2));
-  }
-  debug('%s', source);
-  debug('%s', JSON.stringify(variableValues, null, 2));
-
-  return await graphql(federatedOperation).then(({ data, errors }) => {
-    if (errors && errors[0]) throw new ApolloError(errors);
-    return decideFederatedOperationPayload({
-      data,
-      typeName,
-      isRootOperation,
-      isRelationshipOperation,
-      isListTypeEntityQuery,
-      hasCustomTypeName,
+  const requestError = checkRequestError(context);
+  if (requestError) throw new Error(requestError);
+  const [typeName, parentTypeData, hasCustomTypeName] = decideOperationTypeName(
+    {
+      object,
       resolveInfo,
-      debugFlag
-    });
+      isBaseTypeOperation,
+      isExtendedTypeOperation
+    }
+  );
+  const schema = resolveInfo.schema;
+  const entityType = schema.getType(typeName);
+  const operationResolveInfo = buildFederatedOperation({
+    object,
+    params,
+    context,
+    parentTypeData,
+    resolveInfo,
+    entityType,
+    typeName,
+    schema,
+    hasCustomTypeName,
+    isBaseTypeOperation,
+    isExtendedTypeOperation
+  });
+  const operationContext = setContextKeyParams({
+    typeName,
+    parentTypeData,
+    params,
+    context,
+    resolveInfo
+  });
+  const data = await neo4jgraphql(
+    {},
+    params,
+    operationContext,
+    operationResolveInfo,
+    debugFlag
+  );
+  return decideFederatedOperationPayload({
+    data,
+    object,
+    entityType,
+    typeName,
+    isBaseTypeOperation,
+    isExtendedTypeOperation,
+    hasCustomTypeName,
+    resolveInfo,
+    debugFlag
   });
 };
 
@@ -117,79 +164,142 @@ export const isFederatedOperation = ({ resolveInfo = {} }) => {
   const firstField = selections.length ? selections[0] : {};
   const fieldName = firstField ? firstField.name.value : '';
   const isEntitySelection = fieldName === SERVICE_FIELDS.ENTITIES;
-  let isRootOperation = false;
-  let isRelationshipOperation = false;
+  let isBaseTypeOperation = false;
+  let isExtendedTypeOperation = false;
   // Both root and nested reference resolvers recieve a selection
   // set that initially selects the _entities field
   if (isEntitySelection) {
     if (resolveInfo.fieldName === SERVICE_FIELDS.ENTITIES) {
       // If _entities is also the .fieldName value, then this is a root query
-      isRootOperation = true;
+      isBaseTypeOperation = true;
     } else {
       // Otherwise, the fieldName is a relationship field in an extension
       // of a type from another service
-      isRelationshipOperation = true;
+      isExtendedTypeOperation = true;
     }
   }
-  return [isRootOperation, isRelationshipOperation];
+  return [isBaseTypeOperation, isExtendedTypeOperation];
+};
+
+export const isNonLocalType = ({ generatedTypeMap = {}, typeName = '' }) => {
+  return generatedTypeMap[typeName] === undefined;
 };
 
 export const decideOperationTypeName = ({
   object = {},
   resolveInfo,
-  isRootOperation,
-  isRelationshipOperation
+  isBaseTypeOperation,
+  isExtendedTypeOperation
 }) => {
-  let { [INTROSPECTION_FIELD.TYPENAME]: typeName, ...keys } = object;
-  if (!typeName) throw new ApolloError('Missing __typename key');
+  let { [INTROSPECTION_FIELD.TYPENAME]: typeName, ...fieldData } = object;
   let hasCustomTypeName = false;
-  if (isRelationshipOperation) {
-    // Because __typename is normally the parent type name, check
-    // resolveInfo.parentType to see if it still is
-    const relationshipFieldTypeName = innerType(
-      resolveInfo.returnType
-    ).toString();
-    const parentTypeName = resolveInfo.parentType.name;
-    if (typeName === parentTypeName) {
-      // A custom __typename has not been provided, so the normal behavior
-      // is to resolve the output type of the relationship field
-      typeName = relationshipFieldTypeName;
-    } else {
-      // else a custom __typename has been provided, so it will pass through
-      // hasCustomTypeName is marked true here for later deciding
-      // the selection set to extract
-      hasCustomTypeName = true;
+  const parentTypeName = resolveInfo.parentType.name;
+  if (isExtendedTypeOperation) {
+    if (!typeName) {
+      // Set default
+      typeName = parentTypeName;
     }
-    // else a custom typename has been provided
+  } else if (isBaseTypeOperation) {
+    if (!typeName) {
+      // Set default
+      typeName = getEntityQueryType({
+        resolveInfo
+      });
+    }
   }
-  // FIXME move recursive helper and remove all null values in nested compound / object keys
-  // Remove any null keys
-  const nonNullKeys = {};
-  Object.entries(keys).forEach(([key, value]) => {
-    if (key !== INTROSPECTION_FIELD.TYPENAME && value !== null) {
-      nonNullKeys[key] = value;
+
+  // Error if still no typeName
+  if (typeName === undefined) {
+    throw new ApolloError('Missing __typename key');
+  }
+
+  // Prepare provided key and required field data
+  // for translation, removing nulls
+  const parentTypeData = getDefinedKeys({
+    fieldData
+  });
+
+  return [typeName, parentTypeData, hasCustomTypeName];
+};
+
+const getDefinedKeys = ({ fieldData = {}, parentTypeData = {} }) => {
+  Object.entries(fieldData).forEach(([key, value]) => {
+    const isList = Array.isArray(value);
+    const isNotEmptyList = !isList || value.length;
+    if (
+      key !== INTROSPECTION_FIELD.TYPENAME &&
+      value !== null &&
+      isNotEmptyList
+    ) {
+      // When no value is returned for a field in a compound key
+      // it's value is null and should be removed to prevent a
+      // _not filter translation
+      if (!isList && typeof value === 'object') {
+        const definedKeys = getDefinedKeys({
+          fieldData: value
+        });
+        if (definedKeys && Object.values(definedKeys).length) {
+          parentTypeData[key] = definedKeys;
+        }
+      } else {
+        parentTypeData[key] = value;
+      }
     }
   });
-  return [typeName, nonNullKeys, hasCustomTypeName];
+  return parentTypeData;
+};
+
+const getEntityQueryType = ({ resolveInfo = {} }) => {
+  const operation = resolveInfo.operation || {};
+  const rootSelection = operation.selectionSet
+    ? operation.selectionSet.selections[0]
+    : {};
+  const entityFragment = rootSelection.selectionSet
+    ? rootSelection.selectionSet.selections[0]
+    : {};
+  const typeCondition = entityFragment
+    ? entityFragment.typeCondition.name.value
+    : undefined;
+  return typeCondition;
 };
 
 const setContextKeyParams = ({
+  typeName,
   context = {},
-  serviceKeys = {},
-  params = {}
+  parentTypeData = {},
+  params = {},
+  resolveInfo
 }) => {
-  context[CONTEXT_KEYS_PATH] = {
-    ...serviceKeys,
-    ...params
-  };
+  const entityType = resolveInfo.schema.getType(typeName);
+  const extensionASTNodes = entityType.extensionASTNodes;
+  const keyFieldMap = getTypeExtensionKeyFieldMap({
+    entityType,
+    extensionASTNodes
+  });
+  const requiredFieldMap = getTypeExtensionRequiredFieldMap({
+    parentTypeData,
+    keyFieldMap
+  });
+  const [keyData, requiredData] = Object.entries(parentTypeData).reduce(
+    ([keyData, requiredData], [name, value]) => {
+      if (keyFieldMap[name]) {
+        keyData[name] = value;
+      } else if (requiredFieldMap[name]) {
+        requiredData[name] = value;
+      }
+      return [keyData, requiredData];
+    },
+    [{}, {}]
+  );
+  context[CONTEXT_KEYS_PATH] = [keyData, requiredData, params];
   return context;
 };
 
 const getContextKeyParams = ({ context = {} }) =>
   context[CONTEXT_KEYS_PATH] || {};
 
-export const getEntityKeys = ({ context }) => {
-  const entityKeys = getContextKeyParams({ context });
+export const getFederatedOperationData = ({ context }) => {
+  const [entityKeys, requiredData, params] = getContextKeyParams({ context });
   const compoundKeys = {};
   const scalarKeys = Object.entries(entityKeys).reduce(
     (scalarKeys, [serviceParam, value]) => {
@@ -202,68 +312,108 @@ export const getEntityKeys = ({ context }) => {
     },
     {}
   );
-  return [scalarKeys, compoundKeys];
+  return {
+    scalarKeys,
+    compoundKeys,
+    requiredData,
+    params
+  };
+};
+
+const getTypeExtensionKeyFieldMap = ({
+  extensionASTNodes = [],
+  entityType = {}
+}) => {
+  const entityTypeAst = entityType.astNode;
+  const entityTypeDirectives = entityTypeAst.directives || [];
+  let keyFieldMap = getFederationDirectiveFields({
+    directives: entityTypeDirectives,
+    directiveName: 'key'
+  });
+  extensionASTNodes.map(type => {
+    const directives = type.directives;
+    keyFieldMap = getFederationDirectiveFields({
+      directives,
+      keyFieldMap,
+      directiveName: 'key'
+    });
+  });
+  return keyFieldMap;
+};
+
+const getTypeExtensionRequiredFieldMap = ({
+  parentTypeData = {},
+  keyFieldMap = {}
+}) => {
+  // Infers that any entity field value which is not a key
+  // is provided given the use of a @requires directive
+  let requiredFieldMap = {};
+  Object.keys(parentTypeData).forEach(fieldName => {
+    if (keyFieldMap[fieldName] === undefined) {
+      requiredFieldMap[fieldName] = true;
+    }
+  });
+  return requiredFieldMap;
+};
+
+const getFederationDirectiveFields = ({
+  directives = [],
+  keyFieldMap = {},
+  directiveName = ''
+}) => {
+  directives.forEach(directive => {
+    const name = directive.name.value;
+    if (name === directiveName) {
+      const fields = directive.arguments.find(
+        arg => arg.name.value === 'fields'
+      );
+      if (fields) {
+        const fieldsArgument = fields.value.value;
+        const parsedKeyFields = parse(`{ ${fieldsArgument} }`);
+        const definitions = parsedKeyFields.definitions;
+        const selections = definitions[0].selectionSet.selections;
+        selections.forEach(field => {
+          const name = field.name.value;
+          keyFieldMap[name] = true;
+        });
+      }
+    }
+  });
+  return keyFieldMap;
 };
 
 export const setEntityQueryFilter = ({ params = {}, compoundKeys = {} }) => {
   if (Object.keys(compoundKeys).length) {
-    // FIXME examine merging compound keys with a delegated relationship field filter,
-    //       or an imperatively added filter param argument to neo4jgraphql in a reference
-    //       resolver, preferencing any values provided by a user argument
-    // if(!params['filter']) {
-    params['filter'] = compoundKeys;
-    // }
+    const filterArgument = Object.entries(compoundKeys).reduce(
+      (filterArgument, [fieldName, value]) => {
+        // compound key for a list field of an object type uses AND filter
+        if (Array.isArray(value)) {
+          filterArgument[fieldName] = {
+            AND: value
+          };
+        } else {
+          filterArgument[fieldName] = value;
+        }
+        return filterArgument;
+      },
+      {}
+    );
+    params['filter'] = filterArgument;
   }
   return params;
 };
 
-const buildEntityQuery = ({
-  typeName,
+const buildEntityQueryArguments = ({
+  entityType,
   object,
-  params,
-  hasCustomTypeName,
-  isRootOperation,
-  isRelationshipOperation,
-  operationField,
+  // params,
   resolveInfo
 }) => {
-  const [
-    keyFieldArguments,
-    variableDefinitions,
-    variableValues
-  ] = buildEntityQueryArguments({
-    object,
-    params,
-    resolveInfo,
-    operationField
-  });
-  const selectionSet = buildEntityQuerySelectionSet({
-    typeName,
-    hasCustomTypeName,
-    keyFieldArguments,
-    isRootOperation,
-    isRelationshipOperation,
-    resolveInfo
-  });
-  const source = printEntityQuerySource({
-    variableDefinitions,
-    selectionSet
-  });
-  return [source, variableValues];
-};
-
-// TODO explain some lines
-const buildEntityQueryArguments = ({
-  object,
-  params,
-  resolveInfo,
-  operationField
-}) => {
+  const entityFields = entityType.getFields();
   const {
     [SERVICE_FIELD_ARGUMENTS.REPRESENTATIONS]: representations,
     ...variableValues
   } = resolveInfo.variableValues;
-
   const operation = resolveInfo.operation;
   const variableDefinitions = operation.variableDefinitions.filter(
     ({ variable }) => {
@@ -274,107 +424,95 @@ const buildEntityQueryArguments = ({
     keyFieldArguments,
     keyVariableDefinitions,
     keyVariableValues
-  ] = operationField.args.reduce(
-    ([keyFieldArguments, keyVariableDefinitions, keyVariableValues], arg) => {
-      const astNode = arg.astNode;
+  ] = Object.values(entityFields).reduce(
+    ([keyFieldArguments, keyVariableDefinitions, keyVariableValues], field) => {
+      const astNode = field.astNode;
       let name = astNode.name.value;
-      const hasKeyFieldArgument = object[name] !== undefined;
-      const hasCustomFieldArgument = params[name] !== undefined;
-      if (hasKeyFieldArgument || hasCustomFieldArgument) {
+      const type = astNode.type;
+      if (isScalarType(field.type) || isEnumType(field.type)) {
+        const hasKeyFieldArgument = object[name] !== undefined;
         if (hasKeyFieldArgument) {
-          const serviceVariableName = `${SERVICE_VARIABLE}${name}`;
-          keyVariableValues[serviceVariableName] = object[name];
-          name = serviceVariableName;
-        }
-        keyFieldArguments.push({
-          ...astNode,
-          type: buildNamedType({
-            name: `$${name}`
-          })
-        });
-        keyVariableDefinitions.push(
-          buildVariableDefinition({
-            variable: buildVariable({
+          if (hasKeyFieldArgument) {
+            const serviceVariableName = `${SERVICE_VARIABLE}${name}`;
+            keyVariableValues[serviceVariableName] = object[name];
+            name = serviceVariableName;
+          }
+          keyFieldArguments.push(
+            buildArgument({
               name: buildName({
                 name
+              }),
+              value: buildName({
+                name: `$${name}`
               })
-            }),
-            type: astNode.type
-          })
-        );
+            })
+          );
+          keyVariableDefinitions.push(
+            buildVariableDefinition({
+              variable: buildVariable({
+                name: buildName({
+                  name
+                })
+              }),
+              type
+            })
+          );
+        }
       }
       return [keyFieldArguments, keyVariableDefinitions, keyVariableValues];
     },
     [[], [], {}]
   );
-
   // Prefer using the value, if any, provided in any params
   // built in the prior __referenceResolver
   const mergedVariableValues = {
     ...keyVariableValues,
-    ...variableValues,
-    ...params
+    ...variableValues
+    // ...params
   };
   variableDefinitions.unshift(...keyVariableDefinitions);
   return [keyFieldArguments, variableDefinitions, mergedVariableValues];
 };
 
-export const getEntityQueryField = ({
-  typeName,
-  resolveInfo,
-  isRootOperation,
-  isRelationshipOperation
-}) => {
-  const schema = resolveInfo.schema;
-  let field = {};
-  if (isRootOperation) {
-    const queryType = schema.getQueryType();
-    const queryFields = queryType.getFields();
-    field = queryFields[typeName];
-  } else if (isRelationshipOperation) {
-    const relationshipFieldName = resolveInfo.fieldName;
-    // get the field being queried on the extended type in resolveInfo.parentType
-    const parentType = resolveInfo.parentType;
-    const fields = parentType.getFields();
-    field = fields[relationshipFieldName];
-  }
-  return field;
-};
-
 const buildEntityQuerySelectionSet = ({
   typeName,
-  hasCustomTypeName,
   keyFieldArguments,
-  isRootOperation,
-  isRelationshipOperation,
+  isBaseTypeOperation,
+  isExtendedTypeOperation,
   resolveInfo
 }) => {
   let selectionSet = resolveInfo.fieldNodes[0].selectionSet;
-  if (isRootOperation) {
-    selectionSet = selectionSet.selections[0].selectionSet;
-    selectionSet = buildSelectionSet({
-      selections: [
-        buildFieldSelection({
-          name: buildName({
-            name: typeName
-          }),
-          args: keyFieldArguments,
-          selectionSet
-        })
-      ]
-    });
-  } else if (isRelationshipOperation) {
-    if (hasCustomTypeName) {
-      selectionSet = buildFieldSelection({
-        name: buildName({
-          name: ''
-        }),
-        selectionSet: {
-          kind: Kind.SELECTION_SET,
-          selections: resolveInfo.fieldNodes
-        }
+  if (selectionSet) {
+    if (isBaseTypeOperation) {
+      selectionSet = selectionSet.selections[0].selectionSet;
+      selectionSet = buildSelectionSet({
+        selections: [
+          buildFieldSelection({
+            name: buildName({
+              name: typeName
+            }),
+            args: keyFieldArguments,
+            selectionSet
+          })
+        ]
+      });
+    } else if (isExtendedTypeOperation) {
+      selectionSet =
+        resolveInfo.operation.selectionSet.selections[0].selectionSet;
+      selectionSet = buildSelectionSet({
+        selections: [
+          buildFieldSelection({
+            name: buildName({
+              name: typeName
+            }),
+            args: keyFieldArguments,
+            selectionSet
+          })
+        ]
       });
     }
+  } else {
+    // Scalar fields won't have a selection set
     selectionSet = buildSelectionSet({
       selections: [
         buildFieldSelection({
@@ -382,7 +520,14 @@ const buildEntityQuerySelectionSet = ({
             name: typeName
           }),
           args: keyFieldArguments,
-          selectionSet
+          selectionSet: buildFieldSelection({
+            name: buildName({
+              name: ''
+            }),
+            selectionSet: buildSelectionSet({
+              selections: resolveInfo.fieldNodes
+            })
+          })
         })
       ]
     });
@@ -401,89 +546,79 @@ const printEntityQuerySource = ({
 
 const decideFederatedOperationPayload = ({
   data,
-  typeName,
-  isRootOperation,
-  isRelationshipOperation,
-  isListTypeEntityQuery,
+  object,
+  entityType,
+  isBaseTypeOperation,
+  isExtendedTypeOperation,
   hasCustomTypeName,
-  resolveInfo,
-  debugFlag
+  resolveInfo
 }) => {
-  let entityData = data[typeName];
-  const dataExists = entityData !== undefined;
-  const isListData = dataExists && Array.isArray(entityData);
+  const dataExists = data !== undefined;
+  const isListData = dataExists && Array.isArray(data);
   if (dataExists) {
-    if (isRootOperation) {
-      entityData = decideRootOperationData({
-        entityData,
+    if (isBaseTypeOperation) {
+      data = decideRootOperationData({
+        data,
         isListData
       });
-    } else if (isRelationshipOperation) {
-      entityData = decideRealationshipOperationData({
-        entityData,
+    } else if (isExtendedTypeOperation) {
+      data = decideRealationshipOperationData({
+        object,
+        data,
+        entityType,
         hasCustomTypeName,
         resolveInfo,
-        isListTypeEntityQuery,
         isListData
       });
     }
   }
-  if (debugFlag) {
-    console.log(`Neo4j return for ${typeName}: `);
-    console.log(JSON.stringify(entityData, null, 2));
-  }
-  debug('%s', JSON.stringify(entityData, null, 2));
-  return entityData;
+  return data;
 };
 
-const decideRootOperationData = ({ entityData, isListData }) => {
-  if (isListData && entityData.length) {
+const decideRootOperationData = ({ data, isListData }) => {
+  if (isListData && data.length) {
     // Get only the first element of a list, because the other service
     // expects a unique lookup for each provided representation
-    entityData = entityData[0];
+    data = data[0];
   }
-  return entityData;
+  return data;
 };
 
 const decideRealationshipOperationData = ({
-  entityData,
-  hasCustomTypeName,
+  data,
+  entityType,
   resolveInfo,
-  isListTypeEntityQuery,
   isListData
 }) => {
-  if (hasCustomTypeName) {
-    const relationshipFieldName = resolveInfo.fieldName;
-    // only data for this relationship field was fetched
-    if (isListData) {
-      if (entityData.length) {
-        entityData = entityData[0][relationshipFieldName];
+  const relationshipFieldName = resolveInfo.fieldName;
+  const entityFields = entityType.getFields();
+  const operationField = entityFields[relationshipFieldName];
+  const fieldType = operationField.type;
+  const isListTypeEntityQuery = isListType(fieldType);
+  // FOr now, every translation assumes list
+  if (isListData) {
+    if (data.length) {
+      const relationshipData = data[0][relationshipFieldName];
+      if (relationshipData) {
+        data = relationshipData;
       }
     } else {
-      entityData = entityData[relationshipFieldName];
-    }
-    const relationshipDataExists = entityData !== undefined;
-    const isRelationshipListData =
-      relationshipDataExists && Array.isArray(entityData);
-    if (!isListTypeEntityQuery) {
-      if (isRelationshipListData) {
-        // in case the queried type extension relationship field is a not list
-        // but the field used for translation with a custom typename is a list
-        entityData = entityData[0];
-      }
-    } else {
-      // in case the queried type extension relationship field is a list
-      // but the field used for translation with a custom typename is a not list
-      if (!isRelationshipListData) {
-        entityData = [entityData];
-      }
+      return null;
     }
   } else {
-    if (!isListTypeEntityQuery) {
-      entityData = entityData[0];
+    data = data[relationshipFieldName];
+  }
+  if (!isListTypeEntityQuery) {
+    // The queried field was not a list, but since we assume a list
+    // for the entity query translation, we need to just return the
+    // first element
+    const nestedData = data[0];
+    if (nestedData !== undefined) {
+      const relationshipData = nestedData[relationshipFieldName];
+      if (relationshipData !== undefined) {
+        data = relationshipData;
+      }
     }
   }
-  // else if list without a custom __typename,
-  // return above default of data[typeName]
-  return entityData;
+  return data;
 };

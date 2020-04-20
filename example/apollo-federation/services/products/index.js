@@ -1,6 +1,35 @@
 import { gql } from 'apollo-server';
 import { buildFederatedSchema } from '@apollo/federation';
-import { makeAugmentedSchema } from '../../../../src';
+import { makeAugmentedSchema, neo4jgraphql, cypher } from '../../../../src';
+
+export const productsSchema = buildFederatedSchema([
+  makeAugmentedSchema({
+    typeDefs: gql`
+      extend type Query {
+        topProducts(first: Int = 5): [Product]
+      }
+
+      type Product
+        @key(fields: "upc listCompoundKey { id } objectCompoundKey { id }") {
+        upc: String!
+        name: String
+        price: Int
+        weight: Int
+        objectCompoundKey: Metric @relation(name: "METRIC_OF", direction: OUT)
+        listCompoundKey: [Metric] @relation(name: "METRIC_OF", direction: OUT)
+      }
+
+      type Metric @key(fields: "id") {
+        id: ID
+        metric: Int
+      }
+    `,
+    config: {
+      isFederated: true
+      // debug: true
+    }
+  })
+]);
 
 export const products = [
   {
@@ -22,40 +51,3 @@ export const products = [
     weight: 50
   }
 ];
-
-export const productsSchema = buildFederatedSchema([
-  makeAugmentedSchema({
-    typeDefs: gql`
-      extend type Query {
-        topProducts(first: Int = 5): [Product]
-      }
-
-      type Product @key(fields: "upc") {
-        upc: String!
-        name: String
-        price: Int
-        weight: Int
-      }
-    `,
-    resolvers: {
-      Product: {
-        __resolveReference(object) {
-          return products.find(product => product.upc === object.upc);
-        }
-      },
-      Query: {
-        //! will be generated
-        Product(object, params, context, resolveInfo) {
-          return products;
-        },
-        topProducts(_, args) {
-          return products.slice(0, args.first);
-        }
-      }
-    },
-    config: {
-      isFederated: true,
-      debug: true
-    }
-  })
-]);
