@@ -32,17 +32,12 @@ export async function neo4jgraphql(
   resolveInfo,
   debugFlag
 ) {
-  const [isBaseTypeOperation, isExtendedTypeOperation] = isFederatedOperation({
-    resolveInfo
-  });
-  if (isBaseTypeOperation || isExtendedTypeOperation) {
+  if (isFederatedOperation({ resolveInfo })) {
     return await executeFederatedOperation({
       object,
       params,
       context,
       resolveInfo,
-      isBaseTypeOperation,
-      isExtendedTypeOperation,
       debugFlag
     });
   } else {

@@ -1,6 +1,5 @@
 import { neo4jgraphql } from '../index';
 import { OperationType } from '../augment/types/types';
-import { isNonLocalType } from '../federation';
 
 /**
  * The main export for the generation of resolvers for the
@@ -68,20 +67,11 @@ export const augmentResolvers = ({
           typeName !== mutationTypeName &&
           typeName !== subscriptionTypeName
         ) {
-          if (
-            isNonLocalType({
-              generatedTypeMap,
-              typeName
-            })
-          ) {
+          if (generatedTypeMap[typeName] === undefined) {
             // Initialize type resolver object
             if (resolvers[typeName] === undefined) resolvers[typeName] = {};
             // If not provided
             if (resolvers[typeName]['__resolveReference'] === undefined) {
-              console.log(
-                '\ngenerating reference resolver for nonlocal type: ',
-                typeName
-              );
               resolvers[typeName]['__resolveReference'] = async function(
                 object,
                 context,
