@@ -65,7 +65,7 @@ import neo4j from 'neo4j-driver';
 import { isUnionTypeDefinition } from './augment/types/types';
 import {
   getFederatedOperationData,
-  setEntityQueryFilter,
+  setCompoundKeyFilter,
   NEO4j_GRAPHQL_SERVICE
 } from './federation';
 import { unwrapNamedType } from './augment/fields';
@@ -862,7 +862,7 @@ export const translateQuery = ({
   } else {
     const additionalLabels = getAdditionalLabels(schemaType, cypherParams);
     if (isFederatedOperation) {
-      nonNullParams = setEntityQueryFilter({
+      nonNullParams = setCompoundKeyFilter({
         params: nonNullParams,
         compoundKeys
       });
