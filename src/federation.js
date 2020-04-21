@@ -48,13 +48,13 @@ export const executeFederatedOperation = async ({
 }) => {
   const requestError = checkRequestError(context);
   if (requestError) throw new Error(requestError);
-  const [typeName, parentTypeData] = decideOperationTypeName({
+  const [typeName, parentTypeData] = decideTypeName({
     object,
     resolveInfo
   });
   const schema = resolveInfo.schema;
   const entityType = schema.getType(typeName);
-  const operationResolveInfo = buildFederatedOperation({
+  const operationResolveInfo = buildOperation({
     object,
     params,
     context,
@@ -64,7 +64,7 @@ export const executeFederatedOperation = async ({
     typeName,
     schema
   });
-  const operationContext = setContextKeyParams({
+  const operationContext = setOperationContext({
     typeName,
     parentTypeData,
     params,
@@ -78,7 +78,7 @@ export const executeFederatedOperation = async ({
     operationResolveInfo,
     debugFlag
   );
-  return decideFederatedOperationPayload({
+  return decideOperationPayload({
     data,
     object,
     entityType,
@@ -88,7 +88,7 @@ export const executeFederatedOperation = async ({
   });
 };
 
-const buildFederatedOperation = ({
+const buildOperation = ({
   object,
   params,
   resolveInfo,
@@ -100,42 +100,25 @@ const buildFederatedOperation = ({
     keyFieldArguments,
     variableDefinitions,
     variableValues
-  ] = buildEntityQueryArguments({
+  ] = buildArguments({
     entityType,
     object,
     // params,
     resolveInfo
   });
-  const selectionSet = buildEntityQuerySelectionSet({
+  const source = buildSource({
     typeName,
+    variableDefinitions,
     keyFieldArguments,
     resolveInfo
   });
-  const source = printEntityQuerySource({
-    variableDefinitions,
-    selectionSet
+  const operationResolveInfo = buildResolveInfo({
+    typeName,
+    entityType,
+    source,
+    variableValues,
+    schema
   });
-  const fieldName = typeName;
-  const path = {
-    key: typeName,
-    prev: undefined
-  };
-  const returnType = new GraphQLList(entityType);
-  const parsedSource = parse(source);
-  const operation = parsedSource.definitions[0];
-  const fieldNodes = operation.selectionSet.selections;
-  const operationResolveInfo = {
-    fieldName,
-    fieldNodes,
-    returnType,
-    path,
-    schema,
-    operation,
-    variableValues
-    // parentType: undefined,
-    // fragments: undefined,
-    // rootValue: undefined
-  };
   return operationResolveInfo;
 };
 
@@ -157,7 +140,7 @@ export const isFederatedOperation = ({ resolveInfo = {} }) => {
   return isFederated;
 };
 
-export const setEntityQueryFilter = ({ params = {}, compoundKeys = {} }) => {
+export const setCompoundKeyFilter = ({ params = {}, compoundKeys = {} }) => {
   if (Object.keys(compoundKeys).length) {
     const filterArgument = Object.entries(compoundKeys).reduce(
       (filterArgument, [fieldName, value]) => {
@@ -197,7 +180,7 @@ export const getFederatedOperationData = ({ context }) => {
   };
 };
 
-const setContextKeyParams = ({
+const setOperationContext = ({
   typeName,
   context = {},
   parentTypeData = {},
@@ -206,7 +189,7 @@ const setContextKeyParams = ({
 }) => {
   const entityType = resolveInfo.schema.getType(typeName);
   const extensionASTNodes = entityType.extensionASTNodes;
-  const keyFieldMap = getTypeExtensionKeyFieldMap({
+  const keyFieldMap = buildTypeExtensionKeyFieldMap({
     entityType,
     extensionASTNodes
   });
@@ -229,31 +212,27 @@ const setContextKeyParams = ({
   return context;
 };
 
-const decideOperationTypeName = ({ object = {}, resolveInfo }) => {
+const decideTypeName = ({ object = {}, resolveInfo }) => {
   let { [INTROSPECTION_FIELD.TYPENAME]: typeName, ...fieldData } = object;
-
   if (!typeName) {
     // Set default
-    typeName = getEntityQueryType({
+    typeName = getEntityTypeName({
       resolveInfo
     });
   }
-
   // Error if still no typeName
   if (typeName === undefined) {
     throw new ApolloError('Missing __typename key');
   }
-
   // Prepare provided key and required field data
   // for translation, removing nulls
   const parentTypeData = getDefinedKeys({
     fieldData
   });
-
   return [typeName, parentTypeData];
 };
 
-const getEntityQueryType = ({ resolveInfo = {} }) => {
+const getEntityTypeName = ({ resolveInfo = {} }) => {
   const operation = resolveInfo.operation || {};
   const rootSelection = operation.selectionSet
     ? operation.selectionSet.selections[0]
@@ -283,6 +262,7 @@ const getDefinedKeys = ({ fieldData = {}, parentTypeData = {} }) => {
         const definedKeys = getDefinedKeys({
           fieldData: value
         });
+        // Keep it if at least one key has a valid value
         if (definedKeys && Object.values(definedKeys).length) {
           parentTypeData[key] = definedKeys;
         }
@@ -294,7 +274,7 @@ const getDefinedKeys = ({ fieldData = {}, parentTypeData = {} }) => {
   return parentTypeData;
 };
 
-const getTypeExtensionKeyFieldMap = ({
+const buildTypeExtensionKeyFieldMap = ({
   extensionASTNodes = [],
   entityType = {}
 }) => {
@@ -356,7 +336,7 @@ const getFederationDirectiveFields = ({
   return keyFieldMap;
 };
 
-const buildEntityQueryArguments = ({
+const buildArguments = ({
   entityType,
   object,
   // params,
@@ -427,13 +407,11 @@ const buildEntityQueryArguments = ({
   return [keyFieldArguments, variableDefinitions, mergedVariableValues];
 };
 
-const buildEntityQuerySelectionSet = ({
-  typeName,
-  keyFieldArguments,
-  resolveInfo
-}) => {
-  let selectionSet = resolveInfo.fieldNodes[0].selectionSet;
-  if (selectionSet) {
+const getSelectionSet = ({ typeName, keyFieldArguments, resolveInfo }) => {
+  let selectionSet = {};
+  if (resolveInfo.fieldNodes) {
+    selectionSet = resolveInfo.fieldNodes[0].selectionSet;
+    // Get the selections inside the fragment provided on the entity type
     selectionSet = selectionSet.selections[0].selectionSet;
     selectionSet = buildSelectionSet({
       selections: [
@@ -446,40 +424,61 @@ const buildEntityQuerySelectionSet = ({
         })
       ]
     });
-  } else {
-    // Scalar fields won't have a selection set
-    selectionSet = buildSelectionSet({
-      selections: [
-        buildFieldSelection({
-          name: buildName({
-            name: typeName
-          }),
-          args: keyFieldArguments,
-          selectionSet: buildFieldSelection({
-            name: buildName({
-              name: ''
-            }),
-            selectionSet: buildSelectionSet({
-              selections: resolveInfo.fieldNodes
-            })
-          })
-        })
-      ]
-    });
+  }
+  if (!Object.keys(selectionSet).length) {
+    throw new ApolloError(
+      `Failed to extract the expected selectionSet for the entity ${typeName}`
+    );
   }
   return selectionSet;
 };
 
-const printEntityQuerySource = ({
-  variableDefinitions = [],
-  selectionSet = {}
+const buildResolveInfo = ({
+  typeName,
+  entityType,
+  source,
+  variableValues,
+  schema
 }) => {
+  const fieldName = typeName;
+  const path = { key: typeName };
+  // Assume a list query and extract in decideOperationPayload
+  const returnType = new GraphQLList(entityType);
+  const parsedSource = parse(source);
+  const operation = parsedSource.definitions[0];
+  const fieldNodes = operation.selectionSet.selections;
+  return {
+    fieldName,
+    fieldNodes,
+    returnType,
+    path,
+    schema,
+    operation,
+    variableValues
+    // Unused resolveInfo properties
+    // parentType: undefined,
+    // fragments: undefined,
+    // rootValue: undefined
+  };
+};
+
+const buildSource = ({
+  typeName,
+  variableDefinitions = [],
+  keyFieldArguments,
+  resolveInfo
+}) => {
+  const selectionSet = getSelectionSet({
+    typeName,
+    keyFieldArguments,
+    resolveInfo
+  });
   return `query ${NEO4j_GRAPHQL_SERVICE}${
     variableDefinitions.length ? `(${print(variableDefinitions)})` : ''
   } ${print(selectionSet)}`;
 };
 
-const decideFederatedOperationPayload = ({ data }) => {
+const decideOperationPayload = ({ data }) => {
   const dataExists = data !== undefined;
   const isListData = dataExists && Array.isArray(data);
   if (dataExists && isListData && data.length) {
