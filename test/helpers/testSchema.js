@@ -54,6 +54,9 @@ export const testSchema = `
     imdbRatings: [Float]
     releases: [DateTime]
     customField: String @neo4j_ignore
+  }
+  
+  extend type Movie {
     currentUserId(strArg: String): String
       @cypher(
         statement: "RETURN $cypherParams.currentUserId AS cypherParamsUserId"
@@ -524,7 +527,10 @@ export const testSchema = `
 
   schema {
     query: QueryA
-    mutation: Mutation
     subscription: SubscriptionC
+  }
+  
+  extend schema {
+    mutation: Mutation
   }
 `;

@@ -1,9 +1,8 @@
 import test from 'ava';
-import { parse, print } from 'graphql';
+import { parse, print, Kind } from 'graphql';
 import { printSchemaDocument } from '../../src/augment/augment';
 import { makeAugmentedSchema } from '../../src/index';
 import { testSchema } from '../helpers/testSchema';
-import { Kind } from 'graphql/language';
 import { gql } from 'apollo-server';
 
 test.cb('Test augmented schema', t => {
@@ -908,6 +907,9 @@ test.cb('Test augmented schema', t => {
       imdbRatings: [Float]
       releases: [_Neo4jDateTime]
       customField: String @neo4j_ignore
+    }
+
+    extend type Movie {
       currentUserId(strArg: String): String
         @cypher(
           statement: "RETURN $cypherParams.currentUserId AS cypherParamsUserId"
@@ -3183,7 +3185,27 @@ const compareSchema = ({ test, sourceSchema = {}, expectedSchema = {} }) => {
         if (definition.name) {
           if (definition.name.value === augmentedDefinition.name.value) {
             if (definition.kind === augmentedDefinition.kind) {
-              return definition;
+              if (
+                definition.kind === Kind.OBJECT_TYPE_EXTENSION
+                // definition.kind === Kind.INTERFACE_TYPE_EXTENSION ||
+                // definition.kind === Kind.INPUT_OBJECT_TYPE_EXTENSION
+              ) {
+                if (
+                  definition.fields.length &&
+                  augmentedDefinition.fields.length
+                ) {
+                  if (
+                    definition.fields[0].name.value ===
+                    augmentedDefinition.fields[0].name.value
+                  ) {
+                    return definition;
+                  }
+                } else {
+                  return definition;
+                }
+              } else {
+                return definition;
+              }
             }
           }
         }

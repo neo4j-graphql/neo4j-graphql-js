@@ -1095,8 +1095,11 @@ export const getInterfaceDerivedTypeNames = (schema, interfaceName) => {
   const implementingTypeMap = schema._implementations
     ? schema._implementations[interfaceName]
     : {};
-  const implementingTypes = Object.values(implementingTypeMap).map(
-    type => type.name
-  );
+  let implementingTypes = [];
+  if (implementingTypeMap) {
+    implementingTypes = Object.values(implementingTypeMap).map(
+      type => type.name
+    );
+  }
   return implementingTypes.sort();
 };

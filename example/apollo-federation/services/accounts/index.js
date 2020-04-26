@@ -6,7 +6,12 @@ export const accountsSchema = buildFederatedSchema([
   makeAugmentedSchema({
     typeDefs: gql`
       extend type Query {
-        me: Account
+        me: Account @cypher(${cypher`
+          MATCH (account: Account {
+            id: '1'
+          })
+          RETURN account
+        `})
         Account: [Account] @cypher(${cypher`
           MATCH (account: Account)
           RETURN account
