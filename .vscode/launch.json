@@ -1,18 +1,28 @@
-// TODO temporarily set to debug-gateway
 {
   "version": "0.2.0",
   "configurations": [
     {
-      "internalConsoleOptions": "openOnFirstSessionStart",
       "type": "node",
       "request": "launch",
-      "restart": true,
-      "name": "Nodemon",
-      "protocol": "inspector",
-      "stopOnEntry": false,
+      "name": "Launch debug via NPM",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run-script", "debug-gateway"],
-      "sourceMaps": true,
+      "runtimeArgs": ["run-script", "debug"],
+      "port": 9229
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Movie-typedefs debug",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run-script", "debug-typedefs"],
+      "port": 9229
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "interface errors",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run-script", "debug-interface"],
       "port": 9229
     }
   ]
