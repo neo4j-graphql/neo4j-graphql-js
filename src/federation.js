@@ -1,11 +1,4 @@
-import {
-  print,
-  parse,
-  isScalarType,
-  GraphQLList,
-  isEnumType,
-  isListType
-} from 'graphql';
+import { parse, isScalarType, GraphQLList, isEnumType } from 'graphql';
 import { ApolloError } from 'apollo-server';
 import {
   buildSelectionSet,
@@ -13,13 +6,11 @@ import {
   buildName,
   buildVariableDefinition,
   buildVariable,
-  buildArgument
+  buildArgument,
+  buildOperationDefinition
 } from './augment/ast';
 import { checkRequestError } from './auth';
-import Debug from 'debug';
 import { neo4jgraphql } from './index';
-
-const debug = Debug('neo4j-graphql-js');
 
 export const NEO4j_GRAPHQL_SERVICE = 'Neo4jGraphQLService';
 
@@ -39,6 +30,8 @@ const INTROSPECTION_FIELD = {
   TYPENAME: '__typename'
 };
 
+const REFERENCE_RESOLVER_NAME = '__resolveReference';
+
 export const executeFederatedOperation = async ({
   object,
   params,
@@ -48,20 +41,17 @@ export const executeFederatedOperation = async ({
 }) => {
   const requestError = checkRequestError(context);
   if (requestError) throw new Error(requestError);
-  const [typeName, parentTypeData] = decideTypeName({
+  const [typeName, parentTypeData] = parseRepresentation({
     object,
     resolveInfo
   });
   const schema = resolveInfo.schema;
   const entityType = schema.getType(typeName);
-  const operationResolveInfo = buildOperation({
-    object,
-    params,
-    context,
+  const operationResolveInfo = buildResolveInfo({
     parentTypeData,
-    resolveInfo,
-    entityType,
     typeName,
+    entityType,
+    resolveInfo,
     schema
   });
   const operationContext = setOperationContext({
@@ -78,67 +68,11 @@ export const executeFederatedOperation = async ({
     operationResolveInfo,
     debugFlag
   );
-  return decideOperationPayload({
-    data,
-    object,
-    entityType,
-    typeName,
-    resolveInfo,
-    debugFlag
-  });
+  return decideOperationPayload({ data });
 };
 
-const buildOperation = ({
-  object,
-  params,
-  resolveInfo,
-  entityType,
-  schema,
-  typeName
-}) => {
-  const [
-    keyFieldArguments,
-    variableDefinitions,
-    variableValues
-  ] = buildArguments({
-    entityType,
-    object,
-    // params,
-    resolveInfo
-  });
-  const source = buildSource({
-    typeName,
-    variableDefinitions,
-    keyFieldArguments,
-    resolveInfo
-  });
-  const operationResolveInfo = buildResolveInfo({
-    typeName,
-    entityType,
-    source,
-    variableValues,
-    schema
-  });
-  return operationResolveInfo;
-};
-
-export const isFederatedOperation = ({ resolveInfo = {} }) => {
-  const operation = resolveInfo.operation ? resolveInfo.operation : {};
-  const selections = operation ? operation.selectionSet.selections : [];
-  const firstField = selections.length ? selections[0] : {};
-  const fieldName = firstField ? firstField.name.value : '';
-  const isEntitySelection = fieldName === SERVICE_FIELDS.ENTITIES;
-  let isFederated = false;
-  // Both root and nested reference resolvers recieve a selection
-  // set that initially selects the _entities field
-  if (isEntitySelection) {
-    if (resolveInfo.fieldName === SERVICE_FIELDS.ENTITIES) {
-      // If _entities is also the .fieldName value, then this is a root query
-      isFederated = true;
-    }
-  }
-  return isFederated;
-};
+export const isFederatedOperation = ({ resolveInfo = {} }) =>
+  resolveInfo.fieldName === SERVICE_FIELDS.ENTITIES;
 
 export const setCompoundKeyFilter = ({ params = {}, compoundKeys = {} }) => {
   if (Object.keys(compoundKeys).length) {
@@ -212,7 +146,7 @@ const setOperationContext = ({
   return context;
 };
 
-const decideTypeName = ({ object = {}, resolveInfo }) => {
+const parseRepresentation = ({ object = {}, resolveInfo }) => {
   let { [INTROSPECTION_FIELD.TYPENAME]: typeName, ...fieldData } = object;
   if (!typeName) {
     // Set default
@@ -336,12 +270,7 @@ const getFederationDirectiveFields = ({
   return keyFieldMap;
 };
 
-const buildArguments = ({
-  entityType,
-  object,
-  // params,
-  resolveInfo
-}) => {
+const buildArguments = ({ entityType, parentTypeData, resolveInfo }) => {
   const entityFields = entityType.getFields();
   const {
     [SERVICE_FIELD_ARGUMENTS.REPRESENTATIONS]: representations,
@@ -363,28 +292,27 @@ const buildArguments = ({
       let name = astNode.name.value;
       const type = astNode.type;
       if (isScalarType(field.type) || isEnumType(field.type)) {
-        const hasKeyFieldArgument = object[name] !== undefined;
+        const hasKeyFieldArgument = parentTypeData[name] !== undefined;
         if (hasKeyFieldArgument) {
-          if (hasKeyFieldArgument) {
-            const serviceVariableName = `${SERVICE_VARIABLE}${name}`;
-            keyVariableValues[serviceVariableName] = object[name];
-            name = serviceVariableName;
-          }
+          const serviceVariableName = `${SERVICE_VARIABLE}${name}`;
+          keyVariableValues[serviceVariableName] = parentTypeData[name];
           keyFieldArguments.push(
             buildArgument({
               name: buildName({
                 name
               }),
               value: buildName({
-                name: `$${name}`
+                name: `$${serviceVariableName}`
               })
             })
           );
+          // keyVariableDefinitions are not currently used but could be
+          // so they're built here for now and we scope the variable name
           keyVariableDefinitions.push(
             buildVariableDefinition({
               variable: buildVariable({
                 name: buildName({
-                  name
+                  name: serviceVariableName
                 })
               }),
               type
@@ -396,12 +324,9 @@ const buildArguments = ({
     },
     [[], [], {}]
   );
-  // Prefer using the value, if any, provided in any params
-  // built in the prior __referenceResolver
   const mergedVariableValues = {
     ...keyVariableValues,
     ...variableValues
-    // ...params
   };
   variableDefinitions.unshift(...keyVariableDefinitions);
   return [keyFieldArguments, variableDefinitions, mergedVariableValues];
@@ -434,19 +359,39 @@ const getSelectionSet = ({ typeName, keyFieldArguments, resolveInfo }) => {
 };
 
 const buildResolveInfo = ({
+  parentTypeData,
   typeName,
   entityType,
-  source,
-  variableValues,
+  resolveInfo,
   schema
 }) => {
   const fieldName = typeName;
   const path = { key: typeName };
+  const [
+    keyFieldArguments,
+    variableDefinitions,
+    variableValues
+  ] = buildArguments({
+    entityType,
+    parentTypeData,
+    resolveInfo
+  });
+  const selectionSet = getSelectionSet({
+    typeName,
+    keyFieldArguments,
+    resolveInfo
+  });
+  const fieldNodes = selectionSet.selections;
+  const operation = buildOperationDefinition({
+    operation: 'query',
+    name: buildName({
+      name: NEO4j_GRAPHQL_SERVICE
+    }),
+    selectionSet,
+    variableDefinitions
+  });
   // Assume a list query and extract in decideOperationPayload
   const returnType = new GraphQLList(entityType);
-  const parsedSource = parse(source);
-  const operation = parsedSource.definitions[0];
-  const fieldNodes = operation.selectionSet.selections;
   return {
     fieldName,
     fieldNodes,
@@ -455,27 +400,11 @@ const buildResolveInfo = ({
     schema,
     operation,
     variableValues
-    // Unused resolveInfo properties
+    // Unused by neo4jgraphql translation
     // parentType: undefined,
     // fragments: undefined,
     // rootValue: undefined
   };
-};
-
-const buildSource = ({
-  typeName,
-  variableDefinitions = [],
-  keyFieldArguments,
-  resolveInfo
-}) => {
-  const selectionSet = getSelectionSet({
-    typeName,
-    keyFieldArguments,
-    resolveInfo
-  });
-  return `query ${NEO4j_GRAPHQL_SERVICE}${
-    variableDefinitions.length ? `(${print(variableDefinitions)})` : ''
-  } ${print(selectionSet)}`;
 };
 
 const decideOperationPayload = ({ data }) => {
@@ -485,4 +414,78 @@ const decideOperationPayload = ({ data }) => {
     data = data[0];
   }
   return data;
+};
+
+export const generateBaseTypeReferenceResolvers = ({
+  queryResolvers = {},
+  resolvers = {},
+  config
+}) => {
+  Object.keys(queryResolvers).forEach(typeName => {
+    // Initialize type resolver object
+    if (resolvers[typeName] === undefined) resolvers[typeName] = {};
+    // If not provided
+    if (resolvers[typeName][REFERENCE_RESOLVER_NAME] === undefined) {
+      resolvers[typeName][REFERENCE_RESOLVER_NAME] = async function(
+        object,
+        context,
+        resolveInfo
+      ) {
+        return await neo4jgraphql(
+          object,
+          {},
+          context,
+          resolveInfo,
+          config.debug
+        );
+      };
+    }
+  });
+  return resolvers;
+};
+
+export const generateNonLocalTypeExtensionReferenceResolvers = ({
+  resolvers,
+  generatedTypeMap,
+  typeExtensionDefinitionMap,
+  queryTypeName,
+  mutationTypeName,
+  subscriptionTypeName,
+  config
+}) => {
+  Object.keys(typeExtensionDefinitionMap).forEach(typeName => {
+    if (
+      typeName !== queryTypeName &&
+      typeName !== mutationTypeName &&
+      typeName !== subscriptionTypeName
+    ) {
+      if (generatedTypeMap[typeName] === undefined) {
+        // Initialize type resolver object
+        if (resolvers[typeName] === undefined) resolvers[typeName] = {};
+        // If not provided
+        if (resolvers[typeName][REFERENCE_RESOLVER_NAME] === undefined) {
+          resolvers[typeName][REFERENCE_RESOLVER_NAME] = async function(
+            object,
+            context,
+            resolveInfo
+          ) {
+            const entityData = await neo4jgraphql(
+              object,
+              {},
+              context,
+              resolveInfo,
+              config.debug
+            );
+            return {
+              // Data for this entity type possibly previously fetched from other services
+              ...object,
+              // Data now fetched for the fields this service resolves for the entity type
+              ...entityData
+            };
+          };
+        }
+      }
+    }
+  });
+  return resolvers;
 };

@@ -6,6 +6,9 @@ import { productsSchema } from './services/products';
 import { reviewsSchema } from './services/reviews';
 import neo4j from 'neo4j-driver';
 
+// The schema and seed data are based on the Apollo Federation demo
+// See: https://github.com/apollographql/federation-demo
+
 const driver = neo4j.driver(
   process.env.NEO4J_URI || 'bolt://localhost:7687',
   neo4j.auth.basic(
@@ -107,6 +110,6 @@ const gateway = new ApolloGateway({
   });
 
   server.listen({ port: 4000 }).then(({ url }) => {
-    console.log(`🚀 Server ready at ${url}`);
+    console.log(`🚀 Apollo Gateway ready at ${url}`);
   });
 })();

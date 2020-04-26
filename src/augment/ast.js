@@ -242,3 +242,18 @@ export const buildVariable = ({ name = {} }) => {
     name
   };
 };
+
+export const buildOperationDefinition = ({
+  operation = '',
+  name = {},
+  selectionSet = {},
+  variableDefinitions = []
+}) => {
+  return {
+    kind: Kind.OPERATION_DEFINITION,
+    name,
+    operation,
+    selectionSet,
+    variableDefinitions
+  };
+};

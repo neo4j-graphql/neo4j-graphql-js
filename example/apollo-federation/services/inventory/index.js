@@ -1,14 +1,15 @@
 import { gql } from 'apollo-server';
 import { buildFederatedSchema } from '@apollo/federation';
-import { makeAugmentedSchema, neo4jgraphql, cypher } from '../../../../src';
+import { makeAugmentedSchema, cypher } from '../../../../src';
 
 export const inventorySchema = buildFederatedSchema([
   makeAugmentedSchema({
     typeDefs: gql`
-      extend type Product @key(fields: "upc listCompoundKey { id } objectCompoundKey { id }") {
+      extend type Product @key(fields: "upc listCompoundKey { id } objectCompoundKey { id } nullKey") {
         upc: String! @external
         weight: Int @external
         price: Int @external
+        nullKey: String @external
         inStock: Boolean
         shippingEstimate: Int
           @requires(fields: "weight price")

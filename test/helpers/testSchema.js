@@ -64,6 +64,11 @@ export const testSchema = `
       @relation(name: "INTERFACE_NO_SCALARS", direction: OUT)
   }
 
+  extend type Movie @hasRole(roles: [admin]) {
+    extensionScalar: String
+    extensionNode: [Genre] @relation(name: "IN_GENRE", direction: "OUT")
+  }
+
   type Genre {
     _id: String!
     name: String
@@ -83,6 +88,10 @@ export const testSchema = `
   interface Person {
     userId: ID!
     name: String
+  }
+
+  extend interface Person {
+    extensionScalar: String
   }
 
   enum _PersonOrdering {
@@ -117,12 +126,15 @@ export const testSchema = `
     name_not_ends_with: String
   }
 
-  type Actor implements Person {
+  type Actor {
     userId: ID!
     name: String
     movies: [Movie] @relation(name: "ACTED_IN", direction: "OUT")
     knows: [Person] @relation(name: "KNOWS", direction: "OUT")
+    extensionScalar: String
   }
+
+  extend type Actor implements Person
 
   type User implements Person {
     userId: ID!
@@ -153,6 +165,7 @@ export const testSchema = `
     movieSearch: [MovieSearch]
     computedMovieSearch: [MovieSearch]
       @cypher(statement: "MATCH (ms:MovieSearch) RETURN ms")
+    extensionScalar: String
   }
 
   type FriendOf @relation {
@@ -193,6 +206,9 @@ export const testSchema = `
   enum BookGenre {
     Mystery
     Science
+  }
+
+  extend enum BookGenre {
     Math
   }
 
@@ -265,6 +281,9 @@ export const testSchema = `
     ): [InterfaceNoScalars]
     CustomCameras: [Camera] @cypher(statement: "MATCH (c:Camera) RETURN c")
     CustomCamera: Camera @cypher(statement: "MATCH (c:Camera) RETURN c")
+  }
+
+  extend type QueryA {
     MovieSearch(first: Int): [MovieSearch]
     computedMovieSearch: [MovieSearch]
       @cypher(statement: "MATCH (ms:MovieSearch) RETURN ms")
@@ -290,6 +309,11 @@ export const testSchema = `
     customWithArguments(strArg: String, strInputArg: strInput): String
       @cypher(statement: "RETURN $strInputArg.strArg")
     testPublish: Boolean @neo4j_ignore
+    computedMovieSearch: [MovieSearch]
+      @cypher(statement: "MATCH (ms:MovieSearch) RETURN ms")
+  }
+
+  extend type Mutation {
     CustomCamera: Camera
       @cypher(
         statement: "CREATE (newCamera:Camera:NewCamera {id: apoc.create.uuid(), type: 'macro'}) RETURN newCamera"
@@ -298,8 +322,6 @@ export const testSchema = `
       @cypher(
         statement: "CREATE (newCamera:Camera:NewCamera {id: apoc.create.uuid(), type: 'macro', features: ['selfie', 'zoom']}) CREATE (oldCamera:Camera:OldCamera {id: apoc.create.uuid(), type: 'floating', smell: 'rusty' }) RETURN [newCamera, oldCamera]"
       )
-    computedMovieSearch: [MovieSearch]
-      @cypher(statement: "MATCH (ms:MovieSearch) RETURN ms")
   }
 
   type currentUserId {
@@ -341,8 +363,14 @@ export const testSchema = `
   scalar LocalTime
   scalar LocalDateTime
 
+  extend scalar Time @neo4j_ignore
+
   input strInput {
     strArg: String
+  }
+
+  extend input strInput {
+    extensionArg: String
   }
 
   enum Role {
@@ -473,7 +501,9 @@ export const testSchema = `
       @cypher(statement: "MATCH (this)<-[:cameras]-(p:Person) RETURN p")
   }
 
-  union MovieSearch = Movie | Genre | Book | Actor | OldCamera
+  union MovieSearch = Movie | Genre | Book
+
+  extend union MovieSearch = Actor | OldCamera
 
   type CameraMan implements Person {
     userId: ID!
@@ -485,6 +515,7 @@ export const testSchema = `
       )
     cameras: [Camera!]! @relation(name: "cameras", direction: "OUT")
     cameraBuddy: Person @relation(name: "cameraBuddy", direction: "OUT")
+    extensionScalar: String
   }
 
   type SubscriptionC {

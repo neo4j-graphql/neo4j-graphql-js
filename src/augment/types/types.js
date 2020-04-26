@@ -5,7 +5,8 @@ import {
   GraphQLString,
   GraphQLInt,
   GraphQLFloat,
-  GraphQLBoolean
+  GraphQLBoolean,
+  isTypeExtensionNode
 } from 'graphql';
 import {
   isIgnoredField,
@@ -180,6 +181,11 @@ export const isSubscriptionTypeDefinition = ({
       operationTypeMap[OperationType.SUBSCRIPTION].name.value
     : false;
 
+const isDefaultOperationType = ({ typeName }) =>
+  typeName === OperationType.QUERY ||
+  typeName === OperationType.MUTATION ||
+  typeName === OperationType.SUBSCRIPTION;
+
 /**
  * A predicate function for identifying a GraphQL type definition representing
  * complex Neo4j property types (Temporal, Spatial) managed by the translation process
@@ -247,18 +253,11 @@ export const interpretType = ({ definition = {} }) => {
  */
 export const augmentTypes = ({
   typeDefinitionMap,
-  typeExtensionDefinitionMap,
+  typeExtensionDefinitionMap = {},
   generatedTypeMap,
   operationTypeMap = {},
   config = {}
 }) => {
-  const queryType = operationTypeMap[OperationType.QUERY];
-  const queryTypeName = queryType ? queryType.name.value : '';
-  const queryTypeExtensions = typeExtensionDefinitionMap[queryTypeName] || [];
-  const mutationType = operationTypeMap[OperationType.MUTATION];
-  const mutationTypeName = mutationType ? mutationType.name.value : '';
-  const mutationTypeExtensions =
-    typeExtensionDefinitionMap[mutationTypeName] || [];
   const augmentationDefinitions = [
     ...Object.entries({
       ...typeDefinitionMap,
@@ -275,10 +274,10 @@ export const augmentTypes = ({
     });
     const isQueryType = isQueryTypeDefinition({ definition, operationTypeMap });
     if (isOperationType) {
-      // Overwrite existing operation map entry with augmented type
-      operationTypeMap[typeName] = augmentOperationType({
+      [definition, typeExtensionDefinitionMap] = augmentOperationType({
         typeName,
         definition,
+        typeExtensionDefinitionMap,
         isQueryType,
         isObjectType,
         typeDefinitionMap,
@@ -286,8 +285,14 @@ export const augmentTypes = ({
         operationTypeMap,
         config
       });
+      operationTypeMap[typeName] = definition;
     } else if (isNodeType({ definition })) {
-      [definition, generatedTypeMap, operationTypeMap] = augmentNodeType({
+      [
+        definition,
+        generatedTypeMap,
+        operationTypeMap,
+        typeExtensionDefinitionMap
+      ] = augmentNodeType({
         typeName,
         definition,
         isObjectType,
@@ -307,25 +312,57 @@ export const augmentTypes = ({
       // Persist any other type definition
       generatedTypeMap[typeName] = definition;
     }
-    return definition;
-  });
-  queryTypeExtensions.forEach(extension => {
-    const typeName = extension.name.value;
-    return augmentOperationType({
-      typeName,
-      definition: extension,
-      isQueryType: true,
-      isObjectType: true,
-      typeDefinitionMap,
-      generatedTypeMap,
-      operationTypeMap,
-      config
-    });
   });
   generatedTypeMap = augmentNeo4jTypes({
     generatedTypeMap,
     config
   });
+  Object.entries(typeExtensionDefinitionMap).forEach(
+    ([typeName, extensions]) => {
+      const isNonLocalType = !generatedTypeMap[typeName];
+      const isOperationType = isDefaultOperationType({ typeName });
+      if (isNonLocalType && !isOperationType) {
+        const augmentedExtensions = extensions.map(definition => {
+          const isObjectExtension =
+            definition.kind === Kind.OBJECT_TYPE_EXTENSION;
+          const isInterfaceExtension =
+            definition.kind === Kind.INTERFACE_TYPE_EXTENSION;
+          const isUnionExtension =
+            definition.kind === Kind.UNION_TYPE_EXTENSION;
+          let nodeInputTypeMap = {};
+          let propertyOutputFields = [];
+          let propertyInputValues = [];
+          let extensionNodeInputTypeMap = {};
+          if (isObjectExtension || isInterfaceExtension) {
+            [
+              nodeInputTypeMap,
+              propertyOutputFields,
+              propertyInputValues
+            ] = augmentNodeTypeFields({
+              typeName,
+              definition,
+              typeDefinitionMap,
+              generatedTypeMap,
+              operationTypeMap,
+              nodeInputTypeMap,
+              extensionNodeInputTypeMap,
+              propertyOutputFields,
+              propertyInputValues,
+              isUnionExtension,
+              isObjectExtension,
+              isInterfaceExtension,
+              config
+            });
+            return {
+              ...definition,
+              fields: propertyOutputFields
+            };
+          }
+        });
+        typeExtensionDefinitionMap[typeName] = augmentedExtensions;
+      }
+    }
+  );
   return [typeExtensionDefinitionMap, generatedTypeMap, operationTypeMap];
 };
 
@@ -524,8 +561,6 @@ export const initializeOperationTypes = ({
     typeDefinitionMap,
     typeExtensionDefinitionMap
   });
-  const queryTypeExtensions = typeExtensionDefinitionMap[queryTypeName];
-  const mutationTypeExtensions = typeExtensionDefinitionMap[mutationTypeName];
   return [typeDefinitionMap, operationTypeMap];
 };
 
@@ -609,6 +644,7 @@ const buildAugmentationTypeMaps = ({
 const augmentOperationType = ({
   typeName,
   definition,
+  typeExtensionDefinitionMap,
   isQueryType,
   isObjectType,
   typeDefinitionMap,
@@ -617,7 +653,40 @@ const augmentOperationType = ({
   config
 }) => {
   if (isQueryType && isObjectType) {
-    let [
+    let nodeInputTypeMap = {};
+    let propertyOutputFields = [];
+    let propertyInputValues = [];
+    const typeExtensions = typeExtensionDefinitionMap[typeName] || [];
+    if (typeExtensions.length) {
+      typeExtensionDefinitionMap[typeName] = typeExtensions.map(extension => {
+        let isIgnoredType = false;
+        [
+          nodeInputTypeMap,
+          propertyOutputFields,
+          propertyInputValues,
+          isIgnoredType
+        ] = augmentNodeTypeFields({
+          typeName,
+          definition: extension,
+          typeDefinitionMap,
+          generatedTypeMap,
+          operationTypeMap,
+          nodeInputTypeMap,
+          propertyOutputFields,
+          propertyInputValues,
+          config
+        });
+        // FIXME fieldArguments are modified through reference so
+        // this branch doesn't end up mattereing. A case of isIgnoredType
+        // being true may also be highly improbable, though it is posisble
+        if (!isIgnoredType) {
+          extension.fields = propertyOutputFields;
+        }
+        return extension;
+      });
+    }
+    let isIgnoredType = false;
+    [
       nodeInputTypeMap,
       propertyOutputFields,
       propertyInputValues,
@@ -627,6 +696,7 @@ const augmentOperationType = ({
       definition,
       typeDefinitionMap,
       generatedTypeMap,
+      propertyOutputFields,
       operationTypeMap,
       config
     });
@@ -634,7 +704,7 @@ const augmentOperationType = ({
       definition.fields = propertyOutputFields;
     }
   }
-  return definition;
+  return [definition, typeExtensionDefinitionMap];
 };
 
 /**

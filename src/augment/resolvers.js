@@ -1,5 +1,9 @@
 import { neo4jgraphql } from '../index';
 import { OperationType } from '../augment/types/types';
+import {
+  generateBaseTypeReferenceResolvers,
+  generateNonLocalTypeExtensionReferenceResolvers
+} from '../federation';
 
 /**
  * The main export for the generation of resolvers for the
@@ -35,25 +39,10 @@ export const augmentResolvers = ({
     if (Object.keys(queryResolvers).length) {
       resolvers[queryTypeName] = queryResolvers;
       if (isFederated) {
-        Object.keys(queryResolvers).forEach(typeName => {
-          // Initialize type resolver object
-          if (resolvers[typeName] === undefined) resolvers[typeName] = {};
-          // If not provided
-          if (resolvers[typeName]['__resolveReference'] === undefined) {
-            resolvers[typeName]['__resolveReference'] = async function(
-              object,
-              context,
-              resolveInfo
-            ) {
-              return await neo4jgraphql(
-                object,
-                {},
-                context,
-                resolveInfo,
-                config.debug
-              );
-            };
-          }
+        resolvers = generateBaseTypeReferenceResolvers({
+          queryResolvers,
+          resolvers,
+          config
         });
       }
     }
@@ -61,39 +50,14 @@ export const augmentResolvers = ({
 
   if (Object.values(typeExtensionDefinitionMap).length) {
     if (isFederated) {
-      Object.keys(typeExtensionDefinitionMap).forEach(typeName => {
-        if (
-          typeName !== queryTypeName &&
-          typeName !== mutationTypeName &&
-          typeName !== subscriptionTypeName
-        ) {
-          if (generatedTypeMap[typeName] === undefined) {
-            // Initialize type resolver object
-            if (resolvers[typeName] === undefined) resolvers[typeName] = {};
-            // If not provided
-            if (resolvers[typeName]['__resolveReference'] === undefined) {
-              resolvers[typeName]['__resolveReference'] = async function(
-                object,
-                context,
-                resolveInfo
-              ) {
-                const entityData = await neo4jgraphql(
-                  object,
-                  {},
-                  context,
-                  resolveInfo,
-                  config.debug
-                );
-                return {
-                  // Data for this entity type possibly previously fetched from other services
-                  ...object,
-                  // Data now fetched for the fields this service resolves for the entity type
-                  ...entityData
-                };
-              };
-            }
-          }
-        }
+      resolvers = generateNonLocalTypeExtensionReferenceResolvers({
+        resolvers,
+        generatedTypeMap,
+        typeExtensionDefinitionMap,
+        queryTypeName,
+        mutationTypeName,
+        subscriptionTypeName,
+        config
       });
     }
   }

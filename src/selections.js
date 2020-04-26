@@ -755,18 +755,18 @@ const mergeInterfacedObjectFragments = ({
 };
 
 const mergeFragmentedSelections = ({ selections = [] }) => {
-  const subSelecionFieldMap = {};
+  const subSelectionFieldMap = {};
   const fragments = [];
   selections.forEach(selection => {
     const fieldKind = selection.kind;
     if (fieldKind === Kind.FIELD) {
       const fieldName = selection.name.value;
-      if (!subSelecionFieldMap[fieldName]) {
+      if (!subSelectionFieldMap[fieldName]) {
         // initialize entry for this composing type
-        subSelecionFieldMap[fieldName] = selection;
+        subSelectionFieldMap[fieldName] = selection;
       } else {
-        const alreadySelected = subSelecionFieldMap[fieldName].selectionSet
-          ? subSelecionFieldMap[fieldName].selectionSet.selections
+        const alreadySelected = subSelectionFieldMap[fieldName].selectionSet
+          ? subSelectionFieldMap[fieldName].selectionSet.selections
           : [];
         const selected = selection.selectionSet
           ? selection.selectionSet.selections
@@ -774,7 +774,7 @@ const mergeFragmentedSelections = ({ selections = [] }) => {
         // If the field has a subselection (relationship field)
         if (alreadySelected.length && selected.length) {
           const selections = [...alreadySelected, ...selected];
-          subSelecionFieldMap[
+          subSelectionFieldMap[
             fieldName
           ].selectionSet.selections = mergeFragmentedSelections({
             selections
@@ -783,11 +783,14 @@ const mergeFragmentedSelections = ({ selections = [] }) => {
       }
     } else {
       // Persist all fragments, to be merged later
-      fragments.push(selection);
+      // If we already have this fragment, skip it.
+      if (!fragments.some(anyElement => anyElement === selection)) {
+        fragments.push(selection);
+      }
     }
   });
   // Return the aggregation of all fragments and merged relationship fields
-  return [...Object.values(subSelecionFieldMap), ...fragments];
+  return [...Object.values(subSelectionFieldMap), ...fragments];
 };
 
 export const getDerivedTypes = ({

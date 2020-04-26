@@ -51,7 +51,8 @@ import {
   isScalarType,
   isEnumType,
   isObjectType,
-  isInterfaceType
+  isInterfaceType,
+  Kind
 } from 'graphql';
 import {
   buildCypherSelection,
@@ -62,7 +63,10 @@ import {
 } from './selections';
 import _ from 'lodash';
 import neo4j from 'neo4j-driver';
-import { isUnionTypeDefinition } from './augment/types/types';
+import {
+  isUnionTypeDefinition,
+  isUnionTypeExtensionDefinition
+} from './augment/types/types';
 import {
   getFederatedOperationData,
   setCompoundKeyFilter,
@@ -1230,8 +1234,9 @@ const getUnionLabels = ({ typeName = '', typeMap = {} }) => {
     const definition = typeMap[key];
     const astNode = definition.astNode;
     if (isUnionTypeDefinition({ definition: astNode })) {
-      const unionTypeName = astNode.name.value;
-      if (astNode.types.find(type => type.name.value === typeName)) {
+      const types = definition.getTypes();
+      const unionTypeName = definition.name;
+      if (types.find(type => type.name === typeName)) {
         unionLabels.push(unionTypeName);
       }
     }
@@ -1285,6 +1290,7 @@ export const translateMutation = ({
     typeof schemaType.getInterfaces === 'function'
       ? schemaType.getInterfaces().map(i => i.name)
       : [];
+
   const unionLabels = getUnionLabels({ typeName, typeMap });
   const additionalLabels = [
     ...additionalNodeLabels,

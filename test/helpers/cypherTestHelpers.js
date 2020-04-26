@@ -32,8 +32,6 @@ type Mutation {
     computedTemporal: DateTime @cypher(statement: "WITH datetime() AS now RETURN { year: now.year, month: now.month , day: now.day , hour: now.hour , minute: now.minute , second: now.second , millisecond: now.millisecond , microsecond: now.microsecond , nanosecond: now.nanosecond , timezone: now.timezone , formatted: toString(now) }")
     computedSpatial: Point @cypher(statement: "WITH point({ x: 10, y: 20, z: 15 }) AS instance RETURN { x: instance.x, y: instance.y, z: instance.z, crs: instance.crs }")
     customWithArguments(strArg: String, strInputArg: strInput): String @cypher(statement: "RETURN $strInputArg.strArg")
-    CustomCamera: Camera @cypher(statement: "CREATE (newCamera:Camera:NewCamera {id: apoc.create.uuid(), type: 'macro'}) RETURN newCamera")
-    CustomCameras: [Camera] @cypher(statement: "CREATE (newCamera:Camera:NewCamera {id: apoc.create.uuid(), type: 'macro', features: ['selfie', 'zoom']}) CREATE (oldCamera:Camera:OldCamera {id: apoc.create.uuid(), type: 'floating', smell: 'rusty' }) RETURN [newCamera, oldCamera]")
     CreateNewCamera(id: ID, type: String, make: String, weight: Int, features: [String]): NewCamera
     CreateActor(userId: ID, name: String): Actor
     computedMovieSearch: [MovieSearch] @cypher(statement: "MATCH (ms:MovieSearch) RETURN ms")

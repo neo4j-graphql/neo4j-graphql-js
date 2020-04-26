@@ -1,20 +1,24 @@
 import { gql } from 'apollo-server';
 import { buildFederatedSchema } from '@apollo/federation';
-import { makeAugmentedSchema, neo4jgraphql, cypher } from '../../../../src';
+import { makeAugmentedSchema } from '../../../../src';
 
 export const productsSchema = buildFederatedSchema([
   makeAugmentedSchema({
     typeDefs: gql`
       extend type Query {
+        Product: [Product]
         topProducts(first: Int = 5): [Product]
       }
 
       type Product
-        @key(fields: "upc listCompoundKey { id } objectCompoundKey { id }") {
+        @key(
+          fields: "upc listCompoundKey { id } objectCompoundKey { id } nullKey"
+        ) {
         upc: String!
         name: String
         price: Int
         weight: Int
+        nullKey: String
         objectCompoundKey: Metric @relation(name: "METRIC_OF", direction: OUT)
         listCompoundKey: [Metric] @relation(name: "METRIC_OF", direction: OUT)
       }

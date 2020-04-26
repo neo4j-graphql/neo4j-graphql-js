@@ -1,15 +1,19 @@
 import { gql } from 'apollo-server';
 import { buildFederatedSchema } from '@apollo/federation';
-import { makeAugmentedSchema, neo4jgraphql, cypher } from '../../../../src';
+import { makeAugmentedSchema, cypher } from '../../../../src';
 
 export const accountsSchema = buildFederatedSchema([
   makeAugmentedSchema({
     typeDefs: gql`
       extend type Query {
-        me: User
+        me: Account
+        Account: [Account] @cypher(${cypher`
+          MATCH (account: Account)
+          RETURN account
+        `})
       }
 
-      type User @key(fields: "id") {
+      type Account @key(fields: "id") {
         id: ID!
         name: String
         username: String
@@ -22,7 +26,7 @@ export const accountsSchema = buildFederatedSchema([
   })
 ]);
 
-export const users = [
+export const accounts = [
   {
     id: '1',
     name: 'Ada Lovelace',
