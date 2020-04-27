@@ -16,7 +16,11 @@ import {
   mapDefinitions,
   mergeDefinitionMaps
 } from './augment/augment';
-import { augmentTypes, transformNeo4jTypes } from './augment/types/types';
+import {
+  augmentTypes,
+  transformNeo4jTypes,
+  isSchemaDocument
+} from './augment/types/types';
 import { buildDocument } from './augment/ast';
 import { augmentDirectiveDefinitions } from './augment/directives';
 import { isFederatedOperation, executeFederatedOperation } from './federation';
@@ -166,7 +170,15 @@ export const augmentTypeDefs = (typeDefs, config = {}) => {
   config.query = false;
   config.mutation = false;
   if (config.isFederated === undefined) config.isFederated = false;
-  const definitions = parse(typeDefs).definitions;
+  const isParsedTypeDefs = isSchemaDocument({ definition: typeDefs });
+  let definitions = [];
+  if (isParsedTypeDefs) {
+    // Print if we recieved parsed type definitions in a GraphQL Document
+    definitions = typeDefs.definitions;
+  } else {
+    // Otherwise parse the SDL and get its definitions
+    definitions = parse(typeDefs).definitions;
+  }
   let generatedTypeMap = {};
   let [
     typeDefinitionMap,
@@ -208,8 +220,10 @@ export const augmentTypeDefs = (typeDefs, config = {}) => {
   const documentAST = buildDocument({
     definitions: transformedDefinitions
   });
-  typeDefs = print(documentAST);
-  return typeDefs;
+  if (config.isFederated === true) {
+    return documentAST;
+  }
+  return print(documentAST);
 };
 
 export const augmentSchema = (schema, config) => {
