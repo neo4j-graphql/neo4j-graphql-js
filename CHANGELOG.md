@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.14.0
+
+- [Apollo Federation support](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/418)
+- [Improvements to handling of type extensions](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/418)
+- [Add Apollo Federation and Gateway example](https://github.com/neo4j-graphql/neo4j-graphql-js/blob/master/example/apollo-federation/gateway.js)
+- [Improve handling of nested fragments](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/415)
+- [Allow overriding of graphql-auth-directives](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/417)
+- [Add database option to inferSchema config](https://github.com/neo4j-graphql/neo4j-graphql-js/commit/69b4c8e4bca435faf0b465da335f181392265bc4)
+
 ## 2.13.0
 
 - [Translating fragments on interface types](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/394)
