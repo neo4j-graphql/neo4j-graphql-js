@@ -82,10 +82,21 @@ references:
       name: Start Neo4j Server
       command: ./scripts/start-neo4j.sh
 
+  restart_neo4j: &restart_neo4j
+    run:
+      name: Clear and restart Neo4j
+      command: ./scripts/stop-and-clear-neo4j.sh
+
   start_graphql: &start_graphql
     run:
       name: Start GraphQL Server
       command: node -r @babel/register ./example/apollo-server/movies-middleware.js
+      background: true
+
+  start_gateway: &start_gateway
+    run:
+      name: Start Apollo Gateway
+      command: npm run start-gateway
       background: true
 
   wait_for_graphql: &wait_for_graphql
@@ -102,6 +113,11 @@ references:
     run:
       name: Run Tests
       command: npm run test-all
+
+  run_gateway_tests: &run_gateway_tests
+    run:
+      name: Run Gateway tests
+      command: npm run test-gateway
 
   env_neo4j34ee: &env_neo4j34ee
       NEO4J_DIST: 'enterprise'
@@ -147,9 +163,12 @@ references:
     - *restore_neo4j
     - *start_neo4j
     - *start_graphql
+    - *start_gateway
     - *wait_for_graphql
     - *parse_tck
     - *run_tests
+    - *restart_neo4j
+    - *run_gateway_tests
     - *report_coverage
 
 jobs:
