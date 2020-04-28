@@ -96,7 +96,7 @@ references:
   start_gateway: &start_gateway
     run:
       name: Start Apollo Gateway
-      command: npm run start-gateway
+      command: node -r @babel/register ./example/apollo-federation/gateway.js
       background: true
 
   wait_for_graphql: &wait_for_graphql
