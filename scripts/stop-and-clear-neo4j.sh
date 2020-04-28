@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+BOLT_PORT=7687
+
 ./neo4j/bin/neo4j stop
 rm -r neo4j/data/databases/graph.db
 ./neo4j/bin/neo4j start
