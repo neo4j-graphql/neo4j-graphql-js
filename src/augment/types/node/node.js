@@ -1,3 +1,4 @@
+import { Kind } from 'graphql';
 import {
   augmentNodeQueryAPI,
   augmentNodeQueryArgumentTypes,
@@ -55,10 +56,50 @@ export const augmentNodeType = ({
   typeDefinitionMap,
   generatedTypeMap,
   operationTypeMap,
+  typeExtensionDefinitionMap,
   config
 }) => {
+  let nodeInputTypeMap = {};
+  let propertyOutputFields = [];
+  let propertyInputValues = [];
+  let extensionPropertyInputValues = [];
+  let extensionNodeInputTypeMap = {};
   if (isObjectType || isInterfaceType || isUnionType) {
-    let [
+    const typeExtensions = typeExtensionDefinitionMap[typeName] || [];
+    if (typeExtensions.length) {
+      typeExtensionDefinitionMap[typeName] = typeExtensions.map(extension => {
+        let isIgnoredType = false;
+        const isObjectExtension = extension.kind === Kind.OBJECT_TYPE_EXTENSION;
+        const isInterfaceExtension =
+          extension.kind === Kind.INTERFACE_TYPE_EXTENSION;
+        if (isObjectExtension || isInterfaceExtension) {
+          [
+            extensionNodeInputTypeMap,
+            propertyOutputFields,
+            extensionPropertyInputValues,
+            isIgnoredType
+          ] = augmentNodeTypeFields({
+            typeName,
+            definition: extension,
+            typeDefinitionMap,
+            generatedTypeMap,
+            operationTypeMap,
+            nodeInputTypeMap: extensionNodeInputTypeMap,
+            propertyInputValues: extensionPropertyInputValues,
+            propertyOutputFields,
+            config
+          });
+          if (!isIgnoredType) {
+            extension.fields = propertyOutputFields;
+          }
+        }
+        return extension;
+      });
+    }
+
+    // A type is ignored when all its fields use @neo4j_ignore
+    let isIgnoredType = false;
+    [
       nodeInputTypeMap,
       propertyOutputFields,
       propertyInputValues,
@@ -71,9 +112,19 @@ export const augmentNodeType = ({
       typeDefinitionMap,
       generatedTypeMap,
       operationTypeMap,
+      nodeInputTypeMap,
+      extensionNodeInputTypeMap,
+      propertyOutputFields,
+      propertyInputValues,
       config
     });
-    // A type is ignored when all its fields use @neo4j_ignore
+
+    definition.fields = propertyOutputFields;
+
+    if (extensionPropertyInputValues.length) {
+      propertyInputValues.push(...extensionPropertyInputValues);
+    }
+
     if (!isIgnoredType) {
       if (!isOperationType && !isInterfaceType && !isUnionType) {
         [propertyOutputFields, nodeInputTypeMap] = buildNeo4jSystemIDField({
@@ -86,7 +137,6 @@ export const augmentNodeType = ({
         });
       }
       [
-        propertyOutputFields,
         typeDefinitionMap,
         generatedTypeMap,
         operationTypeMap
@@ -102,14 +152,19 @@ export const augmentNodeType = ({
         propertyInputValues,
         nodeInputTypeMap,
         typeDefinitionMap,
+        typeExtensionDefinitionMap,
         generatedTypeMap,
         operationTypeMap,
         config
       });
-      definition.fields = propertyOutputFields;
     }
   }
-  return [definition, generatedTypeMap, operationTypeMap];
+  return [
+    definition,
+    generatedTypeMap,
+    operationTypeMap,
+    typeExtensionDefinitionMap
+  ];
 };
 
 /**
@@ -125,23 +180,35 @@ export const augmentNodeTypeFields = ({
   typeDefinitionMap,
   generatedTypeMap,
   operationTypeMap,
+  nodeInputTypeMap = {},
+  extensionNodeInputTypeMap,
+  propertyOutputFields = [],
+  propertyInputValues = [],
+  isUnionExtension,
+  isObjectExtension,
+  isInterfaceExtension,
   config
 }) => {
-  let nodeInputTypeMap = {};
-  let propertyOutputFields = [];
-  const propertyInputValues = [];
   let isIgnoredType = true;
-  if (!isUnionType) {
+  if (!isUnionType && !isUnionExtension) {
     const fields = definition.fields;
     if (!isQueryType) {
-      nodeInputTypeMap[FilteringArgument.FILTER] = {
-        name: `_${typeName}Filter`,
-        fields: []
-      };
-      nodeInputTypeMap[OrderingArgument.ORDER_BY] = {
-        name: `_${typeName}Ordering`,
-        values: []
-      };
+      if (!nodeInputTypeMap[FilteringArgument.FILTER]) {
+        nodeInputTypeMap[FilteringArgument.FILTER] = {
+          name: `_${typeName}Filter`,
+          fields: []
+        };
+      }
+      if (!nodeInputTypeMap[OrderingArgument.ORDER_BY]) {
+        nodeInputTypeMap[OrderingArgument.ORDER_BY] = {
+          name: `_${typeName}Ordering`,
+          values: []
+        };
+      }
+    }
+    if (fields === undefined) {
+      console.log('\ndefinition: ', definition);
+      console.log('fields: ', fields);
     }
     propertyOutputFields = fields.reduce((outputFields, field) => {
       let fieldType = field.type;
@@ -160,6 +227,8 @@ export const augmentNodeTypeFields = ({
           name: DirectiveDefinition.RELATION
         });
         if (
+          !isObjectExtension &&
+          !isInterfaceExtension &&
           isPropertyTypeField({
             kind: outputKind,
             type: outputType
@@ -199,7 +268,9 @@ export const augmentNodeTypeFields = ({
             operationTypeMap,
             config,
             relationshipDirective,
-            outputTypeWrappers
+            outputTypeWrappers,
+            isObjectExtension,
+            isInterfaceExtension
           });
         } else if (isRelationshipType({ definition: outputDefinition })) {
           [
@@ -234,6 +305,23 @@ export const augmentNodeTypeFields = ({
       });
       return outputFields;
     }, []);
+
+    if (!isQueryType && extensionNodeInputTypeMap) {
+      if (extensionNodeInputTypeMap[FilteringArgument.FILTER]) {
+        const extendedFilteringFields =
+          extensionNodeInputTypeMap[FilteringArgument.FILTER].fields;
+        nodeInputTypeMap[FilteringArgument.FILTER].fields.push(
+          ...extendedFilteringFields
+        );
+      }
+      if (extensionNodeInputTypeMap[OrderingArgument.ORDER_BY]) {
+        const extendedOrderingValues =
+          extensionNodeInputTypeMap[OrderingArgument.ORDER_BY].values;
+        nodeInputTypeMap[OrderingArgument.ORDER_BY].values.push(
+          ...extendedOrderingValues
+        );
+      }
+    }
   } else {
     isIgnoredType = false;
   }
@@ -263,7 +351,9 @@ const augmentNodeTypeField = ({
   operationTypeMap,
   config,
   relationshipDirective,
-  outputTypeWrappers
+  outputTypeWrappers,
+  isObjectExtension,
+  isInterfaceExtension
 }) => {
   const isUnionType = isUnionTypeDefinition({ definition: outputDefinition });
   fieldArguments = augmentNodeTypeFieldArguments({
@@ -275,7 +365,7 @@ const augmentNodeTypeField = ({
     typeDefinitionMap,
     config
   });
-  if (!isUnionType) {
+  if (!isUnionType && !isObjectExtension && !isInterfaceExtension) {
     if (
       relationshipDirective &&
       !isQueryTypeDefinition({ definition, operationTypeMap })
@@ -337,10 +427,10 @@ const augmentNodeTypeAPI = ({
   isUnionType,
   isOperationType,
   isQueryType,
-  propertyOutputFields,
   propertyInputValues,
   nodeInputTypeMap,
   typeDefinitionMap,
+  typeExtensionDefinitionMap,
   generatedTypeMap,
   operationTypeMap,
   config
@@ -353,6 +443,7 @@ const augmentNodeTypeAPI = ({
       propertyInputValues,
       generatedTypeMap,
       operationTypeMap,
+      typeExtensionDefinitionMap,
       config
     });
     generatedTypeMap = buildNodeSelectionInputType({
@@ -373,16 +464,12 @@ const augmentNodeTypeAPI = ({
     propertyInputValues,
     nodeInputTypeMap,
     typeDefinitionMap,
+    typeExtensionDefinitionMap,
     generatedTypeMap,
     operationTypeMap,
     config
   });
-  return [
-    propertyOutputFields,
-    typeDefinitionMap,
-    generatedTypeMap,
-    operationTypeMap
-  ];
+  return [typeDefinitionMap, generatedTypeMap, operationTypeMap];
 };
 
 /**

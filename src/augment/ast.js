@@ -4,7 +4,7 @@ import { TypeWrappers } from './fields';
 /**
  * Builds the AST definition for a Name
  */
-export const buildName = ({ name = '' }) => ({
+export const buildName = ({ name = {} }) => ({
   kind: Kind.NAME,
   value: name
 });
@@ -20,16 +20,16 @@ export const buildDocument = ({ definitions = [] }) => ({
 /**
  * Builds the AST definition for a Directive Argument
  */
-export const buildDirectiveArgument = ({ name = '', value }) => ({
-  kind: Kind.ARGUMENT,
-  name,
-  value
-});
+export const buildDirectiveArgument = ({ name = {}, value }) =>
+  buildArgument({
+    name,
+    value
+  });
 
 /**
  * Builds the AST definition for a Directive instance
  */
-export const buildDirective = ({ name = '', args = [] }) => ({
+export const buildDirective = ({ name = {}, args = [] }) => ({
   kind: Kind.DIRECTIVE,
   name,
   arguments: args
@@ -38,7 +38,7 @@ export const buildDirective = ({ name = '', args = [] }) => ({
 /**
  * Builds the AST definition for a type
  */
-export const buildNamedType = ({ name = '', wrappers = {} }) => {
+export const buildNamedType = ({ name = {}, wrappers = {} }) => {
   let type = {
     kind: Kind.NAMED_TYPE,
     name: buildName({ name })
@@ -86,7 +86,7 @@ export const buildOperationType = ({ operation = '', type = {} }) => ({
  * Builds the AST definition for an Object type
  */
 export const buildObjectType = ({
-  name = '',
+  name = {},
   fields = [],
   directives = [],
   description
@@ -102,7 +102,7 @@ export const buildObjectType = ({
  * Builds the AST definition for a Field
  */
 export const buildField = ({
-  name = '',
+  name = {},
   type = {},
   args = [],
   directives = [],
@@ -121,7 +121,7 @@ export const buildField = ({
  * used for both field arguments and input object types
  */
 export const buildInputValue = ({
-  name = '',
+  name = {},
   type = {},
   directives = [],
   defaultValue,
@@ -140,7 +140,7 @@ export const buildInputValue = ({
 /**
  * Builds the AST definition for an Enum type
  */
-export const buildEnumType = ({ name = '', values = [], description }) => ({
+export const buildEnumType = ({ name = {}, values = [], description }) => ({
   kind: Kind.ENUM_TYPE_DEFINITION,
   name,
   values,
@@ -150,7 +150,7 @@ export const buildEnumType = ({ name = '', values = [], description }) => ({
 /**
  * Builds the AST definition for an Enum type value
  */
-export const buildEnumValue = ({ name = '', description }) => ({
+export const buildEnumValue = ({ name = {}, description }) => ({
   kind: Kind.ENUM_VALUE_DEFINITION,
   name,
   description
@@ -160,7 +160,7 @@ export const buildEnumValue = ({ name = '', description }) => ({
  * Builds the AST definition for an Input Object type
  */
 export const buildInputObjectType = ({
-  name = '',
+  name = {},
   fields = [],
   directives = [],
   description
@@ -176,16 +176,84 @@ export const buildInputObjectType = ({
  * Builds the AST definition for a Directive definition
  */
 export const buildDirectiveDefinition = ({
-  name = '',
+  name = {},
   args = [],
   locations = [],
-  description
+  description,
+  isRepeatable = false
 }) => {
   return {
     kind: Kind.DIRECTIVE_DEFINITION,
     name,
     arguments: args,
     locations,
-    description
+    description,
+    isRepeatable
+  };
+};
+
+export const buildDescription = ({ value, block = false }) => ({
+  kind: Kind.STRING,
+  value,
+  block
+});
+
+export const buildSelectionSet = ({ selections = [] }) => {
+  return {
+    kind: Kind.SELECTION_SET,
+    selections
+  };
+};
+
+export const buildFieldSelection = ({
+  args = [],
+  directives = [],
+  name = {},
+  selectionSet = {}
+}) => {
+  return {
+    kind: Kind.FIELD,
+    arguments: args,
+    directives,
+    name,
+    selectionSet
+  };
+};
+
+export const buildArgument = ({ name = {}, value }) => {
+  return {
+    kind: Kind.ARGUMENT,
+    name,
+    value
+  };
+};
+
+export const buildVariableDefinition = ({ variable = {}, type = {} }) => {
+  return {
+    kind: Kind.VARIABLE_DEFINITION,
+    variable,
+    type
+  };
+};
+
+export const buildVariable = ({ name = {} }) => {
+  return {
+    kind: Kind.VARIABLE,
+    name
+  };
+};
+
+export const buildOperationDefinition = ({
+  operation = '',
+  name = {},
+  selectionSet = {},
+  variableDefinitions = []
+}) => {
+  return {
+    kind: Kind.OPERATION_DEFINITION,
+    name,
+    operation,
+    selectionSet,
+    variableDefinitions
   };
 };
