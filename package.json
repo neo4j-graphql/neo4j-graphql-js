@@ -18,7 +18,7 @@
     "parse-tck": "babel-node test/helpers/tck/parseTck.js",
     "test-tck": "nyc ava --fail-fast test/unit/filterTests.test.js",
     "report-coverage": "nyc report --reporter=text-lcov > coverage.lcov && codecov",
-    "test-all": "nyc ava --verbose --files='!*gateway*'",
+    "test-all": "nyc ava --verbose",
     "test-isolated": "nyc ava test/**/*.test.js --verbose --match='!*not-isolated*'",
     "test-gateway": "nyc --reporter=lcov ava --fail-fast test/integration/gateway.test.js",
     "debug": "nodemon ./example/apollo-server/movies.js --exec babel-node --inspect-brk=9229 --nolazy",
@@ -77,7 +77,8 @@
       "@babel/register"
     ],
     "files": [
-      "!test/helpers"
+      "!test/helpers",
+      "!test/integration/gateway.test.js"
     ]
   },
   "prettier": {
