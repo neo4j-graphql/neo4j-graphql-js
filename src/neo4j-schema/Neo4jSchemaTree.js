@@ -5,8 +5,13 @@ import neo4jTypes from './types';
 const extractRelationshipType = relTypeName =>
   relTypeName.substring(2, relTypeName.length - 1);
 
-const withSession = (driver, f) => {
-  const s = driver.session();
+const withSession = (driver, database, f) => {
+  let s;
+  if (database) {
+    s = driver.session({ database });
+  } else {
+    s = driver.session();
+  }
 
   return f(s).finally(() => s.close());
 };
@@ -29,6 +34,7 @@ export default class Neo4jSchemaTree {
     this.driver = driver;
     this.nodes = {};
     this.rels = {};
+    this.config = config;
   }
 
   toJSON() {
@@ -52,8 +58,8 @@ export default class Neo4jSchemaTree {
     console.log('Initializing your Neo4j Schema');
     console.log('This may take a few moments depending on the size of your DB');
     return Promise.all([
-      withSession(this.driver, nodeTypeProperties),
-      withSession(this.driver, relTypeProperties)
+      withSession(this.driver, this.config.database, nodeTypeProperties),
+      withSession(this.driver, this.config.database, relTypeProperties)
     ])
       .then(([nodeTypes, relTypes]) => this._populate(nodeTypes, relTypes))
       .then(() => this._populateRelationshipLinkTypes())
@@ -72,7 +78,7 @@ export default class Neo4jSchemaTree {
                 RETURN distinct(labels(n)) as from, labels(m) as to
             `;
 
-      return withSession(this.driver, s =>
+      return withSession(this.driver, this.config.database, s =>
         s.run(q).then(results => results.records.map(r => r.toObject()))
       ).then(rows => {
         this.getRel(okapiId).relType = extractRelationshipType(okapiId);
