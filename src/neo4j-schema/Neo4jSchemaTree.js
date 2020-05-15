@@ -47,12 +47,24 @@ export default class Neo4jSchemaTree {
   initialize() {
     const nodeTypeProperties = session =>
       session
-        .run('CALL db.schema.nodeTypeProperties()')
+        .run(
+          `CALL db.schema.nodeTypeProperties()
+        YIELD nodeType, nodeLabels, propertyName, propertyTypes, mandatory
+        WITH *
+        WHERE propertyName =~ "[_A-Za-z][_0-9A-Za-z]*" 
+        AND all(x IN nodeLabels WHERE (x =~ "[A-Za-z][_0-9A-Za-z]*"))
+        RETURN *`
+        )
         .then(results => results.records.map(rec => rec.toObject()));
 
     const relTypeProperties = session =>
       session
-        .run('CALL db.schema.relTypeProperties()')
+        .run(
+          `CALL db.schema.relTypeProperties()
+        YIELD relType, propertyName, propertyTypes, mandatory
+        WITH * WHERE propertyName =~ "[_A-Za-z][_0-9A-Za-z]*" OR propertyName IS NULL
+        RETURN *`
+        )
         .then(results => results.records.map(rec => rec.toObject()));
 
     console.log('Initializing your Neo4j Schema');
@@ -73,9 +85,12 @@ export default class Neo4jSchemaTree {
 
     const promises = okapiIds.map(okapiId => {
       const q = `
-                MATCH (n)-[r${okapiId}]->(m)
-                WITH n, r, m LIMIT 10
-                RETURN distinct(labels(n)) as from, labels(m) as to
+      MATCH (n)-[r${okapiId}]->(m)
+      WITH n, r, m LIMIT 100
+      WITH DISTINCT labels(n) AS from, labels(m) AS to
+      WITH [x IN from WHERE x =~ "[A-Za-z][_0-9A-Za-z]*"] AS from, [x IN to WHERE x =~ "[A-Za-z][_0-9A-Za-z]*"] AS to
+      WITH from, to WHERE SIZE(from) > 0 AND SIZE(to) > 0
+      RETURN from, to
             `;
 
       return withSession(this.driver, this.config.database, s =>
