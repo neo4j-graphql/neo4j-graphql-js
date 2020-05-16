@@ -1,5 +1,5 @@
 import { parse, isScalarType, GraphQLList, isEnumType } from 'graphql';
-import { ApolloError } from 'apollo-server';
+import { ApolloError } from 'apollo-server-errors';
 import {
   buildSelectionSet,
   buildFieldSelection,
