@@ -16,6 +16,7 @@ import { OperationType } from '../../types/types';
 import {
   TypeWrappers,
   getFieldDefinition,
+  getTypeExtensionFieldDefinition,
   Neo4jSystemIDField
 } from '../../fields';
 import {
@@ -48,6 +49,7 @@ export const augmentNodeQueryAPI = ({
   propertyInputValues,
   nodeInputTypeMap,
   typeDefinitionMap,
+  typeExtensionDefinitionMap,
   generatedTypeMap,
   operationTypeMap,
   config
@@ -63,6 +65,7 @@ export const augmentNodeQueryAPI = ({
         propertyInputValues,
         operationTypeMap,
         typeDefinitionMap,
+        typeExtensionDefinitionMap,
         config
       });
     }
@@ -151,12 +154,19 @@ const buildNodeQueryField = ({
   propertyInputValues,
   operationTypeMap,
   typeDefinitionMap,
+  typeExtensionDefinitionMap,
   config
 }) => {
   const queryFields = queryType.fields;
+  const queryTypeName = queryType ? queryType.name.value : '';
+  const queryTypeExtensions = typeExtensionDefinitionMap[queryTypeName];
   if (
     !getFieldDefinition({
       fields: queryFields,
+      name: typeName
+    }) &&
+    !getTypeExtensionFieldDefinition({
+      typeExtensions: queryTypeExtensions,
       name: typeName
     })
   ) {

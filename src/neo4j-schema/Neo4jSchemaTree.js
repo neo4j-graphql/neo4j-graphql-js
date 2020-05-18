@@ -5,8 +5,13 @@ import neo4jTypes from './types';
 const extractRelationshipType = relTypeName =>
   relTypeName.substring(2, relTypeName.length - 1);
 
-const withSession = (driver, f) => {
-  const s = driver.session();
+const withSession = (driver, database, f) => {
+  let s;
+  if (database) {
+    s = driver.session({ database });
+  } else {
+    s = driver.session();
+  }
 
   return f(s).finally(() => s.close());
 };
@@ -29,6 +34,7 @@ export default class Neo4jSchemaTree {
     this.driver = driver;
     this.nodes = {};
     this.rels = {};
+    this.config = config;
   }
 
   toJSON() {
@@ -41,19 +47,31 @@ export default class Neo4jSchemaTree {
   initialize() {
     const nodeTypeProperties = session =>
       session
-        .run('CALL db.schema.nodeTypeProperties()')
+        .run(
+          `CALL db.schema.nodeTypeProperties()
+        YIELD nodeType, nodeLabels, propertyName, propertyTypes, mandatory
+        WITH *
+        WHERE propertyName =~ "[_A-Za-z][_0-9A-Za-z]*" 
+        AND all(x IN nodeLabels WHERE (x =~ "[A-Za-z][_0-9A-Za-z]*"))
+        RETURN *`
+        )
         .then(results => results.records.map(rec => rec.toObject()));
 
     const relTypeProperties = session =>
       session
-        .run('CALL db.schema.relTypeProperties()')
+        .run(
+          `CALL db.schema.relTypeProperties()
+        YIELD relType, propertyName, propertyTypes, mandatory
+        WITH * WHERE propertyName =~ "[_A-Za-z][_0-9A-Za-z]*" OR propertyName IS NULL
+        RETURN *`
+        )
         .then(results => results.records.map(rec => rec.toObject()));
 
     console.log('Initializing your Neo4j Schema');
     console.log('This may take a few moments depending on the size of your DB');
     return Promise.all([
-      withSession(this.driver, nodeTypeProperties),
-      withSession(this.driver, relTypeProperties)
+      withSession(this.driver, this.config.database, nodeTypeProperties),
+      withSession(this.driver, this.config.database, relTypeProperties)
     ])
       .then(([nodeTypes, relTypes]) => this._populate(nodeTypes, relTypes))
       .then(() => this._populateRelationshipLinkTypes())
@@ -67,12 +85,15 @@ export default class Neo4jSchemaTree {
 
     const promises = okapiIds.map(okapiId => {
       const q = `
-                MATCH (n)-[r${okapiId}]->(m)
-                WITH n, r, m LIMIT 10
-                RETURN distinct(labels(n)) as from, labels(m) as to
+      MATCH (n)-[r${okapiId}]->(m)
+      WITH n, r, m LIMIT 100
+      WITH DISTINCT labels(n) AS from, labels(m) AS to
+      WITH [x IN from WHERE x =~ "[A-Za-z][_0-9A-Za-z]*"] AS from, [x IN to WHERE x =~ "[A-Za-z][_0-9A-Za-z]*"] AS to
+      WITH from, to WHERE SIZE(from) > 0 AND SIZE(to) > 0
+      RETURN from, to
             `;
 
-      return withSession(this.driver, s =>
+      return withSession(this.driver, this.config.database, s =>
         s.run(q).then(results => results.records.map(r => r.toObject()))
       ).then(rows => {
         this.getRel(okapiId).relType = extractRelationshipType(okapiId);

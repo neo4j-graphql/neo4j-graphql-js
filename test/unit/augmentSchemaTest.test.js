@@ -1,13 +1,16 @@
 import test from 'ava';
-import { parse, print } from 'graphql';
+import { parse, print, Kind } from 'graphql';
 import { printSchemaDocument } from '../../src/augment/augment';
 import { makeAugmentedSchema } from '../../src/index';
 import { testSchema } from '../helpers/testSchema';
-import { Kind } from 'graphql/language';
+import { gql } from 'apollo-server';
 
 test.cb('Test augmented schema', t => {
+  const parseTypeDefs = gql`
+    ${testSchema}
+  `;
   const sourceSchema = makeAugmentedSchema({
-    typeDefs: testSchema,
+    typeDefs: parseTypeDefs,
     config: {
       auth: true
     }
@@ -151,9 +154,6 @@ test.cb('Test augmented schema', t => {
         orderBy: [_CameraOrdering]
       ): [Camera] @cypher(statement: "MATCH (c:Camera) RETURN c")
       CustomCamera: Camera @cypher(statement: "MATCH (c:Camera) RETURN c")
-      MovieSearch(first: Int, offset: Int): [MovieSearch]
-      computedMovieSearch(first: Int, offset: Int): [MovieSearch]
-        @cypher(statement: "MATCH (ms:MovieSearch) RETURN ms")
       Genre(
         _id: String
         name: String
@@ -165,6 +165,7 @@ test.cb('Test augmented schema', t => {
       Person(
         userId: ID
         name: String
+        extensionScalar: String
         _id: String
         first: Int
         offset: Int
@@ -174,6 +175,7 @@ test.cb('Test augmented schema', t => {
       Actor(
         userId: ID
         name: String
+        extensionScalar: String
         _id: String
         first: Int
         offset: Int
@@ -239,12 +241,19 @@ test.cb('Test augmented schema', t => {
       CameraMan(
         userId: ID
         name: String
+        extensionScalar: String
         _id: String
         first: Int
         offset: Int
         orderBy: [_CameraManOrdering]
         filter: _CameraManFilter
       ): [CameraMan] @hasScope(scopes: ["CameraMan: Read"])
+    }
+
+    extend type QueryA {
+      MovieSearch(first: Int, offset: Int): [MovieSearch]
+      computedMovieSearch(first: Int, offset: Int): [MovieSearch]
+        @cypher(statement: "MATCH (ms:MovieSearch) RETURN ms")
     }
 
     input _Neo4jDateTimeInput {
@@ -290,6 +299,8 @@ test.cb('Test augmented schema', t => {
       scaleRatingFloat_desc
       currentUserId_asc
       currentUserId_desc
+      extensionScalar_asc
+      extensionScalar_desc
     }
 
     input _MovieFilter {
@@ -420,6 +431,24 @@ test.cb('Test augmented schema', t => {
       interfaceNoScalars_none: _InterfaceNoScalarsFilter
       interfaceNoScalars_single: _InterfaceNoScalarsFilter
       interfaceNoScalars_every: _InterfaceNoScalarsFilter
+      extensionScalar: String
+      extensionScalar_not: String
+      extensionScalar_in: [String!]
+      extensionScalar_not_in: [String!]
+      extensionScalar_contains: String
+      extensionScalar_not_contains: String
+      extensionScalar_starts_with: String
+      extensionScalar_not_starts_with: String
+      extensionScalar_ends_with: String
+      extensionScalar_not_ends_with: String
+      extensionNode: _GenreFilter
+      extensionNode_not: _GenreFilter
+      extensionNode_in: [_GenreFilter!]
+      extensionNode_not_in: [_GenreFilter!]
+      extensionNode_some: _GenreFilter
+      extensionNode_none: _GenreFilter
+      extensionNode_single: _GenreFilter
+      extensionNode_every: _GenreFilter
     }
 
     input _GenreFilter {
@@ -484,6 +513,16 @@ test.cb('Test augmented schema', t => {
       knows_none: _PersonFilter
       knows_single: _PersonFilter
       knows_every: _PersonFilter
+      extensionScalar: String
+      extensionScalar_not: String
+      extensionScalar_in: [String!]
+      extensionScalar_not_in: [String!]
+      extensionScalar_contains: String
+      extensionScalar_not_contains: String
+      extensionScalar_starts_with: String
+      extensionScalar_not_starts_with: String
+      extensionScalar_ends_with: String
+      extensionScalar_not_ends_with: String
     }
 
     input _StateFilter {
@@ -650,6 +689,16 @@ test.cb('Test augmented schema', t => {
       favorites_none: _MovieFilter
       favorites_single: _MovieFilter
       favorites_every: _MovieFilter
+      extensionScalar: String
+      extensionScalar_not: String
+      extensionScalar_in: [String!]
+      extensionScalar_not_in: [String!]
+      extensionScalar_contains: String
+      extensionScalar_not_contains: String
+      extensionScalar_starts_with: String
+      extensionScalar_not_starts_with: String
+      extensionScalar_ends_with: String
+      extensionScalar_not_ends_with: String
     }
 
     input _UserRatedFilter {
@@ -858,6 +907,9 @@ test.cb('Test augmented schema', t => {
       imdbRatings: [Float]
       releases: [_Neo4jDateTime]
       customField: String @neo4j_ignore
+    }
+
+    extend type Movie {
       currentUserId(strArg: String): String
         @cypher(
           statement: "RETURN $cypherParams.currentUserId AS cypherParamsUserId"
@@ -869,6 +921,16 @@ test.cb('Test augmented schema', t => {
         filter: _InterfaceNoScalarsFilter
       ): [InterfaceNoScalars]
         @relation(name: "INTERFACE_NO_SCALARS", direction: OUT)
+    }
+
+    extend type Movie @hasRole(roles: [admin]) {
+      extensionScalar: String
+      extensionNode(
+        first: Int
+        offset: Int
+        orderBy: [_GenreOrdering]
+        filter: _GenreFilter
+      ): [Genre] @relation(name: "IN_GENRE", direction: "OUT")
     }
 
     type _Neo4jDateTime {
@@ -910,11 +972,13 @@ test.cb('Test augmented schema', t => {
       userId_desc
       name_asc
       name_desc
+      extensionScalar_asc
+      extensionScalar_desc
       _id_asc
       _id_desc
     }
 
-    type Actor implements Person {
+    type Actor {
       userId: ID!
       name: String
       movies(
@@ -929,12 +993,19 @@ test.cb('Test augmented schema', t => {
         orderBy: [_PersonOrdering]
         filter: _PersonFilter
       ): [Person] @relation(name: "KNOWS", direction: "OUT")
+      extensionScalar: String
       _id: String
     }
+
+    extend type Actor implements Person
 
     interface Person {
       userId: ID!
       name: String
+    }
+
+    extend interface Person {
+      extensionScalar: String
     }
 
     type State {
@@ -1028,11 +1099,16 @@ test.cb('Test augmented schema', t => {
       movieSearch(first: Int, offset: Int): [MovieSearch]
       computedMovieSearch(first: Int, offset: Int): [MovieSearch]
         @cypher(statement: "MATCH (ms:MovieSearch) RETURN ms")
+      extensionScalar: String
       _id: String
     }
 
     input strInput {
       strArg: String
+    }
+
+    extend input strInput {
+      extensionArg: String
     }
 
     type _UserRated @relation(name: "RATED", from: "User", to: "Movie") {
@@ -1119,6 +1195,8 @@ test.cb('Test augmented schema', t => {
       name_desc
       currentUserId_asc
       currentUserId_desc
+      extensionScalar_asc
+      extensionScalar_desc
       _id_asc
       _id_desc
     }
@@ -1142,6 +1220,9 @@ test.cb('Test augmented schema', t => {
     enum BookGenre {
       Mystery
       Science
+    }
+
+    extend enum BookGenre {
       Math
     }
 
@@ -1617,6 +1698,8 @@ test.cb('Test augmented schema', t => {
       userId_desc
       name_asc
       name_desc
+      extensionScalar_asc
+      extensionScalar_desc
       _id_asc
       _id_desc
     }
@@ -1660,9 +1743,21 @@ test.cb('Test augmented schema', t => {
       cameraBuddy_not: _PersonFilter
       cameraBuddy_in: [_PersonFilter!]
       cameraBuddy_not_in: [_PersonFilter!]
+      extensionScalar: String
+      extensionScalar_not: String
+      extensionScalar_in: [String!]
+      extensionScalar_not_in: [String!]
+      extensionScalar_contains: String
+      extensionScalar_not_contains: String
+      extensionScalar_starts_with: String
+      extensionScalar_not_starts_with: String
+      extensionScalar_ends_with: String
+      extensionScalar_not_ends_with: String
     }
 
-    union MovieSearch = Movie | Genre | Book | Actor | OldCamera
+    union MovieSearch = Movie | Genre | Book
+
+    extend union MovieSearch = Actor | OldCamera
 
     type CameraMan implements Person {
       userId: ID!
@@ -1685,6 +1780,7 @@ test.cb('Test augmented schema', t => {
       ): [Camera!]! @relation(name: "cameras", direction: "OUT")
       cameraBuddy(filter: _PersonFilter): Person
         @relation(name: "cameraBuddy", direction: "OUT")
+      extensionScalar: String
       _id: String
     }
 
@@ -1738,16 +1834,26 @@ test.cb('Test augmented schema', t => {
       customWithArguments(strArg: String, strInputArg: strInput): String
         @cypher(statement: "RETURN $strInputArg.strArg")
       testPublish: Boolean @neo4j_ignore
-      CustomCamera: Camera
-        @cypher(
-          statement: "CREATE (newCamera:Camera:NewCamera {id: apoc.create.uuid(), type: 'macro'}) RETURN newCamera"
-        )
-      CustomCameras: [Camera]
-        @cypher(
-          statement: "CREATE (newCamera:Camera:NewCamera {id: apoc.create.uuid(), type: 'macro', features: ['selfie', 'zoom']}) CREATE (oldCamera:Camera:OldCamera {id: apoc.create.uuid(), type: 'floating', smell: 'rusty' }) RETURN [newCamera, oldCamera]"
-        )
       computedMovieSearch: [MovieSearch]
         @cypher(statement: "MATCH (ms:MovieSearch) RETURN ms")
+      AddMovieExtensionNode(
+        from: _MovieInput!
+        to: _GenreInput!
+      ): _AddMovieExtensionNodePayload
+        @MutationMeta(relationship: "IN_GENRE", from: "Movie", to: "Genre")
+        @hasScope(scopes: ["Movie: Create", "Genre: Create"])
+      RemoveMovieExtensionNode(
+        from: _MovieInput!
+        to: _GenreInput!
+      ): _RemoveMovieExtensionNodePayload
+        @MutationMeta(relationship: "IN_GENRE", from: "Movie", to: "Genre")
+        @hasScope(scopes: ["Movie: Delete", "Genre: Delete"])
+      MergeMovieExtensionNode(
+        from: _MovieInput!
+        to: _GenreInput!
+      ): _MergeMovieExtensionNodePayload
+        @MutationMeta(relationship: "IN_GENRE", from: "Movie", to: "Genre")
+        @hasScope(scopes: ["Movie: Merge", "Genre: Merge"])
       AddMovieGenres(
         from: _MovieInput!
         to: _GenreInput!
@@ -1845,6 +1951,7 @@ test.cb('Test augmented schema', t => {
         titles: [String]
         imdbRatings: [Float]
         releases: [_Neo4jDateTimeInput]
+        extensionScalar: String
       ): Movie @hasScope(scopes: ["Movie: Create"])
       UpdateMovie(
         movieId: ID!
@@ -1862,6 +1969,7 @@ test.cb('Test augmented schema', t => {
         titles: [String]
         imdbRatings: [Float]
         releases: [_Neo4jDateTimeInput]
+        extensionScalar: String
       ): Movie @hasScope(scopes: ["Movie: Update"])
       DeleteMovie(movieId: ID!): Movie @hasScope(scopes: ["Movie: Delete"])
       MergeMovie(
@@ -1880,6 +1988,7 @@ test.cb('Test augmented schema', t => {
         titles: [String]
         imdbRatings: [Float]
         releases: [_Neo4jDateTimeInput]
+        extensionScalar: String
       ): Movie @hasScope(scopes: ["Movie: Merge"])
       AddGenreMovies(
         from: _MovieInput!
@@ -1939,12 +2048,12 @@ test.cb('Test augmented schema', t => {
       ): _MergeActorKnowsPayload
         @MutationMeta(relationship: "KNOWS", from: "Actor", to: "Person")
         @hasScope(scopes: ["Actor: Merge", "Person: Merge"])
-      CreateActor(userId: ID, name: String): Actor
+      CreateActor(userId: ID, name: String, extensionScalar: String): Actor
         @hasScope(scopes: ["Actor: Create"])
-      UpdateActor(userId: ID!, name: String): Actor
+      UpdateActor(userId: ID!, name: String, extensionScalar: String): Actor
         @hasScope(scopes: ["Actor: Update"])
       DeleteActor(userId: ID!): Actor @hasScope(scopes: ["Actor: Delete"])
-      MergeActor(userId: ID!, name: String): Actor
+      MergeActor(userId: ID!, name: String, extensionScalar: String): Actor
         @hasScope(scopes: ["Actor: Merge"])
       AddUserRated(
         from: _UserInput!
@@ -2018,12 +2127,12 @@ test.cb('Test augmented schema', t => {
       ): _MergeUserFavoritesPayload
         @MutationMeta(relationship: "FAVORITED", from: "User", to: "Movie")
         @hasScope(scopes: ["User: Merge", "Movie: Merge"])
-      CreateUser(userId: ID, name: String): User
+      CreateUser(userId: ID, name: String, extensionScalar: String): User
         @hasScope(scopes: ["User: Create"])
-      UpdateUser(userId: ID!, name: String): User
+      UpdateUser(userId: ID!, name: String, extensionScalar: String): User
         @hasScope(scopes: ["User: Update"])
       DeleteUser(userId: ID!): User @hasScope(scopes: ["User: Delete"])
-      MergeUser(userId: ID!, name: String): User
+      MergeUser(userId: ID!, name: String, extensionScalar: String): User
         @hasScope(scopes: ["User: Merge"])
       CreateBook(genre: BookGenre): Book @hasScope(scopes: ["Book: Create"])
       DeleteBook(genre: BookGenre!): Book @hasScope(scopes: ["Book: Delete"])
@@ -2328,22 +2437,59 @@ test.cb('Test augmented schema', t => {
           to: "Person"
         )
         @hasScope(scopes: ["CameraMan: Merge", "Person: Merge"])
-      CreateCameraMan(userId: ID, name: String): CameraMan
-        @hasScope(scopes: ["CameraMan: Create"])
-      UpdateCameraMan(userId: ID!, name: String): CameraMan
-        @hasScope(scopes: ["CameraMan: Update"])
+      CreateCameraMan(
+        userId: ID
+        name: String
+        extensionScalar: String
+      ): CameraMan @hasScope(scopes: ["CameraMan: Create"])
+      UpdateCameraMan(
+        userId: ID!
+        name: String
+        extensionScalar: String
+      ): CameraMan @hasScope(scopes: ["CameraMan: Update"])
       DeleteCameraMan(userId: ID!): CameraMan
         @hasScope(scopes: ["CameraMan: Delete"])
-      MergeCameraMan(userId: ID!, name: String): CameraMan
-        @hasScope(scopes: ["CameraMan: Merge"])
+      MergeCameraMan(
+        userId: ID!
+        name: String
+        extensionScalar: String
+      ): CameraMan @hasScope(scopes: ["CameraMan: Merge"])
     }
 
+    extend type Mutation {
+      CustomCamera: Camera
+        @cypher(
+          statement: "CREATE (newCamera:Camera:NewCamera {id: apoc.create.uuid(), type: 'macro'}) RETURN newCamera"
+        )
+      CustomCameras: [Camera]
+        @cypher(
+          statement: "CREATE (newCamera:Camera:NewCamera {id: apoc.create.uuid(), type: 'macro', features: ['selfie', 'zoom']}) CREATE (oldCamera:Camera:OldCamera {id: apoc.create.uuid(), type: 'floating', smell: 'rusty' }) RETURN [newCamera, oldCamera]"
+        )
+    }
     input _MovieInput {
       movieId: ID!
     }
 
     input _GenreInput {
       name: String!
+    }
+
+    type _AddMovieExtensionNodePayload
+      @relation(name: "IN_GENRE", from: "Movie", to: "Genre") {
+      from: Movie
+      to: Genre
+    }
+
+    type _RemoveMovieExtensionNodePayload
+      @relation(name: "IN_GENRE", from: "Movie", to: "Genre") {
+      from: Movie
+      to: Genre
+    }
+
+    type _MergeMovieExtensionNodePayload
+      @relation(name: "IN_GENRE", from: "Movie", to: "Genre") {
+      from: Movie
+      to: Genre
     }
 
     type _AddMovieGenresPayload
@@ -2923,6 +3069,8 @@ test.cb('Test augmented schema', t => {
 
     scalar LocalDateTime
 
+    extend scalar Time @neo4j_ignore
+
     enum Role {
       reader
       user
@@ -3021,9 +3169,6 @@ test.cb('Test augmented schema', t => {
 
 const compareSchema = ({ test, sourceSchema = {}, expectedSchema = {} }) => {
   const expectedDefinitions = parse(expectedSchema).definitions;
-  // printSchema is no longer used here, as it simplifies out the schema type and all
-  // directive instances. printSchemaDocument does not simplify anything out, as it uses
-  // the graphql print function instead, along with the regeneration of the schema type
   const printedSourceSchema = printSchemaDocument({ schema: sourceSchema });
   const augmentedDefinitions = parse(printedSourceSchema).definitions;
   augmentedDefinitions.forEach(augmentedDefinition => {
@@ -3039,7 +3184,29 @@ const compareSchema = ({ test, sourceSchema = {}, expectedSchema = {} }) => {
       expectedDefinition = expectedDefinitions.find(definition => {
         if (definition.name) {
           if (definition.name.value === augmentedDefinition.name.value) {
-            return definition;
+            if (definition.kind === augmentedDefinition.kind) {
+              if (
+                definition.kind === Kind.OBJECT_TYPE_EXTENSION
+                // definition.kind === Kind.INTERFACE_TYPE_EXTENSION ||
+                // definition.kind === Kind.INPUT_OBJECT_TYPE_EXTENSION
+              ) {
+                if (
+                  definition.fields.length &&
+                  augmentedDefinition.fields.length
+                ) {
+                  if (
+                    definition.fields[0].name.value ===
+                    augmentedDefinition.fields[0].name.value
+                  ) {
+                    return definition;
+                  }
+                } else {
+                  return definition;
+                }
+              } else {
+                return definition;
+              }
+            }
           }
         }
       });

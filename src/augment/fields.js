@@ -148,6 +148,18 @@ export const getFieldDefinition = ({ fields = [], name = '' }) =>
   fields.find(field => field.name && field.name.value === name);
 
 /**
+ * A getter for a field definition of a given name, contained
+ * in the field definitions of a type in a given array of extensions
+ */
+export const getTypeExtensionFieldDefinition = ({
+  typeExtensions = [],
+  name = ''
+}) =>
+  typeExtensions.find(extension =>
+    getFieldDefinition({ fields: extension.fields, name })
+  );
+
+/**
  * A getter for the type name of a field of a given name,
  * finding the field, unwrapping its type, and returning
  * the value of its NamedType

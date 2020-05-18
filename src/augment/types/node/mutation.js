@@ -14,7 +14,12 @@ import {
 import { getPrimaryKey } from '../../../utils';
 import { shouldAugmentType } from '../../augment';
 import { OperationType } from '../../types/types';
-import { TypeWrappers, getFieldDefinition, isNeo4jIDField } from '../../fields';
+import {
+  TypeWrappers,
+  getFieldDefinition,
+  isNeo4jIDField,
+  getTypeExtensionFieldDefinition
+} from '../../fields';
 
 /**
  * An enum describing the names of node type mutations
@@ -38,6 +43,7 @@ export const augmentNodeMutationAPI = ({
   propertyInputValues,
   generatedTypeMap,
   operationTypeMap,
+  typeExtensionDefinitionMap,
   config
 }) => {
   const primaryKey = getPrimaryKey(definition);
@@ -57,6 +63,7 @@ export const augmentNodeMutationAPI = ({
         typeName,
         propertyInputValues,
         operationTypeMap,
+        typeExtensionDefinitionMap,
         config
       });
     });
@@ -76,14 +83,21 @@ const buildNodeMutationField = ({
   typeName,
   propertyInputValues,
   operationTypeMap,
+  typeExtensionDefinitionMap,
   config
 }) => {
   const mutationFields = mutationType.fields;
   const mutationName = `${mutationAction}${typeName}`;
+  const mutationTypeName = mutationType ? mutationType.name.value : '';
+  const mutationTypeExtensions = typeExtensionDefinitionMap[mutationTypeName];
   if (
     !getFieldDefinition({
       fields: mutationFields,
       name: mutationName
+    }) &&
+    !getTypeExtensionFieldDefinition({
+      typeExtensions: mutationTypeExtensions,
+      name: typeName
     })
   ) {
     const mutationField = {

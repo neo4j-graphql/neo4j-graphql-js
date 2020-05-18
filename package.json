@@ -1,6 +1,6 @@
 {
   "name": "neo4j-graphql-js",
-  "version": "2.13.0",
+  "version": "2.14.1-alpha.2",
   "description": "A GraphQL to Cypher query execution layer for Neo4j. ",
   "main": "./dist/index.js",
   "scripts": {
@@ -9,6 +9,7 @@
     "start-middleware": "nodemon ./example/apollo-server/movies-middleware.js --exec babel-node -e js",
     "start-typedefs": "nodemon ./example/apollo-server/movies-typedefs.js --exec babel-node -e js",
     "start-interface": "DEBUG=neo4j-graphql.js nodemon ./example/apollo-server/interface-union-example.js --exec babel-node -e js",
+    "start-gateway": "nodemon ./example/apollo-federation/gateway.js --exec babel-node -e js",
     "build": "babel src --presets @babel/preset-env --out-dir dist",
     "build-with-sourcemaps": "babel src --presets @babel/preset-env --out-dir dist --source-maps",
     "precommit": "lint-staged",
@@ -19,9 +20,11 @@
     "report-coverage": "nyc report --reporter=text-lcov > coverage.lcov && codecov",
     "test-all": "nyc ava --verbose",
     "test-isolated": "nyc ava test/**/*.test.js --verbose --match='!*not-isolated*'",
+    "test-gateway": "nyc --reporter=lcov ava --fail-fast test/integration/gateway.test.js",
     "debug": "nodemon ./example/apollo-server/movies.js --exec babel-node --inspect-brk=9229 --nolazy",
     "debug-typedefs": "nodemon ./example/apollo-server/movies-typedefs.js --exec babel-node --inspect-brk=9229 --nolazy",
-    "debug-interface": "nodemon ./example/apollo-server/interfaceError.js --exec babel-node --inspect-brk=9229 --nolazy"
+    "debug-interface": "nodemon ./example/apollo-server/interfaceError.js --exec babel-node --inspect-brk=9229 --nolazy",
+    "debug-gateway": "nodemon ./example/apollo-federation/gateway.js --exec babel-node --inspect-brk=9229 --nolazy"
   },
   "engines": {
     "node": ">=8"
@@ -33,6 +36,8 @@
     "url": "git+https://github.com/neo4j-graphql/neo4j-graphql-js"
   },
   "devDependencies": {
+    "@apollo/federation": "^0.14.1",
+    "@apollo/gateway": "^0.14.1",
     "@babel/cli": "^7.0.0",
     "@babel/core": "^7.0.0",
     "@babel/node": "^7.0.0",
@@ -61,6 +66,7 @@
   "dependencies": {
     "@babel/runtime": "^7.5.5",
     "@babel/runtime-corejs2": "^7.5.5",
+    "apollo-server-errors": "^2.4.1",
     "debug": "^4.1.1",
     "graphql": "^14.2.1",
     "graphql-auth-directives": "^2.2.0",
@@ -72,7 +78,8 @@
       "@babel/register"
     ],
     "files": [
-      "!test/helpers"
+      "!test/helpers",
+      "!test/integration/gateway.test.js"
     ]
   },
   "prettier": {
