@@ -5,12 +5,12 @@ import {
   GraphQLString,
   GraphQLInt,
   GraphQLFloat,
-  GraphQLBoolean,
+  GraphQLBoolean
 } from 'graphql';
 import {
   isIgnoredField,
   DirectiveDefinition,
-  getDirective,
+  getDirective
 } from '../directives';
 import {
   buildOperationType,
@@ -20,21 +20,21 @@ import {
   buildObjectType,
   buildInputObjectType,
   buildInputValue,
-  buildField,
+  buildField
 } from '../ast';
 import {
   TemporalType,
   augmentTemporalTypes,
   Neo4jTime,
   Neo4jTimeField,
-  Neo4jDate,
+  Neo4jDate
 } from './temporal';
 import { SpatialType, Neo4jPoint, augmentSpatialTypes } from './spatial';
 import {
   isNeo4jTypeField,
   unwrapNamedType,
   getFieldDefinition,
-  isTemporalField,
+  isTemporalField
 } from '../fields';
 
 import { augmentNodeType, augmentNodeTypeFields } from './node/node';
@@ -45,7 +45,7 @@ import { RelationshipDirectionField } from '../types/relationship/relationship';
  */
 export const Neo4jStructuralType = {
   NODE: 'Node',
-  RELATIONSHIP: 'Relationship',
+  RELATIONSHIP: 'Relationship'
 };
 
 /**
@@ -54,7 +54,7 @@ export const Neo4jStructuralType = {
 export const OperationType = {
   QUERY: 'Query',
   MUTATION: 'Mutation',
-  SUBSCRIPTION: 'Subscription',
+  SUBSCRIPTION: 'Subscription'
 };
 
 // The prefix added to the name of any type representing a managed Neo4j data type
@@ -65,7 +65,7 @@ export const Neo4jTypeName = `_Neo4j`;
  * and output type definitions representing non-scalar Neo4j property types
  */
 export const Neo4jTypeFormatted = {
-  FORMATTED: 'formatted',
+  FORMATTED: 'formatted'
 };
 
 /**
@@ -85,14 +85,14 @@ export const Neo4jDataType = {
     [TemporalType.DATETIME]: 'Temporal',
     [TemporalType.LOCALTIME]: 'Temporal',
     [TemporalType.LOCALDATETIME]: 'Temporal',
-    [SpatialType.POINT]: 'Spatial',
+    [SpatialType.POINT]: 'Spatial'
   },
   // TODO probably revise and remove...
   STRUCTURAL: {
     [Kind.OBJECT_TYPE_DEFINITION]: Neo4jStructuralType,
     [Kind.INTERFACE_TYPE_DEFINITION]: Neo4jStructuralType,
-    [Kind.UNION_TYPE_DEFINITION]: Neo4jStructuralType,
-  },
+    [Kind.UNION_TYPE_DEFINITION]: Neo4jStructuralType
+  }
 };
 
 /**
@@ -156,7 +156,7 @@ export const isUnionTypeDefinition = ({ definition = {} }) =>
  */
 export const isOperationTypeDefinition = ({
   definition = {},
-  operationTypeMap,
+  operationTypeMap
 }) =>
   isQueryTypeDefinition({ definition, operationTypeMap }) ||
   isMutationTypeDefinition({ definition, operationTypeMap }) ||
@@ -185,7 +185,7 @@ export const isMutationTypeDefinition = ({ definition, operationTypeMap }) =>
  */
 export const isSubscriptionTypeDefinition = ({
   definition,
-  operationTypeMap,
+  operationTypeMap
 }) =>
   definition.name && operationTypeMap[OperationType.SUBSCRIPTION]
     ? definition.name.value ===
@@ -210,16 +210,14 @@ export const isNeo4jPropertyType = ({ type }) =>
  * with a name that has already been transformed ('_Neo4j' prefix added)
  */
 export const isNeo4jTemporalType = ({ type }) =>
-  Object.values(TemporalType).some(
-    (name) => type === `${Neo4jTypeName}${name}`
-  );
+  Object.values(TemporalType).some(name => type === `${Neo4jTypeName}${name}`);
 
 /**
  * A predicate function for identifying a GraphQL type definition representing
  * a Neo4j Spatial type (Point)
  */
 export const isNeo4jPointType = ({ type }) =>
-  Object.values(SpatialType).some((name) => type === `${Neo4jTypeName}${name}`);
+  Object.values(SpatialType).some(name => type === `${Neo4jTypeName}${name}`);
 
 /**
  * A predicate function for identifying which Neo4j entity type, if any, a given
@@ -239,15 +237,15 @@ export const interpretType = ({ definition = {} }) => {
         neo4jStructuralTypes.RELATIONSHIP &&
         getDirective({
           directives: typeDirectives,
-          name: DirectiveDefinition.RELATION,
+          name: DirectiveDefinition.RELATION
         }) &&
         getFieldDefinition({
           fields,
-          name: RelationshipDirectionField.FROM,
+          name: RelationshipDirectionField.FROM
         }) &&
         getFieldDefinition({
           fields,
-          name: RelationshipDirectionField.TO,
+          name: RelationshipDirectionField.TO
         })
       ) {
         neo4jType = neo4jStructuralTypes.RELATIONSHIP;
@@ -269,13 +267,13 @@ export const augmentTypes = ({
   typeExtensionDefinitionMap = {},
   generatedTypeMap,
   operationTypeMap = {},
-  config = {},
+  config = {}
 }) => {
   const augmentationDefinitions = [
     ...Object.entries({
       ...typeDefinitionMap,
-      ...operationTypeMap,
-    }),
+      ...operationTypeMap
+    })
   ];
   augmentationDefinitions.forEach(([typeName, definition]) => {
     const isObjectType = isObjectTypeDefinition({ definition });
@@ -283,7 +281,7 @@ export const augmentTypes = ({
     const isUnionType = isUnionTypeDefinition({ definition });
     const isOperationType = isOperationTypeDefinition({
       definition,
-      operationTypeMap,
+      operationTypeMap
     });
     const isQueryType = isQueryTypeDefinition({ definition, operationTypeMap });
     if (isOperationType) {
@@ -296,7 +294,7 @@ export const augmentTypes = ({
         typeDefinitionMap,
         generatedTypeMap,
         operationTypeMap,
-        config,
+        config
       });
       operationTypeMap[typeName] = definition;
     } else if (isNodeType({ definition })) {
@@ -304,7 +302,7 @@ export const augmentTypes = ({
         definition,
         generatedTypeMap,
         operationTypeMap,
-        typeExtensionDefinitionMap,
+        typeExtensionDefinitionMap
       ] = augmentNodeType({
         typeName,
         definition,
@@ -317,7 +315,7 @@ export const augmentTypes = ({
         generatedTypeMap,
         operationTypeMap,
         typeExtensionDefinitionMap,
-        config,
+        config
       });
       // Add augmented type to generated type map
       generatedTypeMap[typeName] = definition;
@@ -328,14 +326,14 @@ export const augmentTypes = ({
   });
   generatedTypeMap = augmentNeo4jTypes({
     generatedTypeMap,
-    config,
+    config
   });
   Object.entries(typeExtensionDefinitionMap).forEach(
     ([typeName, extensions]) => {
       const isNonLocalType = !generatedTypeMap[typeName];
       const isOperationType = isDefaultOperationType({ typeName });
       if (isNonLocalType && !isOperationType) {
-        const augmentedExtensions = extensions.map((definition) => {
+        const augmentedExtensions = extensions.map(definition => {
           const isObjectExtension =
             definition.kind === Kind.OBJECT_TYPE_EXTENSION;
           const isInterfaceExtension =
@@ -350,7 +348,7 @@ export const augmentTypes = ({
             [
               nodeInputTypeMap,
               propertyOutputFields,
-              propertyInputValues,
+              propertyInputValues
             ] = augmentNodeTypeFields({
               typeName,
               definition,
@@ -365,11 +363,11 @@ export const augmentTypes = ({
               isUnionExtension,
               isObjectExtension,
               isInterfaceExtension,
-              config,
+              config
             });
             return {
               ...definition,
-              fields: propertyOutputFields,
+              fields: propertyOutputFields
             };
           }
         });
@@ -387,11 +385,11 @@ export const augmentTypes = ({
 const augmentNeo4jTypes = ({ generatedTypeMap, config }) => {
   generatedTypeMap = augmentTemporalTypes({
     typeMap: generatedTypeMap,
-    config,
+    config
   });
   generatedTypeMap = augmentSpatialTypes({
     typeMap: generatedTypeMap,
-    config,
+    config
   });
   return generatedTypeMap;
 };
@@ -403,9 +401,9 @@ const augmentNeo4jTypes = ({ generatedTypeMap, config }) => {
 export const buildNeo4jTypes = ({
   typeMap = {},
   neo4jTypes = {},
-  config = {},
+  config = {}
 }) => {
-  Object.values(neo4jTypes).forEach((typeName) => {
+  Object.values(neo4jTypes).forEach(typeName => {
     const typeNameLower = typeName.toLowerCase();
     if (config[typeNameLower] === true) {
       const fields = buildNeo4jTypeFields({ typeName });
@@ -416,19 +414,19 @@ export const buildNeo4jTypes = ({
         const fieldConfig = {
           name: buildName({ name: fieldNameLower }),
           type: buildNamedType({
-            name: fieldType,
-          }),
+            name: fieldType
+          })
         };
         inputFields.push(buildInputValue(fieldConfig));
         outputFields.push(buildField(fieldConfig));
       });
       const formattedFieldConfig = {
         name: buildName({
-          name: Neo4jTypeFormatted.FORMATTED,
+          name: Neo4jTypeFormatted.FORMATTED
         }),
         type: buildNamedType({
-          name: GraphQLString.name,
-        }),
+          name: GraphQLString.name
+        })
       };
       if (isTemporalField({ type: typeName })) {
         inputFields.push(buildInputValue(formattedFieldConfig));
@@ -438,11 +436,11 @@ export const buildNeo4jTypes = ({
       const inputTypeName = `${objectTypeName}Input`;
       typeMap[objectTypeName] = buildObjectType({
         name: buildName({ name: objectTypeName }),
-        fields: outputFields,
+        fields: outputFields
       });
       typeMap[inputTypeName] = buildInputObjectType({
         name: buildName({ name: inputTypeName }),
-        fields: inputFields,
+        fields: inputFields
       });
     }
   });
@@ -462,21 +460,21 @@ const buildNeo4jTypeFields = ({ typeName = '' }) => {
     fields = Object.entries(Neo4jTime);
   } else if (typeName === TemporalType.LOCALTIME) {
     fields = Object.entries({
-      ...Neo4jTime,
+      ...Neo4jTime
     }).filter(([name]) => name !== Neo4jTimeField.TIMEZONE);
   } else if (typeName === TemporalType.DATETIME) {
     fields = Object.entries({
       ...Neo4jDate,
-      ...Neo4jTime,
+      ...Neo4jTime
     });
   } else if (typeName === TemporalType.LOCALDATETIME) {
     fields = Object.entries({
       ...Neo4jDate,
-      ...Neo4jTime,
+      ...Neo4jTime
     }).filter(([name]) => name !== Neo4jTimeField.TIMEZONE);
   } else if (typeName === SpatialType.POINT) {
     fields = Object.entries({
-      ...Neo4jPoint,
+      ...Neo4jPoint
     });
   }
   return fields;
@@ -490,7 +488,7 @@ const buildNeo4jTypeFields = ({ typeName = '' }) => {
 export const transformNeo4jTypes = ({ definitions = [], config }) => {
   const inputTypeSuffix = `Input`;
   return visit(definitions, {
-    [Kind.INPUT_VALUE_DEFINITION]: (field) => {
+    [Kind.INPUT_VALUE_DEFINITION]: field => {
       const directives = field.directives;
       if (!isIgnoredField({ directives })) {
         const type = field.type;
@@ -508,7 +506,7 @@ export const transformNeo4jTypes = ({ definitions = [], config }) => {
       }
       return field;
     },
-    [Kind.FIELD_DEFINITION]: (field) => {
+    [Kind.FIELD_DEFINITION]: field => {
       const directives = field.directives;
       if (!isIgnoredField({ directives })) {
         const type = field.type;
@@ -523,7 +521,7 @@ export const transformNeo4jTypes = ({ definitions = [], config }) => {
         field.type = buildNamedType(unwrappedType);
       }
       return field;
-    },
+    }
   });
 };
 
@@ -534,7 +532,7 @@ export const initializeOperationTypes = ({
   typeDefinitionMap,
   schemaTypeDefinition,
   typeExtensionDefinitionMap,
-  config = {},
+  config = {}
 }) => {
   let queryTypeName = OperationType.QUERY;
   let mutationTypeName = OperationType.MUTATION;
@@ -542,12 +540,12 @@ export const initializeOperationTypes = ({
   [
     queryTypeName,
     mutationTypeName,
-    subscriptionTypeName,
+    subscriptionTypeName
   ] = getSchemaTypeOperationNames({
     schemaTypeDefinition,
     queryTypeName,
     mutationTypeName,
-    subscriptionTypeName,
+    subscriptionTypeName
   });
   // Build default operation type definitions if none are provided,
   // only kept if at least 1 field is added for generated API
@@ -555,17 +553,17 @@ export const initializeOperationTypes = ({
   typeDefinitionMap = initializeOperationType({
     typeName: queryTypeName,
     typeDefinitionMap,
-    config,
+    config
   });
   typeDefinitionMap = initializeOperationType({
     typeName: mutationTypeName,
     typeDefinitionMap,
-    config,
+    config
   });
   typeDefinitionMap = initializeOperationType({
     typeName: subscriptionTypeName,
     typeDefinitionMap,
-    config,
+    config
   });
   // Separate operation types out from other type definitions
   [typeDefinitionMap, operationTypeMap] = buildAugmentationTypeMaps({
@@ -573,7 +571,7 @@ export const initializeOperationTypes = ({
     mutationTypeName,
     subscriptionTypeName,
     typeDefinitionMap,
-    typeExtensionDefinitionMap,
+    typeExtensionDefinitionMap
   });
   return [typeDefinitionMap, operationTypeMap];
 };
@@ -585,12 +583,12 @@ const getSchemaTypeOperationNames = ({
   schemaTypeDefinition,
   queryTypeName,
   mutationTypeName,
-  subscriptionTypeName,
+  subscriptionTypeName
 }) => {
   // Get operation type names, which may be non-default
   if (schemaTypeDefinition) {
     const operationTypes = schemaTypeDefinition.operationTypes;
-    operationTypes.forEach((definition) => {
+    operationTypes.forEach(definition => {
       const operation = definition.operation;
       const unwrappedType = unwrapNamedType({ type: definition.type });
       if (operation === queryTypeName.toLowerCase()) {
@@ -611,13 +609,13 @@ const getSchemaTypeOperationNames = ({
 const initializeOperationType = ({
   typeName = '',
   typeDefinitionMap = {},
-  config = {},
+  config = {}
 }) => {
   const typeNameLower = typeName.toLowerCase();
   let operationType = typeDefinitionMap[typeName];
   if (!operationType && config[typeNameLower]) {
     operationType = buildObjectType({
-      name: buildName({ name: typeName }),
+      name: buildName({ name: typeName })
     });
   }
   if (operationType) typeDefinitionMap[typeName] = operationType;
@@ -632,7 +630,7 @@ const buildAugmentationTypeMaps = ({
   queryTypeName,
   mutationTypeName,
   subscriptionTypeName,
-  typeDefinitionMap = {},
+  typeDefinitionMap = {}
 }) => {
   return Object.entries(typeDefinitionMap).reduce(
     ([typeMap, operationTypeMap], [typeName, definition]) => {
@@ -664,7 +662,7 @@ const augmentOperationType = ({
   typeDefinitionMap,
   generatedTypeMap,
   operationTypeMap,
-  config,
+  config
 }) => {
   if (isQueryType && isObjectType) {
     let nodeInputTypeMap = {};
@@ -672,13 +670,13 @@ const augmentOperationType = ({
     let propertyInputValues = [];
     const typeExtensions = typeExtensionDefinitionMap[typeName] || [];
     if (typeExtensions.length) {
-      typeExtensionDefinitionMap[typeName] = typeExtensions.map((extension) => {
+      typeExtensionDefinitionMap[typeName] = typeExtensions.map(extension => {
         let isIgnoredType = false;
         [
           nodeInputTypeMap,
           propertyOutputFields,
           propertyInputValues,
-          isIgnoredType,
+          isIgnoredType
         ] = augmentNodeTypeFields({
           typeName,
           definition: extension,
@@ -689,7 +687,7 @@ const augmentOperationType = ({
           nodeInputTypeMap,
           propertyOutputFields,
           propertyInputValues,
-          config,
+          config
         });
         // FIXME fieldArguments are modified through reference so
         // this branch doesn't end up mattereing. A case of isIgnoredType
@@ -705,7 +703,7 @@ const augmentOperationType = ({
       nodeInputTypeMap,
       propertyOutputFields,
       propertyInputValues,
-      isIgnoredType,
+      isIgnoredType
     ] = augmentNodeTypeFields({
       typeName,
       definition,
@@ -714,7 +712,7 @@ const augmentOperationType = ({
       generatedTypeMap,
       propertyOutputFields,
       operationTypeMap,
-      config,
+      config
     });
     if (!isIgnoredType) {
       definition.fields = propertyOutputFields;
@@ -728,7 +726,7 @@ const augmentOperationType = ({
  */
 export const regenerateSchemaType = ({ schema = {}, definitions = [] }) => {
   const operationTypes = [];
-  Object.values(OperationType).forEach((name) => {
+  Object.values(OperationType).forEach(name => {
     let operationType = undefined;
     if (name === OperationType.QUERY) operationType = schema.getQueryType();
     else if (name === OperationType.MUTATION)
@@ -739,7 +737,7 @@ export const regenerateSchemaType = ({ schema = {}, definitions = [] }) => {
       operationTypes.push(
         buildOperationType({
           operation: name.toLowerCase(),
-          type: buildNamedType({ name: operationType.name }),
+          type: buildNamedType({ name: operationType.name })
         })
       );
     }
@@ -747,7 +745,7 @@ export const regenerateSchemaType = ({ schema = {}, definitions = [] }) => {
   if (operationTypes.length) {
     definitions.push(
       buildSchemaDefinition({
-        operationTypes,
+        operationTypes
       })
     );
   }
@@ -762,7 +760,7 @@ export const regenerateSchemaType = ({ schema = {}, definitions = [] }) => {
 export const augmentSchemaType = ({
   definitions,
   schemaTypeDefinition,
-  operationTypeMap,
+  operationTypeMap
 }) => {
   let operationTypes = [];
   // If schema type provided or regenerated, get its operation types
@@ -779,14 +777,12 @@ export const augmentSchemaType = ({
         definitions.push(operationType);
         // Add schema type field for any generated default operation types (Query, etc.)
         if (
-          !operationTypes.find(
-            (operation) => operation.operation === typeNameLow
-          )
+          !operationTypes.find(operation => operation.operation === typeNameLow)
         ) {
           operationTypes.push(
             buildOperationType({
               operation: typeNameLow,
-              type: buildNamedType({ name: operationType.name.value }),
+              type: buildNamedType({ name: operationType.name.value })
             })
           );
         }

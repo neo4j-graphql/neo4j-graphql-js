@@ -15,30 +15,30 @@ export const seedData = {
             {
               id: '100',
               metric: 1,
-              data: 2,
-            },
+              data: 2
+            }
           ],
           objectCompoundKey: {
             id: '100',
             metric: 1,
-            data: 2,
+            data: 2
           },
           listCompoundKey: [
             {
               id: '100',
               metric: 1,
-              data: 2,
-            },
+              data: 2
+            }
           ],
-          value: 1,
+          value: 1
         },
         authorID: '1',
         author: {
           id: '1',
           name: 'Ada Lovelace',
           username: '@ada',
-          numberOfReviews: 2,
-        },
+          numberOfReviews: 2
+        }
       },
       {
         id: '2',
@@ -53,15 +53,15 @@ export const seedData = {
           metrics: [],
           objectCompoundKey: null,
           listCompoundKey: [],
-          value: 2,
+          value: 2
         },
         authorID: '1',
         author: {
           id: '1',
           name: 'Ada Lovelace',
           username: '@ada',
-          numberOfReviews: 2,
-        },
+          numberOfReviews: 2
+        }
       },
       {
         id: '3',
@@ -76,15 +76,15 @@ export const seedData = {
           metrics: [],
           objectCompoundKey: null,
           listCompoundKey: [],
-          value: 3,
+          value: 3
         },
         authorID: '2',
         author: {
           id: '2',
           name: 'Alan Turing',
           username: '@complete',
-          numberOfReviews: 2,
-        },
+          numberOfReviews: 2
+        }
       },
       {
         id: '4',
@@ -100,31 +100,31 @@ export const seedData = {
             {
               id: '100',
               metric: 1,
-              data: 2,
-            },
+              data: 2
+            }
           ],
           objectCompoundKey: {
             id: '100',
             metric: 1,
-            data: 2,
+            data: 2
           },
           listCompoundKey: [
             {
               id: '100',
               metric: 1,
-              data: 2,
-            },
+              data: 2
+            }
           ],
-          value: 4,
+          value: 4
         },
         authorID: '2',
         author: {
           id: '2',
           name: 'Alan Turing',
           username: '@complete',
-          numberOfReviews: 2,
-        },
-      },
-    ],
-  },
+          numberOfReviews: 2
+        }
+      }
+    ]
+  }
 };
