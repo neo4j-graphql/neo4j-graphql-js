@@ -1,8 +1,7 @@
-import { Kind } from 'graphql';
 import {
   augmentNodeQueryAPI,
   augmentNodeQueryArgumentTypes,
-  augmentNodeTypeFieldArguments
+  augmentNodeTypeFieldArguments,
 } from './query';
 import { augmentNodeMutationAPI } from './mutation';
 import { augmentRelationshipTypeField } from '../relationship/relationship';
@@ -12,32 +11,34 @@ import {
   TypeWrappers,
   unwrapNamedType,
   isPropertyTypeField,
-  buildNeo4jSystemIDField
+  buildNeo4jSystemIDField,
 } from '../../fields';
 import {
   FilteringArgument,
   OrderingArgument,
-  augmentInputTypePropertyFields
+  augmentInputTypePropertyFields,
 } from '../../input-values';
 import {
   getRelationDirection,
   getRelationName,
   getDirective,
   isIgnoredField,
-  DirectiveDefinition
+  DirectiveDefinition,
 } from '../../directives';
 import {
   buildName,
   buildNamedType,
   buildInputObjectType,
-  buildInputValue
+  buildInputValue,
 } from '../../ast';
 import {
   OperationType,
   isNodeType,
   isRelationshipType,
   isQueryTypeDefinition,
-  isUnionTypeDefinition
+  isUnionTypeDefinition,
+  isObjectTypeExtensionDefinition,
+  isInterfaceTypeExtensionDefinition,
 } from '../../types/types';
 import { getPrimaryKey } from '../../../utils';
 
@@ -57,7 +58,7 @@ export const augmentNodeType = ({
   generatedTypeMap,
   operationTypeMap,
   typeExtensionDefinitionMap,
-  config
+  config,
 }) => {
   let nodeInputTypeMap = {};
   let propertyOutputFields = [];
@@ -67,27 +68,31 @@ export const augmentNodeType = ({
   if (isObjectType || isInterfaceType || isUnionType) {
     const typeExtensions = typeExtensionDefinitionMap[typeName] || [];
     if (typeExtensions.length) {
-      typeExtensionDefinitionMap[typeName] = typeExtensions.map(extension => {
+      typeExtensionDefinitionMap[typeName] = typeExtensions.map((extension) => {
         let isIgnoredType = false;
-        const isObjectExtension = extension.kind === Kind.OBJECT_TYPE_EXTENSION;
-        const isInterfaceExtension =
-          extension.kind === Kind.INTERFACE_TYPE_EXTENSION;
+        const isObjectExtension = isObjectTypeExtensionDefinition({
+          definition: extension,
+        });
+        const isInterfaceExtension = isInterfaceTypeExtensionDefinition({
+          definition: extension,
+        });
         if (isObjectExtension || isInterfaceExtension) {
           [
             extensionNodeInputTypeMap,
             propertyOutputFields,
             extensionPropertyInputValues,
-            isIgnoredType
+            isIgnoredType,
           ] = augmentNodeTypeFields({
             typeName,
             definition: extension,
             typeDefinitionMap,
+            typeExtensionDefinitionMap,
             generatedTypeMap,
             operationTypeMap,
             nodeInputTypeMap: extensionNodeInputTypeMap,
             propertyInputValues: extensionPropertyInputValues,
             propertyOutputFields,
-            config
+            config,
           });
           if (!isIgnoredType) {
             extension.fields = propertyOutputFields;
@@ -103,20 +108,21 @@ export const augmentNodeType = ({
       nodeInputTypeMap,
       propertyOutputFields,
       propertyInputValues,
-      isIgnoredType
+      isIgnoredType,
     ] = augmentNodeTypeFields({
       typeName,
       definition,
       isUnionType,
       isQueryType,
       typeDefinitionMap,
+      typeExtensionDefinitionMap,
       generatedTypeMap,
       operationTypeMap,
       nodeInputTypeMap,
       extensionNodeInputTypeMap,
       propertyOutputFields,
       propertyInputValues,
-      config
+      config,
     });
 
     definition.fields = propertyOutputFields;
@@ -133,13 +139,13 @@ export const augmentNodeType = ({
           propertyOutputFields,
           operationTypeMap,
           nodeInputTypeMap,
-          config
+          config,
         });
       }
       [
         typeDefinitionMap,
         generatedTypeMap,
-        operationTypeMap
+        operationTypeMap,
       ] = augmentNodeTypeAPI({
         definition,
         isObjectType,
@@ -155,7 +161,7 @@ export const augmentNodeType = ({
         typeExtensionDefinitionMap,
         generatedTypeMap,
         operationTypeMap,
-        config
+        config,
       });
     }
   }
@@ -163,7 +169,7 @@ export const augmentNodeType = ({
     definition,
     generatedTypeMap,
     operationTypeMap,
-    typeExtensionDefinitionMap
+    typeExtensionDefinitionMap,
   ];
 };
 
@@ -178,6 +184,7 @@ export const augmentNodeTypeFields = ({
   isUnionType,
   isQueryType,
   typeDefinitionMap,
+  typeExtensionDefinitionMap,
   generatedTypeMap,
   operationTypeMap,
   nodeInputTypeMap = {},
@@ -187,7 +194,7 @@ export const augmentNodeTypeFields = ({
   isUnionExtension,
   isObjectExtension,
   isInterfaceExtension,
-  config
+  config,
 }) => {
   let isIgnoredType = true;
   if (!isUnionType && !isUnionExtension) {
@@ -196,19 +203,15 @@ export const augmentNodeTypeFields = ({
       if (!nodeInputTypeMap[FilteringArgument.FILTER]) {
         nodeInputTypeMap[FilteringArgument.FILTER] = {
           name: `_${typeName}Filter`,
-          fields: []
+          fields: [],
         };
       }
       if (!nodeInputTypeMap[OrderingArgument.ORDER_BY]) {
         nodeInputTypeMap[OrderingArgument.ORDER_BY] = {
           name: `_${typeName}Ordering`,
-          values: []
+          values: [],
         };
       }
-    }
-    if (fields === undefined) {
-      console.log('\ndefinition: ', definition);
-      console.log('fields: ', fields);
     }
     propertyOutputFields = fields.reduce((outputFields, field) => {
       let fieldType = field.type;
@@ -224,14 +227,14 @@ export const augmentNodeTypeFields = ({
         const outputTypeWrappers = unwrappedType.wrappers;
         const relationshipDirective = getDirective({
           directives: fieldDirectives,
-          name: DirectiveDefinition.RELATION
+          name: DirectiveDefinition.RELATION,
         });
         if (
           !isObjectExtension &&
           !isInterfaceExtension &&
           isPropertyTypeField({
             kind: outputKind,
-            type: outputType
+            type: outputType,
           })
         ) {
           nodeInputTypeMap = augmentInputTypePropertyFields({
@@ -240,12 +243,12 @@ export const augmentNodeTypeFields = ({
             fieldDirectives,
             outputType,
             outputKind,
-            outputTypeWrappers
+            outputTypeWrappers,
           });
           propertyInputValues.push({
             name: fieldName,
             type: unwrappedType,
-            directives: fieldDirectives
+            directives: fieldDirectives,
           });
         } else if (isNodeType({ definition: outputDefinition })) {
           [
@@ -253,7 +256,7 @@ export const augmentNodeTypeFields = ({
             nodeInputTypeMap,
             typeDefinitionMap,
             generatedTypeMap,
-            operationTypeMap
+            operationTypeMap,
           ] = augmentNodeTypeField({
             typeName,
             definition,
@@ -264,13 +267,14 @@ export const augmentNodeTypeFields = ({
             outputType,
             nodeInputTypeMap,
             typeDefinitionMap,
+            typeExtensionDefinitionMap,
             generatedTypeMap,
             operationTypeMap,
-            config,
             relationshipDirective,
             outputTypeWrappers,
             isObjectExtension,
-            isInterfaceExtension
+            isInterfaceExtension,
+            config,
           });
         } else if (isRelationshipType({ definition: outputDefinition })) {
           [
@@ -279,7 +283,7 @@ export const augmentNodeTypeFields = ({
             nodeInputTypeMap,
             typeDefinitionMap,
             generatedTypeMap,
-            operationTypeMap
+            operationTypeMap,
           ] = augmentRelationshipTypeField({
             typeName,
             definition,
@@ -292,34 +296,38 @@ export const augmentNodeTypeFields = ({
             outputDefinition,
             nodeInputTypeMap,
             typeDefinitionMap,
+            typeExtensionDefinitionMap,
             generatedTypeMap,
             operationTypeMap,
-            config
+            isObjectExtension,
+            isInterfaceExtension,
+            config,
           });
         }
       }
       outputFields.push({
         ...field,
         type: fieldType,
-        arguments: fieldArguments
+        arguments: fieldArguments,
       });
       return outputFields;
     }, []);
-
-    if (!isQueryType && extensionNodeInputTypeMap) {
-      if (extensionNodeInputTypeMap[FilteringArgument.FILTER]) {
-        const extendedFilteringFields =
-          extensionNodeInputTypeMap[FilteringArgument.FILTER].fields;
-        nodeInputTypeMap[FilteringArgument.FILTER].fields.push(
-          ...extendedFilteringFields
-        );
-      }
-      if (extensionNodeInputTypeMap[OrderingArgument.ORDER_BY]) {
-        const extendedOrderingValues =
-          extensionNodeInputTypeMap[OrderingArgument.ORDER_BY].values;
-        nodeInputTypeMap[OrderingArgument.ORDER_BY].values.push(
-          ...extendedOrderingValues
-        );
+    if (!isObjectExtension && !isInterfaceExtension) {
+      if (!isQueryType && extensionNodeInputTypeMap) {
+        if (extensionNodeInputTypeMap[FilteringArgument.FILTER]) {
+          const extendedFilteringFields =
+            extensionNodeInputTypeMap[FilteringArgument.FILTER].fields;
+          nodeInputTypeMap[FilteringArgument.FILTER].fields.push(
+            ...extendedFilteringFields
+          );
+        }
+        if (extensionNodeInputTypeMap[OrderingArgument.ORDER_BY]) {
+          const extendedOrderingValues =
+            extensionNodeInputTypeMap[OrderingArgument.ORDER_BY].values;
+          nodeInputTypeMap[OrderingArgument.ORDER_BY].values.push(
+            ...extendedOrderingValues
+          );
+        }
       }
     }
   } else {
@@ -329,7 +337,7 @@ export const augmentNodeTypeFields = ({
     nodeInputTypeMap,
     propertyOutputFields,
     propertyInputValues,
-    isIgnoredType
+    isIgnoredType,
   ];
 };
 
@@ -347,13 +355,12 @@ const augmentNodeTypeField = ({
   outputType,
   nodeInputTypeMap,
   typeDefinitionMap,
+  typeExtensionDefinitionMap,
   generatedTypeMap,
   operationTypeMap,
   config,
   relationshipDirective,
   outputTypeWrappers,
-  isObjectExtension,
-  isInterfaceExtension
 }) => {
   const isUnionType = isUnionTypeDefinition({ definition: outputDefinition });
   fieldArguments = augmentNodeTypeFieldArguments({
@@ -363,21 +370,13 @@ const augmentNodeTypeField = ({
     outputType,
     outputTypeWrappers,
     typeDefinitionMap,
-    config
+    config,
   });
-  if (!isUnionType && !isObjectExtension && !isInterfaceExtension) {
+  if (!isUnionType) {
     if (
       relationshipDirective &&
       !isQueryTypeDefinition({ definition, operationTypeMap })
     ) {
-      nodeInputTypeMap = augmentNodeQueryArgumentTypes({
-        typeName,
-        fieldName,
-        outputType,
-        outputTypeWrappers,
-        nodeInputTypeMap,
-        config
-      });
       const relationshipName = getRelationName(relationshipDirective);
       const relationshipDirection = getRelationDirection(relationshipDirective);
       // Assume direction OUT
@@ -388,10 +387,18 @@ const augmentNodeTypeField = ({
         fromType = outputType;
         toType = temp;
       }
+      nodeInputTypeMap = augmentNodeQueryArgumentTypes({
+        typeName,
+        fieldName,
+        outputType,
+        outputTypeWrappers,
+        nodeInputTypeMap,
+        config,
+      });
       [
         typeDefinitionMap,
         generatedTypeMap,
-        operationTypeMap
+        operationTypeMap,
       ] = augmentRelationshipMutationAPI({
         typeName,
         fieldName,
@@ -400,9 +407,10 @@ const augmentNodeTypeField = ({
         toType,
         relationshipName,
         typeDefinitionMap,
+        typeExtensionDefinitionMap,
         generatedTypeMap,
         operationTypeMap,
-        config
+        config,
       });
     }
   }
@@ -411,7 +419,7 @@ const augmentNodeTypeField = ({
     nodeInputTypeMap,
     typeDefinitionMap,
     generatedTypeMap,
-    operationTypeMap
+    operationTypeMap,
   ];
 };
 
@@ -433,7 +441,7 @@ const augmentNodeTypeAPI = ({
   typeExtensionDefinitionMap,
   generatedTypeMap,
   operationTypeMap,
-  config
+  config,
 }) => {
   if (!isUnionType) {
     [operationTypeMap, generatedTypeMap] = augmentNodeMutationAPI({
@@ -444,14 +452,14 @@ const augmentNodeTypeAPI = ({
       generatedTypeMap,
       operationTypeMap,
       typeExtensionDefinitionMap,
-      config
+      config,
     });
     generatedTypeMap = buildNodeSelectionInputType({
       definition,
       typeName,
       propertyInputValues,
       generatedTypeMap,
-      config
+      config,
     });
   }
   [operationTypeMap, generatedTypeMap] = augmentNodeQueryAPI({
@@ -467,7 +475,7 @@ const augmentNodeTypeAPI = ({
     typeExtensionDefinitionMap,
     generatedTypeMap,
     operationTypeMap,
-    config
+    config,
   });
   return [typeDefinitionMap, generatedTypeMap, operationTypeMap];
 };
@@ -483,7 +491,7 @@ const buildNodeSelectionInputType = ({
   typeName,
   propertyInputValues,
   generatedTypeMap,
-  config
+  config,
 }) => {
   const mutationTypeName = OperationType.MUTATION;
   const mutationTypeNameLower = mutationTypeName.toLowerCase();
@@ -493,7 +501,7 @@ const buildNodeSelectionInputType = ({
     if (primaryKey) {
       const primaryKeyName = primaryKey.name.value;
       const primaryKeyInputConfig = propertyInputValues.find(
-        field => field.name === primaryKeyName
+        (field) => field.name === primaryKeyName
       );
       if (primaryKeyInputConfig) {
         generatedTypeMap[propertyInputName] = buildInputObjectType({
@@ -504,11 +512,11 @@ const buildNodeSelectionInputType = ({
               type: buildNamedType({
                 name: primaryKeyInputConfig.type.name,
                 wrappers: {
-                  [TypeWrappers.NON_NULL_NAMED_TYPE]: true
-                }
-              })
-            })
-          ]
+                  [TypeWrappers.NON_NULL_NAMED_TYPE]: true,
+                },
+              }),
+            }),
+          ],
         });
       }
     }
