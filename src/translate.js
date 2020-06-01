@@ -2447,9 +2447,12 @@ const translateFilterArgument = ({
     innerSchemaType = schema.getType(typeName);
   }
   // build path for parameter data for current filter field
-  const parameterPath = `${
-    parentParamPath ? parentParamPath : filterParam
-  }.${fieldName}`;
+  const parameterPath = buildParamaterPathExpression({
+    parentParamPath,
+    filterParam,
+    fieldName,
+    filterOperationType
+  });
   // short-circuit evaluation: predicate used to skip a field
   // if processing a list of objects that possibly contain different arguments
   const nullFieldPredicate = decideNullSkippingPredicate({
@@ -2504,6 +2507,7 @@ const parseFilterArgumentName = fieldName => {
     '_in',
     '_not_in',
     '_contains',
+    '_contains_i',
     '_not_contains',
     '_starts_with',
     '_not_starts_with',
@@ -2553,6 +2557,24 @@ const parseFilterArgumentName = fieldName => {
     name: fieldName,
     type: filterType
   };
+};
+
+const buildParamaterPathExpression = ({
+  parentParamPath,
+  filterParam,
+  fieldName,
+  filterOperationType
+}) => {
+  // build path for parameter data for current filter field
+  const parameterPath = `${
+    parentParamPath ? parentParamPath : filterParam
+  }.${fieldName}`;
+  // may need to call expression on path value depending on filter type
+  if (filterOperationType.slice(-2) === '_i') {
+    // case insensitive
+    return `toLower(${parameterPath})`;
+  }
+  return parameterPath;
 };
 
 const translateScalarFilter = ({
@@ -2638,6 +2660,8 @@ const buildOperatorExpression = ({
       return `NOT ${propertyPath} IN`;
     case 'contains':
       return `${propertyPath} CONTAINS`;
+    case 'contains_i':
+      return `toLower(${propertyPath}) CONTAINS`;
     case 'not_contains':
       return `NOT ${propertyPath} CONTAINS`;
     case 'starts_with':

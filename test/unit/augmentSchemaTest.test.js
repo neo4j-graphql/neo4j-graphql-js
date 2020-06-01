@@ -311,6 +311,7 @@ test.cb('Test augmented schema', t => {
       movieId_in: [ID!]
       movieId_not_in: [ID!]
       movieId_contains: ID
+      movieId_contains_i: ID
       movieId_not_contains: ID
       movieId_starts_with: ID
       movieId_not_starts_with: ID
@@ -321,6 +322,7 @@ test.cb('Test augmented schema', t => {
       title_in: [String!]
       title_not_in: [String!]
       title_contains: String
+      title_contains_i: String
       title_not_contains: String
       title_starts_with: String
       title_not_starts_with: String
@@ -331,6 +333,7 @@ test.cb('Test augmented schema', t => {
       someprefix_title_with_underscores_in: [String!]
       someprefix_title_with_underscores_not_in: [String!]
       someprefix_title_with_underscores_contains: String
+      someprefix_title_with_underscores_contains_i: String
       someprefix_title_with_underscores_not_contains: String
       someprefix_title_with_underscores_starts_with: String
       someprefix_title_with_underscores_not_starts_with: String
@@ -357,6 +360,7 @@ test.cb('Test augmented schema', t => {
       plot_in: [String!]
       plot_not_in: [String!]
       plot_contains: String
+      plot_contains_i: String
       plot_not_contains: String
       plot_starts_with: String
       plot_not_starts_with: String
@@ -367,6 +371,7 @@ test.cb('Test augmented schema', t => {
       poster_in: [String!]
       poster_not_in: [String!]
       poster_contains: String
+      poster_contains_i: String
       poster_not_contains: String
       poster_starts_with: String
       poster_not_starts_with: String
@@ -436,6 +441,7 @@ test.cb('Test augmented schema', t => {
       extensionScalar_in: [String!]
       extensionScalar_not_in: [String!]
       extensionScalar_contains: String
+      extensionScalar_contains_i: String
       extensionScalar_not_contains: String
       extensionScalar_starts_with: String
       extensionScalar_not_starts_with: String
@@ -459,6 +465,7 @@ test.cb('Test augmented schema', t => {
       name_in: [String!]
       name_not_in: [String!]
       name_contains: String
+      name_contains_i: String
       name_not_contains: String
       name_starts_with: String
       name_not_starts_with: String
@@ -482,6 +489,7 @@ test.cb('Test augmented schema', t => {
       userId_in: [ID!]
       userId_not_in: [ID!]
       userId_contains: ID
+      userId_contains_i: ID
       userId_not_contains: ID
       userId_starts_with: ID
       userId_not_starts_with: ID
@@ -492,6 +500,7 @@ test.cb('Test augmented schema', t => {
       name_in: [String!]
       name_not_in: [String!]
       name_contains: String
+      name_contains_i: String
       name_not_contains: String
       name_starts_with: String
       name_not_starts_with: String
@@ -518,6 +527,7 @@ test.cb('Test augmented schema', t => {
       extensionScalar_in: [String!]
       extensionScalar_not_in: [String!]
       extensionScalar_contains: String
+      extensionScalar_contains_i: String
       extensionScalar_not_contains: String
       extensionScalar_starts_with: String
       extensionScalar_not_starts_with: String
@@ -533,6 +543,7 @@ test.cb('Test augmented schema', t => {
       name_in: [String!]
       name_not_in: [String!]
       name_contains: String
+      name_contains_i: String
       name_not_contains: String
       name_starts_with: String
       name_not_starts_with: String
@@ -650,6 +661,7 @@ test.cb('Test augmented schema', t => {
       userId_in: [ID!]
       userId_not_in: [ID!]
       userId_contains: ID
+      userId_contains_i: ID
       userId_not_contains: ID
       userId_starts_with: ID
       userId_not_starts_with: ID
@@ -660,6 +672,7 @@ test.cb('Test augmented schema', t => {
       name_in: [String!]
       name_not_in: [String!]
       name_contains: String
+      name_contains_i: String
       name_not_contains: String
       name_starts_with: String
       name_not_starts_with: String
@@ -694,6 +707,7 @@ test.cb('Test augmented schema', t => {
       extensionScalar_in: [String!]
       extensionScalar_not_in: [String!]
       extensionScalar_contains: String
+      extensionScalar_contains_i: String
       extensionScalar_not_contains: String
       extensionScalar_starts_with: String
       extensionScalar_not_starts_with: String
@@ -1251,6 +1265,7 @@ test.cb('Test augmented schema', t => {
       name_in: [String!]
       name_not_in: [String!]
       name_contains: String
+      name_contains_i: String
       name_not_contains: String
       name_starts_with: String
       name_not_starts_with: String
@@ -1284,6 +1299,7 @@ test.cb('Test augmented schema', t => {
       userId_in: [ID!]
       userId_not_in: [ID!]
       userId_contains: ID
+      userId_contains_i: ID
       userId_not_contains: ID
       userId_starts_with: ID
       userId_not_starts_with: ID
@@ -1294,6 +1310,7 @@ test.cb('Test augmented schema', t => {
       name_in: [String!]
       name_not_in: [String!]
       name_contains: String
+      name_contains_i: String
       name_not_contains: String
       name_starts_with: String
       name_not_starts_with: String
@@ -1336,6 +1353,7 @@ test.cb('Test augmented schema', t => {
       name_in: [String!]
       name_not_in: [String!]
       name_contains: String
+      name_contains_i: String
       name_not_contains: String
       name_starts_with: String
       name_not_starts_with: String
@@ -1446,6 +1464,7 @@ test.cb('Test augmented schema', t => {
       id_in: [ID!]
       id_not_in: [ID!]
       id_contains: ID
+      id_contains_i: ID
       id_not_contains: ID
       id_starts_with: ID
       id_not_starts_with: ID
@@ -1456,6 +1475,7 @@ test.cb('Test augmented schema', t => {
       type_in: [String!]
       type_not_in: [String!]
       type_contains: String
+      type_contains_i: String
       type_not_contains: String
       type_starts_with: String
       type_not_starts_with: String
@@ -1466,6 +1486,7 @@ test.cb('Test augmented schema', t => {
       make_in: [String!]
       make_not_in: [String!]
       make_contains: String
+      make_contains_i: String
       make_not_contains: String
       make_starts_with: String
       make_not_starts_with: String
@@ -1532,6 +1553,7 @@ test.cb('Test augmented schema', t => {
       id_in: [ID!]
       id_not_in: [ID!]
       id_contains: ID
+      id_contains_i: ID
       id_not_contains: ID
       id_starts_with: ID
       id_not_starts_with: ID
@@ -1542,6 +1564,7 @@ test.cb('Test augmented schema', t => {
       type_in: [String!]
       type_not_in: [String!]
       type_contains: String
+      type_contains_i: String
       type_not_contains: String
       type_starts_with: String
       type_not_starts_with: String
@@ -1552,6 +1575,7 @@ test.cb('Test augmented schema', t => {
       make_in: [String!]
       make_not_in: [String!]
       make_contains: String
+      make_contains_i: String
       make_not_contains: String
       make_starts_with: String
       make_not_starts_with: String
@@ -1570,6 +1594,7 @@ test.cb('Test augmented schema', t => {
       smell_in: [String!]
       smell_not_in: [String!]
       smell_contains: String
+      smell_contains_i: String
       smell_not_contains: String
       smell_starts_with: String
       smell_not_starts_with: String
@@ -1628,6 +1653,7 @@ test.cb('Test augmented schema', t => {
       id_in: [ID!]
       id_not_in: [ID!]
       id_contains: ID
+      id_contains_i: ID
       id_not_contains: ID
       id_starts_with: ID
       id_not_starts_with: ID
@@ -1638,6 +1664,7 @@ test.cb('Test augmented schema', t => {
       type_in: [String!]
       type_not_in: [String!]
       type_contains: String
+      type_contains_i: String
       type_not_contains: String
       type_starts_with: String
       type_not_starts_with: String
@@ -1648,6 +1675,7 @@ test.cb('Test augmented schema', t => {
       make_in: [String!]
       make_not_in: [String!]
       make_contains: String
+      make_contains_i: String
       make_not_contains: String
       make_starts_with: String
       make_not_starts_with: String
@@ -1712,6 +1740,7 @@ test.cb('Test augmented schema', t => {
       userId_in: [ID!]
       userId_not_in: [ID!]
       userId_contains: ID
+      userId_contains_i: ID
       userId_not_contains: ID
       userId_starts_with: ID
       userId_not_starts_with: ID
@@ -1722,6 +1751,7 @@ test.cb('Test augmented schema', t => {
       name_in: [String!]
       name_not_in: [String!]
       name_contains: String
+      name_contains_i: String
       name_not_contains: String
       name_starts_with: String
       name_not_starts_with: String
@@ -1748,6 +1778,7 @@ test.cb('Test augmented schema', t => {
       extensionScalar_in: [String!]
       extensionScalar_not_in: [String!]
       extensionScalar_contains: String
+      extensionScalar_contains_i: String
       extensionScalar_not_contains: String
       extensionScalar_starts_with: String
       extensionScalar_not_starts_with: String
@@ -1792,6 +1823,7 @@ test.cb('Test augmented schema', t => {
       id_in: [ID!]
       id_not_in: [ID!]
       id_contains: ID
+      id_contains_i: ID
       id_not_contains: ID
       id_starts_with: ID
       id_not_starts_with: ID
@@ -3044,6 +3076,7 @@ test.cb('Test augmented schema', t => {
       userId_in: [String!]
       userId_not_in: [String!]
       userId_contains: String
+      userId_contains_i: String
       userId_not_contains: String
       userId_starts_with: String
       userId_not_starts_with: String
