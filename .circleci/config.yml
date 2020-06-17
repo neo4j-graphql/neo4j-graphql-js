@@ -149,6 +149,16 @@ references:
       NEO4J_VERSION: '4.0.6'
       APOC_VERSION: '4.0.0.15'
       DATASTORE_VERSION: '4_0'
+  env_neo4j40_3ce: &env_neo4j40_3ce
+      NEO4J_DIST: 'community'
+      NEO4J_VERSION: '4.0.3'
+      APOC_VERSION: '4.0.0.15'
+      DATASTORE_VERSION: '4_0'
+  env_neo4j40_3ee: &env_neo4j40_3ee
+      NEO4J_DIST: 'enterprise'
+      NEO4J_VERSION: '4.0.3'
+      APOC_VERSION: '4.0.0.15'
+      DATASTORE_VERSION: '4_0'
 
   install_neo4j_steps: &install_neo4j_steps
     - checkout
@@ -203,6 +213,16 @@ jobs:
     docker: *node10
     environment: *env_neo4j40ee
     steps: *install_neo4j_steps
+    
+  install_neo4j40_3ee:
+    docker: *node10
+    environment: *env_neo4j40_3ee
+    steps: *install_neo4j_steps
+    
+  install_neo4j40_3ce:
+    docker: *node10
+    environment: *env_neo4j40_3ce
+    steps: *install_neo4j_steps    
 
   # Node 8
   install_for_node8:
@@ -273,6 +293,16 @@ jobs:
     docker: *node10
     environment: *env_neo4j40ee
     steps: *run_tests_steps
+  
+  neo4j40_3ee_node10:
+    docker: *node10
+    environment: *env_neo4j40_3ee
+    steps: *run_tests_steps
+    
+  neo4j40_3ce_node10:
+    docker: *node10
+    environment: *env_neo4j40_3ee
+    steps: *run_tests_steps
 
 workflows:
   version: 2
@@ -286,6 +316,8 @@ workflows:
       - install_neo4j35ee
       - install_neo4j40ce
       - install_neo4j40ee
+      - install_neo4j40_3ce
+      - install_neo4j40_3ee
 
       - neo4j34ee_node8:
           requires:
@@ -335,4 +367,12 @@ workflows:
       - neo4j40ee_node10:
           requires:
             - install_neo4j40ee
+            - install_for_node10
+      - neo4j40_3ee_node10:
+          requires:
+            - install_neo4j40_3ee
+            - install_for_node10
+      - neo4j40_3ce_node10:
+          requires:
+            - install_neo4j40_3ce
             - install_for_node10
