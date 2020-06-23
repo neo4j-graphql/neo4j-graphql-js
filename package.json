@@ -10,6 +10,7 @@
     "start-typedefs": "nodemon ./example/apollo-server/movies-typedefs.js --exec babel-node -e js",
     "start-interface": "DEBUG=neo4j-graphql.js nodemon ./example/apollo-server/interface-union-example.js --exec babel-node -e js",
     "start-gateway": "nodemon ./example/apollo-federation/gateway.js --exec babel-node -e js",
+    "start-bookmark-example": "nodemon ./example/apollo-server/bookmarks.js --exec babel-node -e js",
     "build": "babel src --presets @babel/preset-env --out-dir dist",
     "build-with-sourcemaps": "babel src --presets @babel/preset-env --out-dir dist --source-maps",
     "precommit": "lint-staged",
