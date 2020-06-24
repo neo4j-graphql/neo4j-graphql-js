@@ -55,7 +55,7 @@ export const testSchema = `
     releases: [DateTime]
     customField: String @neo4j_ignore
   }
-  
+
   extend type Movie {
     currentUserId(strArg: String): String
       @cypher(
@@ -112,6 +112,7 @@ export const testSchema = `
     userId_in: [ID!]
     userId_not_in: [ID!]
     userId_contains: ID
+    userId_contains_i: ID
     userId_not_contains: ID
     userId_starts_with: ID
     userId_not_starts_with: ID
@@ -122,6 +123,7 @@ export const testSchema = `
     name_in: [String!]
     name_not_in: [String!]
     name_contains: String
+    name_contains_i: String
     name_not_contains: String
     name_starts_with: String
     name_not_starts_with: String
@@ -403,6 +405,7 @@ export const testSchema = `
     id_in: [ID!]
     id_not_in: [ID!]
     id_contains: ID
+    id_contains_i: ID
     id_not_contains: ID
     id_starts_with: ID
     id_not_starts_with: ID
@@ -413,6 +416,7 @@ export const testSchema = `
     type_in: [String!]
     type_not_in: [String!]
     type_contains: String
+    type_contains_i: String
     type_not_contains: String
     type_starts_with: String
     type_not_starts_with: String
@@ -423,6 +427,7 @@ export const testSchema = `
     make_in: [String!]
     make_not_in: [String!]
     make_contains: String
+    make_contains_i: String
     make_not_contains: String
     make_starts_with: String
     make_not_starts_with: String
@@ -529,7 +534,7 @@ export const testSchema = `
     query: QueryA
     subscription: SubscriptionC
   }
-  
+
   extend schema {
     mutation: Mutation
   }

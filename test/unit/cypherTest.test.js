@@ -524,6 +524,22 @@ test('Cypher subquery filters', t => {
   ]);
 });
 
+test('cypher query filters with case insensitive filter', t => {
+  const graphQLQuery = `
+  {
+    Movie(filter: {title_contains_i: "river"}) {
+      title
+    }
+  }
+  `,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`:\`u_user-id\`:\`newMovieLabel\`) WHERE (toLower(\`movie\`.title) CONTAINS toLower($filter.title_contains_i)) RETURN \`movie\` { .title } AS \`movie\``;
+
+  t.plan(1);
+  return Promise.all([
+    augmentedSchemaCypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery)
+  ]);
+});
+
 test('cypher subquery preserves case through filters', t => {
   const graphQLQuery = `
   {
