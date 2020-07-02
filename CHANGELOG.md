@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.14.2
+
+- [Fix for missing apollo-server dependency with apollo-server-lambda](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/439)
+
 ## 2.14.1
 
 - [Fix for inferSchema potentially generating invalid GraphQL type definitions](https://github.com/neo4j-graphql/neo4j-graphql-js/commit/19b576ffef6a09f435389d096c59c8f387b586c7)
