@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.14.3
+
+- [Add initial support for bookmarks](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/460)
+- [Improvements to temporal and spatial identity filters](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/466)
+- [Fix for issue with using relationship types with federated entities](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/441)
+
 ## 2.14.2
 
 - [Fix for missing apollo-server dependency with apollo-server-lambda](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/439)
