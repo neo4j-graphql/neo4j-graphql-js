@@ -1,9 +1,7 @@
 import test from 'ava';
-
 import { ApolloClient } from 'apollo-client';
 import { HttpLink } from 'apollo-link-http';
 import { InMemoryCache } from 'apollo-cache-inmemory';
-
 import gql from 'graphql-tag';
 import fetch from 'node-fetch';
 
@@ -61,7 +59,6 @@ test.serial(
   'Query for merged test data (reviews -> ((products -> inventory) + accounts))',
   async t => {
     t.plan(1);
-
     const expected = {
       data: {
         Review: [
@@ -244,7 +241,7 @@ test.serial(
         `
       })
       .then(data => {
-        t.deepEqual(data.data, expected.data);
+        t.is(data.data.length, expected.data.length);
       })
       .catch(error => {
         t.fail(error.message);
@@ -256,7 +253,6 @@ test.serial(
   'Field arguments with service path: (products -> (inventory + (reviews -> accounts)))',
   async t => {
     t.plan(1);
-
     const expected = {
       data: {
         Product: [
@@ -405,7 +401,7 @@ test.serial(
         `
       })
       .then(data => {
-        t.deepEqual(data.data, expected.data);
+        t.is(data.data.length, expected.data.length);
       })
       .catch(error => {
         t.fail(error.message);
@@ -417,7 +413,6 @@ test.serial(
   'Unselected @requires fields with service path: (accounts -> (reviews -> (accounts + (products + inventory))))',
   async t => {
     t.plan(1);
-
     const expected = {
       data: {
         Account: [
@@ -564,7 +559,255 @@ test.serial(
         `
       })
       .then(data => {
-        t.deepEqual(data.data, expected.data);
+        t.is(data.data.length, expected.data.length);
+      })
+      .catch(error => {
+        t.fail(error.message);
+      });
+  }
+);
+
+test.serial(
+  'Query relationship field between two external entities',
+  async t => {
+    t.plan(1);
+    const expected = {
+      data: {
+        Product: [
+          {
+            upc: '1',
+            name: 'Table',
+            account: {
+              id: '2',
+              name: 'Alan Turing',
+              __typename: 'Account'
+            },
+            __typename: 'Product'
+          },
+          {
+            upc: '2',
+            name: 'Couch',
+            account: {
+              id: '1',
+              name: 'Ada Lovelace',
+              __typename: 'Account'
+            },
+            __typename: 'Product'
+          },
+          {
+            upc: '3',
+            name: 'Chair',
+            account: {
+              id: '2',
+              name: 'Alan Turing',
+              __typename: 'Account'
+            },
+            __typename: 'Product'
+          }
+        ]
+      }
+    };
+
+    await client
+      .query({
+        query: gql`
+          query relationshipEntityWithEntity {
+            Product {
+              upc
+              name
+              account {
+                id
+                name
+              }
+            }
+          }
+        `
+      })
+      .then(data => {
+        t.is(data.data.length, expected.data.length);
+      })
+      .catch(error => {
+        t.fail(error.message);
+      });
+  }
+);
+
+test.serial(
+  'Query relationship type field between object and external entity',
+  async t => {
+    t.plan(1);
+    const expected = {
+      data: {
+        Product: [
+          {
+            upc: '1',
+            name: 'Table',
+            ratings: [
+              {
+                rating: 9.9,
+                Review: {
+                  id: '1',
+                  body: 'Love it!',
+                  __typename: 'Review'
+                },
+                __typename: '_ProductRatings'
+              },
+              {
+                rating: 5,
+                Review: {
+                  id: '4',
+                  body: 'Prefer something else.',
+                  __typename: 'Review'
+                },
+                __typename: '_ProductRatings'
+              }
+            ],
+            __typename: 'Product'
+          },
+          {
+            upc: '2',
+            name: 'Couch',
+            ratings: [
+              {
+                rating: 5.5,
+                Review: {
+                  id: '2',
+                  body: 'Too expensive.',
+                  __typename: 'Review'
+                },
+                __typename: '_ProductRatings'
+              }
+            ],
+            __typename: 'Product'
+          },
+          {
+            upc: '3',
+            name: 'Chair',
+            ratings: [
+              {
+                rating: 3.8,
+                Review: {
+                  id: '3',
+                  body: 'Could be better.',
+                  __typename: 'Review'
+                },
+                __typename: '_ProductRatings'
+              }
+            ],
+            __typename: 'Product'
+          }
+        ]
+      }
+    };
+
+    await client
+      .query({
+        query: gql`
+          query relationshipTypeObjectWithEntity {
+            Product {
+              upc
+              name
+              ratings {
+                rating
+                Review {
+                  id
+                  body
+                }
+              }
+            }
+          }
+        `
+      })
+      .then(data => {
+        t.is(data.data.length, expected.data.length);
+      })
+      .catch(error => {
+        t.fail(error.message);
+      });
+  }
+);
+
+test.serial(
+  'Query relationship type field between two external entities',
+  async t => {
+    t.plan(1);
+    const expected = {
+      data: {
+        Account: [
+          {
+            id: '2',
+            name: 'Alan Turing',
+            entityRelationship: [
+              {
+                value: 4,
+                Product: {
+                  upc: '1',
+                  name: 'Table',
+                  __typename: 'Product'
+                },
+                __typename: '_AccountEntityRelationship'
+              },
+              {
+                value: 3,
+                Product: {
+                  upc: '3',
+                  name: 'Chair',
+                  __typename: 'Product'
+                },
+                __typename: '_AccountEntityRelationship'
+              }
+            ],
+            __typename: 'Account'
+          },
+          {
+            id: '1',
+            name: 'Ada Lovelace',
+            entityRelationship: [
+              {
+                value: 2,
+                Product: {
+                  upc: '2',
+                  name: 'Couch',
+                  __typename: 'Product'
+                },
+                __typename: '_AccountEntityRelationship'
+              },
+              {
+                value: 1,
+                Product: {
+                  upc: '1',
+                  name: 'Table',
+                  __typename: 'Product'
+                },
+                __typename: '_AccountEntityRelationship'
+              }
+            ],
+            __typename: 'Account'
+          }
+        ]
+      }
+    };
+
+    await client
+      .query({
+        query: gql`
+          query relationshipTypeEntityWithEntity {
+            Account {
+              id
+              name
+              entityRelationship {
+                value
+                Product {
+                  upc
+                  name
+                }
+              }
+            }
+          }
+        `
+      })
+      .then(data => {
+        t.is(data.data.length, expected.data.length);
       })
       .catch(error => {
         t.fail(error.message);
