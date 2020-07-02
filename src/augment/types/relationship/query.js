@@ -6,7 +6,7 @@ import {
   FilteringArgument,
   buildFilters,
   buildQueryFieldArguments,
-  buildQueryFilteringInputType,
+  buildQueryFilteringInputType
 } from '../../input-values';
 import { buildRelationDirective } from '../../directives';
 import {
@@ -15,9 +15,8 @@ import {
   buildName,
   buildNamedType,
   buildObjectType,
-  buildInputValue,
+  buildInputValue
 } from '../../ast';
-import { isExternalTypeExtension } from '../../../federation';
 
 /**
  * An enum describing which arguments are implemented for
@@ -26,7 +25,7 @@ import { isExternalTypeExtension } from '../../../federation';
 const RelationshipQueryArgument = {
   // ...PagingArgument,
   // ...OrderingArgument,
-  ...FilteringArgument,
+  ...FilteringArgument
 };
 
 /**
@@ -42,7 +41,6 @@ export const augmentRelationshipQueryAPI = ({
   fromType,
   toType,
   typeDefinitionMap,
-  typeExtensionDefinitionMap,
   generatedTypeMap,
   nodeInputTypeMap,
   relationshipInputTypeMap,
@@ -50,7 +48,7 @@ export const augmentRelationshipQueryAPI = ({
   config,
   relationshipName,
   fieldType,
-  propertyOutputFields,
+  propertyOutputFields
 }) => {
   const queryTypeNameLower = OperationType.QUERY.toLowerCase();
   if (
@@ -59,7 +57,7 @@ export const augmentRelationshipQueryAPI = ({
     const relatedType = decideRelatedType({
       typeName,
       fromType,
-      toType,
+      toType
     });
     if (
       validateRelationTypeDirectedFields(
@@ -83,12 +81,12 @@ export const augmentRelationshipQueryAPI = ({
         config,
         relationshipName,
         fieldType,
-        propertyOutputFields,
+        propertyOutputFields
       });
       [
         fieldArguments,
         generatedTypeMap,
-        nodeInputTypeMap,
+        nodeInputTypeMap
       ] = augmentRelationshipTypeFieldInput({
         typeName,
         relatedType,
@@ -98,12 +96,11 @@ export const augmentRelationshipQueryAPI = ({
         fromType,
         toType,
         typeDefinitionMap,
-        typeExtensionDefinitionMap,
         generatedTypeMap,
         nodeInputTypeMap,
         relationshipInputTypeMap,
         outputTypeWrappers,
-        config,
+        config
       });
     }
   }
@@ -112,7 +109,7 @@ export const augmentRelationshipQueryAPI = ({
     fieldArguments,
     typeDefinitionMap,
     generatedTypeMap,
-    nodeInputTypeMap,
+    nodeInputTypeMap
   ];
 };
 
@@ -131,58 +128,42 @@ const augmentRelationshipTypeFieldInput = ({
   fromType,
   toType,
   typeDefinitionMap,
-  typeExtensionDefinitionMap,
   generatedTypeMap,
   nodeInputTypeMap,
   relationshipInputTypeMap,
   outputTypeWrappers,
-  config,
+  config
 }) => {
-  if (
-    !isExternalTypeExtension({
-      typeName: fromType,
-      typeMap: typeDefinitionMap,
-      typeExtensionDefinitionMap,
-    }) &&
-    !isExternalTypeExtension({
-      typeName: toType,
-      typeMap: typeDefinitionMap,
-      typeExtensionDefinitionMap,
-    })
-  ) {
-    const nodeFilteringFields =
-      nodeInputTypeMap[FilteringArgument.FILTER].fields;
-    let relationshipFilterTypeName = `_${typeName}${
-      outputType[0].toUpperCase() + outputType.substr(1)
-    }`;
-    // Assume outgoing relationship
-    if (fromType === toType) {
-      relationshipFilterTypeName = `_${outputType}Directions`;
-    }
-    nodeFilteringFields.push(
-      ...buildRelationshipFilters({
-        typeName,
-        fieldName,
-        outputType: `${relationshipFilterTypeName}Filter`,
-        relatedType: outputType,
-        outputTypeWrappers,
-        config,
-      })
-    );
-    [fieldArguments, generatedTypeMap] = augmentRelationshipTypeFieldArguments({
-      fieldArguments,
-      typeName,
-      fromType,
-      toType,
-      outputType,
-      relatedType,
-      relationshipFilterTypeName,
-      outputTypeWrappers,
-      typeDefinitionMap,
-      generatedTypeMap,
-      relationshipInputTypeMap,
-    });
+  const nodeFilteringFields = nodeInputTypeMap[FilteringArgument.FILTER].fields;
+  let relationshipFilterTypeName = `_${typeName}${outputType[0].toUpperCase() +
+    outputType.substr(1)}`;
+  // Assume outgoing relationship
+  if (fromType === toType) {
+    relationshipFilterTypeName = `_${outputType}Directions`;
   }
+  nodeFilteringFields.push(
+    ...buildRelationshipFilters({
+      typeName,
+      fieldName,
+      outputType: `${relationshipFilterTypeName}Filter`,
+      relatedType: outputType,
+      outputTypeWrappers,
+      config
+    })
+  );
+  [fieldArguments, generatedTypeMap] = augmentRelationshipTypeFieldArguments({
+    fieldArguments,
+    typeName,
+    fromType,
+    toType,
+    outputType,
+    relatedType,
+    relationshipFilterTypeName,
+    outputTypeWrappers,
+    typeDefinitionMap,
+    generatedTypeMap,
+    relationshipInputTypeMap
+  });
   return [fieldArguments, generatedTypeMap, nodeInputTypeMap];
 };
 
@@ -201,14 +182,14 @@ const augmentRelationshipTypeFieldArguments = ({
   outputTypeWrappers,
   typeDefinitionMap,
   generatedTypeMap,
-  relationshipInputTypeMap,
+  relationshipInputTypeMap
 }) => {
   if (fromType !== toType) {
     fieldArguments = buildQueryFieldArguments({
       argumentMap: RelationshipQueryArgument,
       fieldArguments,
       outputType: `${typeName}${outputType}`,
-      outputTypeWrappers,
+      outputTypeWrappers
     });
   } else {
     fieldArguments = [];
@@ -220,7 +201,7 @@ const augmentRelationshipTypeFieldArguments = ({
     relationshipFilterTypeName,
     generatedTypeMap,
     relationshipInputTypeMap,
-    typeDefinitionMap,
+    typeDefinitionMap
   });
   return [fieldArguments, generatedTypeMap];
 };
@@ -243,16 +224,15 @@ const transformRelationshipTypeFieldOutput = ({
   outputTypeWrappers,
   relationshipName,
   fieldType,
-  propertyOutputFields,
+  propertyOutputFields
 }) => {
-  const relationshipOutputName = `_${typeName}${
-    fieldName[0].toUpperCase() + fieldName.substr(1)
-  }`;
+  const relationshipOutputName = `_${typeName}${fieldName[0].toUpperCase() +
+    fieldName.substr(1)}`;
   const unwrappedType = unwrapNamedType({ type: fieldType });
   if (fromType === toType) {
     // Clear arguments on this field, given their distribution
     fieldType = buildNamedType({
-      name: `${relationshipOutputName}Directions`,
+      name: `${relationshipOutputName}Directions`
     });
   } else {
     // Output transform
@@ -269,7 +249,7 @@ const transformRelationshipTypeFieldOutput = ({
     relationshipName,
     relatedType,
     propertyOutputFields,
-    generatedTypeMap,
+    generatedTypeMap
   });
   return [fieldType, generatedTypeMap];
 };
@@ -284,7 +264,7 @@ export const buildRelationshipFilters = ({
   outputType,
   relatedType,
   outputTypeWrappers,
-  config,
+  config
 }) => {
   let filters = [];
   const queryTypeNameLower = OperationType.QUERY.toLowerCase();
@@ -302,10 +282,10 @@ export const buildRelationshipFilters = ({
         fieldConfig: {
           name: fieldName,
           type: {
-            name: outputType,
-          },
+            name: outputType
+          }
         },
-        filterTypes: ['not', 'in', 'not_in', 'some', 'none', 'single', 'every'],
+        filterTypes: ['not', 'in', 'not_in', 'some', 'none', 'single', 'every']
       });
     } else {
       filters = buildFilters({
@@ -313,10 +293,10 @@ export const buildRelationshipFilters = ({
         fieldConfig: {
           name: fieldName,
           type: {
-            name: outputType,
-          },
+            name: outputType
+          }
         },
-        filterTypes: ['not', 'in', 'not_in'],
+        filterTypes: ['not', 'in', 'not_in']
       });
     }
   }
@@ -332,29 +312,29 @@ export const buildNodeOutputFields = ({
   fromType,
   toType,
   args = [],
-  wrappers = {},
+  wrappers = {}
 }) => {
   return [
     buildField({
       name: buildName({
-        name: RelationshipDirectionField.FROM,
+        name: RelationshipDirectionField.FROM
       }),
       args,
       type: buildNamedType({
         name: fromType,
-        wrappers,
-      }),
+        wrappers
+      })
     }),
     buildField({
       name: buildName({
-        name: RelationshipDirectionField.TO,
+        name: RelationshipDirectionField.TO
       }),
       args,
       type: buildNamedType({
         name: toType,
-        wrappers,
-      }),
-    }),
+        wrappers
+      })
+    })
   ];
 };
 
@@ -372,19 +352,19 @@ const buildRelationshipFieldOutputTypes = ({
   relationshipName,
   relatedType,
   propertyOutputFields,
-  generatedTypeMap,
+  generatedTypeMap
 }) => {
   const relationTypeDirective = buildRelationDirective({
     relationshipName,
     fromType,
-    toType,
+    toType
   });
   if (fromType === toType) {
     fieldArguments = buildQueryFieldArguments({
       argumentMap: RelationshipQueryArgument,
       fieldArguments,
       outputType,
-      outputTypeWrappers,
+      outputTypeWrappers
     });
     const reflexiveOutputName = `${relationshipOutputName}Directions`;
     generatedTypeMap[reflexiveOutputName] = buildObjectType({
@@ -394,10 +374,10 @@ const buildRelationshipFieldOutputTypes = ({
         toType: relationshipOutputName,
         args: fieldArguments,
         wrappers: {
-          [TypeWrappers.LIST_TYPE]: true,
-        },
+          [TypeWrappers.LIST_TYPE]: true
+        }
       }),
-      directives: [relationTypeDirective],
+      directives: [relationTypeDirective]
     });
   }
   generatedTypeMap[relationshipOutputName] = buildObjectType({
@@ -407,11 +387,11 @@ const buildRelationshipFieldOutputTypes = ({
       buildField({
         name: buildName({ name: relatedType }),
         type: buildNamedType({
-          name: relatedType,
-        }),
-      }),
+          name: relatedType
+        })
+      })
     ],
-    directives: [relationTypeDirective],
+    directives: [relationTypeDirective]
   });
   return generatedTypeMap;
 };
@@ -428,7 +408,7 @@ const buildRelationshipSelectionArgumentInputTypes = ({
   relationshipFilterTypeName,
   generatedTypeMap,
   relationshipInputTypeMap,
-  typeDefinitionMap,
+  typeDefinitionMap
 }) => {
   const relationshipFilteringFields =
     relationshipInputTypeMap[FilteringArgument.FILTER].fields;
@@ -438,26 +418,26 @@ const buildRelationshipSelectionArgumentInputTypes = ({
     const reflexiveFilteringTypeName = `${relationshipFilterTypeName}Filter`;
     generatedTypeMap[reflexiveFilteringTypeName] = buildInputObjectType({
       name: buildName({
-        name: reflexiveFilteringTypeName,
+        name: reflexiveFilteringTypeName
       }),
       fields: buildNodeInputFields({
         fromType: relatedTypeFilterName,
-        toType: relatedTypeFilterName,
-      }),
+        toType: relatedTypeFilterName
+      })
     });
   }
   const relatedTypeFilteringField = buildInputValue({
     name: buildName({ name: relatedType }),
     type: buildNamedType({
-      name: `_${relatedType}Filter`,
-    }),
+      name: `_${relatedType}Filter`
+    })
   });
   relationshipFilteringFields.push(relatedTypeFilteringField);
   generatedTypeMap = buildQueryFilteringInputType({
     typeName: relatedTypeFilterName,
     typeDefinitionMap,
     generatedTypeMap,
-    inputTypeMap: relationshipInputTypeMap,
+    inputTypeMap: relationshipInputTypeMap
   });
   return generatedTypeMap;
 };
@@ -471,20 +451,20 @@ const buildNodeInputFields = ({ fromType, toType }) => {
   return [
     buildInputValue({
       name: buildName({
-        name: RelationshipDirectionField.FROM,
+        name: RelationshipDirectionField.FROM
       }),
       type: buildNamedType({
-        name: fromType,
-      }),
+        name: fromType
+      })
     }),
     buildInputValue({
       name: buildName({
-        name: RelationshipDirectionField.TO,
+        name: RelationshipDirectionField.TO
       }),
       type: buildNamedType({
-        name: toType,
-      }),
-    }),
+        name: toType
+      })
+    })
   ];
 };
 
