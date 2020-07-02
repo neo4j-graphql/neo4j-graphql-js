@@ -17,6 +17,7 @@ import {
   buildObjectType,
   buildInputValue
 } from '../../ast';
+import { isExternalTypeExtension } from '../../../federation';
 
 /**
  * An enum describing which arguments are implemented for
@@ -41,6 +42,7 @@ export const augmentRelationshipQueryAPI = ({
   fromType,
   toType,
   typeDefinitionMap,
+  typeExtensionDefinitionMap,
   generatedTypeMap,
   nodeInputTypeMap,
   relationshipInputTypeMap,
@@ -96,6 +98,7 @@ export const augmentRelationshipQueryAPI = ({
         fromType,
         toType,
         typeDefinitionMap,
+        typeExtensionDefinitionMap,
         generatedTypeMap,
         nodeInputTypeMap,
         relationshipInputTypeMap,
@@ -128,42 +131,57 @@ const augmentRelationshipTypeFieldInput = ({
   fromType,
   toType,
   typeDefinitionMap,
+  typeExtensionDefinitionMap,
   generatedTypeMap,
   nodeInputTypeMap,
   relationshipInputTypeMap,
   outputTypeWrappers,
   config
 }) => {
-  const nodeFilteringFields = nodeInputTypeMap[FilteringArgument.FILTER].fields;
-  let relationshipFilterTypeName = `_${typeName}${outputType[0].toUpperCase() +
-    outputType.substr(1)}`;
-  // Assume outgoing relationship
-  if (fromType === toType) {
-    relationshipFilterTypeName = `_${outputType}Directions`;
-  }
-  nodeFilteringFields.push(
-    ...buildRelationshipFilters({
-      typeName,
-      fieldName,
-      outputType: `${relationshipFilterTypeName}Filter`,
-      relatedType: outputType,
-      outputTypeWrappers,
-      config
+  if (
+    !isExternalTypeExtension({
+      typeName: fromType,
+      typeMap: typeDefinitionMap,
+      typeExtensionDefinitionMap
+    }) &&
+    !isExternalTypeExtension({
+      typeName: toType,
+      typeMap: typeDefinitionMap,
+      typeExtensionDefinitionMap
     })
-  );
-  [fieldArguments, generatedTypeMap] = augmentRelationshipTypeFieldArguments({
-    fieldArguments,
-    typeName,
-    fromType,
-    toType,
-    outputType,
-    relatedType,
-    relationshipFilterTypeName,
-    outputTypeWrappers,
-    typeDefinitionMap,
-    generatedTypeMap,
-    relationshipInputTypeMap
-  });
+  ) {
+    const nodeFilteringFields =
+      nodeInputTypeMap[FilteringArgument.FILTER].fields;
+    let relationshipFilterTypeName = `_${typeName}${outputType[0].toUpperCase() +
+      outputType.substr(1)}`;
+    // Assume outgoing relationship
+    if (fromType === toType) {
+      relationshipFilterTypeName = `_${outputType}Directions`;
+    }
+    nodeFilteringFields.push(
+      ...buildRelationshipFilters({
+        typeName,
+        fieldName,
+        outputType: `${relationshipFilterTypeName}Filter`,
+        relatedType: outputType,
+        outputTypeWrappers,
+        config
+      })
+    );
+    [fieldArguments, generatedTypeMap] = augmentRelationshipTypeFieldArguments({
+      fieldArguments,
+      typeName,
+      fromType,
+      toType,
+      outputType,
+      relatedType,
+      relationshipFilterTypeName,
+      outputTypeWrappers,
+      typeDefinitionMap,
+      generatedTypeMap,
+      relationshipInputTypeMap
+    });
+  }
   return [fieldArguments, generatedTypeMap, nodeInputTypeMap];
 };
 
