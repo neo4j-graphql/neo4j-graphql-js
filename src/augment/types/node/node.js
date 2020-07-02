@@ -1,4 +1,3 @@
-import { Kind } from 'graphql';
 import {
   augmentNodeQueryAPI,
   augmentNodeQueryArgumentTypes,
@@ -37,7 +36,9 @@ import {
   isNodeType,
   isRelationshipType,
   isQueryTypeDefinition,
-  isUnionTypeDefinition
+  isUnionTypeDefinition,
+  isObjectTypeExtensionDefinition,
+  isInterfaceTypeExtensionDefinition
 } from '../../types/types';
 import { getPrimaryKey } from '../../../utils';
 
@@ -69,9 +70,12 @@ export const augmentNodeType = ({
     if (typeExtensions.length) {
       typeExtensionDefinitionMap[typeName] = typeExtensions.map(extension => {
         let isIgnoredType = false;
-        const isObjectExtension = extension.kind === Kind.OBJECT_TYPE_EXTENSION;
-        const isInterfaceExtension =
-          extension.kind === Kind.INTERFACE_TYPE_EXTENSION;
+        const isObjectExtension = isObjectTypeExtensionDefinition({
+          definition: extension
+        });
+        const isInterfaceExtension = isInterfaceTypeExtensionDefinition({
+          definition: extension
+        });
         if (isObjectExtension || isInterfaceExtension) {
           [
             extensionNodeInputTypeMap,
@@ -82,6 +86,7 @@ export const augmentNodeType = ({
             typeName,
             definition: extension,
             typeDefinitionMap,
+            typeExtensionDefinitionMap,
             generatedTypeMap,
             operationTypeMap,
             nodeInputTypeMap: extensionNodeInputTypeMap,
@@ -110,6 +115,7 @@ export const augmentNodeType = ({
       isUnionType,
       isQueryType,
       typeDefinitionMap,
+      typeExtensionDefinitionMap,
       generatedTypeMap,
       operationTypeMap,
       nodeInputTypeMap,
@@ -178,6 +184,7 @@ export const augmentNodeTypeFields = ({
   isUnionType,
   isQueryType,
   typeDefinitionMap,
+  typeExtensionDefinitionMap,
   generatedTypeMap,
   operationTypeMap,
   nodeInputTypeMap = {},
@@ -205,10 +212,6 @@ export const augmentNodeTypeFields = ({
           values: []
         };
       }
-    }
-    if (fields === undefined) {
-      console.log('\ndefinition: ', definition);
-      console.log('fields: ', fields);
     }
     propertyOutputFields = fields.reduce((outputFields, field) => {
       let fieldType = field.type;
@@ -264,13 +267,14 @@ export const augmentNodeTypeFields = ({
             outputType,
             nodeInputTypeMap,
             typeDefinitionMap,
+            typeExtensionDefinitionMap,
             generatedTypeMap,
             operationTypeMap,
-            config,
             relationshipDirective,
             outputTypeWrappers,
             isObjectExtension,
-            isInterfaceExtension
+            isInterfaceExtension,
+            config
           });
         } else if (isRelationshipType({ definition: outputDefinition })) {
           [
@@ -292,8 +296,11 @@ export const augmentNodeTypeFields = ({
             outputDefinition,
             nodeInputTypeMap,
             typeDefinitionMap,
+            typeExtensionDefinitionMap,
             generatedTypeMap,
             operationTypeMap,
+            isObjectExtension,
+            isInterfaceExtension,
             config
           });
         }
@@ -305,21 +312,22 @@ export const augmentNodeTypeFields = ({
       });
       return outputFields;
     }, []);
-
-    if (!isQueryType && extensionNodeInputTypeMap) {
-      if (extensionNodeInputTypeMap[FilteringArgument.FILTER]) {
-        const extendedFilteringFields =
-          extensionNodeInputTypeMap[FilteringArgument.FILTER].fields;
-        nodeInputTypeMap[FilteringArgument.FILTER].fields.push(
-          ...extendedFilteringFields
-        );
-      }
-      if (extensionNodeInputTypeMap[OrderingArgument.ORDER_BY]) {
-        const extendedOrderingValues =
-          extensionNodeInputTypeMap[OrderingArgument.ORDER_BY].values;
-        nodeInputTypeMap[OrderingArgument.ORDER_BY].values.push(
-          ...extendedOrderingValues
-        );
+    if (!isObjectExtension && !isInterfaceExtension) {
+      if (!isQueryType && extensionNodeInputTypeMap) {
+        if (extensionNodeInputTypeMap[FilteringArgument.FILTER]) {
+          const extendedFilteringFields =
+            extensionNodeInputTypeMap[FilteringArgument.FILTER].fields;
+          nodeInputTypeMap[FilteringArgument.FILTER].fields.push(
+            ...extendedFilteringFields
+          );
+        }
+        if (extensionNodeInputTypeMap[OrderingArgument.ORDER_BY]) {
+          const extendedOrderingValues =
+            extensionNodeInputTypeMap[OrderingArgument.ORDER_BY].values;
+          nodeInputTypeMap[OrderingArgument.ORDER_BY].values.push(
+            ...extendedOrderingValues
+          );
+        }
       }
     }
   } else {
@@ -347,13 +355,12 @@ const augmentNodeTypeField = ({
   outputType,
   nodeInputTypeMap,
   typeDefinitionMap,
+  typeExtensionDefinitionMap,
   generatedTypeMap,
   operationTypeMap,
   config,
   relationshipDirective,
-  outputTypeWrappers,
-  isObjectExtension,
-  isInterfaceExtension
+  outputTypeWrappers
 }) => {
   const isUnionType = isUnionTypeDefinition({ definition: outputDefinition });
   fieldArguments = augmentNodeTypeFieldArguments({
@@ -365,19 +372,11 @@ const augmentNodeTypeField = ({
     typeDefinitionMap,
     config
   });
-  if (!isUnionType && !isObjectExtension && !isInterfaceExtension) {
+  if (!isUnionType) {
     if (
       relationshipDirective &&
       !isQueryTypeDefinition({ definition, operationTypeMap })
     ) {
-      nodeInputTypeMap = augmentNodeQueryArgumentTypes({
-        typeName,
-        fieldName,
-        outputType,
-        outputTypeWrappers,
-        nodeInputTypeMap,
-        config
-      });
       const relationshipName = getRelationName(relationshipDirective);
       const relationshipDirection = getRelationDirection(relationshipDirective);
       // Assume direction OUT
@@ -388,6 +387,14 @@ const augmentNodeTypeField = ({
         fromType = outputType;
         toType = temp;
       }
+      nodeInputTypeMap = augmentNodeQueryArgumentTypes({
+        typeName,
+        fieldName,
+        outputType,
+        outputTypeWrappers,
+        nodeInputTypeMap,
+        config
+      });
       [
         typeDefinitionMap,
         generatedTypeMap,
@@ -400,6 +407,7 @@ const augmentNodeTypeField = ({
         toType,
         relationshipName,
         typeDefinitionMap,
+        typeExtensionDefinitionMap,
         generatedTypeMap,
         operationTypeMap,
         config
