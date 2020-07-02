@@ -39,6 +39,7 @@ export const augmentRelationshipTypeField = ({
   outputDefinition,
   nodeInputTypeMap,
   typeDefinitionMap,
+  typeExtensionDefinitionMap,
   generatedTypeMap,
   operationTypeMap,
   outputType,
@@ -87,6 +88,7 @@ export const augmentRelationshipTypeField = ({
         fromType,
         toType,
         typeDefinitionMap,
+        typeExtensionDefinitionMap,
         generatedTypeMap,
         nodeInputTypeMap,
         relationshipInputTypeMap,
@@ -110,6 +112,7 @@ export const augmentRelationshipTypeField = ({
         propertyInputValues,
         propertyOutputFields,
         typeDefinitionMap,
+        typeExtensionDefinitionMap,
         generatedTypeMap,
         operationTypeMap,
         config
