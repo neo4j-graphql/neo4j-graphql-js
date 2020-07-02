@@ -439,7 +439,9 @@ export const buildFilters = ({ fieldName, fieldConfig, filterTypes = [] }) => {
           [TypeWrappers.LIST_TYPE]: true
         };
       } else if (isPointDistanceFilter) {
-        fieldConfig.type.name = `${Neo4jTypeName}${SpatialType.POINT}DistanceFilter`;
+        fieldConfig.type.name = `${Neo4jTypeName}${
+          SpatialType.POINT
+        }DistanceFilter`;
       }
       inputValues.push(
         buildInputValue({
