@@ -19,7 +19,6 @@ export const reviewsSchema = buildFederatedSchema([
         # Normal use of @relation field directive
         product: Product
           @relation(name: "REVIEW_OF", direction: OUT)
-        ratings: [Rating]
       }
 
       extend type Account @key(fields: "id") {
@@ -33,33 +32,12 @@ export const reviewsSchema = buildFederatedSchema([
             MATCH (this)-[:AUTHOR_OF]->(review:Review)
             RETURN count(review)
           `})
-        product: [Product] @relation(name: "PRODUCT_ACCOUNT", direction: IN)
-        entityRelationship: [EntityRelationship]
       }
 
       extend type Product @key(fields: "upc") {
         upc: String! @external
         reviews(body: String): [Review]
           @relation(name: "REVIEW_OF", direction: IN)
-        ratings: [Rating]
-        account(filter: LocalAccountFilter): [Account] @relation(name: "PRODUCT_ACCOUNT", direction: OUT)
-        entityRelationship: [EntityRelationship]
-      }
-
-      input LocalAccountFilter {
-        id_not: ID
-      }
-
-      type Rating @relation(name: "REVIEW_OF") {
-        from: Review
-        rating: Float
-        to: Product
-      }
-
-      type EntityRelationship @relation(name: "PRODUCT_ACCOUNT") {
-        from: Product
-        value: Int
-        to: Account
       }
 
       # Used in testing and for example of nested merge import
@@ -133,18 +111,7 @@ export const reviewsSchema = buildFederatedSchema([
               weight: product.weight,
               inStock: product.inStock
             }
-            MERGE (p)<-[:REVIEW_OF {
-              rating: review.rating
-            }]-(r)
-          WITH *
-          
-            UNWIND review.author AS account
-              MATCH (a:Account {
-                id: account.id
-              })
-              MERGE (p)-[:PRODUCT_ACCOUNT {
-                value: product.value
-              }]->(a)
+            MERGE (p)<-[:REVIEW_OF]-(r)
           WITH *
 
           // Merge Review.product.metrics / .objectCompoundKey / .listCompoundKey
@@ -177,7 +144,7 @@ export const reviewsSchema = buildFederatedSchema([
         async MergeSeedData(object, params, context, resolveInfo) {
           const data = seedData.data['Review'];
           return await neo4jgraphql(object, { data }, context, resolveInfo);
-        },
+        }
       },
       Account: {
         // Generated
@@ -198,13 +165,13 @@ export const reviewsSchema = buildFederatedSchema([
         //     ...data
         //   };
         // }
-      },
+      }
     },
     config: {
-      isFederated: true,
+      isFederated: true
       // debug: true
-    },
-  }),
+    }
+  })
 ]);
 
 export const reviews = [
@@ -212,24 +179,24 @@ export const reviews = [
     id: '1',
     authorID: '1',
     product: { upc: '1' },
-    body: 'Love it!',
+    body: 'Love it!'
   },
   {
     id: '2',
     authorID: '1',
     product: { upc: '2' },
-    body: 'Too expensive.',
+    body: 'Too expensive.'
   },
   {
     id: '3',
     authorID: '2',
     product: { upc: '3' },
-    body: 'Could be better.',
+    body: 'Could be better.'
   },
   {
     id: '4',
     authorID: '2',
     product: { upc: '1' },
-    body: 'Prefer something else.',
-  },
+    body: 'Prefer something else.'
+  }
 ];
