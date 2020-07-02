@@ -19,6 +19,7 @@ export const reviewsSchema = buildFederatedSchema([
         # Normal use of @relation field directive
         product: Product
           @relation(name: "REVIEW_OF", direction: OUT)
+        ratings: [Rating]
       }
 
       extend type Account @key(fields: "id") {
@@ -32,12 +33,33 @@ export const reviewsSchema = buildFederatedSchema([
             MATCH (this)-[:AUTHOR_OF]->(review:Review)
             RETURN count(review)
           `})
+        product: [Product] @relation(name: "PRODUCT_ACCOUNT", direction: IN)
+        entityRelationship: [EntityRelationship]
       }
 
       extend type Product @key(fields: "upc") {
         upc: String! @external
         reviews(body: String): [Review]
           @relation(name: "REVIEW_OF", direction: IN)
+        ratings: [Rating]
+        account(filter: LocalAccountFilter): [Account] @relation(name: "PRODUCT_ACCOUNT", direction: OUT)
+        entityRelationship: [EntityRelationship]
+      }
+
+      input LocalAccountFilter {
+        id_not: ID
+      }
+
+      type Rating @relation(name: "REVIEW_OF") {
+        from: Review
+        rating: Float
+        to: Product
+      }
+
+      type EntityRelationship @relation(name: "PRODUCT_ACCOUNT") {
+        from: Product
+        value: Int
+        to: Account
       }
 
       # Used in testing and for example of nested merge import
@@ -111,9 +133,18 @@ export const reviewsSchema = buildFederatedSchema([
               weight: product.weight,
               inStock: product.inStock
             }
-            MERGE (p)<-[:REVIEW_OF]-(r)
+            MERGE (p)<-[:REVIEW_OF {
+              rating: review.rating
+            }]-(r)
           WITH *
-
+            UNWIND review.author AS account
+              MATCH (a:Account {
+                id: account.id
+              })
+              MERGE (p)-[:PRODUCT_ACCOUNT {
+                value: product.value
+              }]->(a)
+          WITH *
           // Merge Review.product.metrics / .objectCompoundKey / .listCompoundKey
           UNWIND product.metrics AS metric
             MERGE (m:Metric {
