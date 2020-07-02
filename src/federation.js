@@ -7,8 +7,9 @@ import {
   buildVariableDefinition,
   buildVariable,
   buildArgument,
-  buildOperationDefinition
+  buildOperationDefinition,
 } from './augment/ast';
+import { isObjectTypeDefinition } from './augment/types/types';
 import { checkRequestError } from './auth';
 import { neo4jgraphql } from './index';
 
@@ -19,15 +20,15 @@ const CONTEXT_KEYS_PATH = `__${NEO4j_GRAPHQL_SERVICE}`;
 const SERVICE_VARIABLE = '_SERVICE_';
 
 const SERVICE_FIELDS = {
-  ENTITIES: '_entities'
+  ENTITIES: '_entities',
 };
 
 const SERVICE_FIELD_ARGUMENTS = {
-  REPRESENTATIONS: 'representations'
+  REPRESENTATIONS: 'representations',
 };
 
 const INTROSPECTION_FIELD = {
-  TYPENAME: '__typename'
+  TYPENAME: '__typename',
 };
 
 const REFERENCE_RESOLVER_NAME = '__resolveReference';
@@ -37,13 +38,13 @@ export const executeFederatedOperation = async ({
   params,
   context,
   resolveInfo,
-  debugFlag
+  debugFlag,
 }) => {
   const requestError = checkRequestError(context);
   if (requestError) throw new Error(requestError);
   const [typeName, parentTypeData] = parseRepresentation({
     object,
-    resolveInfo
+    resolveInfo,
   });
   const schema = resolveInfo.schema;
   const entityType = schema.getType(typeName);
@@ -52,14 +53,14 @@ export const executeFederatedOperation = async ({
     typeName,
     entityType,
     resolveInfo,
-    schema
+    schema,
   });
   const operationContext = setOperationContext({
     typeName,
     parentTypeData,
     params,
     context,
-    resolveInfo
+    resolveInfo,
   });
   const data = await neo4jgraphql(
     {},
@@ -81,7 +82,7 @@ export const setCompoundKeyFilter = ({ params = {}, compoundKeys = {} }) => {
         // compound key for a list field of an object type uses AND filter
         if (Array.isArray(value)) {
           filterArgument[fieldName] = {
-            AND: value
+            AND: value,
           };
         } else {
           filterArgument[fieldName] = value;
@@ -110,7 +111,7 @@ export const getFederatedOperationData = ({ context }) => {
     scalarKeys,
     compoundKeys,
     requiredData,
-    params
+    params,
   };
 };
 
@@ -119,17 +120,17 @@ const setOperationContext = ({
   context = {},
   parentTypeData = {},
   params = {},
-  resolveInfo
+  resolveInfo,
 }) => {
   const entityType = resolveInfo.schema.getType(typeName);
   const extensionASTNodes = entityType.extensionASTNodes;
   const keyFieldMap = buildTypeExtensionKeyFieldMap({
     entityType,
-    extensionASTNodes
+    extensionASTNodes,
   });
   const requiredFieldMap = getTypeExtensionRequiredFieldMap({
     parentTypeData,
-    keyFieldMap
+    keyFieldMap,
   });
   const [keyData, requiredData] = Object.entries(parentTypeData).reduce(
     ([keyData, requiredData], [name, value]) => {
@@ -151,7 +152,7 @@ const parseRepresentation = ({ object = {}, resolveInfo }) => {
   if (!typeName) {
     // Set default
     typeName = getEntityTypeName({
-      resolveInfo
+      resolveInfo,
     });
   }
   // Error if still no typeName
@@ -161,7 +162,7 @@ const parseRepresentation = ({ object = {}, resolveInfo }) => {
   // Prepare provided key and required field data
   // for translation, removing nulls
   const parentTypeData = getDefinedKeys({
-    fieldData
+    fieldData,
   });
   return [typeName, parentTypeData];
 };
@@ -194,7 +195,7 @@ const getDefinedKeys = ({ fieldData = {}, parentTypeData = {} }) => {
       // _not filter translation
       if (!isList && typeof value === 'object') {
         const definedKeys = getDefinedKeys({
-          fieldData: value
+          fieldData: value,
         });
         // Keep it if at least one key has a valid value
         if (definedKeys && Object.values(definedKeys).length) {
@@ -210,20 +211,20 @@ const getDefinedKeys = ({ fieldData = {}, parentTypeData = {} }) => {
 
 const buildTypeExtensionKeyFieldMap = ({
   extensionASTNodes = [],
-  entityType = {}
+  entityType = {},
 }) => {
   const entityTypeAst = entityType.astNode;
   const entityTypeDirectives = entityTypeAst.directives || [];
   let keyFieldMap = getFederationDirectiveFields({
     directives: entityTypeDirectives,
-    directiveName: 'key'
+    directiveName: 'key',
   });
-  extensionASTNodes.map(type => {
+  extensionASTNodes.map((type) => {
     const directives = type.directives;
     keyFieldMap = getFederationDirectiveFields({
       directives,
       keyFieldMap,
-      directiveName: 'key'
+      directiveName: 'key',
     });
   });
   return keyFieldMap;
@@ -231,12 +232,12 @@ const buildTypeExtensionKeyFieldMap = ({
 
 const getTypeExtensionRequiredFieldMap = ({
   parentTypeData = {},
-  keyFieldMap = {}
+  keyFieldMap = {},
 }) => {
   // Infers that any entity field value which is not a key
   // is provided given the use of a @requires directive
   let requiredFieldMap = {};
-  Object.keys(parentTypeData).forEach(fieldName => {
+  Object.keys(parentTypeData).forEach((fieldName) => {
     if (keyFieldMap[fieldName] === undefined) {
       requiredFieldMap[fieldName] = true;
     }
@@ -247,20 +248,20 @@ const getTypeExtensionRequiredFieldMap = ({
 const getFederationDirectiveFields = ({
   directives = [],
   keyFieldMap = {},
-  directiveName = ''
+  directiveName = '',
 }) => {
-  directives.forEach(directive => {
+  directives.forEach((directive) => {
     const name = directive.name.value;
     if (name === directiveName) {
       const fields = directive.arguments.find(
-        arg => arg.name.value === 'fields'
+        (arg) => arg.name.value === 'fields'
       );
       if (fields) {
         const fieldsArgument = fields.value.value;
         const parsedKeyFields = parse(`{ ${fieldsArgument} }`);
         const definitions = parsedKeyFields.definitions;
         const selections = definitions[0].selectionSet.selections;
-        selections.forEach(field => {
+        selections.forEach((field) => {
           const name = field.name.value;
           keyFieldMap[name] = true;
         });
@@ -285,7 +286,7 @@ const buildArguments = ({ entityType, parentTypeData, resolveInfo }) => {
   const [
     keyFieldArguments,
     keyVariableDefinitions,
-    keyVariableValues
+    keyVariableValues,
   ] = Object.values(entityFields).reduce(
     ([keyFieldArguments, keyVariableDefinitions, keyVariableValues], field) => {
       const astNode = field.astNode;
@@ -299,11 +300,11 @@ const buildArguments = ({ entityType, parentTypeData, resolveInfo }) => {
           keyFieldArguments.push(
             buildArgument({
               name: buildName({
-                name
+                name,
               }),
               value: buildName({
-                name: `$${serviceVariableName}`
-              })
+                name: `$${serviceVariableName}`,
+              }),
             })
           );
           // keyVariableDefinitions are not currently used but could be
@@ -312,10 +313,10 @@ const buildArguments = ({ entityType, parentTypeData, resolveInfo }) => {
             buildVariableDefinition({
               variable: buildVariable({
                 name: buildName({
-                  name: serviceVariableName
-                })
+                  name: serviceVariableName,
+                }),
               }),
-              type
+              type,
             })
           );
         }
@@ -326,7 +327,7 @@ const buildArguments = ({ entityType, parentTypeData, resolveInfo }) => {
   );
   const mergedVariableValues = {
     ...keyVariableValues,
-    ...variableValues
+    ...variableValues,
   };
   variableDefinitions.unshift(...keyVariableDefinitions);
   return [keyFieldArguments, variableDefinitions, mergedVariableValues];
@@ -342,12 +343,12 @@ const getSelectionSet = ({ typeName, keyFieldArguments, resolveInfo }) => {
       selections: [
         buildFieldSelection({
           name: buildName({
-            name: typeName
+            name: typeName,
           }),
           args: keyFieldArguments,
-          selectionSet
-        })
-      ]
+          selectionSet,
+        }),
+      ],
     });
   }
   if (!Object.keys(selectionSet).length) {
@@ -363,32 +364,32 @@ const buildResolveInfo = ({
   typeName,
   entityType,
   resolveInfo,
-  schema
+  schema,
 }) => {
   const fieldName = typeName;
   const path = { key: typeName };
   const [
     keyFieldArguments,
     variableDefinitions,
-    variableValues
+    variableValues,
   ] = buildArguments({
     entityType,
     parentTypeData,
-    resolveInfo
+    resolveInfo,
   });
   const selectionSet = getSelectionSet({
     typeName,
     keyFieldArguments,
-    resolveInfo
+    resolveInfo,
   });
   const fieldNodes = selectionSet.selections;
   const operation = buildOperationDefinition({
     operation: 'query',
     name: buildName({
-      name: NEO4j_GRAPHQL_SERVICE
+      name: NEO4j_GRAPHQL_SERVICE,
     }),
     selectionSet,
-    variableDefinitions
+    variableDefinitions,
   });
   // Assume a list query and extract in decideOperationPayload
   const returnType = new GraphQLList(entityType);
@@ -399,7 +400,7 @@ const buildResolveInfo = ({
     path,
     schema,
     operation,
-    variableValues
+    variableValues,
     // Unused by neo4jgraphql translation
     // parentType: undefined,
     // fragments: undefined,
@@ -419,14 +420,14 @@ const decideOperationPayload = ({ data }) => {
 export const generateBaseTypeReferenceResolvers = ({
   queryResolvers = {},
   resolvers = {},
-  config
+  config,
 }) => {
-  Object.keys(queryResolvers).forEach(typeName => {
+  Object.keys(queryResolvers).forEach((typeName) => {
     // Initialize type resolver object
     if (resolvers[typeName] === undefined) resolvers[typeName] = {};
     // If not provided
     if (resolvers[typeName][REFERENCE_RESOLVER_NAME] === undefined) {
-      resolvers[typeName][REFERENCE_RESOLVER_NAME] = async function(
+      resolvers[typeName][REFERENCE_RESOLVER_NAME] = async function (
         object,
         context,
         resolveInfo
@@ -451,9 +452,9 @@ export const generateNonLocalTypeExtensionReferenceResolvers = ({
   queryTypeName,
   mutationTypeName,
   subscriptionTypeName,
-  config
+  config,
 }) => {
-  Object.keys(typeExtensionDefinitionMap).forEach(typeName => {
+  Object.keys(typeExtensionDefinitionMap).forEach((typeName) => {
     if (
       typeName !== queryTypeName &&
       typeName !== mutationTypeName &&
@@ -463,14 +464,14 @@ export const generateNonLocalTypeExtensionReferenceResolvers = ({
         isExternalTypeExtension({
           typeName,
           typeMap: generatedTypeMap,
-          typeExtensionDefinitionMap
+          typeExtensionDefinitionMap,
         })
       ) {
         // Initialize type resolver object
         if (resolvers[typeName] === undefined) resolvers[typeName] = {};
         // If not provided
         if (resolvers[typeName][REFERENCE_RESOLVER_NAME] === undefined) {
-          resolvers[typeName][REFERENCE_RESOLVER_NAME] = async function(
+          resolvers[typeName][REFERENCE_RESOLVER_NAME] = async function (
             object,
             context,
             resolveInfo
@@ -486,7 +487,7 @@ export const generateNonLocalTypeExtensionReferenceResolvers = ({
               // Data for this entity type possibly previously fetched from other services
               ...object,
               // Data now fetched for the fields this service resolves for the entity type
-              ...entityData
+              ...entityData,
             };
           };
         }
@@ -499,7 +500,7 @@ export const generateNonLocalTypeExtensionReferenceResolvers = ({
 export const isExternalTypeExtension = ({
   typeName = '',
   typeMap = {},
-  typeExtensionDefinitionMap = {}
+  typeExtensionDefinitionMap = {},
 }) => {
   // const definition = typeMap[typeName];
   // Base type, if existent, is expected to be an object type in typeMap,

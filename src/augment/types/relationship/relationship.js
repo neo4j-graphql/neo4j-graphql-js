@@ -4,25 +4,25 @@ import {
   unwrapNamedType,
   isPropertyTypeField,
   getFieldType,
-  toSnakeCase
+  toSnakeCase,
 } from '../../fields';
 import {
   FilteringArgument,
-  augmentInputTypePropertyFields
+  augmentInputTypePropertyFields,
 } from '../../input-values';
 import {
   DirectiveDefinition,
   getDirective,
   isIgnoredField,
   isCypherField,
-  getDirectiveArgument
+  getDirectiveArgument,
 } from '../../directives';
 import { isOperationTypeDefinition } from '../../types/types';
 
 // An enum for the semantics of the directed fields of a relationship type
 export const RelationshipDirectionField = {
   FROM: 'from',
-  TO: 'to'
+  TO: 'to',
 };
 
 /**
@@ -44,42 +44,42 @@ export const augmentRelationshipTypeField = ({
   operationTypeMap,
   outputType,
   config,
-  outputTypeWrappers
+  outputTypeWrappers,
 }) => {
   if (!isOperationTypeDefinition({ definition, operationTypeMap })) {
     if (!isCypherField({ directives: fieldDirectives })) {
       const relationshipTypeDirective = getDirective({
         directives: outputDefinition.directives,
-        name: DirectiveDefinition.RELATION
+        name: DirectiveDefinition.RELATION,
       });
       let relationshipName = getDirectiveArgument({
         directive: relationshipTypeDirective,
-        name: 'name'
+        name: 'name',
       });
       relationshipName = decideDefaultRelationshipName({
         relationshipTypeDirective,
         outputType,
-        relationshipName
+        relationshipName,
       });
       let [
         fromType,
         toType,
         propertyInputValues,
         propertyOutputFields,
-        relationshipInputTypeMap
+        relationshipInputTypeMap,
       ] = augmentRelationshipTypeFields({
         typeName,
         outputType,
         outputDefinition,
         typeDefinitionMap,
-        config
+        config,
       });
       [
         fieldType,
         fieldArguments,
         typeDefinitionMap,
         generatedTypeMap,
-        nodeInputTypeMap
+        nodeInputTypeMap,
       ] = augmentRelationshipQueryAPI({
         typeName,
         fieldArguments,
@@ -96,12 +96,12 @@ export const augmentRelationshipTypeField = ({
         config,
         relationshipName,
         fieldType,
-        propertyOutputFields
+        propertyOutputFields,
       });
       [
         typeDefinitionMap,
         generatedTypeMap,
-        operationTypeMap
+        operationTypeMap,
       ] = augmentRelationshipMutationAPI({
         typeName,
         fieldName,
@@ -115,7 +115,7 @@ export const augmentRelationshipTypeField = ({
         typeExtensionDefinitionMap,
         generatedTypeMap,
         operationTypeMap,
-        config
+        config,
       });
     }
   }
@@ -125,7 +125,7 @@ export const augmentRelationshipTypeField = ({
     nodeInputTypeMap,
     typeDefinitionMap,
     generatedTypeMap,
-    operationTypeMap
+    operationTypeMap,
   ];
 };
 
@@ -139,16 +139,16 @@ const augmentRelationshipTypeFields = ({
   outputType,
   outputDefinition,
   typeDefinitionMap,
-  config
+  config,
 }) => {
   const fields = outputDefinition.fields;
   const fromTypeName = getFieldType({
     fields,
-    name: RelationshipDirectionField.FROM
+    name: RelationshipDirectionField.FROM,
   });
   const toTypeName = getFieldType({
     fields,
-    name: RelationshipDirectionField.TO
+    name: RelationshipDirectionField.TO,
   });
   let relatedTypeFilterName = `_${typeName}${outputType}Filter`;
   if (fromTypeName === toTypeName) {
@@ -157,8 +157,8 @@ const augmentRelationshipTypeFields = ({
   let relationshipInputTypeMap = {
     [FilteringArgument.FILTER]: {
       name: relatedTypeFilterName,
-      fields: []
-    }
+      fields: [],
+    },
   };
   const propertyInputValues = [];
   const propertyOutputFields = fields.reduce((outputFields, field) => {
@@ -173,7 +173,7 @@ const augmentRelationshipTypeFields = ({
       if (
         isPropertyTypeField({
           kind: outputKind,
-          type: outputType
+          type: outputType,
         })
       ) {
         relationshipInputTypeMap = augmentInputTypePropertyFields({
@@ -182,12 +182,12 @@ const augmentRelationshipTypeFields = ({
           fieldDirectives,
           outputType,
           outputKind,
-          outputTypeWrappers
+          outputTypeWrappers,
         });
         propertyInputValues.push({
           name: fieldName,
           type: unwrappedType,
-          directives: fieldDirectives
+          directives: fieldDirectives,
         });
         outputFields.push(field);
       }
@@ -199,7 +199,7 @@ const augmentRelationshipTypeFields = ({
     toTypeName,
     propertyInputValues,
     propertyOutputFields,
-    relationshipInputTypeMap
+    relationshipInputTypeMap,
   ];
 };
 
@@ -210,7 +210,7 @@ const augmentRelationshipTypeFields = ({
 const decideDefaultRelationshipName = ({
   relationshipTypeDirective,
   outputType,
-  relationshipName
+  relationshipName,
 }) => {
   if (relationshipTypeDirective && !relationshipName) {
     relationshipName = toSnakeCase(outputType);

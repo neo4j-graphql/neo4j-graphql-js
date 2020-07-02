@@ -1,26 +1,28 @@
 import test from 'ava';
+
 import { ApolloClient } from 'apollo-client';
 import { HttpLink } from 'apollo-link-http';
 import { InMemoryCache } from 'apollo-cache-inmemory';
+
 import gql from 'graphql-tag';
 import fetch from 'node-fetch';
 
 let client;
 
-test.before(async t => {
+test.before(async (t) => {
   client = new ApolloClient({
     link: new HttpLink({ uri: 'http://localhost:4000', fetch: fetch }),
     cache: new InMemoryCache(),
     defaultOptions: {
       watchQuery: {
         fetchPolicy: 'no-cache',
-        errorPolicy: 'ignore'
+        errorPolicy: 'ignore',
       },
       query: {
         fetchPolicy: 'no-cache',
-        errorPolicy: 'all'
-      }
-    }
+        errorPolicy: 'all',
+      },
+    },
   });
   await client
     .mutate({
@@ -28,36 +30,36 @@ test.before(async t => {
         mutation {
           MergeSeedData
         }
-      `
+      `,
     })
-    .then(data => {
+    .then((data) => {
       return data;
     })
-    .catch(error => {
+    .catch((error) => {
       t.fail(error.message);
     });
 });
 
-test.after(async t => {
+test.after(async (t) => {
   await client
     .mutate({
       mutation: gql`
         mutation {
           DeleteSeedData
         }
-      `
+      `,
     })
-    .then(data => {
+    .then((data) => {
       return data;
     })
-    .catch(error => {
+    .catch((error) => {
       t.fail(error.message);
     });
 });
 
 test.serial(
   'Query for merged test data (reviews -> ((products -> inventory) + accounts))',
-  async t => {
+  async (t) => {
     t.plan(1);
     const expected = {
       data: {
@@ -77,33 +79,33 @@ test.serial(
                   id: '100',
                   metric: 1,
                   data: 2,
-                  __typename: 'Metric'
-                }
+                  __typename: 'Metric',
+                },
               ],
               objectCompoundKey: {
                 id: '100',
                 metric: 1,
                 data: 2,
-                __typename: 'Metric'
+                __typename: 'Metric',
               },
               listCompoundKey: [
                 {
                   id: '100',
                   metric: 1,
                   data: 2,
-                  __typename: 'Metric'
-                }
+                  __typename: 'Metric',
+                },
               ],
-              __typename: 'Product'
+              __typename: 'Product',
             },
             author: {
               id: '1',
               name: 'Ada Lovelace',
               username: '@ada',
               numberOfReviews: 2,
-              __typename: 'Account'
+              __typename: 'Account',
             },
-            __typename: 'Review'
+            __typename: 'Review',
           },
           {
             id: '2',
@@ -118,16 +120,16 @@ test.serial(
               metrics: [],
               objectCompoundKey: null,
               listCompoundKey: [],
-              __typename: 'Product'
+              __typename: 'Product',
             },
             author: {
               id: '1',
               name: 'Ada Lovelace',
               username: '@ada',
               numberOfReviews: 2,
-              __typename: 'Account'
+              __typename: 'Account',
             },
-            __typename: 'Review'
+            __typename: 'Review',
           },
           {
             id: '3',
@@ -142,16 +144,16 @@ test.serial(
               metrics: [],
               objectCompoundKey: null,
               listCompoundKey: [],
-              __typename: 'Product'
+              __typename: 'Product',
             },
             author: {
               id: '2',
               name: 'Alan Turing',
               username: '@complete',
               numberOfReviews: 2,
-              __typename: 'Account'
+              __typename: 'Account',
             },
-            __typename: 'Review'
+            __typename: 'Review',
           },
           {
             id: '4',
@@ -168,36 +170,36 @@ test.serial(
                   id: '100',
                   metric: 1,
                   data: 2,
-                  __typename: 'Metric'
-                }
+                  __typename: 'Metric',
+                },
               ],
               objectCompoundKey: {
                 id: '100',
                 metric: 1,
                 data: 2,
-                __typename: 'Metric'
+                __typename: 'Metric',
               },
               listCompoundKey: [
                 {
                   id: '100',
                   metric: 1,
                   data: 2,
-                  __typename: 'Metric'
-                }
+                  __typename: 'Metric',
+                },
               ],
-              __typename: 'Product'
+              __typename: 'Product',
             },
             author: {
               id: '2',
               name: 'Alan Turing',
               username: '@complete',
               numberOfReviews: 2,
-              __typename: 'Account'
+              __typename: 'Account',
             },
-            __typename: 'Review'
-          }
-        ]
-      }
+            __typename: 'Review',
+          },
+        ],
+      },
     };
 
     await client
@@ -238,12 +240,12 @@ test.serial(
               }
             }
           }
-        `
+        `,
       })
-      .then(data => {
+      .then((data) => {
         t.is(data.data.length, expected.data.length);
       })
-      .catch(error => {
+      .catch((error) => {
         t.fail(error.message);
       });
   }
@@ -251,7 +253,7 @@ test.serial(
 
 test.serial(
   'Field arguments with service path: (products -> (inventory + (reviews -> accounts)))',
-  async t => {
+  async (t) => {
     t.plan(1);
     const expected = {
       data: {
@@ -272,14 +274,14 @@ test.serial(
                   name: 'Alan Turing',
                   username: '@complete',
                   numberOfReviews: 2,
-                  __typename: 'Account'
+                  __typename: 'Account',
                 },
-                __typename: 'Review'
-              }
+                __typename: 'Review',
+              },
             ],
             metrics: [],
             listCompoundKey: [],
-            __typename: 'Product'
+            __typename: 'Product',
           },
           {
             upc: '2',
@@ -297,14 +299,14 @@ test.serial(
                   name: 'Ada Lovelace',
                   username: '@ada',
                   numberOfReviews: 2,
-                  __typename: 'Account'
+                  __typename: 'Account',
                 },
-                __typename: 'Review'
-              }
+                __typename: 'Review',
+              },
             ],
             metrics: [],
             listCompoundKey: [],
-            __typename: 'Product'
+            __typename: 'Product',
           },
           {
             upc: '1',
@@ -322,9 +324,9 @@ test.serial(
                   name: 'Alan Turing',
                   username: '@complete',
                   numberOfReviews: 2,
-                  __typename: 'Account'
+                  __typename: 'Account',
                 },
-                __typename: 'Review'
+                __typename: 'Review',
               },
               {
                 id: '1',
@@ -334,31 +336,31 @@ test.serial(
                   name: 'Ada Lovelace',
                   username: '@ada',
                   numberOfReviews: 2,
-                  __typename: 'Account'
+                  __typename: 'Account',
                 },
-                __typename: 'Review'
-              }
+                __typename: 'Review',
+              },
             ],
             metrics: [
               {
                 id: '100',
                 metric: 1,
                 data: 2,
-                __typename: 'Metric'
-              }
+                __typename: 'Metric',
+              },
             ],
             listCompoundKey: [
               {
                 id: '100',
                 metric: 1,
                 data: 2,
-                __typename: 'Metric'
-              }
+                __typename: 'Metric',
+              },
             ],
-            __typename: 'Product'
-          }
-        ]
-      }
+            __typename: 'Product',
+          },
+        ],
+      },
     };
 
     await client
@@ -398,12 +400,12 @@ test.serial(
               }
             }
           }
-        `
+        `,
       })
-      .then(data => {
+      .then((data) => {
         t.is(data.data.length, expected.data.length);
       })
-      .catch(error => {
+      .catch((error) => {
         t.fail(error.message);
       });
   }
@@ -411,7 +413,7 @@ test.serial(
 
 test.serial(
   'Unselected @requires fields with service path: (accounts -> (reviews -> (accounts + (products + inventory))))',
-  async t => {
+  async (t) => {
     t.plan(1);
     const expected = {
       data: {
@@ -428,7 +430,7 @@ test.serial(
                   id: '1',
                   name: 'Ada Lovelace',
                   username: '@ada',
-                  __typename: 'Account'
+                  __typename: 'Account',
                 },
                 product: {
                   upc: '1',
@@ -439,12 +441,12 @@ test.serial(
                     {
                       id: '100',
                       data: 2,
-                      __typename: 'Metric'
-                    }
+                      __typename: 'Metric',
+                    },
                   ],
-                  __typename: 'Product'
+                  __typename: 'Product',
                 },
-                __typename: 'Review'
+                __typename: 'Review',
               },
               {
                 id: '2',
@@ -453,7 +455,7 @@ test.serial(
                   id: '1',
                   name: 'Ada Lovelace',
                   username: '@ada',
-                  __typename: 'Account'
+                  __typename: 'Account',
                 },
                 product: {
                   upc: '2',
@@ -461,13 +463,13 @@ test.serial(
                   inStock: false,
                   shippingEstimate: 0,
                   metrics: [],
-                  __typename: 'Product'
+                  __typename: 'Product',
                 },
-                __typename: 'Review'
-              }
+                __typename: 'Review',
+              },
             ],
             numberOfReviews: 2,
-            __typename: 'Account'
+            __typename: 'Account',
           },
           {
             id: '2',
@@ -481,7 +483,7 @@ test.serial(
                   id: '2',
                   name: 'Alan Turing',
                   username: '@complete',
-                  __typename: 'Account'
+                  __typename: 'Account',
                 },
                 product: {
                   upc: '3',
@@ -489,9 +491,9 @@ test.serial(
                   inStock: true,
                   shippingEstimate: 25,
                   metrics: [],
-                  __typename: 'Product'
+                  __typename: 'Product',
                 },
-                __typename: 'Review'
+                __typename: 'Review',
               },
               {
                 id: '4',
@@ -500,7 +502,7 @@ test.serial(
                   id: '2',
                   name: 'Alan Turing',
                   username: '@complete',
-                  __typename: 'Account'
+                  __typename: 'Account',
                 },
                 product: {
                   upc: '1',
@@ -511,19 +513,19 @@ test.serial(
                     {
                       id: '100',
                       data: 2,
-                      __typename: 'Metric'
-                    }
+                      __typename: 'Metric',
+                    },
                   ],
-                  __typename: 'Product'
+                  __typename: 'Product',
                 },
-                __typename: 'Review'
-              }
+                __typename: 'Review',
+              },
             ],
             numberOfReviews: 2,
-            __typename: 'Account'
-          }
-        ]
-      }
+            __typename: 'Account',
+          },
+        ],
+      },
     };
 
     await client
@@ -556,12 +558,12 @@ test.serial(
               numberOfReviews
             }
           }
-        `
+        `,
       })
-      .then(data => {
+      .then((data) => {
         t.is(data.data.length, expected.data.length);
       })
-      .catch(error => {
+      .catch((error) => {
         t.fail(error.message);
       });
   }
@@ -569,7 +571,7 @@ test.serial(
 
 test.serial(
   'Query relationship field between two external entities',
-  async t => {
+  async (t) => {
     t.plan(1);
     const expected = {
       data: {
@@ -580,9 +582,9 @@ test.serial(
             account: {
               id: '2',
               name: 'Alan Turing',
-              __typename: 'Account'
+              __typename: 'Account',
             },
-            __typename: 'Product'
+            __typename: 'Product',
           },
           {
             upc: '2',
@@ -590,9 +592,9 @@ test.serial(
             account: {
               id: '1',
               name: 'Ada Lovelace',
-              __typename: 'Account'
+              __typename: 'Account',
             },
-            __typename: 'Product'
+            __typename: 'Product',
           },
           {
             upc: '3',
@@ -600,12 +602,12 @@ test.serial(
             account: {
               id: '2',
               name: 'Alan Turing',
-              __typename: 'Account'
+              __typename: 'Account',
             },
-            __typename: 'Product'
-          }
-        ]
-      }
+            __typename: 'Product',
+          },
+        ],
+      },
     };
 
     await client
@@ -621,12 +623,12 @@ test.serial(
               }
             }
           }
-        `
+        `,
       })
-      .then(data => {
+      .then((data) => {
         t.is(data.data.length, expected.data.length);
       })
-      .catch(error => {
+      .catch((error) => {
         t.fail(error.message);
       });
   }
@@ -634,7 +636,7 @@ test.serial(
 
 test.serial(
   'Query relationship type field between object and external entity',
-  async t => {
+  async (t) => {
     t.plan(1);
     const expected = {
       data: {
@@ -648,21 +650,21 @@ test.serial(
                 Review: {
                   id: '1',
                   body: 'Love it!',
-                  __typename: 'Review'
+                  __typename: 'Review',
                 },
-                __typename: '_ProductRatings'
+                __typename: '_ProductRatings',
               },
               {
                 rating: 5,
                 Review: {
                   id: '4',
                   body: 'Prefer something else.',
-                  __typename: 'Review'
+                  __typename: 'Review',
                 },
-                __typename: '_ProductRatings'
-              }
+                __typename: '_ProductRatings',
+              },
             ],
-            __typename: 'Product'
+            __typename: 'Product',
           },
           {
             upc: '2',
@@ -673,12 +675,12 @@ test.serial(
                 Review: {
                   id: '2',
                   body: 'Too expensive.',
-                  __typename: 'Review'
+                  __typename: 'Review',
                 },
-                __typename: '_ProductRatings'
-              }
+                __typename: '_ProductRatings',
+              },
             ],
-            __typename: 'Product'
+            __typename: 'Product',
           },
           {
             upc: '3',
@@ -689,15 +691,15 @@ test.serial(
                 Review: {
                   id: '3',
                   body: 'Could be better.',
-                  __typename: 'Review'
+                  __typename: 'Review',
                 },
-                __typename: '_ProductRatings'
-              }
+                __typename: '_ProductRatings',
+              },
             ],
-            __typename: 'Product'
-          }
-        ]
-      }
+            __typename: 'Product',
+          },
+        ],
+      },
     };
 
     await client
@@ -716,12 +718,12 @@ test.serial(
               }
             }
           }
-        `
+        `,
       })
-      .then(data => {
+      .then((data) => {
         t.is(data.data.length, expected.data.length);
       })
-      .catch(error => {
+      .catch((error) => {
         t.fail(error.message);
       });
   }
@@ -729,7 +731,7 @@ test.serial(
 
 test.serial(
   'Query relationship type field between two external entities',
-  async t => {
+  async (t) => {
     t.plan(1);
     const expected = {
       data: {
@@ -743,21 +745,21 @@ test.serial(
                 Product: {
                   upc: '1',
                   name: 'Table',
-                  __typename: 'Product'
+                  __typename: 'Product',
                 },
-                __typename: '_AccountEntityRelationship'
+                __typename: '_AccountEntityRelationship',
               },
               {
                 value: 3,
                 Product: {
                   upc: '3',
                   name: 'Chair',
-                  __typename: 'Product'
+                  __typename: 'Product',
                 },
-                __typename: '_AccountEntityRelationship'
-              }
+                __typename: '_AccountEntityRelationship',
+              },
             ],
-            __typename: 'Account'
+            __typename: 'Account',
           },
           {
             id: '1',
@@ -768,24 +770,24 @@ test.serial(
                 Product: {
                   upc: '2',
                   name: 'Couch',
-                  __typename: 'Product'
+                  __typename: 'Product',
                 },
-                __typename: '_AccountEntityRelationship'
+                __typename: '_AccountEntityRelationship',
               },
               {
                 value: 1,
                 Product: {
                   upc: '1',
                   name: 'Table',
-                  __typename: 'Product'
+                  __typename: 'Product',
                 },
-                __typename: '_AccountEntityRelationship'
-              }
+                __typename: '_AccountEntityRelationship',
+              },
             ],
-            __typename: 'Account'
-          }
-        ]
-      }
+            __typename: 'Account',
+          },
+        ],
+      },
     };
 
     await client
@@ -804,12 +806,12 @@ test.serial(
               }
             }
           }
-        `
+        `,
       })
-      .then(data => {
+      .then((data) => {
         t.is(data.data.length, expected.data.length);
       })
-      .catch(error => {
+      .catch((error) => {
         t.fail(error.message);
       });
   }

@@ -137,6 +137,7 @@ export const reviewsSchema = buildFederatedSchema([
               rating: review.rating
             }]-(r)
           WITH *
+          
             UNWIND review.author AS account
               MATCH (a:Account {
                 id: account.id
@@ -145,6 +146,7 @@ export const reviewsSchema = buildFederatedSchema([
                 value: product.value
               }]->(a)
           WITH *
+
           // Merge Review.product.metrics / .objectCompoundKey / .listCompoundKey
           UNWIND product.metrics AS metric
             MERGE (m:Metric {
@@ -175,7 +177,7 @@ export const reviewsSchema = buildFederatedSchema([
         async MergeSeedData(object, params, context, resolveInfo) {
           const data = seedData.data['Review'];
           return await neo4jgraphql(object, { data }, context, resolveInfo);
-        }
+        },
       },
       Account: {
         // Generated
@@ -196,13 +198,13 @@ export const reviewsSchema = buildFederatedSchema([
         //     ...data
         //   };
         // }
-      }
+      },
     },
     config: {
-      isFederated: true
+      isFederated: true,
       // debug: true
-    }
-  })
+    },
+  }),
 ]);
 
 export const reviews = [
@@ -210,24 +212,24 @@ export const reviews = [
     id: '1',
     authorID: '1',
     product: { upc: '1' },
-    body: 'Love it!'
+    body: 'Love it!',
   },
   {
     id: '2',
     authorID: '1',
     product: { upc: '2' },
-    body: 'Too expensive.'
+    body: 'Too expensive.',
   },
   {
     id: '3',
     authorID: '2',
     product: { upc: '3' },
-    body: 'Could be better.'
+    body: 'Could be better.',
   },
   {
     id: '4',
     authorID: '2',
     product: { upc: '1' },
-    body: 'Prefer something else.'
-  }
+    body: 'Prefer something else.',
+  },
 ];
