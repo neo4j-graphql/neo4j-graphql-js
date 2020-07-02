@@ -2225,9 +2225,7 @@ test.serial('Spatial - filtering - field equal to given value', async t => {
     .query({
       query: gql`
         {
-          SpatialNode(
-            filter: { point: { longitude: 10, latitude: 20, height: 30 } }
-          ) {
+          SpatialNode(filter: { point: { longitude: 10 } }) {
             point {
               longitude
               latitude
@@ -2273,9 +2271,7 @@ test.serial(
           {
             Movie(
               title: "Bob Loblaw 5"
-              filter: {
-                location_not: { longitude: 10, latitude: 20, height: 30 }
-              }
+              filter: { location_not: { longitude: 10, height: 30 } }
             ) {
               title
               location {
