@@ -5,8 +5,7 @@ import {
   GraphQLString,
   GraphQLInt,
   GraphQLFloat,
-  GraphQLBoolean,
-  isTypeExtensionNode
+  GraphQLBoolean
 } from 'graphql';
 import {
   isIgnoredField,
@@ -123,6 +122,12 @@ export const isObjectTypeDefinition = ({ definition = {} }) =>
   definition.kind === Kind.OBJECT_TYPE_DEFINITION;
 
 /**
+ * A predicate function for identifying a GraphQL Object Type Extension definition
+ */
+export const isObjectTypeExtensionDefinition = ({ definition = {} }) =>
+  definition.kind === Kind.OBJECT_TYPE_EXTENSION;
+
+/**
  * A predicate function for identifying a GraphQL Input Object Type definition
  */
 export const isInputObjectTypeDefinition = ({ definition = {} }) =>
@@ -133,6 +138,12 @@ export const isInputObjectTypeDefinition = ({ definition = {} }) =>
  */
 export const isInterfaceTypeDefinition = ({ definition = {} }) =>
   definition.kind === Kind.INTERFACE_TYPE_DEFINITION;
+
+/**
+ * A predicate function for identifying a GraphQL Object Type Extension definition
+ */
+export const isInterfaceTypeExtensionDefinition = ({ definition = {} }) =>
+  definition.kind === Kind.INTERFACE_TYPE_EXTENSION;
 
 /**
  * A predicate function for identifying a GraphQL Union definition
@@ -342,6 +353,7 @@ export const augmentTypes = ({
               typeName,
               definition,
               typeDefinitionMap,
+              typeExtensionDefinitionMap,
               generatedTypeMap,
               operationTypeMap,
               nodeInputTypeMap,
@@ -669,6 +681,7 @@ const augmentOperationType = ({
           typeName,
           definition: extension,
           typeDefinitionMap,
+          typeExtensionDefinitionMap,
           generatedTypeMap,
           operationTypeMap,
           nodeInputTypeMap,
@@ -695,6 +708,7 @@ const augmentOperationType = ({
       typeName,
       definition,
       typeDefinitionMap,
+      typeExtensionDefinitionMap,
       generatedTypeMap,
       propertyOutputFields,
       operationTypeMap,
