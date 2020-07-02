@@ -1404,7 +1404,7 @@ MATCH (`person`:`Person`) WHERE (EXISTS((`person`)-[:WORKS_AT]->(:Company)) AND 
 ```
 
 ```cypher
-MATCH (`person`:`Person`) WHERE ((`person`.birthday = datetime($filter.birthday))) RETURN `person` { .name } AS `person`
+MATCH (`person`:`Person`) WHERE (((`person`.birthday.year = $filter.birthday.year) AND (`person`.birthday.month = $filter.birthday.month) AND (`person`.birthday.day = $filter.birthday.day) AND (`person`.birthday.hour = $filter.birthday.hour) AND (`person`.birthday.minute = $filter.birthday.minute) AND (`person`.birthday.second = $filter.birthday.second) AND (`person`.birthday.millisecond = $filter.birthday.millisecond) AND (`person`.birthday.nanosecond = $filter.birthday.nanosecond) AND (`person`.birthday.timezone = $filter.birthday.timezone))) RETURN `person` { .name } AS `person`
 ```
 
 ### Temporal field different from given value
@@ -1418,7 +1418,7 @@ MATCH (`person`:`Person`) WHERE ((`person`.birthday = datetime($filter.birthday)
 ```
 
 ```cypher
-MATCH (`person`:`Person`) WHERE ((NOT `person`.birthday =  datetime($filter.birthday_not))) RETURN `person` { .name } AS `person`
+MATCH (`person`:`Person`) WHERE (NOT((`person`.birthday.year = $filter.birthday_not.year))) RETURN `person` { .name } AS `person`
 ```
 
 ### Temporal field less than or equal to given value
@@ -1492,7 +1492,7 @@ MATCH (`person`:`Person`) WHERE ((`person`.birthday > datetime($filter.birthday_
 ```
 
 ```cypher
-MATCH (`person`:`Person`) WHERE (ANY(_birthday_in IN $filter.birthday_in WHERE (`person`.birthday = datetime(_birthday_in)))) RETURN `person` { .name } AS `person`
+MATCH (`person`:`Person`) WHERE (ANY(_birthday_in IN $filter.birthday_in WHERE ((_birthday_in.year IS NULL OR `person`.birthday.year = _birthday_in.year) AND (_birthday_in.formatted IS NULL OR `person`.birthday = datetime(_birthday_in.formatted))))) RETURN `person` { .name } AS `person`
 ```
 
 ### Temporal field NOT in given list
@@ -1510,7 +1510,7 @@ MATCH (`person`:`Person`) WHERE (ANY(_birthday_in IN $filter.birthday_in WHERE (
 ```
 
 ```cypher
-MATCH (`person`:`Person`) WHERE (NONE(_birthday_not_in IN $filter.birthday_not_in WHERE (`person`.birthday = datetime(_birthday_not_in)))) RETURN `person` { .name } AS `person`
+MATCH (`person`:`Person`) WHERE (NONE(_birthday_not_in IN $filter.birthday_not_in WHERE ((_birthday_not_in.year IS NULL OR `person`.birthday.year = _birthday_not_in.year) AND (_birthday_not_in.formatted IS NULL OR `person`.birthday = datetime(_birthday_not_in.formatted))))) RETURN `person` { .name } AS `person`
 ```
 
 ### Temporal field does NOT exist
@@ -1566,7 +1566,7 @@ MATCH (`person`:`Person`) WHERE (EXISTS((`person`)-[:WORKS_AT]->(:Company)) AND 
 ```
 
 ```cypher
-MATCH (`person`:`Person`) WHERE (EXISTS((`person`)-[:WORKS_AT]->(:Company)) AND ALL(`company` IN [(`person`)-[:WORKS_AT]->(`_company`:Company) | `_company`] WHERE ((`company`.founded = datetime($filter.company.founded))))) RETURN `person` { .name } AS `person`
+MATCH (`person`:`Person`) WHERE (EXISTS((`person`)-[:WORKS_AT]->(:Company)) AND ALL(`company` IN [(`person`)-[:WORKS_AT]->(`_company`:Company) | `_company`] WHERE (((`company`.founded.year = $filter.company.founded.year))))) RETURN `person` { .name } AS `person`
 ```
 
 ### Temporal field on related node equal to given year OR formatted value OR does NOT exist
@@ -1590,7 +1590,7 @@ MATCH (`person`:`Person`) WHERE (EXISTS((`person`)-[:WORKS_AT]->(:Company)) AND 
 ```
 
 ```cypher
-MATCH (`person`:`Person`) WHERE (EXISTS((`person`)-[:WORKS_AT]->(:Company)) AND ALL(`company` IN [(`person`)-[:WORKS_AT]->(`_company`:Company) | `_company`] WHERE (ANY(_OR IN $filter.company.OR WHERE ((_OR.founded IS NULL OR `company`.founded = datetime(_OR.founded))) AND (_OR._founded_null IS NULL OR _OR._founded_null = TRUE AND NOT EXISTS(`company`.founded)))))) RETURN `person` { .name } AS `person`
+MATCH (`person`:`Person`) WHERE (EXISTS((`person`)-[:WORKS_AT]->(:Company)) AND ALL(`company` IN [(`person`)-[:WORKS_AT]->(`_company`:Company) | `_company`] WHERE (ANY(_OR IN $filter.company.OR WHERE (((_OR.founded.year IS NULL OR `company`.founded.year = _OR.founded.year) AND (_OR.founded.formatted IS NULL OR `company`.founded = datetime(_OR.founded.formatted)))) AND (_OR._founded_null IS NULL OR _OR._founded_null = TRUE AND NOT EXISTS(`company`.founded)))))) RETURN `person` { .name } AS `person`
 ```
 
 ### Temporal and scalar field on relationship match given logical AND filters
@@ -1614,7 +1614,7 @@ MATCH (`person`:`Person`) WHERE (EXISTS((`person`)-[:WORKS_AT]->(:Company)) AND 
 ```
 
 ```cypher
-MATCH (`person`:`Person`) WHERE (EXISTS((`person`)-[:WORKED_AT]->(:Company)) AND ALL(`person_filter_company` IN [(`person`)-[`_person_filter_company`:WORKED_AT]->(:Company) | `_person_filter_company`] WHERE (ALL(_AND IN $filter.employmentHistory.AND WHERE (_AND.role IS NULL OR `person_filter_company`.role = _AND.role) AND ((_AND.start IS NULL OR `person_filter_company`.start = datetime(_AND.start))) AND ((_AND.end IS NULL OR `person_filter_company`.end = datetime(_AND.end))))))) RETURN `person` { .name } AS `person`
+MATCH (`person`:`Person`) WHERE (EXISTS((`person`)-[:WORKED_AT]->(:Company)) AND ALL(`person_filter_company` IN [(`person`)-[`_person_filter_company`:WORKED_AT]->(:Company) | `_person_filter_company`] WHERE (ALL(_AND IN $filter.employmentHistory.AND WHERE (_AND.role IS NULL OR `person_filter_company`.role = _AND.role) AND (((_AND.start.year IS NULL OR `person_filter_company`.start.year = _AND.start.year))) AND (((_AND.end.year IS NULL OR `person_filter_company`.end.year = _AND.end.year))))))) RETURN `person` { .name } AS `person`
 ```
 
 ### Related node does NOT exist (relationship type)
@@ -1691,7 +1691,7 @@ MATCH (`person`:`Person`) WHERE (EXISTS((`person`)-[:WORKED_AT]->(:Company)) AND
 ```
 
 ```cypher
-MATCH (`person`:`Person`) WHERE (EXISTS((`person`)-[:WORKED_AT]->(:Company)) AND ALL(`person_filter_company` IN [(`person`)-[`_person_filter_company`:WORKED_AT]->(:Company) | `_person_filter_company`] WHERE ((`person_filter_company`.start = datetime($filter.employmentHistory.start))) AND ((`person_filter_company`.end = datetime($filter.employmentHistory.end))))) RETURN `person` { .name } AS `person`
+MATCH (`person`:`Person`) WHERE (EXISTS((`person`)-[:WORKED_AT]->(:Company)) AND ALL(`person_filter_company` IN [(`person`)-[`_person_filter_company`:WORKED_AT]->(:Company) | `_person_filter_company`] WHERE (((`person_filter_company`.start.year = $filter.employmentHistory.start.year))) AND (((`person_filter_company`.end = datetime($filter.employmentHistory.end.formatted)))))) RETURN `person` { .name } AS `person`
 ```
 
 ### Spatial field equal to given value
@@ -1709,7 +1709,7 @@ MATCH (`person`:`Person`) WHERE (EXISTS((`person`)-[:WORKED_AT]->(:Company)) AND
 ```
 
 ```cypher
-MATCH (`company`:`Company`) WHERE ((`company`.location = point($filter.location))) RETURN `company` {location: { longitude: `company`.location.longitude , latitude: `company`.location.latitude , height: `company`.location.height }} AS `company`
+MATCH (`company`:`Company`) WHERE (((`company`.location.longitude = $filter.location.longitude) AND (`company`.location.latitude = $filter.location.latitude) AND (`company`.location.height = $filter.location.height))) RETURN `company` {location: { longitude: `company`.location.longitude , latitude: `company`.location.latitude , height: `company`.location.height }} AS `company`
 ```
 
 ### Spatial field different from given value
@@ -1729,7 +1729,7 @@ MATCH (`company`:`Company`) WHERE ((`company`.location = point($filter.location)
 ```
 
 ```cypher
-MATCH (`company`:`Company`) WHERE ((NOT `company`.location =  point($filter.location_not))) RETURN `company` {location: { longitude: `company`.location.longitude , latitude: `company`.location.latitude , height: `company`.location.height }} AS `company`
+MATCH (`company`:`Company`) WHERE (NOT((`company`.location.longitude = $filter.location_not.longitude) AND (`company`.location.latitude = $filter.location_not.latitude) AND (`company`.location.height = $filter.location_not.height))) RETURN `company` {location: { longitude: `company`.location.longitude , latitude: `company`.location.latitude , height: `company`.location.height }} AS `company`
 ```
 
 ### Spatial field distance with given Point value equal to given value
@@ -1944,7 +1944,7 @@ MATCH (`company`:`Company`) WHERE (EXISTS((`company`)<-[:WORKS_AT]-(:Person)) AN
 ```
 
 ```cypher
-MATCH (`company`:`Company`) WHERE (EXISTS((`company`)<-[:WORKS_AT]-(:Person)) AND ALL(`person` IN [(`company`)<-[:WORKS_AT]-(`_person`:Person) | `_person`] WHERE ((`person`.location = point($filter.employees.location))))) RETURN `company` { .name ,employees: [(`company`)<-[:`WORKS_AT`]-(`company_employees`:`Person`) | `company_employees` { .name ,location: { longitude: `company_employees`.location.longitude , latitude: `company_employees`.location.latitude , height: `company_employees`.location.height }}] } AS `company`
+MATCH (`company`:`Company`) WHERE (EXISTS((`company`)<-[:WORKS_AT]-(:Person)) AND ALL(`person` IN [(`company`)<-[:WORKS_AT]-(`_person`:Person) | `_person`] WHERE (((`person`.location.longitude = $filter.employees.location.longitude) AND (`person`.location.latitude = $filter.employees.location.latitude) AND (`person`.location.height = $filter.employees.location.height))))) RETURN `company` { .name ,employees: [(`company`)<-[:`WORKS_AT`]-(`company_employees`:`Person`) | `company_employees` { .name ,location: { longitude: `company_employees`.location.longitude , latitude: `company_employees`.location.latitude , height: `company_employees`.location.height }}] } AS `company`
 ```
 
 ### Spatial field on related node equal to given year OR does NOT exist
@@ -1967,7 +1967,7 @@ MATCH (`company`:`Company`) WHERE (EXISTS((`company`)<-[:WORKS_AT]-(:Person)) AN
 ```
 
 ```cypher
-MATCH (`company`:`Company`) WHERE (EXISTS((`company`)<-[:WORKS_AT]-(:Person)) AND ALL(`person` IN [(`company`)<-[:WORKS_AT]-(`_person`:Person) | `_person`] WHERE (ANY(_OR IN $filter.employees.OR WHERE ((_OR.location IS NULL OR `person`.location = point(_OR.location))) AND (_OR._location_null IS NULL OR _OR._location_null = TRUE AND NOT EXISTS(`person`.location)))))) RETURN `company` { .name } AS `company`
+MATCH (`company`:`Company`) WHERE (EXISTS((`company`)<-[:WORKS_AT]-(:Person)) AND ALL(`person` IN [(`company`)<-[:WORKS_AT]-(`_person`:Person) | `_person`] WHERE (ANY(_OR IN $filter.employees.OR WHERE (((_OR.location.longitude IS NULL OR `person`.location.longitude = _OR.location.longitude) AND (_OR.location.latitude IS NULL OR `person`.location.latitude = _OR.location.latitude) AND (_OR.location.height IS NULL OR `person`.location.height = _OR.location.height))) AND (_OR._location_null IS NULL OR _OR._location_null = TRUE AND NOT EXISTS(`person`.location)))))) RETURN `company` { .name } AS `company`
 ```
 
 ### Spatial and scalar field on relationship match given logical AND filters
@@ -1990,7 +1990,7 @@ MATCH (`company`:`Company`) WHERE (EXISTS((`company`)<-[:WORKS_AT]-(:Person)) AN
 ```
 
 ```cypher
-MATCH (`company`:`Company`) WHERE (EXISTS((`company`)<-[:WORKS_AT]-(:Person)) AND ALL(`person` IN [(`company`)<-[:WORKS_AT]-(`_person`:Person) | `_person`] WHERE (ALL(_AND IN $filter.employees.AND WHERE ((_AND.location IS NULL OR `person`.location = point(_AND.location))))))) RETURN `company` { .name } AS `company`
+MATCH (`company`:`Company`) WHERE (EXISTS((`company`)<-[:WORKS_AT]-(:Person)) AND ALL(`person` IN [(`company`)<-[:WORKS_AT]-(`_person`:Person) | `_person`] WHERE (ALL(_AND IN $filter.employees.AND WHERE (((_AND.location.longitude IS NULL OR `person`.location.longitude = _AND.location.longitude) AND (_AND.location.latitude IS NULL OR `person`.location.latitude = _AND.location.latitude) AND (_AND.location.height IS NULL OR `person`.location.height = _AND.location.height))))))) RETURN `company` { .name } AS `company`
 ```
 
 ### ALL relationships matching filter
@@ -2113,7 +2113,7 @@ MATCH (`person`:`Person`) WHERE (EXISTS((`person`)-[:WORKED_AT]->(:Company)) AND
 ```
 
 ```cypher
-MATCH (`person`:`Person`) WHERE (EXISTS((`person`)-[:WORKED_AT]->(:Company)) AND ALL(`person_filter_company` IN [(`person`)-[`_person_filter_company`:WORKED_AT]->(:Company) | `_person_filter_company`] WHERE ANY(_employmentHistory_in IN $filter.employmentHistory_in WHERE (_employmentHistory_in.role IS NULL OR `person_filter_company`.role = _employmentHistory_in.role) AND ((_employmentHistory_in.start IS NULL OR `person_filter_company`.start = datetime(_employmentHistory_in.start)))))) RETURN `person` { .name } AS `person`
+MATCH (`person`:`Person`) WHERE (EXISTS((`person`)-[:WORKED_AT]->(:Company)) AND ALL(`person_filter_company` IN [(`person`)-[`_person_filter_company`:WORKED_AT]->(:Company) | `_person_filter_company`] WHERE ANY(_employmentHistory_in IN $filter.employmentHistory_in WHERE (_employmentHistory_in.role IS NULL OR `person_filter_company`.role = _employmentHistory_in.role) AND (((_employmentHistory_in.start.year IS NULL OR `person_filter_company`.start.year = _employmentHistory_in.start.year) AND (_employmentHistory_in.start.formatted IS NULL OR `person_filter_company`.start = datetime(_employmentHistory_in.start.formatted))))))) RETURN `person` { .name } AS `person`
 ```
 
 ### ALL relationships NOT matching filter in given list
@@ -2131,7 +2131,7 @@ MATCH (`person`:`Person`) WHERE (EXISTS((`person`)-[:WORKED_AT]->(:Company)) AND
 ```
 
 ```cypher
-MATCH (`person`:`Person`) WHERE (EXISTS((`person`)-[:WORKED_AT]->(:Company)) AND ALL(`person_filter_company` IN [(`person`)-[`_person_filter_company`:WORKED_AT]->(:Company) | `_person_filter_company`] WHERE NONE(_employmentHistory_not_in IN $filter.employmentHistory_not_in WHERE (_employmentHistory_not_in.role IS NULL OR `person_filter_company`.role = _employmentHistory_not_in.role) AND ((_employmentHistory_not_in.start IS NULL OR `person_filter_company`.start = datetime(_employmentHistory_not_in.start)))))) RETURN `person` { .name } AS `person`
+MATCH (`person`:`Person`) WHERE (EXISTS((`person`)-[:WORKED_AT]->(:Company)) AND ALL(`person_filter_company` IN [(`person`)-[`_person_filter_company`:WORKED_AT]->(:Company) | `_person_filter_company`] WHERE NONE(_employmentHistory_not_in IN $filter.employmentHistory_not_in WHERE (_employmentHistory_not_in.role IS NULL OR `person_filter_company`.role = _employmentHistory_not_in.role) AND (((_employmentHistory_not_in.start.year IS NULL OR `person_filter_company`.start.year = _employmentHistory_not_in.start.year)))))) RETURN `person` { .name } AS `person`
 ```
 
 ### ALL outgoing reflexive type relationships matching filter
@@ -2145,7 +2145,7 @@ MATCH (`person`:`Person`) WHERE (EXISTS((`person`)-[:WORKED_AT]->(:Company)) AND
 ```
 
 ```cypher
-MATCH (`person`:`Person`) WHERE (`person`.name = $filter.name) AND ((EXISTS((`person`)-[:KNOWS]->(:Person)) AND ALL(`person_filter_person` IN [(`person`)-[`_person_filter_person`:KNOWS]->(:Person) | `_person_filter_person`] WHERE ((`person_filter_person`.since = datetime($filter.knows.to.since)))))) RETURN `person` { .name } AS `person`
+MATCH (`person`:`Person`) WHERE (`person`.name = $filter.name) AND ((EXISTS((`person`)-[:KNOWS]->(:Person)) AND ALL(`person_filter_person` IN [(`person`)-[`_person_filter_person`:KNOWS]->(:Person) | `_person_filter_person`] WHERE (((`person_filter_person`.since.year = $filter.knows.to.since.year)))))) RETURN `person` { .name } AS `person`
 ```
 
 ### ALL incoming reflexive type relationships NOT matching filter
@@ -2161,7 +2161,7 @@ MATCH (`person`:`Person`) WHERE (`person`.name = $filter.name) AND ((EXISTS((`pe
 ```
 
 ```cypher
-MATCH (`person`:`Person`) WHERE (`person`.name = $filter.name) AND ((EXISTS((`person`)<-[:KNOWS]-(:Person)) AND NONE(`person_filter_person` IN [(`person`)<-[`_person_filter_person`:KNOWS]-(:Person) | `_person_filter_person`] WHERE ((`person_filter_person`.since = datetime($filter.knows_not.from.since)))))) RETURN `person` { .name } AS `person`
+MATCH (`person`:`Person`) WHERE (`person`.name = $filter.name) AND ((EXISTS((`person`)<-[:KNOWS]-(:Person)) AND NONE(`person_filter_person` IN [(`person`)<-[`_person_filter_person`:KNOWS]-(:Person) | `_person_filter_person`] WHERE (((`person_filter_person`.since.year = $filter.knows_not.from.since.year)))))) RETURN `person` { .name } AS `person`
 ```
 
 ### ALL outgoing reflexive type relationships matching given filter
@@ -2175,7 +2175,7 @@ MATCH (`person`:`Person`) WHERE (`person`.name = $filter.name) AND ((EXISTS((`pe
 ```
 
 ```cypher
-MATCH (`person`:`Person`) WHERE (`person`.name = $filter.name) AND ((EXISTS((`person`)<-[:KNOWS]-(:Person)) AND ALL(`person_filter_person` IN [(`person`)<-[`_person_filter_person`:KNOWS]-(:Person) | `_person_filter_person`] WHERE ((`person_filter_person`.since = datetime($filter.knows.from.since)))))) RETURN `person` { .name } AS `person`
+MATCH (`person`:`Person`) WHERE (`person`.name = $filter.name) AND ((EXISTS((`person`)<-[:KNOWS]-(:Person)) AND ALL(`person_filter_person` IN [(`person`)<-[`_person_filter_person`:KNOWS]-(:Person) | `_person_filter_person`] WHERE (((`person_filter_person`.since.year = $filter.knows.from.since.year)))))) RETURN `person` { .name } AS `person`
 ```
 
 ### SOME incoming reflexive type relationships matching given filter
@@ -2191,7 +2191,7 @@ MATCH (`person`:`Person`) WHERE (`person`.name = $filter.name) AND ((EXISTS((`pe
 ```
 
 ```cypher
-MATCH (`person`:`Person`) WHERE (`person`.name = $filter.name) AND ((EXISTS((`person`)<-[:KNOWS]-(:Person)) AND ANY(`person_filter_person` IN [(`person`)<-[`_person_filter_person`:KNOWS]-(:Person) | `_person_filter_person`] WHERE ((`person_filter_person`.since = datetime($filter.knows_some.from.since)))))) RETURN `person` { .name } AS `person`
+MATCH (`person`:`Person`) WHERE (`person`.name = $filter.name) AND ((EXISTS((`person`)<-[:KNOWS]-(:Person)) AND ANY(`person_filter_person` IN [(`person`)<-[`_person_filter_person`:KNOWS]-(:Person) | `_person_filter_person`] WHERE (((`person_filter_person`.since.year = $filter.knows_some.from.since.year)))))) RETURN `person` { .name } AS `person`
 ```
 
 ### EVERY incoming and outgoing reflexive type relationship matching given filters
@@ -2213,7 +2213,7 @@ MATCH (`person`:`Person`) WHERE (`person`.name = $filter.name) AND ((EXISTS((`pe
 ```
 
 ```cypher
-MATCH (`person`:`Person`) WHERE (`person`.name = $filter.name) AND ((EXISTS((`person`)<-[:KNOWS]-(:Person)) AND ALL(`person_filter_person` IN [(`person`)<-[`_person_filter_person`:KNOWS]-(:Person) | `_person_filter_person`] WHERE ((`person_filter_person`.since = datetime($filter.knows_every.from.since))))) AND (EXISTS((`person`)-[:KNOWS]->(:Person)) AND ALL(`person_filter_person` IN [(`person`)-[`_person_filter_person`:KNOWS]->(:Person) | `_person_filter_person`] WHERE ((`person_filter_person`.since = datetime($filter.knows_every.to.since)))))) RETURN `person` { .name } AS `person`
+MATCH (`person`:`Person`) WHERE (`person`.name = $filter.name) AND ((EXISTS((`person`)<-[:KNOWS]-(:Person)) AND ALL(`person_filter_person` IN [(`person`)<-[`_person_filter_person`:KNOWS]-(:Person) | `_person_filter_person`] WHERE (((`person_filter_person`.since.year = $filter.knows_every.from.since.year))))) AND (EXISTS((`person`)-[:KNOWS]->(:Person)) AND ALL(`person_filter_person` IN [(`person`)-[`_person_filter_person`:KNOWS]->(:Person) | `_person_filter_person`] WHERE (((`person_filter_person`.since.year = $filter.knows_every.to.since.year)))))) RETURN `person` { .name } AS `person`
 ```
 
 ### NONE of any incoming and outgoing reflexive type relationships match given filters
@@ -2235,7 +2235,7 @@ MATCH (`person`:`Person`) WHERE (`person`.name = $filter.name) AND ((EXISTS((`pe
 ```
 
 ```cypher
-MATCH (`person`:`Person`) WHERE (`person`.name = $filter.name) AND ((EXISTS((`person`)<-[:KNOWS]-(:Person)) AND NONE(`person_filter_person` IN [(`person`)<-[`_person_filter_person`:KNOWS]-(:Person) | `_person_filter_person`] WHERE ((`person_filter_person`.since = datetime($filter.knows_none.from.since))))) AND (EXISTS((`person`)-[:KNOWS]->(:Person)) AND NONE(`person_filter_person` IN [(`person`)-[`_person_filter_person`:KNOWS]->(:Person) | `_person_filter_person`] WHERE ((`person_filter_person`.since = datetime($filter.knows_none.to.since)))))) RETURN `person` { .name } AS `person`
+MATCH (`person`:`Person`) WHERE (`person`.name = $filter.name) AND ((EXISTS((`person`)<-[:KNOWS]-(:Person)) AND NONE(`person_filter_person` IN [(`person`)<-[`_person_filter_person`:KNOWS]-(:Person) | `_person_filter_person`] WHERE (((`person_filter_person`.since.year = $filter.knows_none.from.since.year))))) AND (EXISTS((`person`)-[:KNOWS]->(:Person)) AND NONE(`person_filter_person` IN [(`person`)-[`_person_filter_person`:KNOWS]->(:Person) | `_person_filter_person`] WHERE (((`person_filter_person`.since.year = $filter.knows_none.to.since.year)))))) RETURN `person` { .name } AS `person`
 ```
 
 ### SINGLE incoming reflexive type relationships matching given filter
@@ -2251,7 +2251,7 @@ MATCH (`person`:`Person`) WHERE (`person`.name = $filter.name) AND ((EXISTS((`pe
 ```
 
 ```cypher
-MATCH (`person`:`Person`) WHERE (`person`.name = $filter.name) AND ((EXISTS((`person`)<-[:KNOWS]-(:Person)) AND SINGLE(`person_filter_person` IN [(`person`)<-[`_person_filter_person`:KNOWS]-(:Person) | `_person_filter_person`] WHERE ((`person_filter_person`.since = datetime($filter.knows_single.from.since)))))) RETURN `person` { .name } AS `person`
+MATCH (`person`:`Person`) WHERE (`person`.name = $filter.name) AND ((EXISTS((`person`)<-[:KNOWS]-(:Person)) AND SINGLE(`person_filter_person` IN [(`person`)<-[`_person_filter_person`:KNOWS]-(:Person) | `_person_filter_person`] WHERE (((`person_filter_person`.since.year = $filter.knows_single.from.since.year)))))) RETURN `person` { .name } AS `person`
 ```
 
 ### ALL outgoing reflexive relationships matching filter in given list
@@ -2273,7 +2273,7 @@ MATCH (`person`:`Person`) WHERE (`person`.name = $filter.name) AND ((EXISTS((`pe
 ```
 
 ```cypher
-MATCH (`person`:`Person`) WHERE (`person`.name = $filter.name) AND (ANY(_knows_in IN $filter.knows_in WHERE (_knows_in.to IS NULL OR EXISTS((`person`)-[:KNOWS]->(:Person)) AND ANY(`person_filter_person` IN [(`person`)-[`_person_filter_person`:KNOWS]->(:Person) | `_person_filter_person`] WHERE ((_knows_in.to.since IS NULL OR `person_filter_person`.since = datetime(_knows_in.to.since))))))) RETURN `person` { .name } AS `person`
+MATCH (`person`:`Person`) WHERE (`person`.name = $filter.name) AND (ANY(_knows_in IN $filter.knows_in WHERE (_knows_in.to IS NULL OR EXISTS((`person`)-[:KNOWS]->(:Person)) AND ANY(`person_filter_person` IN [(`person`)-[`_person_filter_person`:KNOWS]->(:Person) | `_person_filter_person`] WHERE (((_knows_in.to.since.year IS NULL OR `person_filter_person`.since.year = _knows_in.to.since.year))))))) RETURN `person` { .name } AS `person`
 ```
 
 ### ALL incoming reflexive relationships NOT matching filter in given list
@@ -2295,7 +2295,7 @@ MATCH (`person`:`Person`) WHERE (`person`.name = $filter.name) AND (ANY(_knows_i
 ```
 
 ```cypher
-MATCH (`person`:`Person`) WHERE (`person`.name = $filter.name) AND (ANY(_knows_in IN $filter.knows_in WHERE (_knows_in.from IS NULL OR EXISTS((`person`)<-[:KNOWS]-(:Person)) AND ANY(`person_filter_person` IN [(`person`)<-[`_person_filter_person`:KNOWS]-(:Person) | `_person_filter_person`] WHERE ((_knows_in.from.since IS NULL OR `person_filter_person`.since = datetime(_knows_in.from.since))))))) RETURN `person` { .name } AS `person`
+MATCH (`person`:`Person`) WHERE (`person`.name = $filter.name) AND (ANY(_knows_in IN $filter.knows_in WHERE (_knows_in.from IS NULL OR EXISTS((`person`)<-[:KNOWS]-(:Person)) AND ANY(`person_filter_person` IN [(`person`)<-[`_person_filter_person`:KNOWS]-(:Person) | `_person_filter_person`] WHERE (((_knows_in.from.since.year IS NULL OR `person_filter_person`.since.year = _knows_in.from.since.year))))))) RETURN `person` { .name } AS `person`
 ```
 
 ### Incoming and outgoing reflexive relationships do NOT exist
@@ -2347,7 +2347,7 @@ MATCH (`person`:`Person`) WHERE (EXISTS((`person`)-[:WORKS_AT]->(:Company)) AND 
 ```
 
 ```cypher
-MATCH (`person`:`Person`) WHERE (`person`.name = $filter.name) AND (EXISTS((`person`)-[:WORKS_AT]->(:Company)) AND ALL(`company` IN [(`person`)-[:WORKS_AT]->(`_company`:Company) | `_company`] WHERE (`company`.name = $filter.company.name))) RETURN `person` { .name ,company: head([(`person`)-[:`WORKS_AT`]->(`person_company`:`Company`) WHERE (`person_company`.name = $1_filter.name) AND ((`person_company`.founded = datetime($1_filter.founded))) | `person_company` { .name }]) } AS `person`
+MATCH (`person`:`Person`) WHERE (`person`.name = $filter.name) AND (EXISTS((`person`)-[:WORKS_AT]->(:Company)) AND ALL(`company` IN [(`person`)-[:WORKS_AT]->(`_company`:Company) | `_company`] WHERE (`company`.name = $filter.company.name))) RETURN `person` { .name ,company: head([(`person`)-[:`WORKS_AT`]->(`person_company`:`Company`) WHERE (`person_company`.name = $1_filter.name) AND (((`person_company`.founded.year = $1_filter.founded.year))) | `person_company` { .name }]) } AS `person`
 ```
 
 ### Nested filter on relationship type field
@@ -2403,7 +2403,7 @@ MATCH (`person`:`Person`) WHERE (`person`.name = $filter.name) RETURN `person` {
 ```
 
 ```cypher
-MATCH (`person`:`Person`) WHERE (`person`.name = $filter.name) RETURN `person` { .name ,knows: {from: [(`person`)<-[`person_from_relation`:`KNOWS`]-(`person_from`:`Person`) WHERE ((`person_from_relation`.since = datetime($1_filter.since))) AND (ALL(`person_filter_person` IN [(`person`)-[`person_from_relation`]->(`_person`:Person) | `_person`] WHERE (`person_filter_person`.name = $1_filter.Person.name))) | person_from_relation {since: { year: `person_from_relation`.since.year },Person: person_from { .name } }] ,to: [(`person`)-[`person_to_relation`:`KNOWS`]->(`person_to`:`Person`) WHERE ((`person_to_relation`.since = datetime($3_filter.since))) AND (ALL(`person_filter_person` IN [(`person`)-[`person_to_relation`]->(`_person`:Person) | `_person`] WHERE (`person_filter_person`.name = $3_filter.Person.name))) | person_to_relation {since: { year: `person_to_relation`.since.year },Person: person_to { .name } }] } } AS `person`
+MATCH (`person`:`Person`) WHERE (`person`.name = $filter.name) RETURN `person` { .name ,knows: {from: [(`person`)<-[`person_from_relation`:`KNOWS`]-(`person_from`:`Person`) WHERE (((`person_from_relation`.since.year = $1_filter.since.year))) AND (ALL(`person_filter_person` IN [(`person`)-[`person_from_relation`]->(`_person`:Person) | `_person`] WHERE (`person_filter_person`.name = $1_filter.Person.name))) | person_from_relation {since: { year: `person_from_relation`.since.year },Person: person_from { .name } }] ,to: [(`person`)-[`person_to_relation`:`KNOWS`]->(`person_to`:`Person`) WHERE (((`person_to_relation`.since.year = $3_filter.since.year))) AND (ALL(`person_filter_person` IN [(`person`)-[`person_to_relation`]->(`_person`:Person) | `_person`] WHERE (`person_filter_person`.name = $3_filter.Person.name))) | person_to_relation {since: { year: `person_to_relation`.since.year },Person: person_to { .name } }] } } AS `person`
 ```
 
 ### Nested filter not on root
