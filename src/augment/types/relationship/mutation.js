@@ -2,11 +2,7 @@ import { RelationshipDirectionField } from './relationship';
 import { buildNodeOutputFields } from './query';
 import { shouldAugmentRelationshipField } from '../../augment';
 import { OperationType } from '../../types/types';
-import {
-  TypeWrappers,
-  getFieldDefinition,
-  unwrapNamedType
-} from '../../fields';
+import { TypeWrappers, getFieldDefinition } from '../../fields';
 import {
   DirectiveDefinition,
   buildAuthScopeDirective,
@@ -25,6 +21,7 @@ import {
   buildInputObjectType
 } from '../../ast';
 import { getPrimaryKey } from '../../../utils';
+import { isExternalTypeExtension } from '../../../federation';
 
 /**
  * An enum describing the names of relationship mutations,
@@ -53,6 +50,7 @@ export const augmentRelationshipMutationAPI = ({
   propertyInputValues = [],
   propertyOutputFields = [],
   typeDefinitionMap,
+  typeExtensionDefinitionMap,
   generatedTypeMap,
   operationTypeMap,
   config
@@ -75,8 +73,19 @@ export const augmentRelationshipMutationAPI = ({
         typeName,
         fieldName
       });
-      const fromTypeDefinition = typeDefinitionMap[fromType];
-      const toTypeDefinition = typeDefinitionMap[toType];
+      const [
+        fromTypeDefinition,
+        isFromServiceType
+      ] = getRelatedNodeTypeDefinition({
+        typeName: fromType,
+        typeDefinitionMap,
+        typeExtensionDefinitionMap
+      });
+      const [toTypeDefinition, isToServiceType] = getRelatedNodeTypeDefinition({
+        typeName: toType,
+        typeDefinitionMap,
+        typeExtensionDefinitionMap
+      });
       const fromTypePk = getPrimaryKey(fromTypeDefinition);
       const toTypePk = getPrimaryKey(toTypeDefinition);
       if (
@@ -100,12 +109,39 @@ export const augmentRelationshipMutationAPI = ({
           outputType,
           generatedTypeMap,
           operationTypeMap,
+          isFromServiceType,
+          isToServiceType,
           config
         });
       }
     });
   }
   return [typeDefinitionMap, generatedTypeMap, operationTypeMap];
+};
+
+const getRelatedNodeTypeDefinition = ({
+  typeName = '',
+  typeDefinitionMap = {},
+  typeExtensionDefinitionMap = {}
+}) => {
+  let definition = {};
+  let isServiceType = false;
+  if (
+    isExternalTypeExtension({
+      typeName,
+      typeMap: typeDefinitionMap,
+      typeExtensionDefinitionMap
+    })
+  ) {
+    const typeExtensions = typeExtensionDefinitionMap[typeName];
+    if (typeExtensions && typeExtensions.length) {
+      definition = typeExtensions[0];
+      isServiceType = true;
+    }
+  } else {
+    definition = typeDefinitionMap[typeName];
+  }
+  return [definition, isServiceType];
 };
 
 /**
@@ -155,38 +191,42 @@ const buildRelationshipMutationAPI = ({
   outputType,
   generatedTypeMap,
   operationTypeMap,
+  isFromServiceType,
+  isToServiceType,
   config
 }) => {
-  const mutationOutputType = `_${mutationName}Payload`;
-  operationTypeMap = buildRelationshipMutationField({
-    mutationAction,
-    mutationName,
-    relationshipName,
-    fromType,
-    toType,
-    propertyInputValues,
-    propertyOutputFields,
-    mutationOutputType,
-    outputType,
-    operationTypeMap,
-    config
-  });
-  generatedTypeMap = buildRelationshipMutationPropertyInputType({
-    mutationAction,
-    outputType,
-    propertyInputValues,
-    generatedTypeMap
-  });
-  generatedTypeMap = buildRelationshipMutationOutputType({
-    mutationAction,
-    mutationOutputType,
-    propertyInputValues,
-    propertyOutputFields,
-    relationshipName,
-    fromType,
-    toType,
-    generatedTypeMap
-  });
+  if (!isFromServiceType && !isToServiceType) {
+    const mutationOutputType = `_${mutationName}Payload`;
+    operationTypeMap = buildRelationshipMutationField({
+      mutationAction,
+      mutationName,
+      relationshipName,
+      fromType,
+      toType,
+      propertyInputValues,
+      propertyOutputFields,
+      mutationOutputType,
+      outputType,
+      operationTypeMap,
+      config
+    });
+    generatedTypeMap = buildRelationshipMutationPropertyInputType({
+      mutationAction,
+      outputType,
+      propertyInputValues,
+      generatedTypeMap
+    });
+    generatedTypeMap = buildRelationshipMutationOutputType({
+      mutationAction,
+      mutationOutputType,
+      propertyInputValues,
+      propertyOutputFields,
+      relationshipName,
+      fromType,
+      toType,
+      generatedTypeMap
+    });
+  }
   return [operationTypeMap, generatedTypeMap];
 };
 
