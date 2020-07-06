@@ -333,9 +333,7 @@ export const relationTypeFieldOnNodeType = ({
   cypherParams
 }) => {
   if (innerSchemaTypeRelation.from === innerSchemaTypeRelation.to) {
-    tailParams.initial = `${initial}${fieldName}: {${
-      subSelection[0]
-    }}${skipLimit} ${commaIfTail}`;
+    tailParams.initial = `${initial}${fieldName}: {${subSelection[0]}}${skipLimit} ${commaIfTail}`;
     return [tailParams, subSelection];
   }
   const relationshipVariableName = `${nestedVariable}_relation`;
@@ -586,9 +584,7 @@ const directedNodeTypeFieldOnRelationType = ({
       }}]${!isArrayType(fieldType) ? ')' : ''}${skipLimit} ${commaIfTail}`;
       return [tailParams, subSelection];
     } else {
-      tailParams.initial = `${initial}${fieldName}: ${variableName} {${
-        subSelection[0]
-      }}${skipLimit} ${commaIfTail}`;
+      tailParams.initial = `${initial}${fieldName}: ${variableName} {${subSelection[0]}}${skipLimit} ${commaIfTail}`;
       // Case of a renamed directed field
       // e.g., 'from: Movie' -> 'Movie: Movie'
       return [tailParams, subSelection];
@@ -743,9 +739,7 @@ export const neo4jType = ({
   return {
     initial: `${initial}${fieldName}: ${
       fieldIsArray
-        ? `reduce(a = [], INSTANCE IN ${variableName}.${fieldName} | a + {${
-            subSelection[0]
-          }})${commaIfTail}`
+        ? `reduce(a = [], INSTANCE IN ${variableName}.${fieldName} | a + {${subSelection[0]}})${commaIfTail}`
         : temporalOrderingFieldExists(parentSchemaType, parentFilterParams)
         ? `${safeVariableName}.${fieldName}${commaIfTail}`
         : `{${subSelection[0]}}${commaIfTail}`
@@ -2147,9 +2141,6 @@ const processFilterArgument = ({
       schema
     });
     translations = translateFilterArguments({
-      fieldArgs,
-      params,
-      filterParamKey,
       filterFieldMap,
       filterCypherParam,
       rootIsRelationType,
@@ -2440,9 +2431,6 @@ const deserializeFilterFieldName = name => {
 };
 
 const translateFilterArguments = ({
-  fieldArgs,
-  params,
-  filterParamKey,
   filterFieldMap,
   filterCypherParam,
   variableName,
@@ -2460,9 +2448,6 @@ const translateFilterArguments = ({
         filterValue: value,
         rootIsRelationType,
         variableName,
-        fieldArgs,
-        params,
-        filterParamKey,
         schemaType,
         schema
       });
@@ -2483,9 +2468,6 @@ const translateFilterArgument = ({
   fieldName,
   rootIsRelationType,
   variableName,
-  fieldArgs,
-  params,
-  filterParamKey,
   filterParam,
   parentSchemaType,
   schemaType,
@@ -2544,9 +2526,6 @@ const translateFilterArgument = ({
       filterValue,
       variableName,
       fieldName,
-      fieldArgs,
-      params,
-      filterParamKey,
       filterParam,
       schema,
       parentSchemaType,
@@ -2744,9 +2723,6 @@ const translateInputFilter = ({
   filterValue,
   variableName,
   fieldName,
-  fieldArgs,
-  params,
-  filterParamKey,
   filterParam,
   schema,
   parentSchemaType,
@@ -2788,7 +2764,6 @@ const translateInputFilter = ({
         isReflexiveTypeDirectedField
       ] = decideRelationFilterMetadata({
         fieldName,
-        parentSchemaType,
         schemaType,
         variableName,
         innerSchemaType,
@@ -2995,7 +2970,6 @@ const translateRelationFilter = ({
 
 const decideRelationFilterMetadata = ({
   fieldName,
-  parentSchemaType,
   schemaType,
   variableName,
   innerSchemaType,
@@ -3028,10 +3002,10 @@ const decideRelationFilterMetadata = ({
     relatedType = typeVariables.typeName;
   } else if (innerRelationTypeDirective) {
     isRelationType = true;
-    [thisType, relatedType, relDirection] = decideRelationTypeDirection(
-      schemaType,
-      innerRelationTypeDirective
-    );
+    thisType = innerRelationTypeDirective.from;
+    relatedType = innerRelationTypeDirective.to;
+    relLabel = innerRelationTypeDirective.name;
+    relDirection = 'OUT';
     if (thisType === relatedType) {
       isReflexiveRelationType = true;
       if (fieldName === 'from') {
@@ -3039,17 +3013,28 @@ const decideRelationFilterMetadata = ({
         relDirection = 'IN';
       } else if (fieldName === 'to') {
         isReflexiveTypeDirectedField = true;
-        relDirection = 'OUT';
       }
     }
-    relLabel = innerRelationTypeDirective.name;
   } else if (relationTypeDirective) {
     isRelationTypeNode = true;
-    [thisType, relatedType, relDirection] = decideRelationTypeDirection(
-      parentSchemaType,
-      relationTypeDirective
-    );
+    thisType = relationTypeDirective.from;
+    relatedType = relationTypeDirective.to;
     relLabel = variableName;
+    relDirection = 'OUT';
+    // if not a reflexive relationship type
+    if (thisType !== relatedType) {
+      const filteredType =
+        innerSchemaType && innerSchemaType.name ? innerSchemaType.name : '';
+      // then the connecting node type field on a relationship type filter
+      // may be incoming or outgoing; thisType could be .from or .to
+      if (filteredType === thisType) {
+        // then a filter argument for the incoming direction is being used
+        // when querying the node type it goes out from
+        thisType = relatedType;
+        relatedType = filteredType;
+        relDirection = 'IN';
+      }
+    }
   }
   return [
     thisType,
@@ -3062,21 +3047,6 @@ const decideRelationFilterMetadata = ({
     isReflexiveRelationType,
     isReflexiveTypeDirectedField
   ];
-};
-
-const decideRelationTypeDirection = (schemaType, relationTypeDirective) => {
-  let fromType = relationTypeDirective.from;
-  let toType = relationTypeDirective.to;
-  let relDirection = 'OUT';
-  if (fromType !== toType) {
-    if (schemaType && schemaType.name === toType) {
-      const temp = fromType;
-      fromType = toType;
-      toType = temp;
-      relDirection = 'IN';
-    }
-  }
-  return [fromType, toType, relDirection];
 };
 
 const buildRelationPredicate = ({
