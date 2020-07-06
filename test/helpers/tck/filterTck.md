@@ -2350,7 +2350,7 @@ MATCH (`person`:`Person`) WHERE (EXISTS((`person`)-[:WORKS_AT]->(:Company)) AND 
 MATCH (`person`:`Person`) WHERE (`person`.name = $filter.name) AND (EXISTS((`person`)-[:WORKS_AT]->(:Company)) AND ALL(`company` IN [(`person`)-[:WORKS_AT]->(`_company`:Company) | `_company`] WHERE (`company`.name = $filter.company.name))) RETURN `person` { .name ,company: head([(`person`)-[:`WORKS_AT`]->(`person_company`:`Company`) WHERE (`person_company`.name = $1_filter.name) AND (((`person_company`.founded.year = $1_filter.founded.year))) | `person_company` { .name }]) } AS `person`
 ```
 
-### Nested filter on relationship type field
+### Nested filter on relationship type field (filter outgoing)
 
 ```graphql
 {
@@ -2372,6 +2372,28 @@ MATCH (`person`:`Person`) WHERE (`person`.name = $filter.name) AND (EXISTS((`per
 
 ```cypher
 MATCH (`person`:`Person`) WHERE (`person`.name = $filter.name) RETURN `person` { .name ,employmentHistory: [(`person`)-[`person_employmentHistory_relation`:`WORKED_AT`]->(:`Company`) WHERE (`person_employmentHistory_relation`.role = $1_filter.role) AND (ALL(`person_filter_company` IN [(`person`)-[`person_employmentHistory_relation`]->(`_company`:Company) | `_company`] WHERE (`person_filter_company`.name = $1_filter.Company.name))) | person_employmentHistory_relation {start: { year: `person_employmentHistory_relation`.start.year },Company: head([(:`Person`)-[`person_employmentHistory_relation`]->(`person_employmentHistory_Company`:`Company`) | person_employmentHistory_Company { .name }]) }] } AS `person`
+```
+
+### Nested filter on relationship type field (filter incoming)
+
+```graphql
+{
+  Company(filter: { name: "Neo4j" }) {
+    name
+    employeeHistory(filter: { role: "Developer", Person: { name: "jane" } }) {
+      start {
+        year
+      }
+      Person {
+        name
+      }
+    }
+  }
+}
+```
+
+```cypher
+MATCH (`company`:`Company`) WHERE (`company`.name = $filter.name) RETURN `company` { .name ,employeeHistory: [(`company`)<-[`company_employeeHistory_relation`:`WORKED_AT`]-(:`Person`) WHERE (`company_employeeHistory_relation`.role = $1_filter.role) AND (ALL(`company_filter_person` IN [(`company`)<-[`company_employeeHistory_relation`]-(`_person`:Person) | `_person`] WHERE (`company_filter_person`.name = $1_filter.Person.name))) | company_employeeHistory_relation {start: { year: `company_employeeHistory_relation`.start.year },Person: head([(:`Company`)<-[`company_employeeHistory_relation`]-(`company_employeeHistory_Person`:`Person`) | company_employeeHistory_Person { .name }]) }] } AS `company`
 ```
 
 ### Nested filters on reflexive relationship type field
