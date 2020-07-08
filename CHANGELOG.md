@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.14.4
+
+- [Fix for missing results with some queries using nested filtering](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/469)
+- [Use \_RelationDirections enum for relationship directions in inferSchema](https://github.com/neo4j-graphql/neo4j-graphql-js/commit/c9b8b1af65ea751d060be79f8ab9d521577968de)
+
 ## 2.14.3
 
 - [Add initial support for bookmarks](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/460)
