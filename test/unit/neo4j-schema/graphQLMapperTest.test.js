@@ -107,12 +107,12 @@ test('Defines properties with correct types', t => {
 test('Defines relationships BOTH WAYS with right order and @relation directive', t => {
   t.true(
     typeDefs.indexOf(
-      'lives_in: [State] @relation(name: "LIVES_IN", direction: "OUT")'
+      'lives_in: [State] @relation(name: "LIVES_IN", direction: OUT)'
     ) > -1
   );
   t.true(
     typeDefs.indexOf(
-      'customers: [Customer] @relation(name: "LIVES_IN", direction: "IN")'
+      'customers: [Customer] @relation(name: "LIVES_IN", direction: IN)'
     ) > -1
   );
 });
@@ -123,13 +123,13 @@ test('Deconflicts names for multi-targeted relationships by using relationship l
   // conflict.  This tests that the module has worked around this.
   t.true(
     typeDefs.indexOf(
-      'customers_buys: [Customer] @relation(name: "BUYS", direction: "IN")'
+      'customers_buys: [Customer] @relation(name: "BUYS", direction: IN)'
     ) > -1
   );
 
   t.true(
     typeDefs.indexOf(
-      'customers_reviewed: [Customer] @relation(name: "REVIEWED", direction: "IN")'
+      'customers_reviewed: [Customer] @relation(name: "REVIEWED", direction: IN)'
     ) > -1
   );
 });

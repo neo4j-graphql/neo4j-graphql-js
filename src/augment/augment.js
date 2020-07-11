@@ -12,12 +12,12 @@ import {
   augmentSchemaType,
   augmentTypes,
   transformNeo4jTypes,
-  regenerateSchemaType
+  regenerateSchemaType,
+  isSchemaDocument
 } from './types/types';
 import { augmentDirectiveDefinitions } from './directives';
 import { extractResolversFromSchema, augmentResolvers } from './resolvers';
 import { addAuthDirectiveImplementations } from '../auth';
-
 /**
  * The main export for augmenting an SDL document
  */
@@ -34,7 +34,15 @@ export const makeAugmentedExecutableSchema = ({
   config
 }) => {
   config = setDefaultConfig({ config });
-  const definitions = parse(typeDefs).definitions;
+  const isParsedTypeDefs = isSchemaDocument({ definition: typeDefs });
+  let definitions = [];
+  if (isParsedTypeDefs) {
+    // Print if we recieved parsed type definitions in a GraphQL Document
+    definitions = typeDefs.definitions;
+  } else {
+    // Otherwise parse the SDL and get its definitions
+    definitions = parse(typeDefs).definitions;
+  }
   let generatedTypeMap = {};
   let [
     typeDefinitionMap,
@@ -81,12 +89,19 @@ export const makeAugmentedExecutableSchema = ({
   const documentAST = buildDocument({
     definitions: transformedDefinitions
   });
-  const augmentedResolvers = augmentResolvers(
+  const augmentedResolvers = augmentResolvers({
     generatedTypeMap,
     operationTypeMap,
+    typeExtensionDefinitionMap,
     resolvers,
     config
-  );
+  });
+  if (config.isFederated === true) {
+    return {
+      typeDefs: documentAST,
+      resolvers: augmentedResolvers
+    };
+  }
   resolverValidationOptions.requireResolversForResolveType = false;
   return makeExecutableSchema({
     typeDefs: print(documentAST),
@@ -155,12 +170,19 @@ export const augmentedSchema = (schema, config) => {
     definitions: transformedDefinitions
   });
   const resolvers = extractResolversFromSchema(schema);
-  const augmentedResolvers = augmentResolvers(
+  const augmentedResolvers = augmentResolvers({
     generatedTypeMap,
     operationTypeMap,
+    typeExtensionDefinitionMap,
     resolvers,
     config
-  );
+  });
+  if (config.isFederated === true) {
+    return {
+      typeDefs: documentAST,
+      resolvers: augmentedResolvers
+    };
+  }
   return makeExecutableSchema({
     typeDefs: print(documentAST),
     resolvers: augmentedResolvers,
@@ -198,6 +220,7 @@ export const mapDefinitions = ({ definitions = [], config = {} }) => {
   });
   const [typeMap, operationTypeMap] = initializeOperationTypes({
     typeDefinitionMap,
+    typeExtensionDefinitionMap,
     schemaTypeDefinition,
     config
   });
@@ -287,7 +310,7 @@ const APIConfiguration = {
 /**
  * Builds the default values in a given configuration object
  */
-const setDefaultConfig = ({ config = {} }) => {
+export const setDefaultConfig = ({ config = {} }) => {
   const configKeys = Object.keys(config);
   Object.values(APIConfiguration).forEach(configKey => {
     if (!configKeys.find(providedKey => providedKey === configKey)) {

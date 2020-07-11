@@ -1,10 +1,11 @@
-import { isObjectType, parse, GraphQLInt } from 'graphql';
+import { parse, GraphQLInt, Kind } from 'graphql';
 import neo4j from 'neo4j-driver';
 import _ from 'lodash';
-import filter from 'lodash/filter';
 import { Neo4jTypeName } from './augment/types/types';
 import { SpatialType } from './augment/types/spatial';
 import { unwrapNamedType } from './augment/fields';
+import { Neo4jTypeFormatted } from './augment/types/types';
+import { getFederatedOperationData } from './federation';
 
 function parseArg(arg, variableValues) {
   switch (arg.value.kind) {
@@ -50,21 +51,6 @@ export const parseDirectiveSdl = sdl => {
         .directives[0]
     : {};
 };
-
-export function extractSelections(selections, fragments) {
-  // extract any fragment selection sets into a single array of selections
-  return selections.reduce((acc, cur) => {
-    if (cur.kind === 'FragmentSpread') {
-      const recursivelyExtractedSelections = extractSelections(
-        fragments[cur.name.value].selectionSet.selections,
-        fragments
-      );
-      return [...acc, ...recursivelyExtractedSelections];
-    } else {
-      return [...acc, cur];
-    }
-  }, []);
-}
 
 export function extractQueryResult({ records }, returnType) {
   const { variableName } = typeIdentifiers(returnType);
@@ -112,7 +98,9 @@ export function cypherDirectiveArgs(
   cypherParams,
   schemaType,
   resolveInfo,
-  paramIndex
+  paramIndex,
+  isFederatedOperation,
+  context
 ) {
   // Get any default arguments or an empty object
   const defaultArgs = getDefaultArguments(headSelection.name.value, schemaType);
@@ -120,6 +108,17 @@ export function cypherDirectiveArgs(
   let args = [`this: ${variable}`];
   // If cypherParams are provided, add the parameter
   if (cypherParams) args.push(`cypherParams: $cypherParams`);
+  let federatedOperationParams = {};
+  if (isFederatedOperation) {
+    const { requiredData, params } = getFederatedOperationData({ context });
+    federatedOperationParams = {
+      ...requiredData,
+      ...params
+    };
+    Object.keys(federatedOperationParams).forEach(name => {
+      args.push(`${name}: $${name}`);
+    });
+  }
   // Parse field argument values
   const queryArgs = parseArgs(
     headSelection.arguments,
@@ -128,7 +127,11 @@ export function cypherDirectiveArgs(
   // Add arguments that have default values, if no value is provided
   Object.keys(defaultArgs).forEach(e => {
     // Use only if default value exists and no value has been provided
-    if (defaultArgs[e] !== undefined && queryArgs[e] === undefined) {
+    if (
+      defaultArgs[e] !== undefined &&
+      queryArgs[e] === undefined &&
+      federatedOperationParams[e] === undefined
+    ) {
       // Values are inlined
       const inlineDefaultValue = JSON.stringify(defaultArgs[e]);
       args.push(`${e}: ${inlineDefaultValue}`);
@@ -136,7 +139,10 @@ export function cypherDirectiveArgs(
   });
   // Add arguments that have provided values
   Object.keys(queryArgs).forEach(e => {
-    if (queryArgs[e] !== undefined) {
+    if (
+      queryArgs[e] !== undefined &&
+      federatedOperationParams[e] === undefined
+    ) {
       // Use only if value exists
       args.push(`${e}: $${paramIndex}_${e}`);
     }
@@ -185,8 +191,16 @@ export function isGraphqlScalarType(type) {
   );
 }
 
+export function isGraphqlObjectType(type) {
+  return type.constructor.name === 'GraphQLObjectType';
+}
+
 export function isGraphqlInterfaceType(type) {
   return type.constructor.name === 'GraphQLInterfaceType';
+}
+
+export function isGraphqlUnionType(type) {
+  return type.constructor.name === 'GraphQLUnionType';
 }
 
 export function isArrayType(type) {
@@ -298,7 +312,7 @@ export function paramsToString(params, cypherParams) {
   if (params.length > 0) {
     const strings = _.map(params, param => {
       return `${param.key}:${param.paramKey ? `$${param.paramKey}.` : '$'}${
-        typeof param.value.index === 'undefined'
+        !param.value || typeof param.value.index === 'undefined'
           ? param.key
           : `${param.value.index}_${param.key}`
       }`;
@@ -347,16 +361,15 @@ export const computeOrderBy = (resolveInfo, schemaType) => {
   const orderByArray = Array.isArray(orderByArgs) ? orderByArgs : [orderByArgs];
 
   let optimization = { earlyOrderBy: true };
-  let orderByStatements = [];
 
-  const orderByStatments = orderByArray.map(orderByVar => {
+  const orderByStatements = orderByArray.map(orderByVar => {
     const { orderBy, order } = splitOrderByArg(orderByVar);
     const hasNoCypherDirective = _.isEmpty(
       cypherDirective(schemaType, orderBy)
     );
     optimization.earlyOrderBy =
       optimization.earlyOrderBy && hasNoCypherDirective;
-    orderByStatements.push(orderByStatement(resolveInfo, { orderBy, order }));
+    return orderByStatement(resolveInfo, { orderBy, order });
   });
 
   return {
@@ -375,8 +388,8 @@ export const possiblySetFirstId = ({ args, statements = [], params }) => {
   return statements;
 };
 
-export const getQueryArguments = resolveInfo => {
-  if (resolveInfo.fieldName === '_entities') return [];
+export const getQueryArguments = (resolveInfo, isFederatedOperation) => {
+  if (resolveInfo.fieldName === '_entities' || isFederatedOperation) return [];
   return resolveInfo.schema.getQueryType().getFields()[resolveInfo.fieldName]
     .astNode.arguments;
 };
@@ -559,7 +572,7 @@ const serializeNeo4jIntegers = ({
 // TODO refactor to handle Query/Mutation type schema directives
 const directiveWithArgs = (directiveName, args) => (schemaType, fieldName) => {
   function fieldDirective(schemaType, fieldName, directiveName) {
-    return !isGraphqlScalarType(schemaType)
+    return !isGraphqlScalarType(schemaType) && !isGraphqlUnionType(schemaType)
       ? schemaType.getFields() &&
           schemaType.getFields()[fieldName] &&
           schemaType
@@ -610,8 +623,8 @@ export const getFieldDirective = (field, directive) => {
   );
 };
 
-export const getQueryCypherDirective = resolveInfo => {
-  if (resolveInfo.fieldName === '_entities') return;
+export const getQueryCypherDirective = (resolveInfo, isFederatedOperation) => {
+  if (resolveInfo.fieldName === '_entities' || isFederatedOperation) return;
   return resolveInfo.schema
     .getQueryType()
     .getFields()
@@ -652,7 +665,8 @@ export const getCreatedUpdatedDirectiveFields = resolveInfo => {
 };
 
 function argumentValue(selection, name, variableValues) {
-  let arg = selection.arguments.find(a => a.name.value === name);
+  let args = selection ? selection.arguments : [];
+  let arg = args.find(a => a.name.value === name);
   if (!arg) {
     return null;
   } else {
@@ -713,8 +727,14 @@ const firstField = fields => {
 export const getPrimaryKey = astNode => {
   let fields = astNode.fields;
   let pk = undefined;
-  // remove all ignored fields
-  fields = fields.filter(field => !getFieldDirective(field, 'neo4j_ignore'));
+  // prevent ignored, relation, and computed fields
+  // from being used as primary keys
+  fields = fields.filter(
+    field =>
+      !getFieldDirective(field, 'neo4j_ignore') &&
+      !getFieldDirective(field, 'relation') &&
+      !getFieldDirective(field, 'cypher')
+  );
   if (!fields.length) return pk;
   pk = firstNonNullAndIdField(fields);
   if (!pk) {
@@ -836,19 +856,16 @@ export const getOuterSkipLimit = (first, offset) =>
   }`;
 
 export const getPayloadSelections = resolveInfo => {
-  const filteredFieldNodes = filter(
-    resolveInfo.fieldNodes,
-    n => n.name.value === resolveInfo.fieldName
-  );
-  if (filteredFieldNodes[0] && filteredFieldNodes[0].selectionSet) {
-    // FIXME: how to handle multiple fieldNode matches
-    const x = extractSelections(
-      filteredFieldNodes[0].selectionSet.selections,
-      resolveInfo.fragments
-    );
-    return x;
+  const filteredFieldNodes = resolveInfo.fieldNodes.filter(n => {
+    return n => n.name.value === resolveInfo.fieldName;
+  });
+  // FIXME: how to handle multiple fieldNode matches
+  const payloadTypeNode = filteredFieldNodes[0];
+  let selections = [];
+  if (payloadTypeNode && payloadTypeNode.selectionSet) {
+    selections = payloadTypeNode.selectionSet.selections;
   }
-  return [];
+  return selections;
 };
 
 export const filterNullParams = ({ offset, first, otherParams }) => {
@@ -972,8 +989,18 @@ export const isSpatialField = (schemaType, name) => {
 
 export const isSpatialInputType = name => name === '_Neo4jPointInput';
 
-export const isSpatialDistanceInputType = name =>
-  name === `${Neo4jTypeName}${SpatialType.POINT}DistanceFilter`;
+export const isSpatialDistanceInputType = ({ filterOperationType = '' }) => {
+  switch (filterOperationType) {
+    case 'distance':
+    case 'distance_lt':
+    case 'distance_lte':
+    case 'distance_gt':
+    case 'distance_gte':
+      return true;
+    default:
+      return false;
+  }
+};
 
 export const decideNeo4jTypeConstructor = typeName => {
   switch (typeName) {
@@ -1011,7 +1038,7 @@ export const neo4jTypePredicateClauses = (
       const paramValue = neo4jTypeParam.value;
       // If it is, set and use its .value
       if (paramValue) neo4jTypeParam = paramValue;
-      if (neo4jTypeParam['formatted']) {
+      if (neo4jTypeParam[Neo4jTypeFormatted.FORMATTED]) {
         // Only the dedicated 'formatted' arg is used if it is provided
         const type = t ? _getNamedType(t.type).name.value : '';
         acc.push(
@@ -1055,13 +1082,17 @@ export const getNeo4jTypeArguments = args => {
     : [];
 };
 
+// TODO rename and add logic for @skip and @include directives?
 export const removeIgnoredFields = (schemaType, selections) => {
   if (!isGraphqlScalarType(schemaType) && selections && selections.length) {
+    const schemaTypeFields = schemaType.getFields();
     let schemaTypeField = '';
-    selections = selections.filter(e => {
-      if (e.kind === 'Field') {
+    selections = selections.filter(field => {
+      const fieldKind = field.kind;
+      if (fieldKind === Kind.FIELD) {
+        const fieldName = field.name.value;
         // so check if this field is ignored
-        schemaTypeField = schemaType.getFields()[e.name.value];
+        schemaTypeField = schemaTypeFields[fieldName];
         return (
           schemaTypeField &&
           schemaTypeField.astNode &&
@@ -1082,9 +1113,15 @@ const _getNamedType = type => {
   return type;
 };
 
-export const getDerivedTypeNames = (schema, interfaceName) => {
-  return Object.values(schema.getTypeMap())
-    .filter(t => isObjectType(t))
-    .filter(t => t.getInterfaces().some(i => i.name === interfaceName))
-    .map(t => t.name);
+export const getInterfaceDerivedTypeNames = (schema, interfaceName) => {
+  const implementingTypeMap = schema._implementations
+    ? schema._implementations[interfaceName]
+    : {};
+  let implementingTypes = [];
+  if (implementingTypeMap) {
+    implementingTypes = Object.values(implementingTypeMap).map(
+      type => type.name
+    );
+  }
+  return implementingTypes.sort();
 };

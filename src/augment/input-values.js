@@ -23,7 +23,8 @@ import {
   isBooleanField,
   isTemporalField,
   getFieldDefinition,
-  isSpatialField
+  isSpatialField,
+  propertyFieldExists
 } from './fields';
 import { SpatialType, Neo4jPointDistanceFilter } from './types/spatial';
 /**
@@ -81,7 +82,7 @@ export const augmentInputTypePropertyFields = ({
         );
       }
     }
-    if (orderingType) {
+    if (orderingType && outputType !== SpatialType.POINT) {
       orderingType.values.push(...buildPropertyOrderingValues({ fieldName }));
     }
   }
@@ -97,7 +98,9 @@ export const buildQueryFieldArguments = ({
   fieldArguments,
   fieldDirectives,
   outputType,
-  outputTypeWrappers
+  outputTypeWrappers,
+  isUnionType,
+  typeDefinitionMap
 }) => {
   Object.values(argumentMap).forEach(name => {
     if (isListTypeField({ wrappers: outputTypeWrappers })) {
@@ -129,29 +132,37 @@ export const buildQueryFieldArguments = ({
             })
           );
         }
-      } else if (name === OrderingArgument.ORDER_BY) {
+      } else if (name === OrderingArgument.ORDER_BY && !isUnionType) {
         const argumentIndex = fieldArguments.findIndex(
           arg => arg.name.value === OrderingArgument.ORDER_BY
         );
-        // Does overwrite
+        const outputTypeDefinition = typeDefinitionMap[outputType];
+        const orderingArgument = buildQueryOrderingArgument({
+          typeName: outputType
+        });
+        const hasPropertyField = propertyFieldExists({
+          definition: outputTypeDefinition,
+          typeDefinitionMap
+        });
+        // Does not already exist
         if (argumentIndex === -1) {
-          fieldArguments.push(
-            buildQueryOrderingArgument({
-              typeName: outputType
-            })
-          );
+          // Ordering is only supported when there exists at
+          // least 1 property field (scalar, temporal, etc.)
+          if (hasPropertyField) {
+            fieldArguments.push(orderingArgument);
+          }
         } else {
-          fieldArguments.splice(
-            argumentIndex,
-            1,
-            buildQueryOrderingArgument({
-              typeName: outputType
-            })
-          );
+          // Does already exist
+          if (hasPropertyField) {
+            // Replace it with generated argument
+            fieldArguments.splice(argumentIndex, 1, orderingArgument);
+          }
+          // Else, there are no property fields on the type to be ordered,
+          // but we should keep what has been provided
         }
       }
     }
-    if (name === FilteringArgument.FILTER) {
+    if (name === FilteringArgument.FILTER && !isUnionType) {
       if (!isCypherField({ directives: fieldDirectives })) {
         const argumentIndex = fieldArguments.findIndex(
           arg => arg.name.value === FilteringArgument.FILTER
@@ -228,7 +239,7 @@ export const buildQueryOrderingEnumType = ({
   generatedTypeMap
 }) => {
   const inputType = nodeInputTypeMap[OrderingArgument.ORDER_BY];
-  if (inputType) {
+  if (inputType && inputType.values.length) {
     const orderingTypeName = inputType.name;
     const type = typeDefinitionMap[inputType.name];
     // Prevent overwrite

@@ -13,7 +13,12 @@ import {
 } from '../../directives';
 import { shouldAugmentType } from '../../augment';
 import { OperationType } from '../../types/types';
-import { TypeWrappers, getFieldDefinition } from '../../fields';
+import {
+  TypeWrappers,
+  getFieldDefinition,
+  getTypeExtensionFieldDefinition,
+  Neo4jSystemIDField
+} from '../../fields';
 import {
   FilteringArgument,
   PagingArgument,
@@ -40,9 +45,11 @@ const NodeQueryArgument = {
  */
 export const augmentNodeQueryAPI = ({
   typeName,
+  isUnionType,
   propertyInputValues,
   nodeInputTypeMap,
   typeDefinitionMap,
+  typeExtensionDefinitionMap,
   generatedTypeMap,
   operationTypeMap,
   config
@@ -53,23 +60,28 @@ export const augmentNodeQueryAPI = ({
     if (queryType) {
       operationTypeMap = buildNodeQueryField({
         typeName,
+        isUnionType,
         queryType,
         propertyInputValues,
         operationTypeMap,
+        typeDefinitionMap,
+        typeExtensionDefinitionMap,
         config
       });
     }
-    generatedTypeMap = buildQueryOrderingEnumType({
-      nodeInputTypeMap,
-      typeDefinitionMap,
-      generatedTypeMap
-    });
-    generatedTypeMap = buildQueryFilteringInputType({
-      typeName: `_${typeName}Filter`,
-      typeDefinitionMap,
-      generatedTypeMap,
-      inputTypeMap: nodeInputTypeMap
-    });
+    if (!isUnionType) {
+      generatedTypeMap = buildQueryOrderingEnumType({
+        nodeInputTypeMap,
+        typeDefinitionMap,
+        generatedTypeMap
+      });
+      generatedTypeMap = buildQueryFilteringInputType({
+        typeName: `_${typeName}Filter`,
+        typeDefinitionMap,
+        generatedTypeMap,
+        inputTypeMap: nodeInputTypeMap
+      });
+    }
   }
   return [operationTypeMap, generatedTypeMap];
 };
@@ -81,18 +93,22 @@ export const augmentNodeQueryAPI = ({
 export const augmentNodeTypeFieldArguments = ({
   fieldArguments,
   fieldDirectives,
+  isUnionType,
   outputType,
   outputTypeWrappers,
+  typeDefinitionMap,
   config
 }) => {
   const queryTypeNameLower = OperationType.QUERY.toLowerCase();
   if (shouldAugmentType(config, queryTypeNameLower, outputType)) {
     fieldArguments = buildQueryFieldArguments({
       argumentMap: NodeQueryArgument,
+      isUnionType,
       fieldArguments,
       fieldDirectives,
       outputType,
-      outputTypeWrappers
+      outputTypeWrappers,
+      typeDefinitionMap
     });
   }
   return fieldArguments;
@@ -133,15 +149,24 @@ export const augmentNodeQueryArgumentTypes = ({
  */
 const buildNodeQueryField = ({
   typeName,
+  isUnionType,
   queryType,
   propertyInputValues,
   operationTypeMap,
+  typeDefinitionMap,
+  typeExtensionDefinitionMap,
   config
 }) => {
   const queryFields = queryType.fields;
+  const queryTypeName = queryType ? queryType.name.value : '';
+  const queryTypeExtensions = typeExtensionDefinitionMap[queryTypeName];
   if (
     !getFieldDefinition({
       fields: queryFields,
+      name: typeName
+    }) &&
+    !getTypeExtensionFieldDefinition({
+      typeExtensions: queryTypeExtensions,
       name: typeName
     })
   ) {
@@ -156,7 +181,9 @@ const buildNodeQueryField = ({
         }),
         args: buildNodeQueryArguments({
           typeName,
-          propertyInputValues
+          isUnionType,
+          propertyInputValues,
+          typeDefinitionMap
         }),
         directives: buildNodeQueryDirectives({
           typeName,
@@ -173,25 +200,36 @@ const buildNodeQueryField = ({
  * Builds the AST for input value definitions used for the
  * arguments of the Query type field for a given node type
  */
-const buildNodeQueryArguments = ({ typeName, propertyInputValues }) => {
-  // Do not persist type wrappers
-  propertyInputValues = propertyInputValues.map(arg =>
-    buildInputValue({
-      name: buildName({ name: arg.name }),
-      type: buildNamedType({
-        name: arg.type.name
-      })
-    })
-  );
-  if (!propertyInputValues.some(field => field.name.value === '_id')) {
-    propertyInputValues.push(
+const buildNodeQueryArguments = ({
+  typeName,
+  isUnionType,
+  propertyInputValues,
+  typeDefinitionMap
+}) => {
+  if (!isUnionType) {
+    // Do not persist type wrappers
+    propertyInputValues = propertyInputValues.map(arg =>
       buildInputValue({
-        name: buildName({ name: '_id' }),
+        name: buildName({ name: arg.name }),
         type: buildNamedType({
-          name: GraphQLString.name
+          name: arg.type.name
         })
       })
     );
+    if (
+      !propertyInputValues.some(
+        field => field.name.value === Neo4jSystemIDField
+      )
+    ) {
+      propertyInputValues.push(
+        buildInputValue({
+          name: buildName({ name: Neo4jSystemIDField }),
+          type: buildNamedType({
+            name: GraphQLString.name
+          })
+        })
+      );
+    }
   }
   propertyInputValues = buildQueryFieldArguments({
     argumentMap: NodeQueryArgument,
@@ -199,7 +237,9 @@ const buildNodeQueryArguments = ({ typeName, propertyInputValues }) => {
     outputType: typeName,
     outputTypeWrappers: {
       [TypeWrappers.LIST_TYPE]: true
-    }
+    },
+    isUnionType,
+    typeDefinitionMap
   });
   return propertyInputValues;
 };

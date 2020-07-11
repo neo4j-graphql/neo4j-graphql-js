@@ -1,5 +1,81 @@
 # Changelog
 
+## 2.14.4
+
+- [Fix for missing results with some queries using nested filtering](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/469)
+- [Use \_RelationDirections enum for relationship directions in inferSchema](https://github.com/neo4j-graphql/neo4j-graphql-js/commit/c9b8b1af65ea751d060be79f8ab9d521577968de)
+
+## 2.14.3
+
+- [Add initial support for bookmarks](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/460)
+- [Improvements to temporal and spatial identity filters](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/466)
+- [Fix for issue with using relationship types with federated entities](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/441)
+
+## 2.14.2
+
+- [Fix for missing apollo-server dependency with apollo-server-lambda](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/439)
+
+## 2.14.1
+
+- [Fix for inferSchema potentially generating invalid GraphQL type definitions](https://github.com/neo4j-graphql/neo4j-graphql-js/commit/19b576ffef6a09f435389d096c59c8f387b586c7)
+
+## 2.14.0
+
+- [Apollo Federation support](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/418)
+- [Improvements to handling of type extensions](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/418)
+- [Add Apollo Federation and Gateway example](https://github.com/neo4j-graphql/neo4j-graphql-js/blob/master/example/apollo-federation/gateway.js)
+- [Improve handling of nested fragments](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/415)
+- [Allow overriding of graphql-auth-directives](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/417)
+- [Add database option to inferSchema config](https://github.com/neo4j-graphql/neo4j-graphql-js/commit/69b4c8e4bca435faf0b465da335f181392265bc4)
+
+## 2.13.0
+
+- [Translating fragments on interface types](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/394)
+- [Initial support for union types](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/397)
+- [Generated pagination for union type fields](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/398)
+- [Bump graphql-auth-directives version](https://github.com/neo4j-graphql/neo4j-graphql-js/commit/dbff65b0e7e947c1ba722f7edc2a03bd26608f03)
+- [Use latest APOC release in integration tests](https://github.com/neo4j-graphql/neo4j-graphql-js/commit/677d7d3a925f45fb96ae01ba4208357011b3d48e)
+
+## 2.12.1
+
+- [Fix nested fragments on relations](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/385)
+
+## 2.12.0
+
+- [Add support for Neo4j multi-database](https://github.com/neo4j-graphql/neo4j-graphql-js/commit/fd557123667ab11c4c97fdf1d05c6861def5651b)
+- [Fix fragments on interfaced relational fields](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/377)
+
+## 2.11.5
+
+- [Add relation mutations for interfaced types](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/374)
+
+## 2.11.4
+
+- [Fix for nested ordering fields with underscores](https://github.com/neo4j-graphql/neo4j-graphql-js/commit/b422f3bbef4ffe1a243193d5d1662313625e54c4)
+
+## 2.11.3
+
+- [Fixes for augmentation tests](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/371)
+- [Fix null-access for null string/ID values.](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/368)
+- [Fix for nested filtering](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/372)
+
+## 2.11.2
+
+- [Fix #295 Querying interface @relation fields with non-unique relationship names](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/366)
+- [Update driver user agent](https://github.com/neo4j-graphql/neo4j-graphql-js/commit/5a2e52ecb604483a7aa10383340fd95cdd581f26)
+
+## 2.11.1
+
+- [Fix #361 Merge node should add interface label](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/365)
+- [Fix #349 Interfaces with no scalar fields generate invalid schemas](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/365)
+
+## 2.11.0
+
+- [Fix for \_id field on generated ordering types](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/360)
+- [Initial support for Neo4j v4.0](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/363)
+
+_Note: Multi-database support is not exposed via neo4j-graphql.js in this release, only the default database can be used with neo4j-graphql.js. Multi-database support will be addressed in a future release._
+
 ## 2.10.2
 
 - [Fix for custom cypher fields of interface type](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/356)

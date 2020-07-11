@@ -1,4 +1,6 @@
-export const testSchema = /* GraphQL */ `
+import { gql } from 'apollo-server';
+
+export const testSchema = `
   type Movie
     @additionalLabels(
       labels: ["u_<%= $cypherParams.userId %>", "newMovieLabel"]
@@ -8,7 +10,7 @@ export const testSchema = /* GraphQL */ `
     title: String @isAuthenticated
     someprefix_title_with_underscores: String
     year: Int
-    released: DateTime!
+    released: DateTime
     plot: String
     poster: String
     imdbRating: Float
@@ -52,10 +54,22 @@ export const testSchema = /* GraphQL */ `
     imdbRatings: [Float]
     releases: [DateTime]
     customField: String @neo4j_ignore
+  }
+  
+  extend type Movie {
     currentUserId(strArg: String): String
       @cypher(
         statement: "RETURN $cypherParams.currentUserId AS cypherParamsUserId"
       )
+    interfaceNoScalars(
+      orderBy: _InterfaceNoScalarsOrdering
+    ): [InterfaceNoScalars]
+      @relation(name: "INTERFACE_NO_SCALARS", direction: OUT)
+  }
+
+  extend type Movie @hasRole(roles: [admin]) {
+    extensionScalar: String
+    extensionNode: [Genre] @relation(name: "IN_GENRE", direction: "OUT")
   }
 
   type Genre {
@@ -79,11 +93,51 @@ export const testSchema = /* GraphQL */ `
     name: String
   }
 
-  type Actor implements Person {
+  extend interface Person {
+    extensionScalar: String
+  }
+
+  enum _PersonOrdering {
+    userId_asc
+    userId_desc
+    name_asc
+    name_desc
+  }
+
+  input _PersonFilter {
+    AND: [_PersonFilter!]
+    OR: [_PersonFilter!]
+    userId: ID
+    userId_not: ID
+    userId_in: [ID!]
+    userId_not_in: [ID!]
+    userId_contains: ID
+    userId_not_contains: ID
+    userId_starts_with: ID
+    userId_not_starts_with: ID
+    userId_ends_with: ID
+    userId_not_ends_with: ID
+    name: String
+    name_not: String
+    name_in: [String!]
+    name_not_in: [String!]
+    name_contains: String
+    name_not_contains: String
+    name_starts_with: String
+    name_not_starts_with: String
+    name_ends_with: String
+    name_not_ends_with: String
+  }
+
+  type Actor {
     userId: ID!
     name: String
     movies: [Movie] @relation(name: "ACTED_IN", direction: "OUT")
+    knows: [Person] @relation(name: "KNOWS", direction: "OUT")
+    extensionScalar: String
   }
+
+  extend type Actor implements Person
 
   type User implements Person {
     userId: ID!
@@ -111,6 +165,10 @@ export const testSchema = /* GraphQL */ `
       location: Point
     ): [FriendOf]
     favorites: [Movie] @relation(name: "FAVORITED", direction: "OUT")
+    movieSearch: [MovieSearch]
+    computedMovieSearch: [MovieSearch]
+      @cypher(statement: "MATCH (ms:MovieSearch) RETURN ms")
+    extensionScalar: String
   }
 
   type FriendOf @relation {
@@ -172,6 +230,9 @@ export const testSchema = /* GraphQL */ `
   enum BookGenre {
     Mystery
     Science
+  }
+
+  extend enum BookGenre {
     Math
   }
 
@@ -233,6 +294,23 @@ export const testSchema = /* GraphQL */ `
     customWithArguments(strArg: String, strInputArg: strInput): String
       @cypher(statement: "RETURN $strInputArg.strArg")
     CasedType: [CasedType]
+    Camera(
+      type: String
+      first: Int
+      orderBy: _CameraOrdering
+      filter: _CameraFilter
+    ): [Camera]
+    InterfaceNoScalars(
+      orderBy: _InterfaceNoScalarsOrdering
+    ): [InterfaceNoScalars]
+    CustomCameras: [Camera] @cypher(statement: "MATCH (c:Camera) RETURN c")
+    CustomCamera: Camera @cypher(statement: "MATCH (c:Camera) RETURN c")
+  }
+
+  extend type QueryA {
+    MovieSearch(first: Int): [MovieSearch]
+    computedMovieSearch: [MovieSearch]
+      @cypher(statement: "MATCH (ms:MovieSearch) RETURN ms")
   }
 
   type Mutation {
@@ -255,6 +333,19 @@ export const testSchema = /* GraphQL */ `
     customWithArguments(strArg: String, strInputArg: strInput): String
       @cypher(statement: "RETURN $strInputArg.strArg")
     testPublish: Boolean @neo4j_ignore
+    computedMovieSearch: [MovieSearch]
+      @cypher(statement: "MATCH (ms:MovieSearch) RETURN ms")
+  }
+
+  extend type Mutation {
+    CustomCamera: Camera
+      @cypher(
+        statement: "CREATE (newCamera:Camera:NewCamera {id: apoc.create.uuid(), type: 'macro'}) RETURN newCamera"
+      )
+    CustomCameras: [Camera]
+      @cypher(
+        statement: "CREATE (newCamera:Camera:NewCamera {id: apoc.create.uuid(), type: 'macro', features: ['selfie', 'zoom']}) CREATE (oldCamera:Camera:OldCamera {id: apoc.create.uuid(), type: 'floating', smell: 'rusty' }) RETURN [newCamera, oldCamera]"
+      )
   }
 
   type currentUserId {
@@ -296,8 +387,14 @@ export const testSchema = /* GraphQL */ `
   scalar LocalTime
   scalar LocalDateTime
 
+  extend scalar Time @neo4j_ignore
+
   input strInput {
     strArg: String
+  }
+
+  extend input strInput {
+    extensionArg: String
   }
 
   enum Role {
@@ -311,13 +408,150 @@ export const testSchema = /* GraphQL */ `
     state: State @relation(name: "FILMED_IN", direction: "OUT")
   }
 
+  interface InterfaceNoScalars {
+    movies: [Movie] @relation(name: "MOVIES", direction: OUT)
+  }
+
+  enum _InterfaceNoScalarsOrdering {
+    movies_asc
+  }
+
+  input _CameraFilter {
+    AND: [_CameraFilter!]
+    OR: [_CameraFilter!]
+    id: ID
+    id_not: ID
+    id_in: [ID!]
+    id_not_in: [ID!]
+    id_contains: ID
+    id_not_contains: ID
+    id_starts_with: ID
+    id_not_starts_with: ID
+    id_ends_with: ID
+    id_not_ends_with: ID
+    type: String
+    type_not: String
+    type_in: [String!]
+    type_not_in: [String!]
+    type_contains: String
+    type_not_contains: String
+    type_starts_with: String
+    type_not_starts_with: String
+    type_ends_with: String
+    type_not_ends_with: String
+    make: String
+    make_not: String
+    make_in: [String!]
+    make_not_in: [String!]
+    make_contains: String
+    make_not_contains: String
+    make_starts_with: String
+    make_not_starts_with: String
+    make_ends_with: String
+    make_not_ends_with: String
+    weight: Int
+    weight_not: Int
+    weight_in: [Int!]
+    weight_not_in: [Int!]
+    weight_lt: Int
+    weight_lte: Int
+    weight_gt: Int
+    weight_gte: Int
+    operators: _PersonFilter
+    operators_not: _PersonFilter
+    operators_in: [_PersonFilter!]
+    operators_not_in: [_PersonFilter!]
+    operators_some: _PersonFilter
+    operators_none: _PersonFilter
+    operators_single: _PersonFilter
+    operators_every: _PersonFilter
+  }
+
+  interface Camera {
+    id: ID!
+    type: String
+    make: String
+    weight: Int
+    operators(
+      first: Int
+      offset: Int
+      orderBy: _PersonOrdering
+      filter: _PersonFilter
+    ): [Person] @relation(name: "cameras", direction: IN)
+    computedOperators(name: String): [Person]
+      @cypher(statement: "MATCH (this)<-[:cameras]-(p:Person) RETURN p")
+  }
+
+  enum _CameraOrdering {
+    id_asc
+    id_desc
+    type_asc
+    type_desc
+    make_asc
+    make_desc
+    weight_asc
+    weight_desc
+  }
+
+  type OldCamera implements Camera {
+    id: ID!
+    type: String
+    make: String
+    weight: Int
+    smell: String
+    operators(
+      first: Int
+      offset: Int
+      orderBy: _PersonOrdering
+      filter: _PersonFilter
+    ): [Person] @relation(name: "cameras", direction: IN)
+    computedOperators(name: String): [Person]
+      @cypher(statement: "MATCH (this)<-[:cameras]-(p:Person) RETURN p")
+  }
+
+  type NewCamera implements Camera {
+    id: ID!
+    type: String
+    make: String
+    weight: Int
+    features: [String]
+    operators(
+      first: Int
+      offset: Int
+      orderBy: _PersonOrdering
+      filter: _PersonFilter
+    ): [Person] @relation(name: "cameras", direction: IN)
+    computedOperators(name: String): [Person]
+      @cypher(statement: "MATCH (this)<-[:cameras]-(p:Person) RETURN p")
+  }
+
+  union MovieSearch = Movie | Genre | Book
+
+  extend union MovieSearch = Actor | OldCamera
+
+  type CameraMan implements Person {
+    userId: ID!
+    name: String
+    favoriteCamera: Camera @relation(name: "favoriteCamera", direction: "OUT")
+    heaviestCamera: [Camera]
+      @cypher(
+        statement: "MATCH (c: Camera)--(this) RETURN c ORDER BY c.weight DESC LIMIT 1"
+      )
+    cameras: [Camera!]! @relation(name: "cameras", direction: "OUT")
+    cameraBuddy: Person @relation(name: "cameraBuddy", direction: "OUT")
+    extensionScalar: String
+  }
+
   type SubscriptionC {
     testSubscribe: Boolean
   }
 
   schema {
     query: QueryA
-    mutation: Mutation
     subscription: SubscriptionC
+  }
+  
+  extend schema {
+    mutation: Mutation
   }
 `;

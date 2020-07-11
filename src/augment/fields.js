@@ -20,14 +20,17 @@ export const Neo4jSystemIDField = `_id`;
  * See: https://neo4j.com/docs/cypher-manual/current/syntax/values/#property-types
  */
 export const isPropertyTypeField = ({ kind, type }) =>
+  isScalarField({ kind, type }) ||
+  isTemporalField({ type }) ||
+  isSpatialField({ type }) ||
+  isNeo4jPropertyType({ type });
+
+export const isScalarField = ({ kind, type }) =>
   isIntegerField({ type }) ||
   isFloatField({ type }) ||
   isStringField({ kind, type }) ||
   isBooleanField({ type }) ||
-  isCustomScalarField({ kind }) ||
-  isTemporalField({ type }) ||
-  isSpatialField({ type }) ||
-  isNeo4jPropertyType({ type });
+  isCustomScalarField({ kind });
 
 export const isIntegerField = ({ type }) =>
   Neo4jDataType.PROPERTY[type] === 'Integer';
@@ -145,6 +148,18 @@ export const getFieldDefinition = ({ fields = [], name = '' }) =>
   fields.find(field => field.name && field.name.value === name);
 
 /**
+ * A getter for a field definition of a given name, contained
+ * in the field definitions of a type in a given array of extensions
+ */
+export const getTypeExtensionFieldDefinition = ({
+  typeExtensions = [],
+  name = ''
+}) =>
+  typeExtensions.find(extension =>
+    getFieldDefinition({ fields: extension.fields, name })
+  );
+
+/**
  * A getter for the type name of a field of a given name,
  * finding the field, unwrapping its type, and returning
  * the value of its NamedType
@@ -228,4 +243,23 @@ export const buildNeo4jSystemIDField = ({
     }
   }
   return [propertyOutputFields, nodeInputTypeMap];
+};
+
+export const propertyFieldExists = ({
+  definition = {},
+  typeDefinitionMap = {}
+}) => {
+  const fields = definition.fields || [];
+  return fields.find(field => {
+    const fieldName = field.name.value;
+    const fieldType = field.type;
+    const unwrappedType = unwrapNamedType({ type: fieldType });
+    const outputType = unwrappedType.name;
+    const outputDefinition = typeDefinitionMap[outputType];
+    const outputKind = outputDefinition ? outputDefinition.kind : '';
+    return isPropertyTypeField({
+      kind: outputKind,
+      type: outputType
+    });
+  });
 };

@@ -1,48 +1,91 @@
 import { neo4jgraphql } from '../index';
 import { OperationType } from '../augment/types/types';
+import {
+  generateBaseTypeReferenceResolvers,
+  generateNonLocalTypeExtensionReferenceResolvers
+} from '../federation';
 
 /**
  * The main export for the generation of resolvers for the
  * Query and Mutation API. Prevent overwriting.
  */
-export const augmentResolvers = (
-  augmentedTypeMap,
+export const augmentResolvers = ({
+  generatedTypeMap,
   operationTypeMap,
+  typeExtensionDefinitionMap,
   resolvers,
-  config
-) => {
+  config = {}
+}) => {
+  const isFederated = config.isFederated;
   // Persist and generate Query resolvers
   let queryTypeName = OperationType.QUERY;
+  let mutationTypeName = OperationType.MUTATION;
+  let subscriptionTypeName = OperationType.SUBSCRIPTION;
+
   const queryType = operationTypeMap[queryTypeName];
-  if (queryType) {
-    queryTypeName = queryType.name.value;
+  if (queryType) queryTypeName = queryType.name.value;
+  const queryTypeExtensions = typeExtensionDefinitionMap[queryTypeName];
+  if (queryType || (queryTypeExtensions && queryTypeExtensions.length)) {
     let queryResolvers =
       resolvers && resolvers[queryTypeName] ? resolvers[queryTypeName] : {};
-    queryResolvers = possiblyAddResolvers(queryType, queryResolvers, config);
-    if (Object.keys(queryResolvers).length > 0) {
+    queryResolvers = possiblyAddResolvers({
+      operationType: queryType,
+      operationTypeExtensions: queryTypeExtensions,
+      resolvers: queryResolvers,
+      config,
+      isFederated
+    });
+
+    if (Object.keys(queryResolvers).length) {
       resolvers[queryTypeName] = queryResolvers;
+      if (isFederated) {
+        resolvers = generateBaseTypeReferenceResolvers({
+          queryResolvers,
+          resolvers,
+          config
+        });
+      }
     }
   }
+
+  if (Object.values(typeExtensionDefinitionMap).length) {
+    if (isFederated) {
+      resolvers = generateNonLocalTypeExtensionReferenceResolvers({
+        resolvers,
+        generatedTypeMap,
+        typeExtensionDefinitionMap,
+        queryTypeName,
+        mutationTypeName,
+        subscriptionTypeName,
+        config
+      });
+    }
+  }
+
   // Persist and generate Mutation resolvers
-  let mutationTypeName = OperationType.MUTATION;
   const mutationType = operationTypeMap[mutationTypeName];
-  if (mutationType) {
-    mutationTypeName = mutationType.name.value;
+  if (mutationType) mutationTypeName = mutationType.name.value;
+  const mutationTypeExtensions = typeExtensionDefinitionMap[mutationTypeName];
+  if (
+    mutationType ||
+    (mutationTypeExtensions && mutationTypeExtensions.length)
+  ) {
     let mutationResolvers =
       resolvers && resolvers[mutationTypeName]
         ? resolvers[mutationTypeName]
         : {};
-    mutationResolvers = possiblyAddResolvers(
-      mutationType,
-      mutationResolvers,
+    mutationResolvers = possiblyAddResolvers({
+      operationType: mutationType,
+      operationTypeExtensions: mutationTypeExtensions,
+      resolvers: mutationResolvers,
       config
-    );
+    });
     if (Object.keys(mutationResolvers).length > 0) {
       resolvers[mutationTypeName] = mutationResolvers;
     }
   }
+
   // Persist Subscription resolvers
-  let subscriptionTypeName = OperationType.SUBSCRIPTION;
   const subscriptionType = operationTypeMap[subscriptionTypeName];
   if (subscriptionType) {
     subscriptionTypeName = subscriptionType.name.value;
@@ -54,44 +97,63 @@ export const augmentResolvers = (
       resolvers[subscriptionTypeName] = subscriptionResolvers;
     }
   }
+
   // must implement __resolveInfo for every Interface type
   // we use "FRAGMENT_TYPE" key to identify the Interface implementation
   // type at runtime, so grab this value
-  const interfaceTypes = Object.keys(augmentedTypeMap).filter(
-    e => augmentedTypeMap[e].kind === 'InterfaceTypeDefinition'
+  const derivedTypes = Object.keys(generatedTypeMap).filter(
+    e =>
+      generatedTypeMap[e].kind === 'InterfaceTypeDefinition' ||
+      generatedTypeMap[e].kind === 'UnionTypeDefinition'
   );
-  interfaceTypes.map(e => {
+  derivedTypes.map(e => {
     resolvers[e] = {};
 
     resolvers[e]['__resolveType'] = (obj, context, info) => {
       return obj['FRAGMENT_TYPE'];
     };
   });
+
   return resolvers;
+};
+
+const getOperationFieldMap = ({ operationType, operationTypeExtensions }) => {
+  const fieldMap = {};
+  const fields = operationType ? operationType.fields : [];
+  fields.forEach(field => {
+    fieldMap[field.name.value] = true;
+  });
+  operationTypeExtensions.forEach(extension => {
+    extension.fields.forEach(field => {
+      fieldMap[field.name.value] = true;
+    });
+  });
+  return fieldMap;
 };
 
 /**
  * Generates resolvers for a given operation type, if
  * any fields exist, for any resolver not provided
  */
-const possiblyAddResolvers = (operationType, resolvers, config) => {
-  let operationName = '';
-  const fields = operationType ? operationType.fields : [];
-  const operationTypeMap = fields.reduce((acc, t) => {
-    acc[t.name.value] = t;
-    return acc;
-  }, {});
-  return Object.keys(operationTypeMap).reduce((acc, t) => {
-    // if no resolver provided for this operation type field
-    operationName = operationTypeMap[t].name.value;
+const possiblyAddResolvers = ({
+  operationType,
+  operationTypeExtensions = [],
+  resolvers,
+  config
+}) => {
+  const fieldMap = getOperationFieldMap({
+    operationType,
+    operationTypeExtensions
+  });
+  Object.keys(fieldMap).forEach(name => {
     // If not provided
-    if (acc[operationName] === undefined) {
-      acc[operationName] = function(...args) {
-        return neo4jgraphql(...args, config.debug);
+    if (resolvers[name] === undefined) {
+      resolvers[name] = async function(...args) {
+        return await neo4jgraphql(...args, config.debug);
       };
     }
-    return acc;
-  }, resolvers);
+  });
+  return resolvers;
 };
 
 /**

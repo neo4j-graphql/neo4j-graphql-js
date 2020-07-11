@@ -21,7 +21,7 @@ export function cypherTestRunner(
     `
 type Mutation {
     CreateGenre(name: String): Genre @cypher(statement: "CREATE (g:Genre) SET g.name = $name RETURN g")
-    CreateMovie(movieId: ID, title: String, year: Int, plot: String, poster: String, imdbRating: Float): Movie
+    CreateMovie(movieId: ID, title: String, year: Int, plot: String, poster: String, imdbRating: Float, released: DateTime): Movie
     CreateState(name: String!): State
     UpdateMovie(movieId: ID!, title: String, year: Int, plot: String, poster: String, imdbRating: Float): Movie
     DeleteMovie(movieId: ID!): Movie
@@ -32,8 +32,11 @@ type Mutation {
     computedTemporal: DateTime @cypher(statement: "WITH datetime() AS now RETURN { year: now.year, month: now.month , day: now.day , hour: now.hour , minute: now.minute , second: now.second , millisecond: now.millisecond , microsecond: now.microsecond , nanosecond: now.nanosecond , timezone: now.timezone , formatted: toString(now) }")
     computedSpatial: Point @cypher(statement: "WITH point({ x: 10, y: 20, z: 15 }) AS instance RETURN { x: instance.x, y: instance.y, z: instance.z, crs: instance.crs }")
     customWithArguments(strArg: String, strInputArg: strInput): String @cypher(statement: "RETURN $strInputArg.strArg")
+    CreateNewCamera(id: ID, type: String, make: String, weight: Int, features: [String]): NewCamera
+    CreateActor(userId: ID, name: String): Actor
+    computedMovieSearch: [MovieSearch] @cypher(statement: "MATCH (ms:MovieSearch) RETURN ms")
   }
-`;
+  `;
 
   const checkCypherQuery = (object, params, ctx, resolveInfo) => {
     const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
@@ -59,6 +62,9 @@ type Mutation {
       GenresBySubstring: checkCypherQuery,
       Books: checkCypherQuery,
       State: checkCypherQuery,
+      Camera: checkCypherQuery,
+      CustomCameras: checkCypherQuery,
+      CustomCamera: checkCypherQuery,
       computedBoolean: checkCypherQuery,
       computedInt: checkCypherQuery,
       computedFloat: checkCypherQuery,
@@ -68,11 +74,14 @@ type Mutation {
       computedObjectWithCypherParams: checkCypherQuery,
       computedStringList: checkCypherQuery,
       computedIntList: checkCypherQuery,
-      customWithArguments: checkCypherQuery
+      customWithArguments: checkCypherQuery,
+      MovieSearch: checkCypherQuery,
+      computedMovieSearch: checkCypherQuery
     },
     Mutation: {
       CreateGenre: checkCypherMutation,
       CreateMovie: checkCypherMutation,
+      CreateActor: checkCypherMutation,
       CreateState: checkCypherMutation,
       UpdateMovie: checkCypherMutation,
       DeleteMovie: checkCypherMutation,
@@ -82,7 +91,11 @@ type Mutation {
       computedStringList: checkCypherMutation,
       computedTemporal: checkCypherMutation,
       computedSpatial: checkCypherMutation,
-      customWithArguments: checkCypherMutation
+      customWithArguments: checkCypherMutation,
+      CustomCamera: checkCypherMutation,
+      CustomCameras: checkCypherMutation,
+      CreateNewCamera: checkCypherMutation,
+      computedMovieSearch: checkCypherMutation
     }
   };
   let augmentedTypeDefs = augmentTypeDefs(testMovieSchema, { auth: true });
@@ -152,6 +165,7 @@ export function augmentedSchemaCypherTestRunner(
 
   const resolvers = {
     QueryA: {
+      Actor: checkCypherQuery,
       User: checkCypherQuery,
       Movie: checkCypherQuery,
       MoviesByYear: checkCypherQuery,
@@ -175,6 +189,9 @@ export function augmentedSchemaCypherTestRunner(
       SuperHero: checkCypherQuery,
       Power: checkCypherQuery,
       CasedType: checkCypherQuery,
+      Camera: checkCypherQuery,
+      CustomCameras: checkCypherQuery,
+      CustomCamera: checkCypherQuery,
       computedBoolean: checkCypherQuery,
       computedInt: checkCypherQuery,
       computedFloat: checkCypherQuery,
@@ -184,10 +201,13 @@ export function augmentedSchemaCypherTestRunner(
       computedObjectWithCypherParams: checkCypherQuery,
       computedStringList: checkCypherQuery,
       computedIntList: checkCypherQuery,
-      customWithArguments: checkCypherQuery
+      customWithArguments: checkCypherQuery,
+      MovieSearch: checkCypherQuery,
+      computedMovieSearch: checkCypherQuery
     },
     Mutation: {
       CreateMovie: checkCypherMutation,
+      CreateActor: checkCypherMutation,
       CreateState: checkCypherMutation,
       CreateTemporalNode: checkCypherMutation,
       UpdateTemporalNode: checkCypherMutation,
@@ -216,12 +236,19 @@ export function augmentedSchemaCypherTestRunner(
       AddPowerEndowment: checkCypherMutation,
       MergePowerEndowment: checkCypherMutation,
       UpdatePowerEndowment: checkCypherMutation,
+      AddActorKnows: checkCypherMutation,
+      MergeActorKnows: checkCypherMutation,
+      RemoveActorKnows: checkCypherMutation,
       currentUserId: checkCypherMutation,
       computedObjectWithCypherParams: checkCypherMutation,
       computedStringList: checkCypherMutation,
       computedTemporal: checkCypherMutation,
       computedSpatial: checkCypherMutation,
-      customWithArguments: checkCypherMutation
+      customWithArguments: checkCypherMutation,
+      CustomCamera: checkCypherMutation,
+      CustomCameras: checkCypherMutation,
+      CreateNewCamera: checkCypherMutation,
+      computedMovieSearch: checkCypherMutation
     }
   };
 

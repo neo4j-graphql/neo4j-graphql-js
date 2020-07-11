@@ -36,14 +36,20 @@ export const addAuthDirectiveImplementations = (
   config
 ) => {
   if (shouldAddAuthDirective(config, 'isAuthenticated')) {
-    schemaDirectives['isAuthenticated'] = IsAuthenticatedDirective;
+    if (!schemaDirectives['isAuthenticated']) {
+      schemaDirectives['isAuthenticated'] = IsAuthenticatedDirective;
+    }
   }
   if (shouldAddAuthDirective(config, 'hasRole')) {
     getRoleType(typeMap); // ensure Role enum specified in typedefs
-    schemaDirectives['hasRole'] = HasRoleDirective;
+    if (!schemaDirectives['hasRole']) {
+      schemaDirectives['hasRole'] = HasRoleDirective;
+    }
   }
   if (shouldAddAuthDirective(config, 'hasScope')) {
-    schemaDirectives['hasScope'] = HasScopeDirective;
+    if (!schemaDirectives['hasScope']) {
+      schemaDirectives['hasScope'] = HasScopeDirective;
+    }
   }
   return schemaDirectives;
 };

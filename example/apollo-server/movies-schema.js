@@ -46,6 +46,7 @@ type Actor {
   id: ID!
   name: String
   movies: [Movie] @relation(name: "ACTED_IN", direction: "OUT")
+  knows: [Person] @relation(name: "KNOWS", direction: "OUT")
 }
 
 type User implements Person {
@@ -87,6 +88,8 @@ interface Camera {
   type: String
   make: String
   weight: Int
+  operators: [Person] @relation(name: "cameras", direction: IN)
+  computedOperators(name: String): [Person] @cypher(statement: "MATCH (this)<-[:cameras]-(p:Person) RETURN p")
 }
 
 type OldCamera implements Camera {
@@ -95,6 +98,8 @@ type OldCamera implements Camera {
   make: String
   weight: Int
   smell: String
+  operators: [Person] @relation(name: "cameras", direction: IN)
+  computedOperators(name: String): [Person] @cypher(statement: "MATCH (this)<-[:cameras]-(p:Person) RETURN p")
 }
 
 type NewCamera implements Camera {
@@ -103,6 +108,8 @@ type NewCamera implements Camera {
   make: String
   weight: Int
   features: [String]
+  operators: [Person] @relation(name: "cameras", direction: IN)
+  computedOperators(name: String): [Person] @cypher(statement: "MATCH (this)<-[:cameras]-(p:Person) RETURN p")
 }
 
 type CameraMan implements Person {
@@ -114,12 +121,22 @@ type CameraMan implements Person {
   cameraBuddy: Person @relation(name: "cameraBuddy", direction: "OUT")
 }
 
+union MovieSearch = Movie | Genre | Book | User | OldCamera
+
 type Query {
-  Movie(movieId: ID, title: String, year: Int, plot: String, poster: String, imdbRating: Float): [Movie]  MoviesByYear(year: Int, first: Int = 10, offset: Int = 0): [Movie]
+  Movie(movieId: ID, title: String, year: Int, plot: String, poster: String, imdbRating: Float): [Movie]
+  MoviesByYear(year: Int, first: Int = 10, offset: Int = 0): [Movie]
   AllMovies: [Movie]
   MovieById(movieId: ID!): Movie
   GenresBySubstring(substring: String): [Genre] @cypher(statement: "MATCH (g:Genre) WHERE toLower(g.name) CONTAINS toLower($substring) RETURN g")
   Books: [Book]
+  CustomCameras: [Camera] @cypher(statement: "MATCH (c:Camera) RETURN c")
+  CustomCamera: Camera @cypher(statement: "MATCH (c:Camera) RETURN c")
+}
+
+type Mutation {
+  CustomCamera: Camera @cypher(statement: "CREATE (newCamera:Camera:NewCamera {id: apoc.create.uuid(), type: 'macro'}) RETURN newCamera")
+  CustomCameras: [Camera] @cypher(statement: "CREATE (newCamera:Camera:NewCamera {id: apoc.create.uuid(), type: 'macro', features: ['selfie', 'zoom']}) CREATE (oldCamera:Camera:OldCamera {id: apoc.create.uuid(), type: 'floating', smell: 'rusty' }) RETURN [newCamera, oldCamera]")
 }
 `;
 
@@ -146,15 +163,3 @@ export const resolvers = {
     }
   }
 };
-
-// Mutation: {
-//   CreateGenre(object, params, ctx, resolveInfo) {
-//     return neo4jgraphql(object, params, ctx, resolveInfo, true);
-//   },
-//   CreateMovie(object, params, ctx, resolveInfo) {
-//     return neo4jgraphql(object, params, ctx, resolveInfo, true);
-//   },
-//   AddMovieGenre(object, params, ctx, resolveInfo) {
-//     return neo4jgraphql(object, params, ctx, resolveInfo, true);
-//   }
-// }
