@@ -18,6 +18,8 @@ import {
 export const DirectiveDefinition = {
   CYPHER: 'cypher',
   RELATION: 'relation',
+  CREATED: 'created',
+  UPDATED: 'updated',
   MUTATION_META: 'MutationMeta',
   NEO4J_IGNORE: 'neo4j_ignore',
   IS_AUTHENTICATED: 'isAuthenticated',
@@ -313,6 +315,20 @@ const directiveDefinitionBuilderMap = {
         }
       ],
       locations: [DirectiveLocation.FIELD_DEFINITION, DirectiveLocation.OBJECT]
+    };
+  },
+  [DirectiveDefinition.CREATED]: ({ config }) => {
+    return {
+      name: DirectiveDefinition.CREATED,
+      args: [],
+      locations: [DirectiveLocation.FIELD_DEFINITION]
+    };
+  },
+  [DirectiveDefinition.UPDATED]: ({ config }) => {
+    return {
+      name: DirectiveDefinition.UPDATED,
+      args: [],
+      locations: [DirectiveLocation.FIELD_DEFINITION]
     };
   },
   [DirectiveDefinition.ADDITIONAL_LABELS]: ({ config }) => {

@@ -26,6 +26,10 @@ test.cb('Test augmented schema', t => {
       to: String
     ) on FIELD_DEFINITION | OBJECT
 
+    directive @created on FIELD_DEFINITION
+
+    directive @updated on FIELD_DEFINITION
+
     directive @additionalLabels(labels: [String]) on OBJECT
 
     directive @MutationMeta(
@@ -182,6 +186,26 @@ test.cb('Test augmented schema', t => {
         orderBy: [_ActorOrdering]
         filter: _ActorFilter
       ): [Actor] @hasScope(scopes: ["Actor: Read"])
+      SuperHero(
+        id: ID
+        name: String
+        created: _Neo4jDateTimeInput
+        updated: _Neo4jDateTimeInput
+        _id: String
+        first: Int
+        offset: Int
+        orderBy: [_SuperHeroOrdering]
+        filter: _SuperHeroFilter
+      ): [SuperHero] @hasScope(scopes: ["SuperHero: Read"])
+      Power(
+        id: ID
+        title: String
+        _id: String
+        first: Int
+        offset: Int
+        orderBy: [_PowerOrdering]
+        filter: _PowerFilter
+      ): [Power] @hasScope(scopes: ["Power: Read"])
       Book(
         genre: BookGenre
         _id: String
@@ -2134,6 +2158,76 @@ test.cb('Test augmented schema', t => {
       DeleteUser(userId: ID!): User @hasScope(scopes: ["User: Delete"])
       MergeUser(userId: ID!, name: String, extensionScalar: String): User
         @hasScope(scopes: ["User: Merge"])
+      CreateSuperHero(
+        id: ID
+        name: String!
+        created: _Neo4jDateTimeInput
+        updated: _Neo4jDateTimeInput
+      ): SuperHero @hasScope(scopes: ["SuperHero: Create"])
+      UpdateSuperHero(
+        id: ID!
+        name: String
+        created: _Neo4jDateTimeInput
+        updated: _Neo4jDateTimeInput
+      ): SuperHero @hasScope(scopes: ["SuperHero: Update"])
+      DeleteSuperHero(id: ID!): SuperHero
+        @hasScope(scopes: ["SuperHero: Delete"])
+      MergeSuperHero(
+        id: ID!
+        name: String
+        created: _Neo4jDateTimeInput
+        updated: _Neo4jDateTimeInput
+      ): SuperHero @hasScope(scopes: ["SuperHero: Merge"])
+      AddPowerEndowment(
+        from: _PowerInput!
+        to: _SuperHeroInput!
+        data: _EndowmentInput!
+      ): _AddPowerEndowmentPayload
+        @MutationMeta(
+          relationship: "ENDOWED_TO"
+          from: "Power"
+          to: "SuperHero"
+        )
+        @hasScope(scopes: ["Power: Create", "SuperHero: Create"])
+      RemovePowerEndowment(
+        from: _PowerInput!
+        to: _SuperHeroInput!
+      ): _RemovePowerEndowmentPayload
+        @MutationMeta(
+          relationship: "ENDOWED_TO"
+          from: "Power"
+          to: "SuperHero"
+        )
+        @hasScope(scopes: ["Power: Delete", "SuperHero: Delete"])
+      UpdatePowerEndowment(
+        from: _PowerInput!
+        to: _SuperHeroInput!
+        data: _EndowmentInput!
+      ): _UpdatePowerEndowmentPayload
+        @MutationMeta(
+          relationship: "ENDOWED_TO"
+          from: "Power"
+          to: "SuperHero"
+        )
+        @hasScope(scopes: ["Power: Update", "SuperHero: Update"])
+      MergePowerEndowment(
+        from: _PowerInput!
+        to: _SuperHeroInput!
+        data: _EndowmentInput!
+      ): _MergePowerEndowmentPayload
+        @MutationMeta(
+          relationship: "ENDOWED_TO"
+          from: "Power"
+          to: "SuperHero"
+        )
+        @hasScope(scopes: ["Power: Merge", "SuperHero: Merge"])
+      CreatePower(id: ID, title: String!): Power
+        @hasScope(scopes: ["Power: Create"])
+      UpdatePower(id: ID!, title: String): Power
+        @hasScope(scopes: ["Power: Update"])
+      DeletePower(id: ID!): Power @hasScope(scopes: ["Power: Delete"])
+      MergePower(id: ID!, title: String): Power
+        @hasScope(scopes: ["Power: Merge"])
       CreateBook(genre: BookGenre): Book @hasScope(scopes: ["Book: Create"])
       DeleteBook(genre: BookGenre!): Book @hasScope(scopes: ["Book: Delete"])
       CreatecurrentUserId(userId: String): currentUserId
@@ -3151,6 +3245,210 @@ test.cb('Test augmented schema', t => {
     enum _RelationDirections {
       IN
       OUT
+    }
+
+    enum _SuperHeroOrdering {
+      id_asc
+      id_desc
+      name_asc
+      name_desc
+      created_asc
+      created_desc
+      updated_asc
+      updated_desc
+      _id_asc
+      _id_desc
+    }
+
+    input _SuperHeroFilter {
+      AND: [_SuperHeroFilter!]
+      OR: [_SuperHeroFilter!]
+      id: ID
+      id_not: ID
+      id_in: [ID!]
+      id_not_in: [ID!]
+      id_contains: ID
+      id_not_contains: ID
+      id_starts_with: ID
+      id_not_starts_with: ID
+      id_ends_with: ID
+      id_not_ends_with: ID
+      name: String
+      name_not: String
+      name_in: [String!]
+      name_not_in: [String!]
+      name_contains: String
+      name_not_contains: String
+      name_starts_with: String
+      name_not_starts_with: String
+      name_ends_with: String
+      name_not_ends_with: String
+      created: _Neo4jDateTimeInput
+      created_not: _Neo4jDateTimeInput
+      created_in: [_Neo4jDateTimeInput!]
+      created_not_in: [_Neo4jDateTimeInput!]
+      created_lt: _Neo4jDateTimeInput
+      created_lte: _Neo4jDateTimeInput
+      created_gt: _Neo4jDateTimeInput
+      created_gte: _Neo4jDateTimeInput
+      updated: _Neo4jDateTimeInput
+      updated_not: _Neo4jDateTimeInput
+      updated_in: [_Neo4jDateTimeInput!]
+      updated_not_in: [_Neo4jDateTimeInput!]
+      updated_lt: _Neo4jDateTimeInput
+      updated_lte: _Neo4jDateTimeInput
+      updated_gt: _Neo4jDateTimeInput
+      updated_gte: _Neo4jDateTimeInput
+    }
+
+    type SuperHero {
+      id: ID!
+      name: String!
+      created: _Neo4jDateTime @created
+      updated: _Neo4jDateTime @updated
+      _id: String
+    }
+
+    enum _PowerOrdering {
+      id_asc
+      id_desc
+      title_asc
+      title_desc
+      _id_asc
+      _id_desc
+    }
+
+    input _PowerFilter {
+      AND: [_PowerFilter!]
+      OR: [_PowerFilter!]
+      id: ID
+      id_not: ID
+      id_in: [ID!]
+      id_not_in: [ID!]
+      id_contains: ID
+      id_not_contains: ID
+      id_starts_with: ID
+      id_not_starts_with: ID
+      id_ends_with: ID
+      id_not_ends_with: ID
+      title: String
+      title_not: String
+      title_in: [String!]
+      title_not_in: [String!]
+      title_contains: String
+      title_not_contains: String
+      title_starts_with: String
+      title_not_starts_with: String
+      title_ends_with: String
+      title_not_ends_with: String
+      endowment: _PowerEndowmentFilter
+      endowment_not: _PowerEndowmentFilter
+      endowment_in: [_PowerEndowmentFilter!]
+      endowment_not_in: [_PowerEndowmentFilter!]
+      endowment_some: _PowerEndowmentFilter
+      endowment_none: _PowerEndowmentFilter
+      endowment_single: _PowerEndowmentFilter
+      endowment_every: _PowerEndowmentFilter
+    }
+
+    input _PowerEndowmentFilter {
+      AND: [_PowerEndowmentFilter!]
+      OR: [_PowerEndowmentFilter!]
+      strength: Int
+      strength_not: Int
+      strength_in: [Int!]
+      strength_not_in: [Int!]
+      strength_lt: Int
+      strength_lte: Int
+      strength_gt: Int
+      strength_gte: Int
+      since: _Neo4jDateTimeInput
+      since_not: _Neo4jDateTimeInput
+      since_in: [_Neo4jDateTimeInput!]
+      since_not_in: [_Neo4jDateTimeInput!]
+      since_lt: _Neo4jDateTimeInput
+      since_lte: _Neo4jDateTimeInput
+      since_gt: _Neo4jDateTimeInput
+      since_gte: _Neo4jDateTimeInput
+      modified: _Neo4jDateTimeInput
+      modified_not: _Neo4jDateTimeInput
+      modified_in: [_Neo4jDateTimeInput!]
+      modified_not_in: [_Neo4jDateTimeInput!]
+      modified_lt: _Neo4jDateTimeInput
+      modified_lte: _Neo4jDateTimeInput
+      modified_gt: _Neo4jDateTimeInput
+      modified_gte: _Neo4jDateTimeInput
+      SuperHero: _SuperHeroFilter
+    }
+
+    type Power {
+      id: ID!
+      title: String!
+      endowment(filter: _PowerEndowmentFilter): [_PowerEndowment]
+      _id: String
+    }
+
+    type Endowment @relation(name: "ENDOWED_TO") {
+      from: Power!
+      to: SuperHero!
+      strength: Int!
+      since: _Neo4jDateTime @created
+      modified: _Neo4jDateTime @updated
+    }
+
+    type _PowerEndowment
+      @relation(name: "ENDOWED_TO", from: "Power", to: "SuperHero") {
+      strength: Int!
+      since: _Neo4jDateTime @created
+      modified: _Neo4jDateTime @updated
+      SuperHero: SuperHero
+    }
+
+    input _PowerInput {
+      id: ID!
+    }
+
+    input _SuperHeroInput {
+      id: ID!
+    }
+
+    input _EndowmentInput {
+      strength: Int!
+      since: _Neo4jDateTimeInput
+      modified: _Neo4jDateTimeInput
+    }
+
+    type _AddPowerEndowmentPayload
+      @relation(name: "ENDOWED_TO", from: "Power", to: "SuperHero") {
+      from: Power
+      to: SuperHero
+      strength: Int!
+      since: _Neo4jDateTime @created
+      modified: _Neo4jDateTime @updated
+    }
+
+    type _RemovePowerEndowmentPayload
+      @relation(name: "ENDOWED_TO", from: "Power", to: "SuperHero") {
+      from: Power
+      to: SuperHero
+    }
+
+    type _UpdatePowerEndowmentPayload
+      @relation(name: "ENDOWED_TO", from: "Power", to: "SuperHero") {
+      from: Power
+      to: SuperHero
+      strength: Int!
+      since: _Neo4jDateTime @created
+      modified: _Neo4jDateTime @updated
+    }
+
+    type _MergePowerEndowmentPayload
+      @relation(name: "ENDOWED_TO", from: "Power", to: "SuperHero") {
+      from: Power
+      to: SuperHero
+      strength: Int!
+      since: _Neo4jDateTime @created
+      modified: _Neo4jDateTime @updated
     }
 
     schema {
