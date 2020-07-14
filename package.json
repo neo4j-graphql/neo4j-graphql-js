@@ -46,7 +46,7 @@
     "@babel/plugin-proposal-async-generator-functions": "^7.0.0",
     "@babel/plugin-proposal-object-rest-spread": "^7.0.0",
     "@babel/plugin-transform-runtime": "^7.0.0",
-    "@babel/preset-env": "^7.0.0",
+    "@babel/preset-env": "^7.10.4",
     "apollo-cache-inmemory": "^1.6.3",
     "apollo-client": "^2.6.4",
     "apollo-link-http": "^1.5.16",
@@ -73,7 +73,7 @@
     "graphql": "^14.2.1",
     "graphql-auth-directives": "^2.2.0",
     "lodash": "^4.17.19",
-    "neo4j-driver": "^4.0.1"
+    "neo4j-driver": "^4.1.0"
   },
   "ava": {
     "require": [
