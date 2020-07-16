@@ -3,3 +3,12 @@ test
 .DS_Store
 .idea
 scripts
+.circleci
+.nyc_output
+.vscode
+coverage
+example
+.babelrc
+.prettierignore
+coverage.lcov
+scratch.md
