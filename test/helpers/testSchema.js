@@ -81,6 +81,7 @@ export const testSchema = `
       @cypher(
         statement: "MATCH (m:Movie)-[:IN_GENRE]->(this) RETURN m ORDER BY m.imdbRating DESC LIMIT 1"
       )
+    interfacedRelationshipType: [InterfacedRelationshipType]
   }
 
   type State {
@@ -91,6 +92,21 @@ export const testSchema = `
   interface Person {
     userId: ID!
     name: String
+    interfacedRelationshipType: [InterfacedRelationshipType]
+    reflexiveInterfacedRelationshipType: [ReflexiveInterfacedRelationshipType]    
+  }
+
+  type ReflexiveInterfacedRelationshipType @relation(name: "REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE") {
+    from: Person!
+    boolean: Boolean
+    to: Person!
+  }
+
+  type InterfacedRelationshipType @relation(name: "INTERFACED_RELATIONSHIP_TYPE") {
+    from: Person!
+    string: String!
+    boolean: Boolean
+    to: Genre!
   }
 
   extend interface Person {
@@ -127,6 +143,104 @@ export const testSchema = `
     name_not_starts_with: String
     name_ends_with: String
     name_not_ends_with: String
+    interfacedRelationshipType: _PersonInterfacedRelationshipTypeFilter
+    interfacedRelationshipType_not: _PersonInterfacedRelationshipTypeFilter
+    interfacedRelationshipType_in: [_PersonInterfacedRelationshipTypeFilter!]
+    interfacedRelationshipType_not_in: [_PersonInterfacedRelationshipTypeFilter!]
+    interfacedRelationshipType_some: _PersonInterfacedRelationshipTypeFilter
+    interfacedRelationshipType_none: _PersonInterfacedRelationshipTypeFilter
+    interfacedRelationshipType_single: _PersonInterfacedRelationshipTypeFilter
+    interfacedRelationshipType_every: _PersonInterfacedRelationshipTypeFilter
+    reflexiveInterfacedRelationshipType: _ReflexiveInterfacedRelationshipTypeDirectionsFilter
+    reflexiveInterfacedRelationshipType_not: _ReflexiveInterfacedRelationshipTypeDirectionsFilter
+    reflexiveInterfacedRelationshipType_in: [_ReflexiveInterfacedRelationshipTypeDirectionsFilter!]
+    reflexiveInterfacedRelationshipType_not_in: [_ReflexiveInterfacedRelationshipTypeDirectionsFilter!]
+    reflexiveInterfacedRelationshipType_some: _ReflexiveInterfacedRelationshipTypeDirectionsFilter
+    reflexiveInterfacedRelationshipType_none: _ReflexiveInterfacedRelationshipTypeDirectionsFilter
+    reflexiveInterfacedRelationshipType_single: _ReflexiveInterfacedRelationshipTypeDirectionsFilter
+    reflexiveInterfacedRelationshipType_every: _ReflexiveInterfacedRelationshipTypeDirectionsFilter
+    extensionScalar: String
+    extensionScalar_not: String
+    extensionScalar_in: [String!]
+    extensionScalar_not_in: [String!]
+    extensionScalar_contains: String
+    extensionScalar_not_contains: String
+    extensionScalar_starts_with: String
+    extensionScalar_not_starts_with: String
+    extensionScalar_ends_with: String
+    extensionScalar_not_ends_with: String
+  }
+  
+  input _PersonInterfacedRelationshipTypeFilter {
+    AND: [_PersonInterfacedRelationshipTypeFilter!]
+    OR: [_PersonInterfacedRelationshipTypeFilter!]
+    string: String
+    string_not: String
+    string_in: [String!]
+    string_not_in: [String!]
+    string_contains: String
+    string_not_contains: String
+    string_starts_with: String
+    string_not_starts_with: String
+    string_ends_with: String
+    string_not_ends_with: String
+    boolean: Boolean
+    boolean_not: Boolean
+    Genre: _GenreFilter
+  }
+  
+  input _GenreFilter {
+    AND: [_GenreFilter!]
+    OR: [_GenreFilter!]
+    name: String
+    name_not: String
+    name_in: [String!]
+    name_not_in: [String!]
+    name_contains: String
+    name_not_contains: String
+    name_starts_with: String
+    name_not_starts_with: String
+    name_ends_with: String
+    name_not_ends_with: String
+    interfacedRelationshipType: _GenreInterfacedRelationshipTypeFilter
+    interfacedRelationshipType_not: _GenreInterfacedRelationshipTypeFilter
+    interfacedRelationshipType_in: [_GenreInterfacedRelationshipTypeFilter!]
+    interfacedRelationshipType_not_in: [_GenreInterfacedRelationshipTypeFilter!]
+    interfacedRelationshipType_some: _GenreInterfacedRelationshipTypeFilter
+    interfacedRelationshipType_none: _GenreInterfacedRelationshipTypeFilter
+    interfacedRelationshipType_single: _GenreInterfacedRelationshipTypeFilter
+    interfacedRelationshipType_every: _GenreInterfacedRelationshipTypeFilter
+  }
+
+  input _GenreInterfacedRelationshipTypeFilter {
+    AND: [_GenreInterfacedRelationshipTypeFilter!]
+    OR: [_GenreInterfacedRelationshipTypeFilter!]
+    string: String
+    string_not: String
+    string_in: [String!]
+    string_not_in: [String!]
+    string_contains: String
+    string_not_contains: String
+    string_starts_with: String
+    string_not_starts_with: String
+    string_ends_with: String
+    string_not_ends_with: String
+    boolean: Boolean
+    boolean_not: Boolean
+    Person: _PersonFilter
+  }
+  
+  input _ReflexiveInterfacedRelationshipTypeDirectionsFilter {
+    from: _ReflexiveInterfacedRelationshipTypeFilter
+    to: _ReflexiveInterfacedRelationshipTypeFilter
+  }
+  
+  input _ReflexiveInterfacedRelationshipTypeFilter {
+    AND: [_ReflexiveInterfacedRelationshipTypeFilter!]
+    OR: [_ReflexiveInterfacedRelationshipTypeFilter!]
+    boolean: Boolean
+    boolean_not: Boolean
+    Person: _PersonFilter
   }
 
   type Actor {
@@ -135,6 +249,8 @@ export const testSchema = `
     movies: [Movie] @relation(name: "ACTED_IN", direction: "OUT")
     knows: [Person] @relation(name: "KNOWS", direction: "OUT")
     extensionScalar: String
+    interfacedRelationshipType: [InterfacedRelationshipType]
+    reflexiveInterfacedRelationshipType: [ReflexiveInterfacedRelationshipType]    
   }
 
   extend type Actor implements Person
@@ -142,6 +258,8 @@ export const testSchema = `
   type User implements Person {
     userId: ID!
     name: String
+    interfacedRelationshipType: [InterfacedRelationshipType]
+    reflexiveInterfacedRelationshipType: [ReflexiveInterfacedRelationshipType]
     currentUserId(strArg: String = "Neo4j", strInputArg: strInput): String
       @cypher(
         statement: "RETURN $cypherParams.currentUserId AS cypherParamsUserId"
@@ -459,6 +577,7 @@ export const testSchema = `
     ): [Person] @relation(name: "cameras", direction: IN)
     computedOperators(name: String): [Person]
       @cypher(statement: "MATCH (this)<-[:cameras]-(p:Person) RETURN p")
+    reflexiveInterfaceRelationship: [Camera] @relation(name: "REFLEXIVE_INTERFACE_RELATIONSHIP", direction: OUT)
   }
 
   enum _CameraOrdering {
@@ -486,6 +605,7 @@ export const testSchema = `
     ): [Person] @relation(name: "cameras", direction: IN)
     computedOperators(name: String): [Person]
       @cypher(statement: "MATCH (this)<-[:cameras]-(p:Person) RETURN p")
+    reflexiveInterfaceRelationship: [Camera] @relation(name: "REFLEXIVE_INTERFACE_RELATIONSHIP", direction: OUT)
   }
 
   type NewCamera implements Camera {
@@ -502,6 +622,7 @@ export const testSchema = `
     ): [Person] @relation(name: "cameras", direction: IN)
     computedOperators(name: String): [Person]
       @cypher(statement: "MATCH (this)<-[:cameras]-(p:Person) RETURN p")
+    reflexiveInterfaceRelationship: [Camera] @relation(name: "REFLEXIVE_INTERFACE_RELATIONSHIP", direction: OUT)      
   }
 
   union MovieSearch = Movie | Genre | Book
@@ -519,6 +640,8 @@ export const testSchema = `
     cameras: [Camera!]! @relation(name: "cameras", direction: "OUT")
     cameraBuddy: Person @relation(name: "cameraBuddy", direction: "OUT")
     extensionScalar: String
+    interfacedRelationshipType: [InterfacedRelationshipType]
+    reflexiveInterfacedRelationshipType: [ReflexiveInterfacedRelationshipType]
   }
 
   type SubscriptionC {
