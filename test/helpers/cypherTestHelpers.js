@@ -165,8 +165,10 @@ export function augmentedSchemaCypherTestRunner(
 
   const resolvers = {
     QueryA: {
+      Person: checkCypherQuery,
       Actor: checkCypherQuery,
       User: checkCypherQuery,
+      Genre: checkCypherQuery,
       Movie: checkCypherQuery,
       MoviesByYear: checkCypherQuery,
       MoviesByYears: checkCypherQuery,
@@ -188,6 +190,7 @@ export function augmentedSchemaCypherTestRunner(
       State: checkCypherQuery,
       CasedType: checkCypherQuery,
       Camera: checkCypherQuery,
+      NewCamera: checkCypherQuery,
       CustomCameras: checkCypherQuery,
       CustomCamera: checkCypherQuery,
       computedBoolean: checkCypherQuery,
@@ -240,7 +243,12 @@ export function augmentedSchemaCypherTestRunner(
       CustomCamera: checkCypherMutation,
       CustomCameras: checkCypherMutation,
       CreateNewCamera: checkCypherMutation,
-      computedMovieSearch: checkCypherMutation
+      computedMovieSearch: checkCypherMutation,
+      AddActorInterfacedRelationshipType: checkCypherMutation,
+      RemoveActorInterfacedRelationshipType: checkCypherMutation,
+      MergeActorInterfacedRelationshipType: checkCypherMutation,
+      UpdateActorInterfacedRelationshipType: checkCypherMutation,
+      MergeGenreInterfacedRelationshipType: checkCypherMutation
     }
   };
 
