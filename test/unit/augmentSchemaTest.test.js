@@ -464,14 +464,83 @@ test.cb('Test augmented schema', t => {
       name_not_starts_with: String
       name_ends_with: String
       name_not_ends_with: String
-      movies: _MovieFilter
-      movies_not: _MovieFilter
-      movies_in: [_MovieFilter!]
-      movies_not_in: [_MovieFilter!]
-      movies_some: _MovieFilter
-      movies_none: _MovieFilter
-      movies_single: _MovieFilter
-      movies_every: _MovieFilter
+      interfacedRelationshipType: _GenreInterfacedRelationshipTypeFilter
+      interfacedRelationshipType_not: _GenreInterfacedRelationshipTypeFilter
+      interfacedRelationshipType_in: [_GenreInterfacedRelationshipTypeFilter!]
+      interfacedRelationshipType_not_in: [_GenreInterfacedRelationshipTypeFilter!]
+      interfacedRelationshipType_some: _GenreInterfacedRelationshipTypeFilter
+      interfacedRelationshipType_none: _GenreInterfacedRelationshipTypeFilter
+      interfacedRelationshipType_single: _GenreInterfacedRelationshipTypeFilter
+      interfacedRelationshipType_every: _GenreInterfacedRelationshipTypeFilter
+    }
+
+    input _GenreInterfacedRelationshipTypeFilter {
+      AND: [_GenreInterfacedRelationshipTypeFilter!]
+      OR: [_GenreInterfacedRelationshipTypeFilter!]
+      string: String
+      string_not: String
+      string_in: [String!]
+      string_not_in: [String!]
+      string_contains: String
+      string_not_contains: String
+      string_starts_with: String
+      string_not_starts_with: String
+      string_ends_with: String
+      string_not_ends_with: String
+      boolean: Boolean
+      boolean_not: Boolean
+      Person: _PersonFilter
+    }
+
+    input _InterfacedRelationshipTypeInput {
+      string: String!
+      boolean: Boolean
+    }
+
+    type _AddGenreInterfacedRelationshipTypePayload
+      @relation(
+        name: "INTERFACED_RELATIONSHIP_TYPE"
+        from: "Person"
+        to: "Genre"
+      ) {
+      from: Person
+      to: Genre
+      string: String!
+      boolean: Boolean
+    }
+
+    type _RemoveGenreInterfacedRelationshipTypePayload
+      @relation(
+        name: "INTERFACED_RELATIONSHIP_TYPE"
+        from: "Person"
+        to: "Genre"
+      ) {
+      from: Person
+      to: Genre
+    }
+
+    type _UpdateGenreInterfacedRelationshipTypePayload
+      @relation(
+        name: "INTERFACED_RELATIONSHIP_TYPE"
+        from: "Person"
+        to: "Genre"
+      ) {
+      from: Person
+      to: Genre
+      string: String!
+      boolean: Boolean
+    }
+
+    type _MergeGenreInterfacedRelationshipTypePayload
+      @relation(
+        name: "INTERFACED_RELATIONSHIP_TYPE"
+        from: "Person"
+        to: "Genre"
+      ) {
+      from: Person
+      to: Genre
+      string: String!
+      boolean: Boolean
     }
 
     input _ActorFilter {
@@ -523,6 +592,22 @@ test.cb('Test augmented schema', t => {
       extensionScalar_not_starts_with: String
       extensionScalar_ends_with: String
       extensionScalar_not_ends_with: String
+      interfacedRelationshipType: _PersonInterfacedRelationshipTypeFilter
+      interfacedRelationshipType_not: _PersonInterfacedRelationshipTypeFilter
+      interfacedRelationshipType_in: [_PersonInterfacedRelationshipTypeFilter!]
+      interfacedRelationshipType_not_in: [_PersonInterfacedRelationshipTypeFilter!]
+      interfacedRelationshipType_some: _PersonInterfacedRelationshipTypeFilter
+      interfacedRelationshipType_none: _PersonInterfacedRelationshipTypeFilter
+      interfacedRelationshipType_single: _PersonInterfacedRelationshipTypeFilter
+      interfacedRelationshipType_every: _PersonInterfacedRelationshipTypeFilter
+      reflexiveInterfacedRelationshipType: _ReflexiveInterfacedRelationshipTypeDirectionsFilter
+      reflexiveInterfacedRelationshipType_not: _ReflexiveInterfacedRelationshipTypeDirectionsFilter
+      reflexiveInterfacedRelationshipType_in: [_ReflexiveInterfacedRelationshipTypeDirectionsFilter!]
+      reflexiveInterfacedRelationshipType_not_in: [_ReflexiveInterfacedRelationshipTypeDirectionsFilter!]
+      reflexiveInterfacedRelationshipType_some: _ReflexiveInterfacedRelationshipTypeDirectionsFilter
+      reflexiveInterfacedRelationshipType_none: _ReflexiveInterfacedRelationshipTypeDirectionsFilter
+      reflexiveInterfacedRelationshipType_single: _ReflexiveInterfacedRelationshipTypeDirectionsFilter
+      reflexiveInterfacedRelationshipType_every: _ReflexiveInterfacedRelationshipTypeDirectionsFilter
     }
 
     input _StateFilter {
@@ -601,6 +686,23 @@ test.cb('Test augmented schema', t => {
       User: _UserFilter
     }
 
+    enum _MovieRatedOrdering {
+      currentUserId_asc
+      currentUserId_desc
+      rating_asc
+      rating_desc
+      time_asc
+      time_desc
+      date_asc
+      date_desc
+      datetime_asc
+      datetime_desc
+      localtime_asc
+      localtime_desc
+      localdatetime_asc
+      localdatetime_desc
+    }
+
     input _Neo4jTimeInput {
       hour: Int
       minute: Int
@@ -665,6 +767,22 @@ test.cb('Test augmented schema', t => {
       name_not_starts_with: String
       name_ends_with: String
       name_not_ends_with: String
+      interfacedRelationshipType: _PersonInterfacedRelationshipTypeFilter
+      interfacedRelationshipType_not: _PersonInterfacedRelationshipTypeFilter
+      interfacedRelationshipType_in: [_PersonInterfacedRelationshipTypeFilter!]
+      interfacedRelationshipType_not_in: [_PersonInterfacedRelationshipTypeFilter!]
+      interfacedRelationshipType_some: _PersonInterfacedRelationshipTypeFilter
+      interfacedRelationshipType_none: _PersonInterfacedRelationshipTypeFilter
+      interfacedRelationshipType_single: _PersonInterfacedRelationshipTypeFilter
+      interfacedRelationshipType_every: _PersonInterfacedRelationshipTypeFilter
+      reflexiveInterfacedRelationshipType: _ReflexiveInterfacedRelationshipTypeDirectionsFilter
+      reflexiveInterfacedRelationshipType_not: _ReflexiveInterfacedRelationshipTypeDirectionsFilter
+      reflexiveInterfacedRelationshipType_in: [_ReflexiveInterfacedRelationshipTypeDirectionsFilter!]
+      reflexiveInterfacedRelationshipType_not_in: [_ReflexiveInterfacedRelationshipTypeDirectionsFilter!]
+      reflexiveInterfacedRelationshipType_some: _ReflexiveInterfacedRelationshipTypeDirectionsFilter
+      reflexiveInterfacedRelationshipType_none: _ReflexiveInterfacedRelationshipTypeDirectionsFilter
+      reflexiveInterfacedRelationshipType_single: _ReflexiveInterfacedRelationshipTypeDirectionsFilter
+      reflexiveInterfacedRelationshipType_every: _ReflexiveInterfacedRelationshipTypeDirectionsFilter
       rated: _UserRatedFilter
       rated_not: _UserRatedFilter
       rated_in: [_UserRatedFilter!]
@@ -900,6 +1018,9 @@ test.cb('Test augmented schema', t => {
         localtime: _Neo4jLocalTimeInput
         localdatetime: _Neo4jLocalDateTimeInput
         location: _Neo4jPointInput
+        first: Int
+        offset: Int
+        orderBy: [_RatedOrdering]
         filter: _MovieRatedFilter
       ): [_MovieRatings]
       years: [Int]
@@ -965,6 +1086,48 @@ test.cb('Test augmented schema', t => {
         @cypher(
           statement: "MATCH (m:Movie)-[:IN_GENRE]->(this) RETURN m ORDER BY m.imdbRating DESC LIMIT 1"
         )
+      interfacedRelationshipType(
+        first: Int
+        offset: Int
+        orderBy: [_InterfacedRelationshipTypeOrdering]
+        filter: _GenreInterfacedRelationshipTypeFilter
+      ): [_GenreInterfacedRelationshipType]
+    }
+
+    type _GenreInterfacedRelationshipType
+      @relation(
+        name: "INTERFACED_RELATIONSHIP_TYPE"
+        from: "Person"
+        to: "Genre"
+      ) {
+      string: String!
+      boolean: Boolean
+      Person: Person
+    }
+
+    enum _InterfacedRelationshipTypeOrdering {
+      string_asc
+      string_desc
+      boolean_asc
+      boolean_desc
+    }
+
+    input _GenreInterfacedRelationshipTypeFilter {
+      AND: [_GenreInterfacedRelationshipTypeFilter!]
+      OR: [_GenreInterfacedRelationshipTypeFilter!]
+      string: String
+      string_not: String
+      string_in: [String!]
+      string_not_in: [String!]
+      string_contains: String
+      string_not_contains: String
+      string_starts_with: String
+      string_not_starts_with: String
+      string_ends_with: String
+      string_not_ends_with: String
+      boolean: Boolean
+      boolean_not: Boolean
+      Person: _PersonFilter
     }
 
     enum _ActorOrdering {
@@ -994,6 +1157,13 @@ test.cb('Test augmented schema', t => {
         filter: _PersonFilter
       ): [Person] @relation(name: "KNOWS", direction: "OUT")
       extensionScalar: String
+      interfacedRelationshipType(
+        first: Int
+        offset: Int
+        orderBy: [_InterfacedRelationshipTypeOrdering]
+        filter: _PersonInterfacedRelationshipTypeFilter
+      ): [_PersonInterfacedRelationshipType]
+      reflexiveInterfacedRelationshipType: _PersonReflexiveInterfacedRelationshipTypeDirections
       _id: String
     }
 
@@ -1002,6 +1172,28 @@ test.cb('Test augmented schema', t => {
     interface Person {
       userId: ID!
       name: String
+      interfacedRelationshipType(
+        first: Int
+        offset: Int
+        orderBy: [_InterfacedRelationshipTypeOrdering]
+        filter: _PersonInterfacedRelationshipTypeFilter
+      ): [_PersonInterfacedRelationshipType]
+      reflexiveInterfacedRelationshipType: _PersonReflexiveInterfacedRelationshipTypeDirections
+    }
+
+    type ReflexiveInterfacedRelationshipType
+      @relation(name: "REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE") {
+      from: Person!
+      boolean: Boolean
+      to: Person!
+    }
+
+    type InterfacedRelationshipType
+      @relation(name: "INTERFACED_RELATIONSHIP_TYPE") {
+      from: Person!
+      string: String!
+      boolean: Boolean
+      to: Genre!
     }
 
     extend interface Person {
@@ -1012,6 +1204,35 @@ test.cb('Test augmented schema', t => {
       customField: String @neo4j_ignore
       name: String!
       _id: String
+    }
+
+    type _PersonInterfacedRelationshipType
+      @relation(
+        name: "INTERFACED_RELATIONSHIP_TYPE"
+        from: "Person"
+        to: "Genre"
+      ) {
+      string: String!
+      boolean: Boolean
+      Genre: Genre
+    }
+
+    input _PersonInterfacedRelationshipTypeFilter {
+      AND: [_PersonInterfacedRelationshipTypeFilter!]
+      OR: [_PersonInterfacedRelationshipTypeFilter!]
+      string: String
+      string_not: String
+      string_in: [String!]
+      string_not_in: [String!]
+      string_contains: String
+      string_not_contains: String
+      string_starts_with: String
+      string_not_starts_with: String
+      string_ends_with: String
+      string_not_ends_with: String
+      boolean: Boolean
+      boolean_not: Boolean
+      Genre: _GenreFilter
     }
 
     type _MovieRatings @relation(name: "RATED", from: "User", to: "Movie") {
@@ -1075,6 +1296,13 @@ test.cb('Test augmented schema', t => {
     type User implements Person {
       userId: ID!
       name: String
+      interfacedRelationshipType(
+        first: Int
+        offset: Int
+        orderBy: [_InterfacedRelationshipTypeOrdering]
+        filter: _PersonInterfacedRelationshipTypeFilter
+      ): [_PersonInterfacedRelationshipType]
+      reflexiveInterfacedRelationshipType: _PersonReflexiveInterfacedRelationshipTypeDirections
       currentUserId(strArg: String = "Neo4j", strInputArg: strInput): String
         @cypher(
           statement: "RETURN $cypherParams.currentUserId AS cypherParamsUserId"
@@ -1087,6 +1315,9 @@ test.cb('Test augmented schema', t => {
         localtime: _Neo4jLocalTimeInput
         localdatetime: _Neo4jLocalDateTimeInput
         location: _Neo4jPointInput
+        first: Int
+        offset: Int
+        orderBy: [_RatedOrdering]
         filter: _UserRatedFilter
       ): [_UserRated]
       friends: _UserFriendsDirections
@@ -1109,6 +1340,95 @@ test.cb('Test augmented schema', t => {
 
     extend input strInput {
       extensionArg: String
+    }
+
+    type _AddUserInterfacedRelationshipTypePayload
+      @relation(
+        name: "INTERFACED_RELATIONSHIP_TYPE"
+        from: "Person"
+        to: "Genre"
+      ) {
+      from: Person
+      to: Genre
+      string: String!
+      boolean: Boolean
+    }
+
+    type _RemoveUserInterfacedRelationshipTypePayload
+      @relation(
+        name: "INTERFACED_RELATIONSHIP_TYPE"
+        from: "Person"
+        to: "Genre"
+      ) {
+      from: Person
+      to: Genre
+    }
+
+    type _UpdateUserInterfacedRelationshipTypePayload
+      @relation(
+        name: "INTERFACED_RELATIONSHIP_TYPE"
+        from: "Person"
+        to: "Genre"
+      ) {
+      from: Person
+      to: Genre
+      string: String!
+      boolean: Boolean
+    }
+
+    type _MergeUserInterfacedRelationshipTypePayload
+      @relation(
+        name: "INTERFACED_RELATIONSHIP_TYPE"
+        from: "Person"
+        to: "Genre"
+      ) {
+      from: Person
+      to: Genre
+      string: String!
+      boolean: Boolean
+    }
+
+    type _AddUserReflexiveInterfacedRelationshipTypePayload
+      @relation(
+        name: "REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE"
+        from: "Person"
+        to: "Person"
+      ) {
+      from: Person
+      to: Person
+      boolean: Boolean
+    }
+
+    type _RemoveUserReflexiveInterfacedRelationshipTypePayload
+      @relation(
+        name: "REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE"
+        from: "Person"
+        to: "Person"
+      ) {
+      from: Person
+      to: Person
+    }
+
+    type _UpdateUserReflexiveInterfacedRelationshipTypePayload
+      @relation(
+        name: "REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE"
+        from: "Person"
+        to: "Person"
+      ) {
+      from: Person
+      to: Person
+      boolean: Boolean
+    }
+
+    type _MergeUserReflexiveInterfacedRelationshipTypePayload
+      @relation(
+        name: "REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE"
+        from: "Person"
+        to: "Person"
+      ) {
+      from: Person
+      to: Person
+      boolean: Boolean
     }
 
     type _UserRated @relation(name: "RATED", from: "User", to: "Movie") {
@@ -1138,6 +1458,9 @@ test.cb('Test augmented schema', t => {
         localtime: _Neo4jLocalTimeInput
         localdatetime: _Neo4jLocalDateTimeInput
         location: _Neo4jPointInput
+        first: Int
+        offset: Int
+        orderBy: [_FriendOfOrdering]
         filter: _FriendOfFilter
       ): [_UserFriends]
       to(
@@ -1148,6 +1471,9 @@ test.cb('Test augmented schema', t => {
         localtime: _Neo4jLocalTimeInput
         localdatetime: _Neo4jLocalDateTimeInput
         location: _Neo4jPointInput
+        first: Int
+        offset: Int
+        orderBy: [_FriendOfOrdering]
         filter: _FriendOfFilter
       ): [_UserFriends]
     }
@@ -1299,6 +1625,32 @@ test.cb('Test augmented schema', t => {
       name_not_starts_with: String
       name_ends_with: String
       name_not_ends_with: String
+      interfacedRelationshipType: _PersonInterfacedRelationshipTypeFilter
+      interfacedRelationshipType_not: _PersonInterfacedRelationshipTypeFilter
+      interfacedRelationshipType_in: [_PersonInterfacedRelationshipTypeFilter!]
+      interfacedRelationshipType_not_in: [_PersonInterfacedRelationshipTypeFilter!]
+      interfacedRelationshipType_some: _PersonInterfacedRelationshipTypeFilter
+      interfacedRelationshipType_none: _PersonInterfacedRelationshipTypeFilter
+      interfacedRelationshipType_single: _PersonInterfacedRelationshipTypeFilter
+      interfacedRelationshipType_every: _PersonInterfacedRelationshipTypeFilter
+      reflexiveInterfacedRelationshipType: _ReflexiveInterfacedRelationshipTypeDirectionsFilter
+      reflexiveInterfacedRelationshipType_not: _ReflexiveInterfacedRelationshipTypeDirectionsFilter
+      reflexiveInterfacedRelationshipType_in: [_ReflexiveInterfacedRelationshipTypeDirectionsFilter!]
+      reflexiveInterfacedRelationshipType_not_in: [_ReflexiveInterfacedRelationshipTypeDirectionsFilter!]
+      reflexiveInterfacedRelationshipType_some: _ReflexiveInterfacedRelationshipTypeDirectionsFilter
+      reflexiveInterfacedRelationshipType_none: _ReflexiveInterfacedRelationshipTypeDirectionsFilter
+      reflexiveInterfacedRelationshipType_single: _ReflexiveInterfacedRelationshipTypeDirectionsFilter
+      reflexiveInterfacedRelationshipType_every: _ReflexiveInterfacedRelationshipTypeDirectionsFilter
+      extensionScalar: String
+      extensionScalar_not: String
+      extensionScalar_in: [String!]
+      extensionScalar_not_in: [String!]
+      extensionScalar_contains: String
+      extensionScalar_not_contains: String
+      extensionScalar_starts_with: String
+      extensionScalar_not_starts_with: String
+      extensionScalar_ends_with: String
+      extensionScalar_not_ends_with: String
     }
 
     enum _TemporalNodeOrdering {
@@ -1507,6 +1859,13 @@ test.cb('Test augmented schema', t => {
         orderBy: [_PersonOrdering]
       ): [Person]
         @cypher(statement: "MATCH (this)<-[:cameras]-(p:Person) RETURN p")
+      reflexiveInterfaceRelationship(
+        first: Int
+        offset: Int
+        orderBy: [_CameraOrdering]
+        filter: _CameraFilter
+      ): [Camera]
+        @relation(name: "REFLEXIVE_INTERFACE_RELATIONSHIP", direction: OUT)
     }
 
     enum _OldCameraOrdering {
@@ -1583,6 +1942,14 @@ test.cb('Test augmented schema', t => {
       operators_none: _PersonFilter
       operators_single: _PersonFilter
       operators_every: _PersonFilter
+      reflexiveInterfaceRelationship: _CameraFilter
+      reflexiveInterfaceRelationship_not: _CameraFilter
+      reflexiveInterfaceRelationship_in: [_CameraFilter!]
+      reflexiveInterfaceRelationship_not_in: [_CameraFilter!]
+      reflexiveInterfaceRelationship_some: _CameraFilter
+      reflexiveInterfaceRelationship_none: _CameraFilter
+      reflexiveInterfaceRelationship_single: _CameraFilter
+      reflexiveInterfaceRelationship_every: _CameraFilter
     }
 
     type OldCamera implements Camera {
@@ -1604,6 +1971,13 @@ test.cb('Test augmented schema', t => {
         orderBy: [_PersonOrdering]
       ): [Person]
         @cypher(statement: "MATCH (this)<-[:cameras]-(p:Person) RETURN p")
+      reflexiveInterfaceRelationship(
+        first: Int
+        offset: Int
+        orderBy: [_CameraOrdering]
+        filter: _CameraFilter
+      ): [Camera]
+        @relation(name: "REFLEXIVE_INTERFACE_RELATIONSHIP", direction: OUT)
       _id: String
     }
 
@@ -1669,6 +2043,14 @@ test.cb('Test augmented schema', t => {
       operators_none: _PersonFilter
       operators_single: _PersonFilter
       operators_every: _PersonFilter
+      reflexiveInterfaceRelationship: _CameraFilter
+      reflexiveInterfaceRelationship_not: _CameraFilter
+      reflexiveInterfaceRelationship_in: [_CameraFilter!]
+      reflexiveInterfaceRelationship_not_in: [_CameraFilter!]
+      reflexiveInterfaceRelationship_some: _CameraFilter
+      reflexiveInterfaceRelationship_none: _CameraFilter
+      reflexiveInterfaceRelationship_single: _CameraFilter
+      reflexiveInterfaceRelationship_every: _CameraFilter
     }
 
     type NewCamera implements Camera {
@@ -1690,6 +2072,13 @@ test.cb('Test augmented schema', t => {
         orderBy: [_PersonOrdering]
       ): [Person]
         @cypher(statement: "MATCH (this)<-[:cameras]-(p:Person) RETURN p")
+      reflexiveInterfaceRelationship(
+        first: Int
+        offset: Int
+        orderBy: [_CameraOrdering]
+        filter: _CameraFilter
+      ): [Camera]
+        @relation(name: "REFLEXIVE_INTERFACE_RELATIONSHIP", direction: OUT)
       _id: String
     }
 
@@ -1753,6 +2142,22 @@ test.cb('Test augmented schema', t => {
       extensionScalar_not_starts_with: String
       extensionScalar_ends_with: String
       extensionScalar_not_ends_with: String
+      interfacedRelationshipType: _PersonInterfacedRelationshipTypeFilter
+      interfacedRelationshipType_not: _PersonInterfacedRelationshipTypeFilter
+      interfacedRelationshipType_in: [_PersonInterfacedRelationshipTypeFilter!]
+      interfacedRelationshipType_not_in: [_PersonInterfacedRelationshipTypeFilter!]
+      interfacedRelationshipType_some: _PersonInterfacedRelationshipTypeFilter
+      interfacedRelationshipType_none: _PersonInterfacedRelationshipTypeFilter
+      interfacedRelationshipType_single: _PersonInterfacedRelationshipTypeFilter
+      interfacedRelationshipType_every: _PersonInterfacedRelationshipTypeFilter
+      reflexiveInterfacedRelationshipType: _ReflexiveInterfacedRelationshipTypeDirectionsFilter
+      reflexiveInterfacedRelationshipType_not: _ReflexiveInterfacedRelationshipTypeDirectionsFilter
+      reflexiveInterfacedRelationshipType_in: [_ReflexiveInterfacedRelationshipTypeDirectionsFilter!]
+      reflexiveInterfacedRelationshipType_not_in: [_ReflexiveInterfacedRelationshipTypeDirectionsFilter!]
+      reflexiveInterfacedRelationshipType_some: _ReflexiveInterfacedRelationshipTypeDirectionsFilter
+      reflexiveInterfacedRelationshipType_none: _ReflexiveInterfacedRelationshipTypeDirectionsFilter
+      reflexiveInterfacedRelationshipType_single: _ReflexiveInterfacedRelationshipTypeDirectionsFilter
+      reflexiveInterfacedRelationshipType_every: _ReflexiveInterfacedRelationshipTypeDirectionsFilter
     }
 
     union MovieSearch = Movie | Genre | Book
@@ -1781,6 +2186,13 @@ test.cb('Test augmented schema', t => {
       cameraBuddy(filter: _PersonFilter): Person
         @relation(name: "cameraBuddy", direction: "OUT")
       extensionScalar: String
+      interfacedRelationshipType(
+        first: Int
+        offset: Int
+        orderBy: [_InterfacedRelationshipTypeOrdering]
+        filter: _PersonInterfacedRelationshipTypeFilter
+      ): [_PersonInterfacedRelationshipType]
+      reflexiveInterfacedRelationshipType: _PersonReflexiveInterfacedRelationshipTypeDirections
       _id: String
     }
 
@@ -2008,10 +2420,139 @@ test.cb('Test augmented schema', t => {
       ): _MergeGenreMoviesPayload
         @MutationMeta(relationship: "IN_GENRE", from: "Movie", to: "Genre")
         @hasScope(scopes: ["Movie: Merge", "Genre: Merge"])
+      AddGenreInterfacedRelationshipType(
+        from: _PersonInput!
+        to: _GenreInput!
+        data: _InterfacedRelationshipTypeInput!
+      ): _AddGenreInterfacedRelationshipTypePayload
+        @MutationMeta(
+          relationship: "INTERFACED_RELATIONSHIP_TYPE"
+          from: "Person"
+          to: "Genre"
+        )
+        @hasScope(scopes: ["Person: Create", "Genre: Create"])
+      RemoveGenreInterfacedRelationshipType(
+        from: _PersonInput!
+        to: _GenreInput!
+      ): _RemoveGenreInterfacedRelationshipTypePayload
+        @MutationMeta(
+          relationship: "INTERFACED_RELATIONSHIP_TYPE"
+          from: "Person"
+          to: "Genre"
+        )
+        @hasScope(scopes: ["Person: Delete", "Genre: Delete"])
+      UpdateGenreInterfacedRelationshipType(
+        from: _PersonInput!
+        to: _GenreInput!
+        data: _InterfacedRelationshipTypeInput!
+      ): _UpdateGenreInterfacedRelationshipTypePayload
+        @MutationMeta(
+          relationship: "INTERFACED_RELATIONSHIP_TYPE"
+          from: "Person"
+          to: "Genre"
+        )
+        @hasScope(scopes: ["Person: Update", "Genre: Update"])
+      MergeGenreInterfacedRelationshipType(
+        from: _PersonInput!
+        to: _GenreInput!
+        data: _InterfacedRelationshipTypeInput!
+      ): _MergeGenreInterfacedRelationshipTypePayload
+        @MutationMeta(
+          relationship: "INTERFACED_RELATIONSHIP_TYPE"
+          from: "Person"
+          to: "Genre"
+        )
+        @hasScope(scopes: ["Person: Merge", "Genre: Merge"])
       CreateGenre(name: String): Genre @hasScope(scopes: ["Genre: Create"])
       DeleteGenre(name: String!): Genre @hasScope(scopes: ["Genre: Delete"])
       CreateState(name: String!): State @hasScope(scopes: ["State: Create"])
       DeleteState(name: String!): State @hasScope(scopes: ["State: Delete"])
+      AddPersonInterfacedRelationshipType(
+        from: _PersonInput!
+        to: _GenreInput!
+        data: _InterfacedRelationshipTypeInput!
+      ): _AddPersonInterfacedRelationshipTypePayload
+        @MutationMeta(
+          relationship: "INTERFACED_RELATIONSHIP_TYPE"
+          from: "Person"
+          to: "Genre"
+        )
+        @hasScope(scopes: ["Person: Create", "Genre: Create"])
+      RemovePersonInterfacedRelationshipType(
+        from: _PersonInput!
+        to: _GenreInput!
+      ): _RemovePersonInterfacedRelationshipTypePayload
+        @MutationMeta(
+          relationship: "INTERFACED_RELATIONSHIP_TYPE"
+          from: "Person"
+          to: "Genre"
+        )
+        @hasScope(scopes: ["Person: Delete", "Genre: Delete"])
+      UpdatePersonInterfacedRelationshipType(
+        from: _PersonInput!
+        to: _GenreInput!
+        data: _InterfacedRelationshipTypeInput!
+      ): _UpdatePersonInterfacedRelationshipTypePayload
+        @MutationMeta(
+          relationship: "INTERFACED_RELATIONSHIP_TYPE"
+          from: "Person"
+          to: "Genre"
+        )
+        @hasScope(scopes: ["Person: Update", "Genre: Update"])
+      MergePersonInterfacedRelationshipType(
+        from: _PersonInput!
+        to: _GenreInput!
+        data: _InterfacedRelationshipTypeInput!
+      ): _MergePersonInterfacedRelationshipTypePayload
+        @MutationMeta(
+          relationship: "INTERFACED_RELATIONSHIP_TYPE"
+          from: "Person"
+          to: "Genre"
+        )
+        @hasScope(scopes: ["Person: Merge", "Genre: Merge"])
+      AddPersonReflexiveInterfacedRelationshipType(
+        from: _PersonInput!
+        to: _PersonInput!
+        data: _ReflexiveInterfacedRelationshipTypeInput!
+      ): _AddPersonReflexiveInterfacedRelationshipTypePayload
+        @MutationMeta(
+          relationship: "REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE"
+          from: "Person"
+          to: "Person"
+        )
+        @hasScope(scopes: ["Person: Create", "Person: Create"])
+      RemovePersonReflexiveInterfacedRelationshipType(
+        from: _PersonInput!
+        to: _PersonInput!
+      ): _RemovePersonReflexiveInterfacedRelationshipTypePayload
+        @MutationMeta(
+          relationship: "REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE"
+          from: "Person"
+          to: "Person"
+        )
+        @hasScope(scopes: ["Person: Delete", "Person: Delete"])
+      UpdatePersonReflexiveInterfacedRelationshipType(
+        from: _PersonInput!
+        to: _PersonInput!
+        data: _ReflexiveInterfacedRelationshipTypeInput!
+      ): _UpdatePersonReflexiveInterfacedRelationshipTypePayload
+        @MutationMeta(
+          relationship: "REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE"
+          from: "Person"
+          to: "Person"
+        )
+        @hasScope(scopes: ["Person: Update", "Person: Update"])
+      MergePersonReflexiveInterfacedRelationshipType(
+        from: _PersonInput!
+        to: _PersonInput!
+        data: _ReflexiveInterfacedRelationshipTypeInput!
+      ): _MergePersonReflexiveInterfacedRelationshipTypePayload
+        @MutationMeta(
+          relationship: "REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE"
+          from: "Person"
+          to: "Person"
+        )
+        @hasScope(scopes: ["Person: Merge", "Person: Merge"])
       AddActorMovies(
         from: _ActorInput!
         to: _MovieInput!
@@ -2048,6 +2589,92 @@ test.cb('Test augmented schema', t => {
       ): _MergeActorKnowsPayload
         @MutationMeta(relationship: "KNOWS", from: "Actor", to: "Person")
         @hasScope(scopes: ["Actor: Merge", "Person: Merge"])
+      AddActorInterfacedRelationshipType(
+        from: _PersonInput!
+        to: _GenreInput!
+        data: _InterfacedRelationshipTypeInput!
+      ): _AddActorInterfacedRelationshipTypePayload
+        @MutationMeta(
+          relationship: "INTERFACED_RELATIONSHIP_TYPE"
+          from: "Person"
+          to: "Genre"
+        )
+        @hasScope(scopes: ["Person: Create", "Genre: Create"])
+      RemoveActorInterfacedRelationshipType(
+        from: _PersonInput!
+        to: _GenreInput!
+      ): _RemoveActorInterfacedRelationshipTypePayload
+        @MutationMeta(
+          relationship: "INTERFACED_RELATIONSHIP_TYPE"
+          from: "Person"
+          to: "Genre"
+        )
+        @hasScope(scopes: ["Person: Delete", "Genre: Delete"])
+      UpdateActorInterfacedRelationshipType(
+        from: _PersonInput!
+        to: _GenreInput!
+        data: _InterfacedRelationshipTypeInput!
+      ): _UpdateActorInterfacedRelationshipTypePayload
+        @MutationMeta(
+          relationship: "INTERFACED_RELATIONSHIP_TYPE"
+          from: "Person"
+          to: "Genre"
+        )
+        @hasScope(scopes: ["Person: Update", "Genre: Update"])
+      MergeActorInterfacedRelationshipType(
+        from: _PersonInput!
+        to: _GenreInput!
+        data: _InterfacedRelationshipTypeInput!
+      ): _MergeActorInterfacedRelationshipTypePayload
+        @MutationMeta(
+          relationship: "INTERFACED_RELATIONSHIP_TYPE"
+          from: "Person"
+          to: "Genre"
+        )
+        @hasScope(scopes: ["Person: Merge", "Genre: Merge"])
+      AddActorReflexiveInterfacedRelationshipType(
+        from: _PersonInput!
+        to: _PersonInput!
+        data: _ReflexiveInterfacedRelationshipTypeInput!
+      ): _AddActorReflexiveInterfacedRelationshipTypePayload
+        @MutationMeta(
+          relationship: "REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE"
+          from: "Person"
+          to: "Person"
+        )
+        @hasScope(scopes: ["Person: Create", "Person: Create"])
+      RemoveActorReflexiveInterfacedRelationshipType(
+        from: _PersonInput!
+        to: _PersonInput!
+      ): _RemoveActorReflexiveInterfacedRelationshipTypePayload
+        @MutationMeta(
+          relationship: "REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE"
+          from: "Person"
+          to: "Person"
+        )
+        @hasScope(scopes: ["Person: Delete", "Person: Delete"])
+      UpdateActorReflexiveInterfacedRelationshipType(
+        from: _PersonInput!
+        to: _PersonInput!
+        data: _ReflexiveInterfacedRelationshipTypeInput!
+      ): _UpdateActorReflexiveInterfacedRelationshipTypePayload
+        @MutationMeta(
+          relationship: "REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE"
+          from: "Person"
+          to: "Person"
+        )
+        @hasScope(scopes: ["Person: Update", "Person: Update"])
+      MergeActorReflexiveInterfacedRelationshipType(
+        from: _PersonInput!
+        to: _PersonInput!
+        data: _ReflexiveInterfacedRelationshipTypeInput!
+      ): _MergeActorReflexiveInterfacedRelationshipTypePayload
+        @MutationMeta(
+          relationship: "REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE"
+          from: "Person"
+          to: "Person"
+        )
+        @hasScope(scopes: ["Person: Merge", "Person: Merge"])
       CreateActor(userId: ID, name: String, extensionScalar: String): Actor
         @hasScope(scopes: ["Actor: Create"])
       UpdateActor(userId: ID!, name: String, extensionScalar: String): Actor
@@ -2055,6 +2682,92 @@ test.cb('Test augmented schema', t => {
       DeleteActor(userId: ID!): Actor @hasScope(scopes: ["Actor: Delete"])
       MergeActor(userId: ID!, name: String, extensionScalar: String): Actor
         @hasScope(scopes: ["Actor: Merge"])
+      AddUserInterfacedRelationshipType(
+        from: _PersonInput!
+        to: _GenreInput!
+        data: _InterfacedRelationshipTypeInput!
+      ): _AddUserInterfacedRelationshipTypePayload
+        @MutationMeta(
+          relationship: "INTERFACED_RELATIONSHIP_TYPE"
+          from: "Person"
+          to: "Genre"
+        )
+        @hasScope(scopes: ["Person: Create", "Genre: Create"])
+      RemoveUserInterfacedRelationshipType(
+        from: _PersonInput!
+        to: _GenreInput!
+      ): _RemoveUserInterfacedRelationshipTypePayload
+        @MutationMeta(
+          relationship: "INTERFACED_RELATIONSHIP_TYPE"
+          from: "Person"
+          to: "Genre"
+        )
+        @hasScope(scopes: ["Person: Delete", "Genre: Delete"])
+      UpdateUserInterfacedRelationshipType(
+        from: _PersonInput!
+        to: _GenreInput!
+        data: _InterfacedRelationshipTypeInput!
+      ): _UpdateUserInterfacedRelationshipTypePayload
+        @MutationMeta(
+          relationship: "INTERFACED_RELATIONSHIP_TYPE"
+          from: "Person"
+          to: "Genre"
+        )
+        @hasScope(scopes: ["Person: Update", "Genre: Update"])
+      MergeUserInterfacedRelationshipType(
+        from: _PersonInput!
+        to: _GenreInput!
+        data: _InterfacedRelationshipTypeInput!
+      ): _MergeUserInterfacedRelationshipTypePayload
+        @MutationMeta(
+          relationship: "INTERFACED_RELATIONSHIP_TYPE"
+          from: "Person"
+          to: "Genre"
+        )
+        @hasScope(scopes: ["Person: Merge", "Genre: Merge"])
+      AddUserReflexiveInterfacedRelationshipType(
+        from: _PersonInput!
+        to: _PersonInput!
+        data: _ReflexiveInterfacedRelationshipTypeInput!
+      ): _AddUserReflexiveInterfacedRelationshipTypePayload
+        @MutationMeta(
+          relationship: "REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE"
+          from: "Person"
+          to: "Person"
+        )
+        @hasScope(scopes: ["Person: Create", "Person: Create"])
+      RemoveUserReflexiveInterfacedRelationshipType(
+        from: _PersonInput!
+        to: _PersonInput!
+      ): _RemoveUserReflexiveInterfacedRelationshipTypePayload
+        @MutationMeta(
+          relationship: "REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE"
+          from: "Person"
+          to: "Person"
+        )
+        @hasScope(scopes: ["Person: Delete", "Person: Delete"])
+      UpdateUserReflexiveInterfacedRelationshipType(
+        from: _PersonInput!
+        to: _PersonInput!
+        data: _ReflexiveInterfacedRelationshipTypeInput!
+      ): _UpdateUserReflexiveInterfacedRelationshipTypePayload
+        @MutationMeta(
+          relationship: "REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE"
+          from: "Person"
+          to: "Person"
+        )
+        @hasScope(scopes: ["Person: Update", "Person: Update"])
+      MergeUserReflexiveInterfacedRelationshipType(
+        from: _PersonInput!
+        to: _PersonInput!
+        data: _ReflexiveInterfacedRelationshipTypeInput!
+      ): _MergeUserReflexiveInterfacedRelationshipTypePayload
+        @MutationMeta(
+          relationship: "REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE"
+          from: "Person"
+          to: "Person"
+        )
+        @hasScope(scopes: ["Person: Merge", "Person: Merge"])
       AddUserRated(
         from: _UserInput!
         to: _MovieInput!
@@ -2277,6 +2990,36 @@ test.cb('Test augmented schema', t => {
       ): _MergeCameraOperatorsPayload
         @MutationMeta(relationship: "cameras", from: "Person", to: "Camera")
         @hasScope(scopes: ["Person: Merge", "Camera: Merge"])
+      AddCameraReflexiveInterfaceRelationship(
+        from: _CameraInput!
+        to: _CameraInput!
+      ): _AddCameraReflexiveInterfaceRelationshipPayload
+        @MutationMeta(
+          relationship: "REFLEXIVE_INTERFACE_RELATIONSHIP"
+          from: "Camera"
+          to: "Camera"
+        )
+        @hasScope(scopes: ["Camera: Create", "Camera: Create"])
+      RemoveCameraReflexiveInterfaceRelationship(
+        from: _CameraInput!
+        to: _CameraInput!
+      ): _RemoveCameraReflexiveInterfaceRelationshipPayload
+        @MutationMeta(
+          relationship: "REFLEXIVE_INTERFACE_RELATIONSHIP"
+          from: "Camera"
+          to: "Camera"
+        )
+        @hasScope(scopes: ["Camera: Delete", "Camera: Delete"])
+      MergeCameraReflexiveInterfaceRelationship(
+        from: _CameraInput!
+        to: _CameraInput!
+      ): _MergeCameraReflexiveInterfaceRelationshipPayload
+        @MutationMeta(
+          relationship: "REFLEXIVE_INTERFACE_RELATIONSHIP"
+          from: "Camera"
+          to: "Camera"
+        )
+        @hasScope(scopes: ["Camera: Merge", "Camera: Merge"])
       AddOldCameraOperators(
         from: _PersonInput!
         to: _OldCameraInput!
@@ -2295,6 +3038,36 @@ test.cb('Test augmented schema', t => {
       ): _MergeOldCameraOperatorsPayload
         @MutationMeta(relationship: "cameras", from: "Person", to: "OldCamera")
         @hasScope(scopes: ["Person: Merge", "OldCamera: Merge"])
+      AddOldCameraReflexiveInterfaceRelationship(
+        from: _OldCameraInput!
+        to: _CameraInput!
+      ): _AddOldCameraReflexiveInterfaceRelationshipPayload
+        @MutationMeta(
+          relationship: "REFLEXIVE_INTERFACE_RELATIONSHIP"
+          from: "OldCamera"
+          to: "Camera"
+        )
+        @hasScope(scopes: ["OldCamera: Create", "Camera: Create"])
+      RemoveOldCameraReflexiveInterfaceRelationship(
+        from: _OldCameraInput!
+        to: _CameraInput!
+      ): _RemoveOldCameraReflexiveInterfaceRelationshipPayload
+        @MutationMeta(
+          relationship: "REFLEXIVE_INTERFACE_RELATIONSHIP"
+          from: "OldCamera"
+          to: "Camera"
+        )
+        @hasScope(scopes: ["OldCamera: Delete", "Camera: Delete"])
+      MergeOldCameraReflexiveInterfaceRelationship(
+        from: _OldCameraInput!
+        to: _CameraInput!
+      ): _MergeOldCameraReflexiveInterfaceRelationshipPayload
+        @MutationMeta(
+          relationship: "REFLEXIVE_INTERFACE_RELATIONSHIP"
+          from: "OldCamera"
+          to: "Camera"
+        )
+        @hasScope(scopes: ["OldCamera: Merge", "Camera: Merge"])
       CreateOldCamera(
         id: ID
         type: String
@@ -2336,6 +3109,36 @@ test.cb('Test augmented schema', t => {
       ): _MergeNewCameraOperatorsPayload
         @MutationMeta(relationship: "cameras", from: "Person", to: "NewCamera")
         @hasScope(scopes: ["Person: Merge", "NewCamera: Merge"])
+      AddNewCameraReflexiveInterfaceRelationship(
+        from: _NewCameraInput!
+        to: _CameraInput!
+      ): _AddNewCameraReflexiveInterfaceRelationshipPayload
+        @MutationMeta(
+          relationship: "REFLEXIVE_INTERFACE_RELATIONSHIP"
+          from: "NewCamera"
+          to: "Camera"
+        )
+        @hasScope(scopes: ["NewCamera: Create", "Camera: Create"])
+      RemoveNewCameraReflexiveInterfaceRelationship(
+        from: _NewCameraInput!
+        to: _CameraInput!
+      ): _RemoveNewCameraReflexiveInterfaceRelationshipPayload
+        @MutationMeta(
+          relationship: "REFLEXIVE_INTERFACE_RELATIONSHIP"
+          from: "NewCamera"
+          to: "Camera"
+        )
+        @hasScope(scopes: ["NewCamera: Delete", "Camera: Delete"])
+      MergeNewCameraReflexiveInterfaceRelationship(
+        from: _NewCameraInput!
+        to: _CameraInput!
+      ): _MergeNewCameraReflexiveInterfaceRelationshipPayload
+        @MutationMeta(
+          relationship: "REFLEXIVE_INTERFACE_RELATIONSHIP"
+          from: "NewCamera"
+          to: "Camera"
+        )
+        @hasScope(scopes: ["NewCamera: Merge", "Camera: Merge"])
       CreateNewCamera(
         id: ID
         type: String
@@ -2437,6 +3240,92 @@ test.cb('Test augmented schema', t => {
           to: "Person"
         )
         @hasScope(scopes: ["CameraMan: Merge", "Person: Merge"])
+      AddCameraManInterfacedRelationshipType(
+        from: _PersonInput!
+        to: _GenreInput!
+        data: _InterfacedRelationshipTypeInput!
+      ): _AddCameraManInterfacedRelationshipTypePayload
+        @MutationMeta(
+          relationship: "INTERFACED_RELATIONSHIP_TYPE"
+          from: "Person"
+          to: "Genre"
+        )
+        @hasScope(scopes: ["Person: Create", "Genre: Create"])
+      RemoveCameraManInterfacedRelationshipType(
+        from: _PersonInput!
+        to: _GenreInput!
+      ): _RemoveCameraManInterfacedRelationshipTypePayload
+        @MutationMeta(
+          relationship: "INTERFACED_RELATIONSHIP_TYPE"
+          from: "Person"
+          to: "Genre"
+        )
+        @hasScope(scopes: ["Person: Delete", "Genre: Delete"])
+      UpdateCameraManInterfacedRelationshipType(
+        from: _PersonInput!
+        to: _GenreInput!
+        data: _InterfacedRelationshipTypeInput!
+      ): _UpdateCameraManInterfacedRelationshipTypePayload
+        @MutationMeta(
+          relationship: "INTERFACED_RELATIONSHIP_TYPE"
+          from: "Person"
+          to: "Genre"
+        )
+        @hasScope(scopes: ["Person: Update", "Genre: Update"])
+      MergeCameraManInterfacedRelationshipType(
+        from: _PersonInput!
+        to: _GenreInput!
+        data: _InterfacedRelationshipTypeInput!
+      ): _MergeCameraManInterfacedRelationshipTypePayload
+        @MutationMeta(
+          relationship: "INTERFACED_RELATIONSHIP_TYPE"
+          from: "Person"
+          to: "Genre"
+        )
+        @hasScope(scopes: ["Person: Merge", "Genre: Merge"])
+      AddCameraManReflexiveInterfacedRelationshipType(
+        from: _PersonInput!
+        to: _PersonInput!
+        data: _ReflexiveInterfacedRelationshipTypeInput!
+      ): _AddCameraManReflexiveInterfacedRelationshipTypePayload
+        @MutationMeta(
+          relationship: "REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE"
+          from: "Person"
+          to: "Person"
+        )
+        @hasScope(scopes: ["Person: Create", "Person: Create"])
+      RemoveCameraManReflexiveInterfacedRelationshipType(
+        from: _PersonInput!
+        to: _PersonInput!
+      ): _RemoveCameraManReflexiveInterfacedRelationshipTypePayload
+        @MutationMeta(
+          relationship: "REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE"
+          from: "Person"
+          to: "Person"
+        )
+        @hasScope(scopes: ["Person: Delete", "Person: Delete"])
+      UpdateCameraManReflexiveInterfacedRelationshipType(
+        from: _PersonInput!
+        to: _PersonInput!
+        data: _ReflexiveInterfacedRelationshipTypeInput!
+      ): _UpdateCameraManReflexiveInterfacedRelationshipTypePayload
+        @MutationMeta(
+          relationship: "REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE"
+          from: "Person"
+          to: "Person"
+        )
+        @hasScope(scopes: ["Person: Update", "Person: Update"])
+      MergeCameraManReflexiveInterfacedRelationshipType(
+        from: _PersonInput!
+        to: _PersonInput!
+        data: _ReflexiveInterfacedRelationshipTypeInput!
+      ): _MergeCameraManReflexiveInterfacedRelationshipTypePayload
+        @MutationMeta(
+          relationship: "REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE"
+          from: "Person"
+          to: "Person"
+        )
+        @hasScope(scopes: ["Person: Merge", "Person: Merge"])
       CreateCameraMan(
         userId: ID
         name: String
@@ -2681,10 +3570,116 @@ test.cb('Test augmented schema', t => {
       to: Person
     }
 
+    type _AddActorInterfacedRelationshipTypePayload
+      @relation(
+        name: "INTERFACED_RELATIONSHIP_TYPE"
+        from: "Person"
+        to: "Genre"
+      ) {
+      from: Person
+      to: Genre
+      string: String!
+      boolean: Boolean
+    }
+
+    type _RemoveActorInterfacedRelationshipTypePayload
+      @relation(
+        name: "INTERFACED_RELATIONSHIP_TYPE"
+        from: "Person"
+        to: "Genre"
+      ) {
+      from: Person
+      to: Genre
+    }
+
+    type _UpdateActorInterfacedRelationshipTypePayload
+      @relation(
+        name: "INTERFACED_RELATIONSHIP_TYPE"
+        from: "Person"
+        to: "Genre"
+      ) {
+      from: Person
+      to: Genre
+      string: String!
+      boolean: Boolean
+    }
+
+    type _MergeActorInterfacedRelationshipTypePayload
+      @relation(
+        name: "INTERFACED_RELATIONSHIP_TYPE"
+        from: "Person"
+        to: "Genre"
+      ) {
+      from: Person
+      to: Genre
+      string: String!
+      boolean: Boolean
+    }
+
+    type _AddActorReflexiveInterfacedRelationshipTypePayload
+      @relation(
+        name: "REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE"
+        from: "Person"
+        to: "Person"
+      ) {
+      from: Person
+      to: Person
+      boolean: Boolean
+    }
+
+    type _RemoveActorReflexiveInterfacedRelationshipTypePayload
+      @relation(
+        name: "REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE"
+        from: "Person"
+        to: "Person"
+      ) {
+      from: Person
+      to: Person
+    }
+
+    type _UpdateActorReflexiveInterfacedRelationshipTypePayload
+      @relation(
+        name: "REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE"
+        from: "Person"
+        to: "Person"
+      ) {
+      from: Person
+      to: Person
+      boolean: Boolean
+    }
+
+    type _MergeActorReflexiveInterfacedRelationshipTypePayload
+      @relation(
+        name: "REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE"
+        from: "Person"
+        to: "Person"
+      ) {
+      from: Person
+      to: Person
+      boolean: Boolean
+    }
+
     type _RemoveActorKnowsPayload
       @relation(name: "KNOWS", from: "Actor", to: "Person") {
       from: Actor
       to: Person
+    }
+
+    enum _RatedOrdering {
+      currentUserId_asc
+      currentUserId_desc
+      rating_asc
+      rating_desc
+      time_asc
+      time_desc
+      date_asc
+      date_desc
+      datetime_asc
+      datetime_desc
+      localtime_asc
+      localtime_desc
+      localdatetime_asc
+      localdatetime_desc
     }
 
     type _AddUserRatedPayload
@@ -2748,6 +3743,23 @@ test.cb('Test augmented schema', t => {
       localdatetime: _Neo4jLocalDateTime
       datetimes: [_Neo4jDateTime]
       location: _Neo4jPoint
+    }
+
+    enum _FriendOfOrdering {
+      currentUserId_asc
+      currentUserId_desc
+      since_asc
+      since_desc
+      time_asc
+      time_desc
+      date_asc
+      date_desc
+      datetime_asc
+      datetime_desc
+      localtime_asc
+      localtime_desc
+      localdatetime_asc
+      localdatetime_desc
     }
 
     input _FriendOfInput {
@@ -2905,6 +3917,95 @@ test.cb('Test augmented schema', t => {
       to: State
     }
 
+    type _AddCameraManInterfacedRelationshipTypePayload
+      @relation(
+        name: "INTERFACED_RELATIONSHIP_TYPE"
+        from: "Person"
+        to: "Genre"
+      ) {
+      from: Person
+      to: Genre
+      string: String!
+      boolean: Boolean
+    }
+
+    type _RemoveCameraManInterfacedRelationshipTypePayload
+      @relation(
+        name: "INTERFACED_RELATIONSHIP_TYPE"
+        from: "Person"
+        to: "Genre"
+      ) {
+      from: Person
+      to: Genre
+    }
+
+    type _UpdateCameraManInterfacedRelationshipTypePayload
+      @relation(
+        name: "INTERFACED_RELATIONSHIP_TYPE"
+        from: "Person"
+        to: "Genre"
+      ) {
+      from: Person
+      to: Genre
+      string: String!
+      boolean: Boolean
+    }
+
+    type _MergeCameraManInterfacedRelationshipTypePayload
+      @relation(
+        name: "INTERFACED_RELATIONSHIP_TYPE"
+        from: "Person"
+        to: "Genre"
+      ) {
+      from: Person
+      to: Genre
+      string: String!
+      boolean: Boolean
+    }
+
+    type _AddCameraManReflexiveInterfacedRelationshipTypePayload
+      @relation(
+        name: "REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE"
+        from: "Person"
+        to: "Person"
+      ) {
+      from: Person
+      to: Person
+      boolean: Boolean
+    }
+
+    type _RemoveCameraManReflexiveInterfacedRelationshipTypePayload
+      @relation(
+        name: "REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE"
+        from: "Person"
+        to: "Person"
+      ) {
+      from: Person
+      to: Person
+    }
+
+    type _UpdateCameraManReflexiveInterfacedRelationshipTypePayload
+      @relation(
+        name: "REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE"
+        from: "Person"
+        to: "Person"
+      ) {
+      from: Person
+      to: Person
+      boolean: Boolean
+    }
+
+    type _MergeCameraManReflexiveInterfacedRelationshipTypePayload
+      @relation(
+        name: "REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE"
+        from: "Person"
+        to: "Person"
+      ) {
+      from: Person
+      to: Person
+      boolean: Boolean
+    }
+
     input _CameraManInput {
       userId: ID!
     }
@@ -2928,6 +4029,36 @@ test.cb('Test augmented schema', t => {
     type _MergeCameraOperatorsPayload
       @relation(name: "cameras", from: "Person", to: "Camera") {
       from: Person
+      to: Camera
+    }
+
+    type _AddCameraReflexiveInterfaceRelationshipPayload
+      @relation(
+        name: "REFLEXIVE_INTERFACE_RELATIONSHIP"
+        from: "Camera"
+        to: "Camera"
+      ) {
+      from: Camera
+      to: Camera
+    }
+
+    type _RemoveCameraReflexiveInterfaceRelationshipPayload
+      @relation(
+        name: "REFLEXIVE_INTERFACE_RELATIONSHIP"
+        from: "Camera"
+        to: "Camera"
+      ) {
+      from: Camera
+      to: Camera
+    }
+
+    type _MergeCameraReflexiveInterfaceRelationshipPayload
+      @relation(
+        name: "REFLEXIVE_INTERFACE_RELATIONSHIP"
+        from: "Camera"
+        to: "Camera"
+      ) {
+      from: Camera
       to: Camera
     }
 
@@ -2964,6 +4095,154 @@ test.cb('Test augmented schema', t => {
       from: CameraMan
       to: Camera
     }
+
+    enum InterfacedRelationshipTypeOrdering {
+      string_asc
+      string_desc
+      boolean_asc
+      boolean_desc
+    }
+
+    type _AddPersonInterfacedRelationshipTypePayload
+      @relation(
+        name: "INTERFACED_RELATIONSHIP_TYPE"
+        from: "Person"
+        to: "Genre"
+      ) {
+      from: Person
+      to: Genre
+      string: String!
+      boolean: Boolean
+    }
+
+    type _RemovePersonInterfacedRelationshipTypePayload
+      @relation(
+        name: "INTERFACED_RELATIONSHIP_TYPE"
+        from: "Person"
+        to: "Genre"
+      ) {
+      from: Person
+      to: Genre
+    }
+
+    type _UpdatePersonInterfacedRelationshipTypePayload
+      @relation(
+        name: "INTERFACED_RELATIONSHIP_TYPE"
+        from: "Person"
+        to: "Genre"
+      ) {
+      from: Person
+      to: Genre
+      string: String!
+      boolean: Boolean
+    }
+
+    type _MergePersonInterfacedRelationshipTypePayload
+      @relation(
+        name: "INTERFACED_RELATIONSHIP_TYPE"
+        from: "Person"
+        to: "Genre"
+      ) {
+      from: Person
+      to: Genre
+      string: String!
+      boolean: Boolean
+    }
+    type _PersonReflexiveInterfacedRelationshipTypeDirections
+      @relation(
+        name: "REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE"
+        from: "Person"
+        to: "Person"
+      ) {
+      from(
+        first: Int
+        offset: Int
+        orderBy: [_ReflexiveInterfacedRelationshipTypeOrdering]
+        filter: _ReflexiveInterfacedRelationshipTypeFilter
+      ): [_PersonReflexiveInterfacedRelationshipType]
+      to(
+        first: Int
+        offset: Int
+        orderBy: [_ReflexiveInterfacedRelationshipTypeOrdering]
+        filter: _ReflexiveInterfacedRelationshipTypeFilter
+      ): [_PersonReflexiveInterfacedRelationshipType]
+    }
+
+    type _PersonReflexiveInterfacedRelationshipType
+      @relation(
+        name: "REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE"
+        from: "Person"
+        to: "Person"
+      ) {
+      boolean: Boolean
+      Person: Person
+    }
+
+    input _ReflexiveInterfacedRelationshipTypeDirectionsFilter {
+      from: _ReflexiveInterfacedRelationshipTypeFilter
+      to: _ReflexiveInterfacedRelationshipTypeFilter
+    }
+
+    enum _ReflexiveInterfacedRelationshipTypeOrdering {
+      boolean_asc
+      boolean_desc
+    }
+
+    input _ReflexiveInterfacedRelationshipTypeFilter {
+      AND: [_ReflexiveInterfacedRelationshipTypeFilter!]
+      OR: [_ReflexiveInterfacedRelationshipTypeFilter!]
+      boolean: Boolean
+      boolean_not: Boolean
+      Person: _PersonFilter
+    }
+
+    input _ReflexiveInterfacedRelationshipTypeInput {
+      boolean: Boolean
+    }
+
+    type _AddPersonReflexiveInterfacedRelationshipTypePayload
+      @relation(
+        name: "REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE"
+        from: "Person"
+        to: "Person"
+      ) {
+      from: Person
+      to: Person
+      boolean: Boolean
+    }
+
+    type _RemovePersonReflexiveInterfacedRelationshipTypePayload
+      @relation(
+        name: "REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE"
+        from: "Person"
+        to: "Person"
+      ) {
+      from: Person
+      to: Person
+    }
+
+    type _UpdatePersonReflexiveInterfacedRelationshipTypePayload
+      @relation(
+        name: "REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE"
+        from: "Person"
+        to: "Person"
+      ) {
+      from: Person
+      to: Person
+      boolean: Boolean
+    }
+
+    type _MergePersonReflexiveInterfacedRelationshipTypePayload
+      @relation(
+        name: "REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE"
+        from: "Person"
+        to: "Person"
+      ) {
+      from: Person
+      to: Person
+      boolean: Boolean
+    }
+
     input _PersonInput {
       userId: ID!
     }
@@ -3099,6 +4378,36 @@ test.cb('Test augmented schema', t => {
       to: OldCamera
     }
 
+    type _AddOldCameraReflexiveInterfaceRelationshipPayload
+      @relation(
+        name: "REFLEXIVE_INTERFACE_RELATIONSHIP"
+        from: "OldCamera"
+        to: "Camera"
+      ) {
+      from: OldCamera
+      to: Camera
+    }
+
+    type _RemoveOldCameraReflexiveInterfaceRelationshipPayload
+      @relation(
+        name: "REFLEXIVE_INTERFACE_RELATIONSHIP"
+        from: "OldCamera"
+        to: "Camera"
+      ) {
+      from: OldCamera
+      to: Camera
+    }
+
+    type _MergeOldCameraReflexiveInterfaceRelationshipPayload
+      @relation(
+        name: "REFLEXIVE_INTERFACE_RELATIONSHIP"
+        from: "OldCamera"
+        to: "Camera"
+      ) {
+      from: OldCamera
+      to: Camera
+    }
+
     input _NewCameraInput {
       id: ID!
     }
@@ -3119,6 +4428,36 @@ test.cb('Test augmented schema', t => {
       @relation(name: "cameras", from: "Person", to: "NewCamera") {
       from: Person
       to: NewCamera
+    }
+
+    type _AddNewCameraReflexiveInterfaceRelationshipPayload
+      @relation(
+        name: "REFLEXIVE_INTERFACE_RELATIONSHIP"
+        from: "NewCamera"
+        to: "Camera"
+      ) {
+      from: NewCamera
+      to: Camera
+    }
+
+    type _RemoveNewCameraReflexiveInterfaceRelationshipPayload
+      @relation(
+        name: "REFLEXIVE_INTERFACE_RELATIONSHIP"
+        from: "NewCamera"
+        to: "Camera"
+      ) {
+      from: NewCamera
+      to: Camera
+    }
+
+    type _MergeNewCameraReflexiveInterfaceRelationshipPayload
+      @relation(
+        name: "REFLEXIVE_INTERFACE_RELATIONSHIP"
+        from: "NewCamera"
+        to: "Camera"
+      ) {
+      from: NewCamera
+      to: Camera
     }
 
     type _Neo4jPoint {
