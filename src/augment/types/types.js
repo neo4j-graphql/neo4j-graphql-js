@@ -87,7 +87,6 @@ export const Neo4jDataType = {
     [TemporalType.LOCALDATETIME]: 'Temporal',
     [SpatialType.POINT]: 'Spatial'
   },
-  // TODO probably revise and remove...
   STRUCTURAL: {
     [Kind.OBJECT_TYPE_DEFINITION]: Neo4jStructuralType,
     [Kind.INTERFACE_TYPE_DEFINITION]: Neo4jStructuralType,
@@ -689,9 +688,6 @@ const augmentOperationType = ({
           propertyInputValues,
           config
         });
-        // FIXME fieldArguments are modified through reference so
-        // this branch doesn't end up mattereing. A case of isIgnoredType
-        // being true may also be highly improbable, though it is posisble
         if (!isIgnoredType) {
           extension.fields = propertyOutputFields;
         }
