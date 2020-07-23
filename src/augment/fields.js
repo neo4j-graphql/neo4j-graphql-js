@@ -251,7 +251,6 @@ export const propertyFieldExists = ({
 }) => {
   const fields = definition.fields || [];
   return fields.find(field => {
-    const fieldName = field.name.value;
     const fieldType = field.type;
     const unwrappedType = unwrapNamedType({ type: fieldType });
     const outputType = unwrappedType.name;
