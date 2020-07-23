@@ -82,7 +82,6 @@ const extractTestBlocks = data => {
 const buildTestDeclarations = (tck, extractionLimit) => {
   const schema = makeTestDataSchema(tck);
   const testData = buildTestData(schema, tck);
-  //! refactor to involve forEach and a counter that is compared against extractionLimit
   return testData
     .reduce((acc, test) => {
       // escape " so that we can wrap the cypher in "s
