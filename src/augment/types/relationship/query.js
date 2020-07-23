@@ -3,10 +3,13 @@ import { shouldAugmentRelationshipField } from '../../augment';
 import { OperationType } from '../../types/types';
 import { TypeWrappers, isListTypeField, unwrapNamedType } from '../../fields';
 import {
+  PagingArgument,
+  OrderingArgument,
   FilteringArgument,
   buildFilters,
   buildQueryFieldArguments,
-  buildQueryFilteringInputType
+  buildQueryFilteringInputType,
+  buildQueryOrderingEnumType
 } from '../../input-values';
 import { buildRelationDirective } from '../../directives';
 import {
@@ -24,8 +27,8 @@ import { isExternalTypeExtension } from '../../../federation';
  * relationship type fields in the Query API
  */
 const RelationshipQueryArgument = {
-  // ...PagingArgument,
-  // ...OrderingArgument,
+  ...PagingArgument,
+  ...OrderingArgument,
   ...FilteringArgument
 };
 
@@ -36,6 +39,7 @@ const RelationshipQueryArgument = {
  */
 export const augmentRelationshipQueryAPI = ({
   typeName,
+  definition,
   fieldArguments,
   fieldName,
   outputType,
@@ -56,56 +60,57 @@ export const augmentRelationshipQueryAPI = ({
   if (
     shouldAugmentRelationshipField(config, queryTypeNameLower, fromType, toType)
   ) {
+    const [definingType, isImplementedField] = getTypeDefiningField({
+      typeName,
+      definition,
+      fieldName,
+      typeDefinitionMap,
+      typeExtensionDefinitionMap
+    });
+    if (isImplementedField) typeName = definingType;
     const relatedType = decideRelatedType({
       typeName,
+      definition,
       fromType,
       toType
     });
-    if (
-      validateRelationTypeDirectedFields(
-        typeName,
-        fieldName,
-        fromType,
-        toType,
-        outputType
-      )
-    ) {
-      [fieldType, generatedTypeMap] = transformRelationshipTypeFieldOutput({
-        typeName,
-        relatedType,
-        fieldArguments,
-        fieldName,
-        outputType,
-        fromType,
-        toType,
-        generatedTypeMap,
-        outputTypeWrappers,
-        config,
-        relationshipName,
-        fieldType,
-        propertyOutputFields
-      });
-      [
-        fieldArguments,
-        generatedTypeMap,
-        nodeInputTypeMap
-      ] = augmentRelationshipTypeFieldInput({
-        typeName,
-        relatedType,
-        fieldArguments,
-        fieldName,
-        outputType,
-        fromType,
-        toType,
-        typeDefinitionMap,
-        typeExtensionDefinitionMap,
-        generatedTypeMap,
-        nodeInputTypeMap,
-        relationshipInputTypeMap,
-        outputTypeWrappers,
-        config
-      });
-    }
+    [fieldType, generatedTypeMap] = transformRelationshipTypeFieldOutput({
+      typeName,
+      relatedType,
+      fieldArguments,
+      fieldName,
+      outputType,
+      fromType,
+      toType,
+      typeDefinitionMap,
+      generatedTypeMap,
+      outputTypeWrappers,
+      config,
+      relationshipName,
+      fieldType,
+      propertyOutputFields
+    });
+    [
+      fieldArguments,
+      generatedTypeMap,
+      nodeInputTypeMap
+    ] = augmentRelationshipTypeFieldInput({
+      typeName,
+      relatedType,
+      fieldArguments,
+      fieldName,
+      isImplementedField,
+      outputType,
+      fromType,
+      toType,
+      typeDefinitionMap,
+      typeExtensionDefinitionMap,
+      generatedTypeMap,
+      nodeInputTypeMap,
+      relationshipInputTypeMap,
+      outputTypeWrappers,
+      config
+    });
   }
   return [
     fieldType,
@@ -114,6 +119,44 @@ export const augmentRelationshipQueryAPI = ({
     generatedTypeMap,
     nodeInputTypeMap
   ];
+};
+
+const getTypeDefiningField = ({
+  typeName,
+  definition,
+  fieldName,
+  typeDefinitionMap,
+  typeExtensionDefinitionMap
+}) => {
+  const definitionInterfaces = definition.interfaces || [];
+  const interfaces = [...definitionInterfaces];
+  const typeExtensions = typeExtensionDefinitionMap[typeName] || [];
+  typeExtensions.forEach(extension => {
+    const extendedImplementations = extension.interfaces;
+    if (extendedImplementations && extendedImplementations.length) {
+      interfaces.push(...extendedImplementations);
+    }
+  });
+  let definingType = typeName;
+  // field is defined by interface implemented by this type
+  let isImplementedField = false;
+  if (interfaces && interfaces.length) {
+    interfaces.forEach(namedType => {
+      const unwrappedType = unwrapNamedType({ type: namedType });
+      const interfaceName = unwrappedType.name;
+      const interfaceTypes = [];
+      const typeDefinition = typeDefinitionMap[interfaceName];
+      if (typeDefinition) interfaceTypes.push(typeDefinition);
+      const interfaceDefinesField = interfaceTypes.some(type =>
+        type.fields.some(field => field.name.value === fieldName)
+      );
+      if (interfaceDefinesField) {
+        isImplementedField = true;
+        definingType = interfaceName;
+      }
+    });
+  }
+  return [definingType, isImplementedField];
 };
 
 /**
@@ -127,6 +170,7 @@ const augmentRelationshipTypeFieldInput = ({
   relatedType,
   fieldArguments,
   fieldName,
+  isImplementedField,
   outputType,
   fromType,
   toType,
@@ -150,15 +194,13 @@ const augmentRelationshipTypeFieldInput = ({
       typeExtensionDefinitionMap
     })
   ) {
-    const nodeFilteringFields =
-      nodeInputTypeMap[FilteringArgument.FILTER].fields;
     let relationshipFilterTypeName = `_${typeName}${outputType[0].toUpperCase() +
       outputType.substr(1)}`;
     // Assume outgoing relationship
     if (fromType === toType) {
       relationshipFilterTypeName = `_${outputType}Directions`;
     }
-    nodeFilteringFields.push(
+    nodeInputTypeMap[FilteringArgument.FILTER].fields.push(
       ...buildRelationshipFilters({
         typeName,
         fieldName,
@@ -173,6 +215,7 @@ const augmentRelationshipTypeFieldInput = ({
       typeName,
       fromType,
       toType,
+      isImplementedField,
       outputType,
       relatedType,
       relationshipFilterTypeName,
@@ -194,6 +237,7 @@ const augmentRelationshipTypeFieldArguments = ({
   typeName,
   fromType,
   toType,
+  isImplementedField,
   outputType,
   relatedType,
   relationshipFilterTypeName,
@@ -206,21 +250,28 @@ const augmentRelationshipTypeFieldArguments = ({
     fieldArguments = buildQueryFieldArguments({
       argumentMap: RelationshipQueryArgument,
       fieldArguments,
-      outputType: `${typeName}${outputType}`,
-      outputTypeWrappers
+      typeName,
+      outputType,
+      outputTypeWrappers,
+      typeDefinitionMap
     });
   } else {
     fieldArguments = [];
   }
-  generatedTypeMap = buildRelationshipSelectionArgumentInputTypes({
-    fromType,
-    toType,
-    relatedType,
-    relationshipFilterTypeName,
-    generatedTypeMap,
-    relationshipInputTypeMap,
-    typeDefinitionMap
-  });
+  if (!isImplementedField) {
+    // If this relationship type field is on an object type implementing an
+    // interface that defines it, then the argument input types and output type
+    // must be those used on that interface's field definition
+    generatedTypeMap = buildRelationshipSelectionArgumentInputTypes({
+      fromType,
+      toType,
+      relatedType,
+      relationshipFilterTypeName,
+      generatedTypeMap,
+      relationshipInputTypeMap,
+      typeDefinitionMap
+    });
+  }
   return [fieldArguments, generatedTypeMap];
 };
 
@@ -238,13 +289,14 @@ const transformRelationshipTypeFieldOutput = ({
   outputType,
   fromType,
   toType,
+  typeDefinitionMap,
   generatedTypeMap,
   outputTypeWrappers,
   relationshipName,
   fieldType,
   propertyOutputFields
 }) => {
-  const relationshipOutputName = `_${typeName}${fieldName[0].toUpperCase() +
+  let relationshipOutputName = `_${typeName}${fieldName[0].toUpperCase() +
     fieldName.substr(1)}`;
   const unwrappedType = unwrapNamedType({ type: fieldType });
   if (fromType === toType) {
@@ -267,6 +319,7 @@ const transformRelationshipTypeFieldOutput = ({
     relationshipName,
     relatedType,
     propertyOutputFields,
+    typeDefinitionMap,
     generatedTypeMap
   });
   return [fieldType, generatedTypeMap];
@@ -370,6 +423,7 @@ const buildRelationshipFieldOutputTypes = ({
   relationshipName,
   relatedType,
   propertyOutputFields,
+  typeDefinitionMap,
   generatedTypeMap
 }) => {
   const relationTypeDirective = buildRelationDirective({
@@ -382,7 +436,8 @@ const buildRelationshipFieldOutputTypes = ({
       argumentMap: RelationshipQueryArgument,
       fieldArguments,
       outputType,
-      outputTypeWrappers
+      outputTypeWrappers,
+      typeDefinitionMap
     });
     const reflexiveOutputName = `${relationshipOutputName}Directions`;
     generatedTypeMap[reflexiveOutputName] = buildObjectType({
@@ -457,6 +512,11 @@ const buildRelationshipSelectionArgumentInputTypes = ({
     generatedTypeMap,
     inputTypeMap: relationshipInputTypeMap
   });
+  generatedTypeMap = buildQueryOrderingEnumType({
+    nodeInputTypeMap: relationshipInputTypeMap,
+    typeDefinitionMap,
+    generatedTypeMap
+  });
   return generatedTypeMap;
 };
 
@@ -501,24 +561,4 @@ const decideRelatedType = ({ typeName, fromType, toType }) => {
     }
   }
   return relatedType;
-};
-
-/**
- * Validates that a given relationship type field on a node type
- * has that node type as its 'from' or 'to' node type field
- */
-const validateRelationTypeDirectedFields = (
-  typeName,
-  fieldName,
-  fromName,
-  toName,
-  outputType
-) => {
-  // directive to and from are not the same and neither are equal to this
-  if (fromName !== toName && toName !== typeName && fromName !== typeName) {
-    throw new Error(
-      `The ${fieldName} field on the ${typeName} node type uses the ${outputType} relationship type but ${outputType} comes from ${fromName} and goes to ${toName}`
-    );
-  }
-  return true;
 };
