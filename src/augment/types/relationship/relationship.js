@@ -7,6 +7,7 @@ import {
   toSnakeCase
 } from '../../fields';
 import {
+  OrderingArgument,
   FilteringArgument,
   augmentInputTypePropertyFields
 } from '../../input-values';
@@ -82,6 +83,7 @@ export const augmentRelationshipTypeField = ({
         nodeInputTypeMap
       ] = augmentRelationshipQueryAPI({
         typeName,
+        definition,
         fieldArguments,
         fieldName,
         outputType,
@@ -151,13 +153,19 @@ const augmentRelationshipTypeFields = ({
     name: RelationshipDirectionField.TO
   });
   let relatedTypeFilterName = `_${typeName}${outputType}Filter`;
+  let relatedTypeOrderingName = `_${outputType}Ordering`;
   if (fromTypeName === toTypeName) {
     relatedTypeFilterName = `_${outputType}Filter`;
+    relatedTypeOrderingName = `_${outputType}Ordering`;
   }
   let relationshipInputTypeMap = {
     [FilteringArgument.FILTER]: {
       name: relatedTypeFilterName,
       fields: []
+    },
+    [OrderingArgument.ORDER_BY]: {
+      name: relatedTypeOrderingName,
+      values: []
     }
   };
   const propertyInputValues = [];
