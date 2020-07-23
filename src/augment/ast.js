@@ -209,7 +209,10 @@ export const buildFieldSelection = ({
   args = [],
   directives = [],
   name = {},
-  selectionSet = {}
+  selectionSet = {
+    kind: Kind.SELECTION_SET,
+    selections: []
+  }
 }) => {
   return {
     kind: Kind.FIELD,
