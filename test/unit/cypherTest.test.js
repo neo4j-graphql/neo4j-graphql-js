@@ -1381,6 +1381,56 @@ test('Add interfaced relationship mutation', t => {
   );
 });
 
+test('Add interfaced relationship type mutation', t => {
+  const graphQLQuery = `mutation {
+    AddActorInterfacedRelationshipType(
+      from: { userId: "744c23c8-2042-402d-b482-28d089f976f9" }
+      to: { name: "Wildlife Documentary" }
+      data: { string: "data" }
+    ) {
+      from {
+        userId
+        interfacedRelationshipType {
+          string
+          Genre {
+            name
+          }
+        }
+      }
+      string
+    }
+  }`,
+    expectedCypherQuery = `
+      MATCH (\`person_from\`:\`Person\` {userId: $from.userId})
+      MATCH (\`genre_to\`:\`Genre\` {name: $to.name})
+      CREATE (\`person_from\`)-[\`interfaced_relationship_type_relation\`:\`INTERFACED_RELATIONSHIP_TYPE\` {string:$data.string}]->(\`genre_to\`)
+      RETURN \`interfaced_relationship_type_relation\` { from: \`person_from\` {FRAGMENT_TYPE: head( [ label IN labels(\`person_from\`) WHERE label IN $Person_derivedTypes ] ), .userId ,interfacedRelationshipType: [(\`person_from\`)-[\`person_from_interfacedRelationshipType_relation\`:\`INTERFACED_RELATIONSHIP_TYPE\`]->(:\`Genre\`) | person_from_interfacedRelationshipType_relation { .string ,Genre: head([(:\`Person\`)-[\`person_from_interfacedRelationshipType_relation\`]->(\`person_from_interfacedRelationshipType_Genre\`:\`Genre\`) | person_from_interfacedRelationshipType_Genre { .name }]) }] } , .string  } AS \`_AddActorInterfacedRelationshipTypePayload\`;
+    `;
+
+  t.plan(1);
+
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {},
+    expectedCypherQuery,
+    {
+      from: {
+        userId: '744c23c8-2042-402d-b482-28d089f976f9'
+      },
+      to: {
+        name: 'Wildlife Documentary'
+      },
+      data: {
+        string: 'data'
+      },
+      first: -1,
+      offset: 0,
+      Person_derivedTypes: ['Actor', 'CameraMan', 'User']
+    }
+  );
+});
+
 test('Merge interfaced relationship mutation', t => {
   const graphQLQuery = `mutation someMutation {
     MergeActorKnows(
@@ -1413,6 +1463,167 @@ test('Merge interfaced relationship mutation', t => {
       to: { userId: '456' },
       first: -1,
       offset: 0
+    },
+    expectedCypherQuery,
+    {}
+  );
+});
+
+test('Merge interfaced relationship type mutation', t => {
+  const graphQLQuery = `mutation {
+    MergeActorInterfacedRelationshipType(
+      from: { userId: "744c23c8-2042-402d-b482-28d089f976f9" }
+      to: { name: "Wildlife Documentary" }
+      data: { string: "data" }
+    ) {
+      from {
+        userId
+        interfacedRelationshipType {
+          string
+          Genre {
+            name
+          }
+        }
+      }
+      string
+    }
+  }`,
+    expectedCypherQuery = `
+      MATCH (\`person_from\`:\`Person\` {userId: $from.userId})
+      MATCH (\`genre_to\`:\`Genre\` {name: $to.name})
+      MERGE (\`person_from\`)-[\`interfaced_relationship_type_relation\`:\`INTERFACED_RELATIONSHIP_TYPE\`]->(\`genre_to\`)
+      SET \`interfaced_relationship_type_relation\` += {string:$data.string} 
+      RETURN \`interfaced_relationship_type_relation\` { from: \`person_from\` {FRAGMENT_TYPE: head( [ label IN labels(\`person_from\`) WHERE label IN $Person_derivedTypes ] ), .userId ,interfacedRelationshipType: [(\`person_from\`)-[\`person_from_interfacedRelationshipType_relation\`:\`INTERFACED_RELATIONSHIP_TYPE\`]->(:\`Genre\`) | person_from_interfacedRelationshipType_relation { .string ,Genre: head([(:\`Person\`)-[\`person_from_interfacedRelationshipType_relation\`]->(\`person_from_interfacedRelationshipType_Genre\`:\`Genre\`) | person_from_interfacedRelationshipType_Genre { .name }]) }] } , .string  } AS \`_MergeActorInterfacedRelationshipTypePayload\`;
+    `;
+
+  t.plan(1);
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {
+      from: {
+        userId: '744c23c8-2042-402d-b482-28d089f976f9'
+      },
+      to: {
+        name: 'Wildlife Documentary'
+      },
+      data: {
+        string: 'data'
+      },
+      first: -1,
+      offset: 0,
+      Person_derivedTypes: ['Actor', 'CameraMan', 'User']
+    },
+    expectedCypherQuery,
+    {}
+  );
+});
+
+test('Update interfaced relationship type mutation', t => {
+  const graphQLQuery = `mutation {
+    UpdateActorInterfacedRelationshipType(
+      from: { userId: "744c23c8-2042-402d-b482-28d089f976f9" }
+      to: { name: "Wildlife Documentary" }
+      data: { string: "value" }
+    ) {
+      from {
+        userId
+        interfacedRelationshipType {
+          string
+          Genre {
+            name
+          }
+        }
+      }
+      string
+    }
+  }`,
+    expectedCypherQuery = `
+      MATCH (\`person_from\`:\`Person\` {userId: $from.userId})
+      MATCH (\`genre_to\`:\`Genre\` {name: $to.name})
+      MATCH (\`person_from\`)-[\`interfaced_relationship_type_relation\`:\`INTERFACED_RELATIONSHIP_TYPE\`]->(\`genre_to\`)
+      SET \`interfaced_relationship_type_relation\` += {string:$data.string} 
+      RETURN \`interfaced_relationship_type_relation\` { from: \`person_from\` {FRAGMENT_TYPE: head( [ label IN labels(\`person_from\`) WHERE label IN $Person_derivedTypes ] ), .userId ,interfacedRelationshipType: [(\`person_from\`)-[\`person_from_interfacedRelationshipType_relation\`:\`INTERFACED_RELATIONSHIP_TYPE\`]->(:\`Genre\`) | person_from_interfacedRelationshipType_relation { .string ,Genre: head([(:\`Person\`)-[\`person_from_interfacedRelationshipType_relation\`]->(\`person_from_interfacedRelationshipType_Genre\`:\`Genre\`) | person_from_interfacedRelationshipType_Genre { .name }]) }] } , .string  } AS \`_UpdateActorInterfacedRelationshipTypePayload\`;
+    `;
+
+  t.plan(1);
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {
+      from: {
+        userId: '744c23c8-2042-402d-b482-28d089f976f9'
+      },
+      to: {
+        name: 'Wildlife Documentary'
+      },
+      data: {
+        string: 'value'
+      },
+      first: -1,
+      offset: 0,
+      Person_derivedTypes: ['Actor', 'CameraMan', 'User']
+    },
+    expectedCypherQuery,
+    {}
+  );
+});
+
+test('Merge interfaced relationship type mutation (additional operation)', t => {
+  const graphQLQuery = `mutation {
+    MergeGenreInterfacedRelationshipType(
+      from: { userId: "744c23c8-2042-402d-b482-28d089f976f9" }
+      to: { name: "Wildlife Documentary" }
+      data: { string: "data" }
+    ) {
+      from {
+        userId
+        name
+        interfacedRelationshipType {
+          string
+          Genre {
+            name
+          }
+        }
+      }
+      to {
+        name
+        interfacedRelationshipType {
+          string
+          Person {
+            userId
+            name
+          }
+        }
+      }
+      string
+    }
+  }`,
+    expectedCypherQuery = `
+      MATCH (\`person_from\`:\`Person\` {userId: $from.userId})
+      MATCH (\`genre_to\`:\`Genre\` {name: $to.name})
+      MERGE (\`person_from\`)-[\`interfaced_relationship_type_relation\`:\`INTERFACED_RELATIONSHIP_TYPE\`]->(\`genre_to\`)
+      SET \`interfaced_relationship_type_relation\` += {string:$data.string} 
+      RETURN \`interfaced_relationship_type_relation\` { from: \`person_from\` {FRAGMENT_TYPE: head( [ label IN labels(\`person_from\`) WHERE label IN $Person_derivedTypes ] ), .userId , .name ,interfacedRelationshipType: [(\`person_from\`)-[\`person_from_interfacedRelationshipType_relation\`:\`INTERFACED_RELATIONSHIP_TYPE\`]->(:\`Genre\`) | person_from_interfacedRelationshipType_relation { .string ,Genre: head([(:\`Person\`)-[\`person_from_interfacedRelationshipType_relation\`]->(\`person_from_interfacedRelationshipType_Genre\`:\`Genre\`) | person_from_interfacedRelationshipType_Genre { .name }]) }] } ,to: \`genre_to\` { .name ,interfacedRelationshipType: [(\`genre_to\`)<-[\`genre_to_interfacedRelationshipType_relation\`:\`INTERFACED_RELATIONSHIP_TYPE\`]-(:\`Person\`) | genre_to_interfacedRelationshipType_relation { .string ,Person: head([(:\`Genre\`)<-[\`genre_to_interfacedRelationshipType_relation\`]-(\`genre_to_interfacedRelationshipType_Person\`:\`Person\`) | genre_to_interfacedRelationshipType_Person {FRAGMENT_TYPE: head( [ label IN labels(genre_to_interfacedRelationshipType_Person) WHERE label IN $Person_derivedTypes ] ), .userId , .name }]) }] } , .string  } AS \`_MergeGenreInterfacedRelationshipTypePayload\`;
+    `;
+
+  t.plan(1);
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {
+      from: {
+        userId: '744c23c8-2042-402d-b482-28d089f976f9'
+      },
+      to: {
+        name: 'Wildlife Documentary'
+      },
+      data: {
+        string: 'data'
+      },
+      first: -1,
+      offset: 0,
+      Person_derivedTypes: ['Actor', 'CameraMan', 'User']
     },
     expectedCypherQuery,
     {}
@@ -1453,6 +1664,52 @@ test('Remove interfaced relationship mutation', t => {
       to: { userId: '456' },
       first: -1,
       offset: 0
+    },
+    expectedCypherQuery,
+    {}
+  );
+});
+
+test('Remove interfaced relationship type mutation', t => {
+  const graphQLQuery = `mutation {
+    RemoveActorInterfacedRelationshipType(
+      from: { userId: "744c23c8-2042-402d-b482-28d089f976f9" }
+      to: { name: "Wildlife Documentary" }
+    ) {
+      from {
+        userId
+        interfacedRelationshipType {
+          string
+          Genre {
+            name
+          }
+        }
+      }
+    }
+  }`,
+    expectedCypherQuery = `
+      MATCH (\`person_from\`:\`Person\` {userId: $from.userId})
+      MATCH (\`genre_to\`:\`Genre\` {name: $to.name})
+      OPTIONAL MATCH (\`person_from\`)-[\`person_fromgenre_to\`:\`INTERFACED_RELATIONSHIP_TYPE\`]->(\`genre_to\`)
+      DELETE \`person_fromgenre_to\`
+      WITH COUNT(*) AS scope, \`person_from\` AS \`_person_from\`, \`genre_to\` AS \`_genre_to\`
+      RETURN {from: \`_person_from\` {FRAGMENT_TYPE: head( [ label IN labels(\`_person_from\`) WHERE label IN $Person_derivedTypes ] ), .userId ,interfacedRelationshipType: [(\`_person_from\`)-[\`_person_from_interfacedRelationshipType_relation\`:\`INTERFACED_RELATIONSHIP_TYPE\`]->(:\`Genre\`) | _person_from_interfacedRelationshipType_relation { .string ,Genre: head([(:\`Person\`)-[\`_person_from_interfacedRelationshipType_relation\`]->(\`_person_from_interfacedRelationshipType_Genre\`:\`Genre\`) | _person_from_interfacedRelationshipType_Genre { .name }]) }] } } AS \`_RemoveActorInterfacedRelationshipTypePayload\`;
+    `;
+
+  t.plan(1);
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {
+      from: {
+        userId: '744c23c8-2042-402d-b482-28d089f976f9'
+      },
+      to: {
+        name: 'Wildlife Documentary'
+      },
+      first: -1,
+      offset: 0,
+      Person_derivedTypes: ['Actor', 'CameraMan', 'User']
     },
     expectedCypherQuery,
     {}
@@ -1964,6 +2221,39 @@ test('query for relationship properties', t => {
   );
 });
 
+test('query for relationship properties using orderBy argument', t => {
+  const graphQLQuery = `query {
+    Movie(title: "River Runs Through It, A") {
+      title
+      ratings(orderBy: [datetime_asc]) {
+        rating
+        User {
+          userId
+          name
+        }
+      }
+    }
+  }
+  `,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`:\`u_user-id\`:\`newMovieLabel\` {title:$title}) RETURN \`movie\` { .title ,ratings: [sortedElement IN apoc.coll.sortMulti([(\`movie\`)<-[\`movie_ratings_relation\`:\`RATED\`]-(:\`User\`) | movie_ratings_relation { .rating ,User: head([(:\`Movie\`:\`u_user-id\`:\`newMovieLabel\`)<-[\`movie_ratings_relation\`]-(\`movie_ratings_User\`:\`User\`) | movie_ratings_User { .userId , .name }]) ,datetime: \`movie_ratings_relation\`.datetime}], ['^datetime']) | sortedElement { .* }] } AS \`movie\``;
+
+  t.plan(1);
+
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {},
+    expectedCypherQuery,
+    {
+      offset: 0,
+      first: -1,
+      title: 'River Runs Through It, A',
+      '1_orderBy': ['datetime_asc'],
+      cypherParams: CYPHER_PARAMS
+    }
+  );
+});
+
 test('query reflexive relation nested in non-reflexive relation', t => {
   const graphQLQuery = `query {
     Movie {
@@ -2193,11 +2483,11 @@ test('query using inline fragment on object type - including cypherParams', t =>
   );
 });
 
-test('query interfaced relation using inline fragment', t => {
+test('query interfaced relation using inline fragment and pagination', t => {
   const graphQLQuery = `query {
     Actor {
       name
-      knows {
+      knows(first: 0, offset: 1) {
         ...userFavorites
       }
     }
@@ -2211,7 +2501,7 @@ test('query interfaced relation using inline fragment', t => {
       year
     }
   }`,
-    expectedCypherQuery = `MATCH (\`actor\`:\`Actor\`) RETURN \`actor\` { .name ,knows: [(\`actor\`)-[:\`KNOWS\`]->(\`actor_knows\`:\`Person\`) WHERE ("User" IN labels(\`actor_knows\`)) | head([\`actor_knows\` IN [\`actor_knows\`] WHERE "User" IN labels(\`actor_knows\`) | \`actor_knows\` { FRAGMENT_TYPE: "User",  .name ,favorites: [(\`actor_knows\`)-[:\`FAVORITED\`]->(\`actor_knows_favorites\`:\`Movie\`:\`u_user-id\`:\`newMovieLabel\`) | \`actor_knows_favorites\` { .movieId , .title , .year }]  }])] } AS \`actor\``;
+    expectedCypherQuery = `MATCH (\`actor\`:\`Actor\`) RETURN \`actor\` { .name ,knows: [(\`actor\`)-[:\`KNOWS\`]->(\`actor_knows\`:\`Person\`) WHERE ("User" IN labels(\`actor_knows\`)) | head([\`actor_knows\` IN [\`actor_knows\`] WHERE "User" IN labels(\`actor_knows\`) | \`actor_knows\` { FRAGMENT_TYPE: "User",  .name ,favorites: [(\`actor_knows\`)-[:\`FAVORITED\`]->(\`actor_knows_favorites\`:\`Movie\`:\`u_user-id\`:\`newMovieLabel\`) | \`actor_knows_favorites\` { .movieId , .title , .year }]  }])][1..1] } AS \`actor\``;
 
   t.plan(1);
 
@@ -2221,6 +2511,606 @@ test('query interfaced relation using inline fragment', t => {
     {},
     expectedCypherQuery,
     {}
+  );
+});
+
+test('order interfaced relation using inline fragment', t => {
+  const graphQLQuery = `query {
+    Actor {
+      name
+      knows(orderBy: userId_asc) {
+        name
+        ... on User {
+          userId
+          favorites {
+            movieId
+            title
+            year
+          }          
+        }
+      }
+    }
+  }
+`,
+    expectedCypherQuery = `MATCH (\`actor\`:\`Actor\`) RETURN \`actor\` { .name ,knows: apoc.coll.sortMulti([(\`actor\`)-[:\`KNOWS\`]->(\`actor_knows\`:\`Person\`) WHERE ("Actor" IN labels(\`actor_knows\`) OR "CameraMan" IN labels(\`actor_knows\`) OR "User" IN labels(\`actor_knows\`)) | head([\`actor_knows\` IN [\`actor_knows\`] WHERE "Actor" IN labels(\`actor_knows\`) | \`actor_knows\` { FRAGMENT_TYPE: "Actor",  .name , .userId  }] + [\`actor_knows\` IN [\`actor_knows\`] WHERE "CameraMan" IN labels(\`actor_knows\`) | \`actor_knows\` { FRAGMENT_TYPE: "CameraMan",  .name , .userId  }] + [\`actor_knows\` IN [\`actor_knows\`] WHERE "User" IN labels(\`actor_knows\`) | \`actor_knows\` { FRAGMENT_TYPE: "User",  .userId ,favorites: [(\`actor_knows\`)-[:\`FAVORITED\`]->(\`actor_knows_favorites\`:\`Movie\`:\`u_user-id\`:\`newMovieLabel\`) | \`actor_knows_favorites\` { .movieId , .title , .year }] , .name  }])], ['^userId']) } AS \`actor\``;
+
+  t.plan(1);
+
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {},
+    expectedCypherQuery,
+    {
+      offset: 0,
+      first: -1,
+      '1_orderBy': 'userId_asc',
+      cypherParams: CYPHER_PARAMS
+    }
+  );
+});
+
+test('query interfaced relationship type using inline fragment and pagination', t => {
+  const graphQLQuery = `query {
+    Person {
+      name
+      ... on Actor {
+        userId
+        interfacedRelationshipType(first: 0, offset: 1) {
+          string
+          Genre {
+            name
+          }
+          __typename
+        }
+      }
+      __typename
+    }
+  }
+  `,
+    expectedCypherQuery = `MATCH (\`person\`:\`Person\`) WHERE ("Actor" IN labels(\`person\`) OR "CameraMan" IN labels(\`person\`) OR "User" IN labels(\`person\`)) RETURN head([\`person\` IN [\`person\`] WHERE "Actor" IN labels(\`person\`) | \`person\` { FRAGMENT_TYPE: "Actor",  .userId ,interfacedRelationshipType: [(\`person\`)-[\`person_interfacedRelationshipType_relation\`:\`INTERFACED_RELATIONSHIP_TYPE\`]->(:\`Genre\`) | person_interfacedRelationshipType_relation { .string ,Genre: head([(:\`Person\`)-[\`person_interfacedRelationshipType_relation\`]->(\`person_interfacedRelationshipType_Genre\`:\`Genre\`) | person_interfacedRelationshipType_Genre { .name }]) }][1..1] , .name  }] + [\`person\` IN [\`person\`] WHERE "CameraMan" IN labels(\`person\`) | \`person\` { FRAGMENT_TYPE: "CameraMan",  .name  }] + [\`person\` IN [\`person\`] WHERE "User" IN labels(\`person\`) | \`person\` { FRAGMENT_TYPE: "User",  .name  }]) AS \`person\``;
+
+  t.plan(1);
+
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {},
+    expectedCypherQuery,
+    {
+      offset: 0,
+      first: -1,
+      cypherParams: CYPHER_PARAMS
+    }
+  );
+});
+test('order interfaced relationship type using inline fragment', t => {
+  const graphQLQuery = `query {
+    Person {
+      name
+      ... on Actor {
+        userId
+        interfacedRelationshipType(orderBy: [string_desc]) {
+          string
+          Genre {
+            name
+          }
+          __typename
+        }
+      }
+      __typename
+    }
+  }
+  `,
+    expectedCypherQuery = `MATCH (\`person\`:\`Person\`) WHERE ("Actor" IN labels(\`person\`) OR "CameraMan" IN labels(\`person\`) OR "User" IN labels(\`person\`)) RETURN head([\`person\` IN [\`person\`] WHERE "Actor" IN labels(\`person\`) | \`person\` { FRAGMENT_TYPE: "Actor",  .userId ,interfacedRelationshipType: apoc.coll.sortMulti([(\`person\`)-[\`person_interfacedRelationshipType_relation\`:\`INTERFACED_RELATIONSHIP_TYPE\`]->(:\`Genre\`) | person_interfacedRelationshipType_relation { .string ,Genre: head([(:\`Person\`)-[\`person_interfacedRelationshipType_relation\`]->(\`person_interfacedRelationshipType_Genre\`:\`Genre\`) | person_interfacedRelationshipType_Genre { .name }]) }], ['string']) , .name  }] + [\`person\` IN [\`person\`] WHERE "CameraMan" IN labels(\`person\`) | \`person\` { FRAGMENT_TYPE: "CameraMan",  .name  }] + [\`person\` IN [\`person\`] WHERE "User" IN labels(\`person\`) | \`person\` { FRAGMENT_TYPE: "User",  .name  }]) AS \`person\``;
+
+  t.plan(1);
+
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {},
+    expectedCypherQuery,
+    {
+      offset: 0,
+      first: -1,
+      '1_orderBy': ['string_desc'],
+      cypherParams: CYPHER_PARAMS
+    }
+  );
+});
+
+test('query interfaced relationship type field for outgoing object type nodes', t => {
+  const graphQLQuery = `query {
+    Person {
+      userId
+      name
+      interfacedRelationshipType {
+        string
+        Genre {
+          name
+        }
+      }
+    }
+  }`,
+    expectedCypherQuery = `MATCH (\`person\`:\`Person\`) RETURN \`person\` {FRAGMENT_TYPE: head( [ label IN labels(\`person\`) WHERE label IN $Person_derivedTypes ] ), .userId , .name ,interfacedRelationshipType: [(\`person\`)-[\`person_interfacedRelationshipType_relation\`:\`INTERFACED_RELATIONSHIP_TYPE\`]->(:\`Genre\`) | person_interfacedRelationshipType_relation { .string ,Genre: head([(:\`Person\`)-[\`person_interfacedRelationshipType_relation\`]->(\`person_interfacedRelationshipType_Genre\`:\`Genre\`) | person_interfacedRelationshipType_Genre { .name }]) }] } AS \`person\``;
+
+  t.plan(1);
+
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {},
+    expectedCypherQuery,
+    {
+      offset: 0,
+      first: -1,
+      cypherParams: CYPHER_PARAMS,
+      Person_derivedTypes: ['Actor', 'CameraMan', 'User']
+    }
+  );
+});
+
+test('order interfaced relationship type field for outgoing object type nodes', t => {
+  const graphQLQuery = `query {
+    Person {
+      userId
+      name
+      interfacedRelationshipType(orderBy: [string_asc]) {
+        string
+        Genre {
+          name
+        }
+      }
+    }
+  }`,
+    expectedCypherQuery = `MATCH (\`person\`:\`Person\`) RETURN \`person\` {FRAGMENT_TYPE: head( [ label IN labels(\`person\`) WHERE label IN $Person_derivedTypes ] ), .userId , .name ,interfacedRelationshipType: apoc.coll.sortMulti([(\`person\`)-[\`person_interfacedRelationshipType_relation\`:\`INTERFACED_RELATIONSHIP_TYPE\`]->(:\`Genre\`) | person_interfacedRelationshipType_relation { .string ,Genre: head([(:\`Person\`)-[\`person_interfacedRelationshipType_relation\`]->(\`person_interfacedRelationshipType_Genre\`:\`Genre\`) | person_interfacedRelationshipType_Genre { .name }]) }], ['^string']) } AS \`person\``;
+
+  t.plan(1);
+
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {},
+    expectedCypherQuery,
+    {
+      offset: 0,
+      first: -1,
+      '1_orderBy': ['string_asc'],
+      cypherParams: CYPHER_PARAMS,
+      Person_derivedTypes: ['Actor', 'CameraMan', 'User']
+    }
+  );
+});
+
+test('fliter interfaced relationship type field for outgoing object type nodes', t => {
+  const graphQLQuery = `query {
+    Person(filter: {
+      interfacedRelationshipType: {
+        Genre: {
+          name: "Action"
+        }
+      }
+    }) {
+      userId
+      name
+      interfacedRelationshipType(filter: {
+        string: "data"
+      }) {
+        string
+        Genre {
+          name        
+        }
+      }
+    }
+  }`,
+    expectedCypherQuery = `MATCH (\`person\`:\`Person\`) WHERE (EXISTS((\`person\`)-[:INTERFACED_RELATIONSHIP_TYPE]->(:Genre)) AND ALL(\`person_filter_genre\` IN [(\`person\`)-[\`_person_filter_genre\`:INTERFACED_RELATIONSHIP_TYPE]->(:Genre) | \`_person_filter_genre\`] WHERE (ALL(\`genre\` IN [(\`person\`)-[\`person_filter_genre\`]->(\`_genre\`:Genre) | \`_genre\`] WHERE (\`genre\`.name = $filter.interfacedRelationshipType.Genre.name))))) RETURN \`person\` {FRAGMENT_TYPE: head( [ label IN labels(\`person\`) WHERE label IN $Person_derivedTypes ] ), .userId , .name ,interfacedRelationshipType: [(\`person\`)-[\`person_interfacedRelationshipType_relation\`:\`INTERFACED_RELATIONSHIP_TYPE\`]->(:\`Genre\`) WHERE (\`person_interfacedRelationshipType_relation\`.string = $1_filter.string) | person_interfacedRelationshipType_relation { .string ,Genre: head([(:\`Person\`)-[\`person_interfacedRelationshipType_relation\`]->(\`person_interfacedRelationshipType_Genre\`:\`Genre\`) | person_interfacedRelationshipType_Genre { .name }]) }] } AS \`person\``;
+
+  t.plan(1);
+
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {},
+    expectedCypherQuery,
+    {
+      offset: 0,
+      first: -1,
+      filter: {
+        interfacedRelationshipType: {
+          Genre: {
+            name: 'Action'
+          }
+        }
+      },
+      '1_filter': {
+        string: 'data'
+      },
+      cypherParams: CYPHER_PARAMS,
+      Person_derivedTypes: ['Actor', 'CameraMan', 'User']
+    }
+  );
+});
+
+test('query interfaced relationship type field for incoming interface type nodes', t => {
+  const graphQLQuery = `query {
+    Genre {
+      name
+      interfacedRelationshipType {
+        string
+        Person {
+          userId
+          name
+        }
+      }
+    }
+  }`,
+    expectedCypherQuery = `MATCH (\`genre\`:\`Genre\`) RETURN \`genre\` { .name ,interfacedRelationshipType: [(\`genre\`)<-[\`genre_interfacedRelationshipType_relation\`:\`INTERFACED_RELATIONSHIP_TYPE\`]-(:\`Person\`) | genre_interfacedRelationshipType_relation { .string ,Person: head([(:\`Genre\`)<-[\`genre_interfacedRelationshipType_relation\`]-(\`genre_interfacedRelationshipType_Person\`:\`Person\`) | genre_interfacedRelationshipType_Person {FRAGMENT_TYPE: head( [ label IN labels(genre_interfacedRelationshipType_Person) WHERE label IN $Person_derivedTypes ] ), .userId , .name }]) }] } AS \`genre\``;
+
+  t.plan(1);
+
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {},
+    expectedCypherQuery,
+    {
+      offset: 0,
+      first: -1,
+      Person_derivedTypes: ['Actor', 'CameraMan', 'User'],
+      cypherParams: CYPHER_PARAMS
+    }
+  );
+});
+
+test('order interfaced relationship type field for incoming interface type nodes', t => {
+  const graphQLQuery = `query {
+    Genre {
+      name
+      interfacedRelationshipType(orderBy: string_desc) {
+        string
+        Person {
+          userId
+          name
+        }
+      }
+    }
+  }`,
+    expectedCypherQuery = `MATCH (\`genre\`:\`Genre\`) RETURN \`genre\` { .name ,interfacedRelationshipType: apoc.coll.sortMulti([(\`genre\`)<-[\`genre_interfacedRelationshipType_relation\`:\`INTERFACED_RELATIONSHIP_TYPE\`]-(:\`Person\`) | genre_interfacedRelationshipType_relation { .string ,Person: head([(:\`Genre\`)<-[\`genre_interfacedRelationshipType_relation\`]-(\`genre_interfacedRelationshipType_Person\`:\`Person\`) | genre_interfacedRelationshipType_Person {FRAGMENT_TYPE: head( [ label IN labels(genre_interfacedRelationshipType_Person) WHERE label IN $Person_derivedTypes ] ), .userId , .name }]) }], ['string']) } AS \`genre\``;
+
+  t.plan(1);
+
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {},
+    expectedCypherQuery,
+    {
+      offset: 0,
+      first: -1,
+      '1_orderBy': 'string_desc',
+      Person_derivedTypes: ['Actor', 'CameraMan', 'User'],
+      cypherParams: CYPHER_PARAMS
+    }
+  );
+});
+
+test('fliter interfaced relationship type field for incoming interface type nodes', t => {
+  const graphQLQuery = `query {
+    Genre(filter: {
+      interfacedRelationshipType: {
+        Person: {
+          userId: "45add9f4-e6c7-4ded-b951-59e3947240fe"
+        }
+      }
+    }) {
+      name
+      interfacedRelationshipType(filter: {
+        string: "data",
+        Person: {
+          name_in: ["Michael"]
+        }
+      }) {
+        string
+        Person {
+          userId
+          name
+        }
+      }
+    }
+  }`,
+    expectedCypherQuery = `MATCH (\`genre\`:\`Genre\`) WHERE (EXISTS((\`genre\`)<-[:INTERFACED_RELATIONSHIP_TYPE]-(:Person)) AND ALL(\`genre_filter_person\` IN [(\`genre\`)<-[\`_genre_filter_person\`:INTERFACED_RELATIONSHIP_TYPE]-(:Person) | \`_genre_filter_person\`] WHERE (ALL(\`person\` IN [(\`genre\`)<-[\`genre_filter_person\`]-(\`_person\`:Person) | \`_person\`] WHERE (\`person\`.userId = $filter.interfacedRelationshipType.Person.userId))))) RETURN \`genre\` { .name ,interfacedRelationshipType: [(\`genre\`)<-[\`genre_interfacedRelationshipType_relation\`:\`INTERFACED_RELATIONSHIP_TYPE\`]-(:\`Person\`) WHERE (\`genre_interfacedRelationshipType_relation\`.string = $1_filter.string) AND (ALL(\`genre_filter_person\` IN [(\`genre\`)<-[\`genre_interfacedRelationshipType_relation\`]-(\`_person\`:Person) | \`_person\`] WHERE (\`genre_filter_person\`.name IN $1_filter.Person.name_in))) | genre_interfacedRelationshipType_relation { .string ,Person: head([(:\`Genre\`)<-[\`genre_interfacedRelationshipType_relation\`]-(\`genre_interfacedRelationshipType_Person\`:\`Person\`) | genre_interfacedRelationshipType_Person {FRAGMENT_TYPE: head( [ label IN labels(genre_interfacedRelationshipType_Person) WHERE label IN $Person_derivedTypes ] ), .userId , .name }]) }] } AS \`genre\``;
+
+  t.plan(1);
+
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {},
+    expectedCypherQuery,
+    {
+      offset: 0,
+      first: -1,
+      filter: {
+        interfacedRelationshipType: {
+          Person: {
+            userId: '45add9f4-e6c7-4ded-b951-59e3947240fe'
+          }
+        }
+      },
+      '1_filter': {
+        string: 'data',
+        Person: {
+          name_in: ['Michael']
+        }
+      },
+      Person_derivedTypes: ['Actor', 'CameraMan', 'User'],
+      cypherParams: CYPHER_PARAMS
+    }
+  );
+});
+
+test('query incoming interface type nodes using fragments in relationship type field', t => {
+  const graphQLQuery = `query {
+    Genre {
+      name
+      interfacedRelationshipType {
+        string          
+        Person {
+          ... on User {
+            name
+          }
+          ...UserFragment
+          __typename
+        }
+      }
+    }
+  }
+
+  fragment UserFragment on User {
+    userId
+  }`,
+    expectedCypherQuery = `MATCH (\`genre\`:\`Genre\`) RETURN \`genre\` { .name ,interfacedRelationshipType: [(\`genre\`)<-[\`genre_interfacedRelationshipType_relation\`:\`INTERFACED_RELATIONSHIP_TYPE\`]-(:\`Person\`) | genre_interfacedRelationshipType_relation { .string ,Person: head([(:\`Genre\`)<-[\`genre_interfacedRelationshipType_relation\`]-(\`genre_interfacedRelationshipType_Person\`:\`Person\`) WHERE ("User" IN labels(genre_interfacedRelationshipType_Person)) | head([\`genre_interfacedRelationshipType_Person\` IN [\`genre_interfacedRelationshipType_Person\`] WHERE "User" IN labels(\`genre_interfacedRelationshipType_Person\`) | \`genre_interfacedRelationshipType_Person\` { FRAGMENT_TYPE: "User",  .name , .userId  }])]) }] } AS \`genre\``;
+
+  t.plan(1);
+
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {},
+    expectedCypherQuery,
+    {
+      offset: 0,
+      first: -1,
+      cypherParams: CYPHER_PARAMS
+    }
+  );
+});
+
+test('order incoming interface type nodes using fragments in relationship type field', t => {
+  const graphQLQuery = `query {
+    Genre {
+      name
+      interfacedRelationshipType(orderBy: string_asc) {
+        string          
+        Person {
+          ... on User {
+            name
+          }
+          ...UserFragment
+          __typename
+        }
+      }
+    }
+  }
+
+  fragment UserFragment on User {
+    userId
+  }`,
+    expectedCypherQuery = `MATCH (\`genre\`:\`Genre\`) RETURN \`genre\` { .name ,interfacedRelationshipType: apoc.coll.sortMulti([(\`genre\`)<-[\`genre_interfacedRelationshipType_relation\`:\`INTERFACED_RELATIONSHIP_TYPE\`]-(:\`Person\`) | genre_interfacedRelationshipType_relation { .string ,Person: head([(:\`Genre\`)<-[\`genre_interfacedRelationshipType_relation\`]-(\`genre_interfacedRelationshipType_Person\`:\`Person\`) WHERE ("User" IN labels(genre_interfacedRelationshipType_Person)) | head([\`genre_interfacedRelationshipType_Person\` IN [\`genre_interfacedRelationshipType_Person\`] WHERE "User" IN labels(\`genre_interfacedRelationshipType_Person\`) | \`genre_interfacedRelationshipType_Person\` { FRAGMENT_TYPE: "User",  .name , .userId  }])]) }], ['^string']) } AS \`genre\``;
+
+  t.plan(1);
+
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {},
+    expectedCypherQuery,
+    {
+      offset: 0,
+      first: -1,
+      '1_orderBy': 'string_asc',
+      cypherParams: CYPHER_PARAMS
+    }
+  );
+});
+
+test('filter incoming interface type nodes using only fragments in relationship type field', t => {
+  const graphQLQuery = `query {
+    Genre {
+      name
+      interfacedRelationshipType(filter: { Person: { name_not_in: ["John"] } }) {
+        string
+        Person {
+          ... on User {
+            userId
+          }
+        }
+      }
+      __typename
+    }
+  }
+  `,
+    expectedCypherQuery = `MATCH (\`genre\`:\`Genre\`) RETURN \`genre\` { .name ,interfacedRelationshipType: [(\`genre\`)<-[\`genre_interfacedRelationshipType_relation\`:\`INTERFACED_RELATIONSHIP_TYPE\`]-(:\`Person\`) WHERE (ALL(\`genre_filter_person\` IN [(\`genre\`)<-[\`genre_interfacedRelationshipType_relation\`]-(\`_person\`:Person) | \`_person\`] WHERE (NOT \`genre_filter_person\`.name IN $1_filter.Person.name_not_in))) | genre_interfacedRelationshipType_relation { .string ,Person: head([(:\`Genre\`)<-[\`genre_interfacedRelationshipType_relation\`]-(\`genre_interfacedRelationshipType_Person\`:\`Person\`) WHERE ("User" IN labels(genre_interfacedRelationshipType_Person)) | head([\`genre_interfacedRelationshipType_Person\` IN [\`genre_interfacedRelationshipType_Person\`] WHERE "User" IN labels(\`genre_interfacedRelationshipType_Person\`) | \`genre_interfacedRelationshipType_Person\` { FRAGMENT_TYPE: "User",  .userId  }])]) }] } AS \`genre\``;
+
+  t.plan(1);
+
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {},
+    expectedCypherQuery,
+    {
+      offset: 0,
+      first: -1,
+      '1_filter': {
+        Person: {
+          name_not_in: ['John']
+        }
+      },
+      cypherParams: CYPHER_PARAMS
+    }
+  );
+});
+
+test('query reflexive interfaced relationship type field using fragments', t => {
+  const graphQLQuery = `query {
+    Person {
+      userId
+      name
+      reflexiveInterfacedRelationshipType {
+        from {
+          boolean
+          Person {
+            ...UserFragment
+            __typename
+          }
+        }
+        to {
+          boolean
+          Person {
+            userId
+            ... on Actor {
+              name
+            }
+            __typename
+          }
+        }      
+      }
+    }
+  }	
+  
+  fragment UserFragment on User {
+    name
+    userId
+  }`,
+    expectedCypherQuery = `MATCH (\`person\`:\`Person\`) RETURN \`person\` {FRAGMENT_TYPE: head( [ label IN labels(\`person\`) WHERE label IN $Person_derivedTypes ] ), .userId , .name ,reflexiveInterfacedRelationshipType: {from: [(\`person\`)<-[\`person_from_relation\`:\`REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE\`]-(\`person_from\`:\`Person\`) | person_from_relation { .boolean ,Person: head([\`person_from\` IN [\`person_from\`] WHERE "User" IN labels(\`person_from\`) | \`person_from\` { FRAGMENT_TYPE: "User",  .name , .userId  }]) }] ,to: [(\`person\`)-[\`person_to_relation\`:\`REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE\`]->(\`person_to\`:\`Person\`) | person_to_relation { .boolean ,Person: head([\`person_to\` IN [\`person_to\`] WHERE "Actor" IN labels(\`person_to\`) | \`person_to\` { FRAGMENT_TYPE: "Actor",  .name , .userId  }] + [\`person_to\` IN [\`person_to\`] WHERE "CameraMan" IN labels(\`person_to\`) | \`person_to\` { FRAGMENT_TYPE: "CameraMan",  .userId  }] + [\`person_to\` IN [\`person_to\`] WHERE "User" IN labels(\`person_to\`) | \`person_to\` { FRAGMENT_TYPE: "User",  .userId  }]) }] } } AS \`person\``;
+
+  t.plan(1);
+
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {},
+    expectedCypherQuery,
+    {
+      offset: 0,
+      first: -1,
+      cypherParams: CYPHER_PARAMS,
+      Person_derivedTypes: ['Actor', 'CameraMan', 'User']
+    }
+  );
+});
+
+test('order incoming and outgoing nodes of reflexive interfaced relationship type field', t => {
+  const graphQLQuery = `query {
+    Person {
+      userId
+      name
+      reflexiveInterfacedRelationshipType {
+        from(orderBy: boolean_desc) {
+          boolean
+        }
+        to(orderBy: boolean_asc) {
+          boolean
+        }
+      }
+    }
+  }
+  `,
+    expectedCypherQuery = `MATCH (\`person\`:\`Person\`) RETURN \`person\` {FRAGMENT_TYPE: head( [ label IN labels(\`person\`) WHERE label IN $Person_derivedTypes ] ), .userId , .name ,reflexiveInterfacedRelationshipType: {from: apoc.coll.sortMulti([(\`person\`)<-[\`person_from_relation\`:\`REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE\`]-(\`person_from\`:\`Person\`) | person_from_relation { .boolean }], ['boolean']) ,to: apoc.coll.sortMulti([(\`person\`)-[\`person_to_relation\`:\`REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE\`]->(\`person_to\`:\`Person\`) | person_to_relation { .boolean }], ['^boolean']) } } AS \`person\``;
+
+  t.plan(1);
+
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {},
+    expectedCypherQuery,
+    {
+      offset: 0,
+      first: -1,
+      '1_orderBy': 'boolean_desc',
+      '3_orderBy': 'boolean_asc',
+      cypherParams: CYPHER_PARAMS,
+      Person_derivedTypes: ['Actor', 'CameraMan', 'User']
+    }
+  );
+});
+
+test('filter reflexive interfaced relationship type field', t => {
+  const graphQLQuery = `query {
+    Person(filter: {
+      name_in: ["Michael"]
+      reflexiveInterfacedRelationshipType: {
+        to: {
+          Person: {
+            name_in: ["John"]
+          }
+        }
+      }
+    }) {
+      userId
+      name
+      reflexiveInterfacedRelationshipType {
+        to(first: 1, offset: 0, filter: {
+          boolean: true
+        }) {
+          boolean
+          Person {
+            userId
+            name          
+            interfacedRelationshipType(first: 1) {
+              string
+              Genre {
+                name
+              }
+              __typename
+            }
+            __typename
+          }
+        }
+      }
+    }
+  }`,
+    expectedCypherQuery = `MATCH (\`person\`:\`Person\`) WHERE (\`person\`.name IN $filter.name_in) AND ((EXISTS((\`person\`)-[:REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE]->(:Person)) AND ALL(\`person_filter_person\` IN [(\`person\`)-[\`_person_filter_person\`:REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE]->(:Person) | \`_person_filter_person\`] WHERE (ALL(\`person\` IN [(\`person\`)-[\`person_filter_person\`]->(\`_person\`:Person) | \`_person\`] WHERE (\`person\`.name IN $filter.reflexiveInterfacedRelationshipType.to.Person.name_in)))))) RETURN \`person\` {FRAGMENT_TYPE: head( [ label IN labels(\`person\`) WHERE label IN $Person_derivedTypes ] ), .userId , .name ,reflexiveInterfacedRelationshipType: {to: [(\`person\`)-[\`person_to_relation\`:\`REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE\`]->(\`person_to\`:\`Person\`) WHERE (\`person_to_relation\`.boolean = $1_filter.boolean) | person_to_relation { .boolean ,Person: person_to {FRAGMENT_TYPE: head( [ label IN labels(person_to) WHERE label IN $Person_derivedTypes ] ), .userId , .name ,interfacedRelationshipType: [(\`person_to\`)-[\`person_to_interfacedRelationshipType_relation\`:\`INTERFACED_RELATIONSHIP_TYPE\`]->(:\`Genre\`) | person_to_interfacedRelationshipType_relation { .string ,Genre: head([(:\`Person\`)-[\`person_to_interfacedRelationshipType_relation\`]->(\`person_to_interfacedRelationshipType_Genre\`:\`Genre\`) | person_to_interfacedRelationshipType_Genre { .name }]) }][..1] } }][0..1] } } AS \`person\``;
+
+  t.plan(1);
+
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {},
+    expectedCypherQuery,
+    {
+      offset: 0,
+      first: -1,
+      filter: {
+        name_in: ['Michael'],
+        reflexiveInterfacedRelationshipType: {
+          to: {
+            Person: {
+              name_in: ['John']
+            }
+          }
+        }
+      },
+      '1_filter': {
+        boolean: true
+      },
+      Person_derivedTypes: ['Actor', 'CameraMan', 'User'],
+      cypherParams: CYPHER_PARAMS
+    }
   );
 });
 
@@ -4796,7 +5686,63 @@ test('Deeply nested query using temporal orderBy', t => {
     }
   }`,
     expectedCypherQuery =
-      "MATCH (`temporalNode`:`TemporalNode`) WITH `temporalNode` ORDER BY temporalNode.datetime DESC RETURN `temporalNode` {_id: ID(`temporalNode`),datetime: { year: `temporalNode`.datetime.year , month: `temporalNode`.datetime.month , day: `temporalNode`.datetime.day , hour: `temporalNode`.datetime.hour , minute: `temporalNode`.datetime.minute , second: `temporalNode`.datetime.second , millisecond: `temporalNode`.datetime.millisecond , microsecond: `temporalNode`.datetime.microsecond , nanosecond: `temporalNode`.datetime.nanosecond , timezone: `temporalNode`.datetime.timezone , formatted: toString(`temporalNode`.datetime) },temporalNodes: [sortedElement IN apoc.coll.sortMulti([(`temporalNode`)-[:`TEMPORAL`]->(`temporalNode_temporalNodes`:`TemporalNode`) | `temporalNode_temporalNodes` {_id: ID(`temporalNode_temporalNodes`),datetime: `temporalNode_temporalNodes`.datetime,time: `temporalNode_temporalNodes`.time,temporalNodes: [sortedElement IN apoc.coll.sortMulti([(`temporalNode_temporalNodes`)-[:`TEMPORAL`]->(`temporalNode_temporalNodes_temporalNodes`:`TemporalNode`) | `temporalNode_temporalNodes_temporalNodes` {_id: ID(`temporalNode_temporalNodes_temporalNodes`),datetime: `temporalNode_temporalNodes_temporalNodes`.datetime,time: `temporalNode_temporalNodes_temporalNodes`.time}], ['datetime','time']) | sortedElement { .*,  datetime: {year: sortedElement.datetime.year,formatted: toString(sortedElement.datetime)},time: {hour: sortedElement.time.hour}}][1..3] }], ['^datetime']) | sortedElement { .*,  datetime: {year: sortedElement.datetime.year,month: sortedElement.datetime.month,day: sortedElement.datetime.day,hour: sortedElement.datetime.hour,minute: sortedElement.datetime.minute,second: sortedElement.datetime.second,millisecond: sortedElement.datetime.millisecond,microsecond: sortedElement.datetime.microsecond,nanosecond: sortedElement.datetime.nanosecond,timezone: sortedElement.datetime.timezone,formatted: toString(sortedElement.datetime)},time: {hour: sortedElement.time.hour}}] } AS `temporalNode`";
+      "MATCH (`temporalNode`:`TemporalNode`) WITH `temporalNode` ORDER BY temporalNode.datetime DESC RETURN `temporalNode` {_id: ID(`temporalNode`),datetime: { year: `temporalNode`.datetime.year , month: `temporalNode`.datetime.month , day: `temporalNode`.datetime.day , hour: `temporalNode`.datetime.hour , minute: `temporalNode`.datetime.minute , second: `temporalNode`.datetime.second , millisecond: `temporalNode`.datetime.millisecond , microsecond: `temporalNode`.datetime.microsecond , nanosecond: `temporalNode`.datetime.nanosecond , timezone: `temporalNode`.datetime.timezone , formatted: toString(`temporalNode`.datetime) },temporalNodes: [sortedElement IN apoc.coll.sortMulti([(`temporalNode`)-[:`TEMPORAL`]->(`temporalNode_temporalNodes`:`TemporalNode`) | `temporalNode_temporalNodes` {_id: ID(`temporalNode_temporalNodes`),datetime: `temporalNode_temporalNodes`.datetime,time: `temporalNode_temporalNodes`.time,temporalNodes: [sortedElement IN apoc.coll.sortMulti([(`temporalNode_temporalNodes`)-[:`TEMPORAL`]->(`temporalNode_temporalNodes_temporalNodes`:`TemporalNode`) | `temporalNode_temporalNodes_temporalNodes` {_id: ID(`temporalNode_temporalNodes_temporalNodes`),datetime: `temporalNode_temporalNodes_temporalNodes`.datetime,time: `temporalNode_temporalNodes_temporalNodes`.time}], ['datetime','time']) | sortedElement { .* ,  datetime: {year: sortedElement.datetime.year,formatted: toString(sortedElement.datetime)},time: {hour: sortedElement.time.hour}}][1..3] }], ['^datetime']) | sortedElement { .* ,  datetime: {year: sortedElement.datetime.year,month: sortedElement.datetime.month,day: sortedElement.datetime.day,hour: sortedElement.datetime.hour,minute: sortedElement.datetime.minute,second: sortedElement.datetime.second,millisecond: sortedElement.datetime.millisecond,microsecond: sortedElement.datetime.microsecond,nanosecond: sortedElement.datetime.nanosecond,timezone: sortedElement.datetime.timezone,formatted: toString(sortedElement.datetime)},time: {hour: sortedElement.time.hour}}] } AS `temporalNode`";
+
+  t.plan(1);
+  return Promise.all([
+    augmentedSchemaCypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery)
+  ]);
+});
+
+test('query nested relationship with differences between selected and ordered fields', t => {
+  const graphQLQuery = `query {
+    TemporalNode(orderBy: [datetime_desc]) {
+      datetime {
+        year
+        formatted
+      }
+      temporalNodes(orderBy: [datetime_asc, datetime_desc]) {
+        _id
+        name
+        time {
+          hour
+        }
+        temporalNodes(first: 2, offset: 1, orderBy: [datetime_desc, name_asc]) {
+          _id
+          name
+        }
+      }
+    }
+  }
+  `,
+    expectedCypherQuery =
+      "MATCH (`temporalNode`:`TemporalNode`) WITH `temporalNode` ORDER BY temporalNode.datetime DESC RETURN `temporalNode` {datetime: { year: `temporalNode`.datetime.year , formatted: toString(`temporalNode`.datetime) },temporalNodes: [sortedElement IN apoc.coll.sortMulti([(`temporalNode`)-[:`TEMPORAL`]->(`temporalNode_temporalNodes`:`TemporalNode`) | `temporalNode_temporalNodes` {_id: ID(`temporalNode_temporalNodes`), .name ,time: `temporalNode_temporalNodes`.time,temporalNodes: [sortedElement IN apoc.coll.sortMulti([(`temporalNode_temporalNodes`)-[:`TEMPORAL`]->(`temporalNode_temporalNodes_temporalNodes`:`TemporalNode`) | `temporalNode_temporalNodes_temporalNodes` {_id: ID(`temporalNode_temporalNodes_temporalNodes`), .name ,datetime: `temporalNode_temporalNodes_temporalNodes`.datetime}], ['datetime','^name']) | sortedElement { .* }][1..3] ,datetime: `temporalNode_temporalNodes`.datetime}], ['^datetime','datetime']) | sortedElement { .* ,  time: {hour: sortedElement.time.hour}}] } AS `temporalNode`";
+
+  t.plan(1);
+  return Promise.all([
+    augmentedSchemaCypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery, {
+      offset: 0,
+      first: -1,
+      '1_orderBy': ['datetime_asc', 'datetime_desc'],
+      '2_first': 2,
+      '2_offset': 1,
+      '2_orderBy': ['datetime_desc', 'name_asc'],
+      cypherParams: CYPHER_PARAMS
+    })
+  ]);
+});
+
+test('Deeply nested query using temporal orderBy without temporal field selection', t => {
+  const graphQLQuery = `query {
+    TemporalNode(orderBy: [datetime_desc]) {
+      _id
+      temporalNodes(first: 2, offset: 1, orderBy: [datetime_desc, time_desc]) {
+        _id
+      }
+    }
+  }`,
+    expectedCypherQuery =
+      "MATCH (`temporalNode`:`TemporalNode`) WITH `temporalNode` ORDER BY temporalNode.datetime DESC RETURN `temporalNode` {_id: ID(`temporalNode`),temporalNodes: [sortedElement IN apoc.coll.sortMulti([(`temporalNode`)-[:`TEMPORAL`]->(`temporalNode_temporalNodes`:`TemporalNode`) | `temporalNode_temporalNodes` {_id: ID(`temporalNode_temporalNodes`),datetime: `temporalNode_temporalNodes`.datetime,time: `temporalNode_temporalNodes`.time}], ['datetime','time']) | sortedElement { .* }][1..3] } AS `temporalNode`";
 
   t.plan(1);
   return Promise.all([
@@ -5346,7 +6292,7 @@ test('Handle order by field with underscores - nested field ', t => {
   }
   `,
     expectedCypherQuery =
-      'WITH apoc.cypher.runFirstColumn("MATCH (g:Genre) WHERE toLower(g.name) CONTAINS toLower($substring) RETURN g", {offset:$offset, first:$first, substring:$substring, cypherParams: $cypherParams}, True) AS x UNWIND x AS `genre` RETURN `genre` {movies: apoc.coll.sortMulti([(`genre`)<-[:`IN_GENRE`]-(`genre_movies`:`Movie`:`u_user-id`:`newMovieLabel`) | `genre_movies` { .title }], [\'someprefix_title_with_underscores\']) } AS `genre`';
+      'WITH apoc.cypher.runFirstColumn("MATCH (g:Genre) WHERE toLower(g.name) CONTAINS toLower($substring) RETURN g", {offset:$offset, first:$first, substring:$substring, cypherParams: $cypherParams}, True) AS x UNWIND x AS `genre` RETURN `genre` {movies: apoc.coll.sortMulti([(`genre`)<-[:`IN_GENRE`]-(`genre_movies`:`Movie`:`u_user-id`:`newMovieLabel`) | `genre_movies` { .title , .someprefix_title_with_underscores }], [\'someprefix_title_with_underscores\']) } AS `genre`';
 
   t.plan(1);
   return Promise.all([
@@ -5492,6 +6438,77 @@ test('query interface type relationship field', t => {
     }),
     augmentedSchemaCypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery)
   ]);
+});
+
+test('query reflexive interface type relationship field', t => {
+  const graphQLQuery = `query {
+    NewCamera {
+      id
+      make
+      reflexiveInterfaceRelationship {
+        id
+        type
+        weight
+      }
+    }
+  }
+  `,
+    expectedCypherQuery = `MATCH (\`newCamera\`:\`NewCamera\`) RETURN \`newCamera\` { .id , .make ,reflexiveInterfaceRelationship: [(\`newCamera\`)-[:\`REFLEXIVE_INTERFACE_RELATIONSHIP\`]->(\`newCamera_reflexiveInterfaceRelationship\`:\`Camera\`) | \`newCamera_reflexiveInterfaceRelationship\` {FRAGMENT_TYPE: head( [ label IN labels(\`newCamera_reflexiveInterfaceRelationship\`) WHERE label IN $Camera_derivedTypes ] ), .id , .type , .weight }] } AS \`newCamera\``;
+
+  t.plan(1);
+
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {},
+    expectedCypherQuery,
+    {
+      offset: 0,
+      first: -1,
+      Camera_derivedTypes: ['NewCamera', 'OldCamera'],
+      cypherParams: CYPHER_PARAMS
+    }
+  );
+});
+
+test('query reflexive interface type relationship field using fragments', t => {
+  const graphQLQuery = `query {
+    Camera {
+      id
+      ... on NewCamera {
+        make
+        reflexiveInterfaceRelationship {
+          ... on Camera {
+            id
+            type
+            weight
+            make
+          }
+        }
+      }
+      reflexiveInterfaceRelationship {
+        ... on OldCamera {
+          weight
+        }
+      }
+    }
+  }  
+  `,
+    expectedCypherQuery = `MATCH (\`camera\`:\`Camera\`) WHERE ("NewCamera" IN labels(\`camera\`) OR "OldCamera" IN labels(\`camera\`)) RETURN head([\`camera\` IN [\`camera\`] WHERE "NewCamera" IN labels(\`camera\`) | \`camera\` { FRAGMENT_TYPE: "NewCamera",  .make ,reflexiveInterfaceRelationship: [(\`camera\`)-[:\`REFLEXIVE_INTERFACE_RELATIONSHIP\`]->(\`camera_reflexiveInterfaceRelationship\`:\`Camera\`) WHERE ("NewCamera" IN labels(\`camera_reflexiveInterfaceRelationship\`) OR "OldCamera" IN labels(\`camera_reflexiveInterfaceRelationship\`)) | head([\`camera_reflexiveInterfaceRelationship\` IN [\`camera_reflexiveInterfaceRelationship\`] WHERE "NewCamera" IN labels(\`camera_reflexiveInterfaceRelationship\`) | \`camera_reflexiveInterfaceRelationship\` { FRAGMENT_TYPE: "NewCamera",  .id , .type , .weight , .make  }] + [\`camera_reflexiveInterfaceRelationship\` IN [\`camera_reflexiveInterfaceRelationship\`] WHERE "OldCamera" IN labels(\`camera_reflexiveInterfaceRelationship\`) | \`camera_reflexiveInterfaceRelationship\` { FRAGMENT_TYPE: "OldCamera",  .weight , .id , .type , .make  }])] , .id  }] + [\`camera\` IN [\`camera\`] WHERE "OldCamera" IN labels(\`camera\`) | \`camera\` { FRAGMENT_TYPE: "OldCamera",  .id ,reflexiveInterfaceRelationship: [(\`camera\`)-[:\`REFLEXIVE_INTERFACE_RELATIONSHIP\`]->(\`camera_reflexiveInterfaceRelationship\`:\`Camera\`) WHERE ("OldCamera" IN labels(\`camera_reflexiveInterfaceRelationship\`)) | head([\`camera_reflexiveInterfaceRelationship\` IN [\`camera_reflexiveInterfaceRelationship\`] WHERE "OldCamera" IN labels(\`camera_reflexiveInterfaceRelationship\`) | \`camera_reflexiveInterfaceRelationship\` { FRAGMENT_TYPE: "OldCamera",  .weight  }])]  }]) AS \`camera\``;
+
+  t.plan(1);
+
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {},
+    expectedCypherQuery,
+    {
+      offset: 0,
+      first: -1,
+      cypherParams: CYPHER_PARAMS
+    }
+  );
 });
 
 test('query only __typename field on interface type relationship field', t => {

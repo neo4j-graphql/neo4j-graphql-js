@@ -197,12 +197,13 @@ export const augmentNodeTypeFields = ({
   config
 }) => {
   let isIgnoredType = true;
+  let filterTypeName = `_${typeName}Filter`;
+  const fields = definition.fields;
   if (!isUnionType && !isUnionExtension) {
-    const fields = definition.fields;
     if (!isQueryType) {
       if (!nodeInputTypeMap[FilteringArgument.FILTER]) {
         nodeInputTypeMap[FilteringArgument.FILTER] = {
-          name: `_${typeName}Filter`,
+          name: filterTypeName,
           fields: []
         };
       }

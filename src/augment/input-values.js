@@ -5,7 +5,8 @@ import {
   buildInputValue,
   buildInputObjectType,
   buildEnumType,
-  buildEnumValue
+  buildEnumValue,
+  buildFieldSelection
 } from './ast';
 import {
   isNeo4jTemporalType,
@@ -97,6 +98,7 @@ export const buildQueryFieldArguments = ({
   argumentMap = {},
   fieldArguments,
   fieldDirectives,
+  typeName,
   outputType,
   outputTypeWrappers,
   isUnionType,
@@ -167,6 +169,9 @@ export const buildQueryFieldArguments = ({
         const argumentIndex = fieldArguments.findIndex(
           arg => arg.name.value === FilteringArgument.FILTER
         );
+        if (typeName) {
+          outputType = `${typeName}${outputType}`;
+        }
         // Does overwrite
         if (argumentIndex === -1) {
           fieldArguments.push(
@@ -439,9 +444,7 @@ export const buildFilters = ({ fieldName, fieldConfig, filterTypes = [] }) => {
           [TypeWrappers.LIST_TYPE]: true
         };
       } else if (isPointDistanceFilter) {
-        fieldConfig.type.name = `${Neo4jTypeName}${
-          SpatialType.POINT
-        }DistanceFilter`;
+        fieldConfig.type.name = `${Neo4jTypeName}${SpatialType.POINT}DistanceFilter`;
       }
       inputValues.push(
         buildInputValue({
@@ -461,4 +464,57 @@ export const buildFilters = ({ fieldName, fieldConfig, filterTypes = [] }) => {
       })
     ]
   );
+};
+
+export const selectUnselectedOrderedFields = ({
+  selectionFilters,
+  fieldSelectionSet
+}) => {
+  let orderingArguments = selectionFilters['orderBy'];
+  const orderedFieldSelectionSet = [];
+  // cooerce to array if not provided as list
+  if (orderingArguments) {
+    // if a single ordering enum argument value is provided,
+    // cooerce back into an array
+    if (typeof orderingArguments === 'string') {
+      orderingArguments = [orderingArguments];
+    }
+    orderedFieldSelectionSet.push(...fieldSelectionSet);
+    // add field selection AST for ordered fields if those fields are
+    // not selected, since apoc.coll.sortMulti requires data to sort
+    const orderedFieldNameMap = orderingArguments.reduce(
+      (uniqueFieldMap, orderingArg) => {
+        const fieldName = orderingArg.substring(
+          0,
+          orderingArg.lastIndexOf('_')
+        );
+        // prevent redundant selections
+        // ex: [datetime_asc, datetime_desc], if provided, would result
+        // in adding two selections for the datetime field
+        if (!uniqueFieldMap[fieldName]) uniqueFieldMap[fieldName] = true;
+        return uniqueFieldMap;
+      },
+      {}
+    );
+    const orderingArgumentFieldNames = Object.keys(orderedFieldNameMap);
+    orderingArgumentFieldNames.forEach(orderedFieldName => {
+      if (
+        !fieldSelectionSet.some(
+          field => field.name && field.name.value === orderedFieldName
+        )
+      ) {
+        // add the field so that its data can be used for ordering
+        // since as it is not actually selected, it will be removed
+        // by default GraphQL post-processing field resolvers
+        orderedFieldSelectionSet.push(
+          buildFieldSelection({
+            name: buildName({
+              name: orderedFieldName
+            })
+          })
+        );
+      }
+    });
+  }
+  return orderedFieldSelectionSet;
 };

@@ -39,6 +39,7 @@ import {
   TypeWrappers,
   Neo4jSystemIDField
 } from './augment/fields';
+import { selectUnselectedOrderedFields } from './augment/input-values';
 
 export function buildCypherSelection({
   initial = '',
@@ -290,13 +291,23 @@ export function buildCypherSelection({
         fieldName,
         parentSelectionInfo
       });
+
       const fieldSelectionSet =
         headSelection && headSelection.selectionSet
           ? headSelection.selectionSet.selections
           : [];
 
+      const orderedFieldSelectionSet = selectUnselectedOrderedFields({
+        selectionFilters,
+        fieldSelectionSet
+      });
+
+      const fieldsForTranslation = orderedFieldSelectionSet.length
+        ? orderedFieldSelectionSet
+        : fieldSelectionSet;
+
       subSelection = recurse({
-        selections: fieldSelectionSet,
+        selections: fieldsForTranslation,
         variableName: nestedVariable,
         paramIndex,
         schemaType: innerSchemaType,
@@ -406,6 +417,7 @@ export function buildCypherSelection({
           initial,
           fieldName,
           fieldType,
+          fieldSelectionSet,
           variableName,
           relDirection,
           relType,
@@ -422,7 +434,7 @@ export function buildCypherSelection({
           filterParams,
           selectionFilters,
           neo4jTypeArgs,
-          selections,
+          fieldsForTranslation,
           schemaType,
           subSelection,
           skipLimit,
@@ -436,6 +448,7 @@ export function buildCypherSelection({
         // (from, to, renamed, relation mutation payloads...)
         [translationConfig, subSelection] = nodeTypeFieldOnRelationType({
           initial,
+          schemaType,
           fieldName,
           fieldType,
           variableName,
@@ -449,6 +462,8 @@ export function buildCypherSelection({
           neo4jTypeArgs,
           schemaTypeRelation,
           innerSchemaType,
+          fieldSelectionSet,
+          fieldsForTranslation,
           schemaTypeFields,
           derivedTypeMap,
           isObjectTypeField,
@@ -469,12 +484,14 @@ export function buildCypherSelection({
           innerSchemaTypeRelation,
           initial,
           fieldName,
+          fieldSelectionSet,
           subSelection,
           skipLimit,
           commaIfTail,
           tailParams,
           fieldType,
           variableName,
+          fieldsForTranslation,
           schemaType,
           innerSchemaType,
           nestedVariable,
