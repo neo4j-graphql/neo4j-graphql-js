@@ -778,6 +778,39 @@ test('Add relationship mutation', t => {
   );
 });
 
+test('Add relationship mutation and query only outgoing nodes', t => {
+  const graphQLQuery = `mutation someMutation {
+    AddMovieGenres(
+      from: { movieId: "123" },
+      to: { name: "Action" }
+    ) {
+      to {
+        name
+      }
+    }
+  }`,
+    expectedCypherQuery = `
+      MATCH (\`movie_from\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {movieId: $from.movieId})
+      MATCH (\`genre_to\`:\`Genre\` {name: $to.name})
+      CREATE (\`movie_from\`)-[\`in_genre_relation\`:\`IN_GENRE\`]->(\`genre_to\`)
+      RETURN \`in_genre_relation\` { to: \`genre_to\` { .name }  } AS \`_AddMovieGenresPayload\`;
+    `;
+
+  t.plan(1);
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {
+      from: { movieId: '123' },
+      to: { name: 'Action' },
+      first: -1,
+      offset: 0
+    },
+    expectedCypherQuery,
+    {}
+  );
+});
+
 test('Merge relationship mutation', t => {
   const graphQLQuery = `mutation someMutation {
     MergeMovieGenres(
@@ -1029,6 +1062,63 @@ test('Update relationship mutation with relationship property', t => {
       MATCH (\`user_from\`)-[\`rated_relation\`:\`RATED\`]->(\`movie_to\`)
       SET \`rated_relation\` += {rating:$data.rating,location: point($data.location)} 
       RETURN \`rated_relation\` { from: \`user_from\` {_id: ID(\`user_from\`), .userId , .name ,rated: [(\`user_from\`)-[\`user_from_rated_relation\`:\`RATED\`]->(:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) | user_from_rated_relation { .rating ,Movie: head([(:\`User\`)-[\`user_from_rated_relation\`]->(\`user_from_rated_Movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) | user_from_rated_Movie {_id: ID(\`user_from_rated_Movie\`), .movieId , .title }]) }] } ,to: \`movie_to\` {_id: ID(\`movie_to\`), .movieId , .title ,ratings: [(\`movie_to\`)<-[\`movie_to_ratings_relation\`:\`RATED\`]-(:\`User\`) | movie_to_ratings_relation { .rating ,User: head([(:\`Movie\`${ADDITIONAL_MOVIE_LABELS})<-[\`movie_to_ratings_relation\`]-(\`movie_to_ratings_User\`:\`User\`) | movie_to_ratings_User {_id: ID(\`movie_to_ratings_User\`), .userId , .name }]) }] } , .rating  } AS \`_UpdateUserRatedPayload\`;
+    `;
+
+  t.plan(1);
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {
+      from: { userId: '123' },
+      to: { movieId: '2kljghd' },
+      data: {
+        rating: 1,
+        location: {
+          longitude: 3.0,
+          latitude: 4.5,
+          height: 12.5
+        }
+      },
+      first: -1,
+      offset: 0
+    },
+    expectedCypherQuery
+  );
+});
+
+test('Update relationship mutation with relationship property and query only outgoing nodes', t => {
+  const graphQLQuery = `mutation someMutation {
+    UpdateUserRated(
+      from: { userId: "123" }
+      to: { movieId: "2kljghd" }
+      data: {
+        rating: 1
+        location: { longitude: 3.0, latitude: 4.5, height: 12.5 }
+      }
+    ) {
+      to {
+        _id
+        movieId
+        title
+        ratings {
+          rating
+          User {
+            _id
+            userId
+            name
+          }
+        }
+      }
+      rating
+    }
+  }
+  `,
+    expectedCypherQuery = `
+      MATCH (\`user_from\`:\`User\` {userId: $from.userId})
+      MATCH (\`movie_to\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {movieId: $to.movieId})
+      MATCH (\`user_from\`)-[\`rated_relation\`:\`RATED\`]->(\`movie_to\`)
+      SET \`rated_relation\` += {rating:$data.rating,location: point($data.location)} 
+      RETURN \`rated_relation\` { to: \`movie_to\` {_id: ID(\`movie_to\`), .movieId , .title ,ratings: [(\`movie_to\`)<-[\`movie_to_ratings_relation\`:\`RATED\`]-(:\`User\`) | movie_to_ratings_relation { .rating ,User: head([(:\`Movie\`${ADDITIONAL_MOVIE_LABELS})<-[\`movie_to_ratings_relation\`]-(\`movie_to_ratings_User\`:\`User\`) | movie_to_ratings_User {_id: ID(\`movie_to_ratings_User\`), .userId , .name }]) }] } , .rating  } AS \`_UpdateUserRatedPayload\`;
     `;
 
   t.plan(1);
@@ -1739,6 +1829,41 @@ test('Remove relationship mutation', t => {
       DELETE \`movie_fromgenre_to\`
       WITH COUNT(*) AS scope, \`movie_from\` AS \`_movie_from\`, \`genre_to\` AS \`_genre_to\`
       RETURN {from: \`_movie_from\` {_id: ID(\`_movie_from\`), .title } ,to: \`_genre_to\` {_id: ID(\`_genre_to\`), .name } } AS \`_RemoveMovieGenresPayload\`;
+    `;
+
+  t.plan(1);
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {
+      from: { movieId: '123' },
+      to: { name: 'Action' },
+      first: -1,
+      offset: 0
+    },
+    expectedCypherQuery
+  );
+});
+
+test('Remove relationship mutation and query only outgoing nodes', t => {
+  const graphQLQuery = `mutation someMutation {
+    RemoveMovieGenres(
+      from: { movieId: "123" },
+      to: { name: "Action" }
+    ) {
+      to {
+        _id
+        name
+      }
+    }
+  }`,
+    expectedCypherQuery = `
+      MATCH (\`movie_from\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {movieId: $from.movieId})
+      MATCH (\`genre_to\`:\`Genre\` {name: $to.name})
+      OPTIONAL MATCH (\`movie_from\`)-[\`movie_fromgenre_to\`:\`IN_GENRE\`]->(\`genre_to\`)
+      DELETE \`movie_fromgenre_to\`
+      WITH COUNT(*) AS scope, \`movie_from\` AS \`_movie_from\`, \`genre_to\` AS \`_genre_to\`
+      RETURN {to: \`_genre_to\` {_id: ID(\`_genre_to\`), .name } } AS \`_RemoveMovieGenresPayload\`;
     `;
 
   t.plan(1);
