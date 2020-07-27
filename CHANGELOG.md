@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.15.0
+
+- [Fix for relationship mutation issue when only to field is requested](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/485)
+- [Relationship API bug fixes and API updates](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/481)
+
 ## 2.14.4
 
 - [Fix for missing results with some queries using nested filtering](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/469)
