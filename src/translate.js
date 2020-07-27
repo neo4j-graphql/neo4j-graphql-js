@@ -344,7 +344,9 @@ export const relationTypeFieldOnNodeType = ({
 }) => {
   let translation = '';
   if (innerSchemaTypeRelation.from === innerSchemaTypeRelation.to) {
-    translation = `${initial}${fieldName}: {${subSelection[0]}}${skipLimit} ${commaIfTail}`;
+    translation = `${initial}${fieldName}: {${
+      subSelection[0]
+    }}${skipLimit} ${commaIfTail}`;
   } else {
     const relationshipVariableName = `${nestedVariable}_relation`;
 
@@ -481,7 +483,6 @@ export const nodeTypeFieldOnRelationType = ({
   fieldArgs,
   cypherParams
 }) => {
-  const safeVariableName = safeVar(variableName);
   if (
     isRootSelection({
       selectionInfo: parentSelectionInfo,
@@ -489,14 +490,18 @@ export const nodeTypeFieldOnRelationType = ({
     }) &&
     isRelationTypeDirectedField(fieldName)
   ) {
+    const nodeFieldVariableName = decideRootRelationshipTypeNodeVariable({
+      parentSelectionInfo,
+      fieldName
+    });
     const [mapProjection, labelPredicate] = buildMapProjection({
       schemaType: innerSchemaType,
       isObjectType: isObjectTypeField,
       isInterfaceType: isInterfaceTypeField,
       isUnionType: isUnionTypeField,
-      usesFragments,
-      safeVariableName,
+      safeVariableName: nodeFieldVariableName,
       subQuery: subSelection[0],
+      usesFragments,
       schemaTypeFields,
       derivedTypeMap,
       resolveInfo
@@ -542,6 +547,19 @@ export const nodeTypeFieldOnRelationType = ({
     fieldArgs,
     cypherParams
   });
+};
+
+const decideRootRelationshipTypeNodeVariable = ({
+  parentSelectionInfo = {},
+  fieldName
+}) => {
+  const fromVariable = parentSelectionInfo.from;
+  const toVariable = parentSelectionInfo.to;
+  // assume incoming
+  let variableName = safeVar(fromVariable);
+  // else set as outgoing
+  if (fieldName === 'to') variableName = safeVar(toVariable);
+  return variableName;
 };
 
 const relationTypeMutationPayloadField = ({
@@ -871,7 +889,9 @@ export const neo4jType = ({
   return {
     initial: `${initial}${fieldName}: ${
       fieldIsArray
-        ? `reduce(a = [], INSTANCE IN ${variableName}.${fieldName} | a + {${subSelection[0]}})${commaIfTail}`
+        ? `reduce(a = [], INSTANCE IN ${variableName}.${fieldName} | a + {${
+            subSelection[0]
+          }})${commaIfTail}`
         : usesTemporalOrdering
         ? `${safeVariableName}.${fieldName}${commaIfTail}`
         : `{${subSelection[0]}}${commaIfTail}`
@@ -1816,7 +1836,6 @@ const relationshipCreate = ({
       to: toVar,
       variableName: lowercased
     },
-    variableName: schemaType.name === fromType ? `${toVar}` : `${fromVar}`,
     cypherParams: getCypherParams(context)
   });
   params = { ...preparedParams, ...subParams };
@@ -1942,7 +1961,6 @@ const relationshipDelete = ({
       from: `_${fromVar}`,
       to: `_${toVar}`
     },
-    variableName: schemaType.name === fromType ? `_${toVar}` : `_${fromVar}`,
     cypherParams: getCypherParams(context)
   });
   params = { ...params, ...subParams };
@@ -2068,7 +2086,6 @@ const relationshipMergeOrUpdate = ({
         to: toVar,
         variableName: lowercased
       },
-      variableName: schemaType.name === fromType ? `${toVar}` : `${fromVar}`,
       cypherParams: getCypherParams(context)
     });
     let cypherOperation = '';
