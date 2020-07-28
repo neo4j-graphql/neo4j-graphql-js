@@ -243,21 +243,18 @@ export const mergeDefinitionMaps = ({
   directiveDefinitionMap = {},
   schemaTypeDefinition
 }) => {
-  const typeExtensions = Object.values(typeExtensionDefinitionMap);
+  let typeExtensions = Object.values(typeExtensionDefinitionMap);
   if (typeExtensions) {
-    typeExtensionDefinitionMap = typeExtensions.reduce(
-      (typeExtensions, extensions) => {
-        typeExtensions.push(...extensions);
-        return typeExtensions;
-      },
-      []
-    );
+    typeExtensions = typeExtensions.reduce((typeExtensions, extensions) => {
+      typeExtensions.push(...extensions);
+      return typeExtensions;
+    }, []);
   }
   let definitions = Object.values({
     ...generatedTypeMap,
-    ...typeExtensionDefinitionMap,
     ...directiveDefinitionMap
   });
+  definitions.push(...typeExtensions);
   definitions = augmentSchemaType({
     definitions,
     schemaTypeDefinition,
@@ -336,10 +333,11 @@ export const printSchemaDocument = ({ schema }) => {
 /**
  * Extracts type definitions from a schema and regenerates the schema type
  */
-const extractSchemaDefinitions = ({ schema = {} }) => {
+export const extractSchemaDefinitions = ({ schema = {} }) => {
+  const typeMap = schema.getTypeMap();
   let definitions = Object.values({
     ...schema.getDirectives(),
-    ...schema.getTypeMap()
+    ...typeMap
   }).reduce((astNodes, definition) => {
     const astNode = definition.astNode;
     if (astNode) {
