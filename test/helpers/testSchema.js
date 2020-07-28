@@ -1,12 +1,26 @@
 import { gql } from 'apollo-server';
 
-export const testSchema = `
+export const testSchema = `  
+  """
+  Directive definition
+  block
+  description
+  """
+  directive @cypher(statement: String) on FIELD_DEFINITION
+
+  "Object type line description"
   type Movie
     @additionalLabels(
       labels: ["u_<%= $cypherParams.userId %>", "newMovieLabel"]
     ) {
     _id: String
+    "Field line description"
     movieId: ID!
+    """
+    Field
+    block
+    description
+    """
     title: String @isAuthenticated
     someprefix_title_with_underscores: String
     year: Int
@@ -14,6 +28,7 @@ export const testSchema = `
     plot: String
     poster: String
     imdbRating: Float
+    "@relation field line description"
     genres: [Genre] @relation(name: "IN_GENRE", direction: "OUT")
     similar(first: Int = 3, offset: Int = 0): [Movie]
       @cypher(
@@ -40,6 +55,7 @@ export const testSchema = `
       @cypher(
         statement: "MATCH (this)-[:ACTED_IN*2]-(other:Movie) RETURN other"
       )
+    "@relation type field line description"      
     ratings(
       rating: Int
       time: Time
@@ -52,22 +68,22 @@ export const testSchema = `
     years: [Int]
     titles: [String]
     imdbRatings: [Float]
+    "Temporal type field line description"
     releases: [DateTime]
+    "Ignored field line description"
     customField: String @neo4j_ignore
   }
   
-  extend type Movie {
+  extend type Movie @hasRole(roles: [admin]) {
     currentUserId(strArg: String): String
       @cypher(
         statement: "RETURN $cypherParams.currentUserId AS cypherParamsUserId"
       )
+    "Object type extension field line description"
     interfaceNoScalars(
       orderBy: _InterfaceNoScalarsOrdering
     ): [InterfaceNoScalars]
       @relation(name: "INTERFACE_NO_SCALARS", direction: OUT)
-  }
-
-  extend type Movie @hasRole(roles: [admin]) {
     extensionScalar: String
     extensionNode: [Genre] @relation(name: "IN_GENRE", direction: "OUT")
   }
@@ -89,6 +105,10 @@ export const testSchema = `
     name: String!
   }
 
+  """
+  Interface type
+  block description
+  """
   interface Person {
     userId: ID!
     name: String
@@ -112,14 +132,25 @@ export const testSchema = `
   extend interface Person {
     extensionScalar: String
   }
-
+  
+  "Enum type line description"
   enum _PersonOrdering {
+    "Enum value line description"
     userId_asc
+    """
+    Enum value
+    block
+    description
+    """
     userId_desc
     name_asc
     name_desc
   }
 
+  """
+  Custom filtering input type
+  block description
+  """
   input _PersonFilter {
     AND: [_PersonFilter!]
     OR: [_PersonFilter!]
@@ -337,15 +368,26 @@ export const testSchema = `
     genre: BookGenre
   }
 
+  """
+  Custom ordering enum type
+  block description
+  """  
   enum _GenreOrdering {
     name_desc
     name_asc
   }
-
+  
+  "Query type line description"
   type QueryA {
+    "Object type query field line description"
     Movie(
       _id: String
+      "Query field argument line description"
       movieId: ID
+      """
+      Query field argument
+      block description
+      """
       title: String
       year: Int
       released: DateTime
@@ -356,6 +398,11 @@ export const testSchema = `
       first: Int
       offset: Int
     ): [Movie]
+    """
+    Query field
+    block
+    description
+    """
     MoviesByYear(year: Int): [Movie]
     MoviesByYears(year: [Int]): [Movie]
     MovieById(movieId: ID!): Movie
@@ -391,6 +438,7 @@ export const testSchema = `
     customWithArguments(strArg: String, strInputArg: strInput): String
       @cypher(statement: "RETURN $strInputArg.strArg")
     CasedType: [CasedType]
+    "Interface type query field line description"
     Camera(
       type: String
       first: Int
@@ -403,16 +451,23 @@ export const testSchema = `
     CustomCameras: [Camera] @cypher(statement: "MATCH (c:Camera) RETURN c")
     CustomCamera: Camera @cypher(statement: "MATCH (c:Camera) RETURN c")
   }
-
+  
   extend type QueryA {
     MovieSearch(first: Int): [MovieSearch]
     computedMovieSearch: [MovieSearch]
       @cypher(statement: "MATCH (ms:MovieSearch) RETURN ms")
   }
 
+  "Mutation  type line description"
   type Mutation {
+    "Mutation  field line description"
     currentUserId: String
       @cypher(statement: "RETURN $cypherParams.currentUserId")
+    """
+    Mutation  field
+    block
+    description
+    """
     computedObjectWithCypherParams: currentUserId
       @cypher(statement: "RETURN { userId: $cypherParams.currentUserId }")
     computedTemporal: DateTime
@@ -427,7 +482,14 @@ export const testSchema = `
       @cypher(
         statement: "UNWIND ['hello', 'world'] AS stringList RETURN stringList"
       )
-    customWithArguments(strArg: String, strInputArg: strInput): String
+    customWithArguments(
+      """
+      Mutation field argument
+      block description
+      """
+      strArg: String,
+      strInputArg: strInput
+    ): String
       @cypher(statement: "RETURN $strInputArg.strArg")
     testPublish: Boolean @neo4j_ignore
     computedMovieSearch: [MovieSearch]
@@ -478,15 +540,16 @@ export const testSchema = `
     ignoredField: String @neo4j_ignore
   }
 
+  "Custom scalar type line description"
   scalar Time
   scalar Date
   scalar DateTime
   scalar LocalTime
   scalar LocalDateTime
-
-  extend scalar Time @neo4j_ignore
-
+  
+  "Input object type line description"
   input strInput {
+    "Input field line description"
     strArg: String
   }
 
@@ -625,6 +688,10 @@ export const testSchema = `
     reflexiveInterfaceRelationship: [Camera] @relation(name: "REFLEXIVE_INTERFACE_RELATIONSHIP", direction: OUT)      
   }
 
+  """
+  Union type
+  block description
+  """
   union MovieSearch = Movie | Genre | Book
 
   extend union MovieSearch = Actor | OldCamera
