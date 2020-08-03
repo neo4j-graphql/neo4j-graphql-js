@@ -1,5 +1,5 @@
 import test from 'ava';
-import { parse, print, Kind } from 'graphql';
+import { parse, print, Kind, isTypeSystemExtensionNode } from 'graphql';
 import { printSchemaDocument } from '../../src/augment/augment';
 import { makeAugmentedSchema } from '../../src/index';
 import { testSchema } from '../helpers/testSchema';
@@ -17,6 +17,11 @@ test.cb('Test augmented schema', t => {
   });
 
   const expectedSchema = /* GraphQL */ `
+    """
+    Directive definition
+    block
+    description
+    """
     directive @cypher(statement: String) on FIELD_DEFINITION
 
     directive @relation(
@@ -42,10 +47,17 @@ test.cb('Test augmented schema', t => {
 
     directive @hasScope(scopes: [String]) on OBJECT | FIELD_DEFINITION
 
+    "Query type line description"
     type QueryA {
+      "Object type query field line description"
       Movie(
         _id: String
+        "Query field argument line description"
         movieId: ID
+        """
+        Query field argument
+        block description
+        """
         title: String
         year: Int
         released: _Neo4jDateTimeInput
@@ -58,6 +70,11 @@ test.cb('Test augmented schema', t => {
         orderBy: [_MovieOrdering]
         filter: _MovieFilter
       ): [Movie]
+      """
+      Query field
+      block
+      description
+      """
       MoviesByYear(
         year: Int
         first: Int
@@ -135,6 +152,7 @@ test.cb('Test augmented schema', t => {
         orderBy: [_CasedTypeOrdering]
         filter: _CasedTypeFilter
       ): [CasedType]
+      "Interface type query field line description"
       Camera(
         type: String
         first: Int
@@ -686,64 +704,6 @@ test.cb('Test augmented schema', t => {
       User: _UserFilter
     }
 
-    enum _MovieRatedOrdering {
-      currentUserId_asc
-      currentUserId_desc
-      rating_asc
-      rating_desc
-      time_asc
-      time_desc
-      date_asc
-      date_desc
-      datetime_asc
-      datetime_desc
-      localtime_asc
-      localtime_desc
-      localdatetime_asc
-      localdatetime_desc
-    }
-
-    input _Neo4jTimeInput {
-      hour: Int
-      minute: Int
-      second: Int
-      millisecond: Int
-      microsecond: Int
-      nanosecond: Int
-      timezone: String
-      formatted: String
-    }
-
-    input _Neo4jDateInput {
-      year: Int
-      month: Int
-      day: Int
-      formatted: String
-    }
-
-    input _Neo4jLocalTimeInput {
-      hour: Int
-      minute: Int
-      second: Int
-      millisecond: Int
-      microsecond: Int
-      nanosecond: Int
-      formatted: String
-    }
-
-    input _Neo4jLocalDateTimeInput {
-      year: Int
-      month: Int
-      day: Int
-      hour: Int
-      minute: Int
-      second: Int
-      millisecond: Int
-      microsecond: Int
-      nanosecond: Int
-      formatted: String
-    }
-
     input _UserFilter {
       AND: [_UserFilter!]
       OR: [_UserFilter!]
@@ -959,12 +919,19 @@ test.cb('Test augmented schema', t => {
       movies_every: _MovieFilter
     }
 
+    "Object type line description"
     type Movie
       @additionalLabels(
         labels: ["u_<%= $cypherParams.userId %>", "newMovieLabel"]
       ) {
       _id: String
+      "Field line description"
       movieId: ID!
+      """
+      Field
+      block
+      description
+      """
       title: String @isAuthenticated
       someprefix_title_with_underscores: String
       year: Int
@@ -972,6 +939,7 @@ test.cb('Test augmented schema', t => {
       plot: String
       poster: String
       imdbRating: Float
+      "@relation field line description"
       genres(
         first: Int
         offset: Int
@@ -1010,6 +978,7 @@ test.cb('Test augmented schema', t => {
         @cypher(
           statement: "MATCH (this)-[:ACTED_IN*2]-(other:Movie) RETURN other"
         )
+      "@relation type field line description"
       ratings(
         rating: Int
         time: _Neo4jTimeInput
@@ -1026,15 +995,18 @@ test.cb('Test augmented schema', t => {
       years: [Int]
       titles: [String]
       imdbRatings: [Float]
+      "Temporal type field line description"
       releases: [_Neo4jDateTime]
+      "Ignored field line description"
       customField: String @neo4j_ignore
     }
 
-    extend type Movie {
+    extend type Movie @hasRole(roles: [admin]) {
       currentUserId(strArg: String): String
         @cypher(
           statement: "RETURN $cypherParams.currentUserId AS cypherParamsUserId"
         )
+      "Object type extension field line description"
       interfaceNoScalars(
         orderBy: _InterfaceNoScalarsOrdering
         first: Int
@@ -1042,9 +1014,6 @@ test.cb('Test augmented schema', t => {
         filter: _InterfaceNoScalarsFilter
       ): [InterfaceNoScalars]
         @relation(name: "INTERFACE_NO_SCALARS", direction: OUT)
-    }
-
-    extend type Movie @hasRole(roles: [admin]) {
       extensionScalar: String
       extensionNode(
         first: Int
@@ -1068,6 +1037,10 @@ test.cb('Test augmented schema', t => {
       formatted: String
     }
 
+    """
+    Custom ordering enum type
+    block description
+    """
     enum _GenreOrdering {
       name_desc
       name_asc
@@ -1169,6 +1142,10 @@ test.cb('Test augmented schema', t => {
 
     extend type Actor implements Person
 
+    """
+    Interface type
+    block description
+    """
     interface Person {
       userId: ID!
       name: String
@@ -1263,7 +1240,25 @@ test.cb('Test augmented schema', t => {
       formatted: String
     }
 
+    input _Neo4jTimeInput {
+      hour: Int
+      minute: Int
+      second: Int
+      millisecond: Int
+      microsecond: Int
+      nanosecond: Int
+      timezone: String
+      formatted: String
+    }
+
     type _Neo4jDate {
+      year: Int
+      month: Int
+      day: Int
+      formatted: String
+    }
+
+    input _Neo4jDateInput {
       year: Int
       month: Int
       day: Int
@@ -1280,7 +1275,30 @@ test.cb('Test augmented schema', t => {
       formatted: String
     }
 
+    input _Neo4jLocalTimeInput {
+      hour: Int
+      minute: Int
+      second: Int
+      millisecond: Int
+      microsecond: Int
+      nanosecond: Int
+      formatted: String
+    }
+
     type _Neo4jLocalDateTime {
+      year: Int
+      month: Int
+      day: Int
+      hour: Int
+      minute: Int
+      second: Int
+      millisecond: Int
+      microsecond: Int
+      nanosecond: Int
+      formatted: String
+    }
+
+    input _Neo4jLocalDateTimeInput {
       year: Int
       month: Int
       day: Int
@@ -1334,7 +1352,9 @@ test.cb('Test augmented schema', t => {
       _id: String
     }
 
+    "Input object type line description"
     input strInput {
+      "Input field line description"
       strArg: String
     }
 
@@ -1595,13 +1615,24 @@ test.cb('Test augmented schema', t => {
       _id: String
     }
 
+    "Enum type line description"
     enum _PersonOrdering {
+      "Enum value line description"
       userId_asc
+      """
+      Enum value
+      block
+      description
+      """
       userId_desc
       name_asc
       name_desc
     }
 
+    """
+    Custom filtering input type
+    block description
+    """
     input _PersonFilter {
       AND: [_PersonFilter!]
       OR: [_PersonFilter!]
@@ -2160,6 +2191,10 @@ test.cb('Test augmented schema', t => {
       reflexiveInterfacedRelationshipType_every: _ReflexiveInterfacedRelationshipTypeDirectionsFilter
     }
 
+    """
+    Union type
+    block description
+    """
     union MovieSearch = Movie | Genre | Book
 
     extend union MovieSearch = Actor | OldCamera
@@ -2226,9 +2261,16 @@ test.cb('Test augmented schema', t => {
       spatialNodes_every: _SpatialNodeFilter
     }
 
+    "Mutation  type line description"
     type Mutation {
+      "Mutation  field line description"
       currentUserId: String
         @cypher(statement: "RETURN $cypherParams.currentUserId")
+      """
+      Mutation  field
+      block
+      description
+      """
       computedObjectWithCypherParams: currentUserId
         @cypher(statement: "RETURN { userId: $cypherParams.currentUserId }")
       computedTemporal: _Neo4jDateTime
@@ -2243,8 +2285,14 @@ test.cb('Test augmented schema', t => {
         @cypher(
           statement: "UNWIND ['hello', 'world'] AS stringList RETURN stringList"
         )
-      customWithArguments(strArg: String, strInputArg: strInput): String
-        @cypher(statement: "RETURN $strInputArg.strArg")
+      customWithArguments(
+        """
+        Mutation field argument
+        block description
+        """
+        strArg: String
+        strInputArg: strInput
+      ): String @cypher(statement: "RETURN $strInputArg.strArg")
       testPublish: Boolean @neo4j_ignore
       computedMovieSearch: [MovieSearch]
         @cypher(statement: "MATCH (ms:MovieSearch) RETURN ms")
@@ -4096,7 +4144,7 @@ test.cb('Test augmented schema', t => {
       to: Camera
     }
 
-    enum InterfacedRelationshipTypeOrdering {
+    enum _InterfacedRelationshipTypeOrdering {
       string_asc
       string_desc
       boolean_asc
@@ -4338,6 +4386,7 @@ test.cb('Test augmented schema', t => {
       ignoredField: String @neo4j_ignore
     }
 
+    "Custom scalar type line description"
     scalar Time
 
     scalar Date
@@ -4347,8 +4396,6 @@ test.cb('Test augmented schema', t => {
     scalar LocalTime
 
     scalar LocalDateTime
-
-    extend scalar Time @neo4j_ignore
 
     enum Role {
       reader
@@ -4507,52 +4554,58 @@ test.cb('Test augmented schema', t => {
 });
 
 const compareSchema = ({ test, sourceSchema = {}, expectedSchema = {} }) => {
-  const expectedDefinitions = parse(expectedSchema).definitions;
+  const expectedDefinitions = parse(expectedSchema, { noLocation: true })
+    .definitions;
   const printedSourceSchema = printSchemaDocument({ schema: sourceSchema });
-  const augmentedDefinitions = parse(printedSourceSchema).definitions;
-  augmentedDefinitions.forEach(augmentedDefinition => {
-    const kind = augmentedDefinition.kind;
-    let expectedDefinition = undefined;
-    let name = '';
-    if (kind === Kind.SCHEMA_DEFINITION) {
-      expectedDefinition = expectedDefinitions.find(
-        def => def.kind === Kind.SCHEMA_DEFINITION
-      );
+  const augmentedDefinitions = parse(printedSourceSchema, { noLocation: true })
+    .definitions;
+  expectedDefinitions.forEach(expected => {
+    const matchingAugmented = findMatchingType({
+      definitions: augmentedDefinitions,
+      definition: expected
+    });
+    if (matchingAugmented) {
+      test.is(print(expected), print(matchingAugmented));
     } else {
-      name = augmentedDefinition.name.value;
-      expectedDefinition = expectedDefinitions.find(definition => {
-        if (definition.name) {
-          if (definition.name.value === augmentedDefinition.name.value) {
-            if (definition.kind === augmentedDefinition.kind) {
-              if (
-                definition.kind === Kind.OBJECT_TYPE_EXTENSION
-                // definition.kind === Kind.INTERFACE_TYPE_EXTENSION ||
-                // definition.kind === Kind.INPUT_OBJECT_TYPE_EXTENSION
-              ) {
-                if (
-                  definition.fields.length &&
-                  augmentedDefinition.fields.length
-                ) {
-                  if (
-                    definition.fields[0].name.value ===
-                    augmentedDefinition.fields[0].name.value
-                  ) {
-                    return definition;
-                  }
-                } else {
-                  return definition;
-                }
-              } else {
-                return definition;
-              }
-            }
-          }
+      test.fail(
+        `\nAugmented schema is missing definition:\n${print(expected)}`
+      );
+    }
+  });
+  augmentedDefinitions.forEach(augmented => {
+    const matchingExpected = findMatchingType({
+      definitions: expectedDefinitions,
+      definition: augmented
+    });
+    if (matchingExpected) {
+      test.is(print(augmented), print(matchingExpected));
+    } else {
+      test.fail(
+        `\nExpected augmented schema is missing definition:\n${print(
+          augmented
+        )}`
+      );
+    }
+  });
+};
+
+const findMatchingType = ({ definitions = [], definition }) => {
+  const expectedKind = definition.kind;
+  const expectedName = definition.name;
+  return definitions.find(augmented => {
+    const augmentedName = augmented.name;
+    const matchesKind = augmented.kind == expectedKind;
+    let matchesName = false;
+    let isSchemaDefinition = false;
+    if (matchesKind) {
+      if (expectedName && augmentedName) {
+        if (expectedName.value === augmentedName.value) {
+          matchesName = true;
         }
-      });
-      if (!expectedDefinition) {
-        throw new Error(`${name} is missing from the augmented schema`);
+      } else if (augmented.kind === Kind.SCHEMA_DEFINITION) {
+        isSchemaDefinition = true;
       }
     }
-    test.is(print(expectedDefinition), print(augmentedDefinition));
+    return matchesKind && (matchesName || isSchemaDefinition);
   });
 };
