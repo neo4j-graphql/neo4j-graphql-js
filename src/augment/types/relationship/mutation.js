@@ -2,7 +2,7 @@ import { RelationshipDirectionField } from './relationship';
 import { buildNodeOutputFields } from './query';
 import { shouldAugmentRelationshipField } from '../../augment';
 import { OperationType } from '../../types/types';
-import { TypeWrappers, getFieldDefinition } from '../../fields';
+import { TypeWrappers, getFieldDefinition, isNeo4jIDField } from '../../fields';
 import {
   DirectiveDefinition,
   buildAuthScopeDirective,
@@ -322,7 +322,7 @@ const buildRelationshipMutationPropertyInputType = ({
         directives: field.directives,
         name: DirectiveDefinition.CYPHER
       });
-      return !cypherDirective;
+      return !cypherDirective && !isNeo4jIDField({ name: field.name });
     });
     const inputTypeName = `_${outputType}Input`;
     generatedTypeMap[inputTypeName] = buildInputObjectType({
