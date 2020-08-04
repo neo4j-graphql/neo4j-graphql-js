@@ -282,6 +282,7 @@ export const testSchema = `
     extensionScalar: String
     interfacedRelationshipType: [InterfacedRelationshipType]
     reflexiveInterfacedRelationshipType: [ReflexiveInterfacedRelationshipType]    
+    _id: String
   }
 
   extend type Actor implements Person
@@ -352,6 +353,7 @@ export const testSchema = `
     localdatetime: LocalDateTime
     datetimes: [DateTime]
     location: Point
+    _id: String
     to: Movie
   }
 
@@ -366,6 +368,10 @@ export const testSchema = `
 
   type Book {
     genre: BookGenre
+  }
+  
+  type NodeTypeMutationTest {
+    NodeTypeMutationTest: BookGenre
   }
 
   """
@@ -445,6 +451,16 @@ export const testSchema = `
       orderBy: _CameraOrdering
       filter: _CameraFilter
     ): [Camera]
+    Person(
+      userId: ID
+      name: String
+      extensionScalar: String
+      _id: String
+      first: Int
+      offset: Int
+      orderBy: [_PersonOrdering]
+      filter: _PersonFilter
+    ): [Person]
     InterfaceNoScalars(
       orderBy: _InterfaceNoScalarsOrdering
     ): [InterfaceNoScalars]
