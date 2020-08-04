@@ -26,6 +26,8 @@ type Mutation {
     UpdateMovie(movieId: ID!, title: String, year: Int, plot: String, poster: String, imdbRating: Float): Movie
     DeleteMovie(movieId: ID!): Movie
     MergeUser(userId: ID!, name: String): User
+    MergeBook(genre: BookGenre!): Book
+    MergeNodeTypeMutationTest(NodeTypeMutationTest: BookGenre!): NodeTypeMutationTest
     currentUserId: String @cypher(statement: "RETURN $cypherParams.currentUserId")
     computedObjectWithCypherParams: currentUserId @cypher(statement: "RETURN { userId: $cypherParams.currentUserId }")
     computedStringList: [String] @cypher(statement: "UNWIND ['hello', 'world'] AS stringList RETURN stringList")
@@ -63,6 +65,7 @@ type Mutation {
       Books: checkCypherQuery,
       State: checkCypherQuery,
       Camera: checkCypherQuery,
+      Person: checkCypherQuery,
       CustomCameras: checkCypherQuery,
       CustomCamera: checkCypherQuery,
       computedBoolean: checkCypherQuery,
@@ -86,6 +89,8 @@ type Mutation {
       UpdateMovie: checkCypherMutation,
       DeleteMovie: checkCypherMutation,
       MergeUser: checkCypherMutation,
+      MergeBook: checkCypherMutation,
+      MergeNodeTypeMutationTest: checkCypherMutation,
       currentUserId: checkCypherMutation,
       computedObjectWithCypherParams: checkCypherMutation,
       computedStringList: checkCypherMutation,
@@ -190,6 +195,7 @@ export function augmentedSchemaCypherTestRunner(
       State: checkCypherQuery,
       CasedType: checkCypherQuery,
       Camera: checkCypherQuery,
+      Person: checkCypherQuery,
       NewCamera: checkCypherQuery,
       CustomCameras: checkCypherQuery,
       CustomCamera: checkCypherQuery,
@@ -210,6 +216,8 @@ export function augmentedSchemaCypherTestRunner(
       CreateMovie: checkCypherMutation,
       CreateActor: checkCypherMutation,
       CreateState: checkCypherMutation,
+      MergeBook: checkCypherMutation,
+      MergeNodeTypeMutationTest: checkCypherMutation,
       CreateTemporalNode: checkCypherMutation,
       UpdateTemporalNode: checkCypherMutation,
       DeleteTemporalNode: checkCypherMutation,
