@@ -344,9 +344,7 @@ export const relationTypeFieldOnNodeType = ({
 }) => {
   let translation = '';
   if (innerSchemaTypeRelation.from === innerSchemaTypeRelation.to) {
-    translation = `${initial}${fieldName}: {${
-      subSelection[0]
-    }}${skipLimit} ${commaIfTail}`;
+    translation = `${initial}${fieldName}: {${subSelection[0]}}${skipLimit} ${commaIfTail}`;
   } else {
     const relationshipVariableName = `${nestedVariable}_relation`;
 
@@ -889,9 +887,7 @@ export const neo4jType = ({
   return {
     initial: `${initial}${fieldName}: ${
       fieldIsArray
-        ? `reduce(a = [], INSTANCE IN ${variableName}.${fieldName} | a + {${
-            subSelection[0]
-          }})${commaIfTail}`
+        ? `reduce(a = [], INSTANCE IN ${variableName}.${fieldName} | a + {${subSelection[0]}})${commaIfTail}`
         : usesTemporalOrdering
         ? `${safeVariableName}.${fieldName}${commaIfTail}`
         : `{${subSelection[0]}}${commaIfTail}`
@@ -979,19 +975,23 @@ export const translateQuery = ({
   const orderByValue = computeOrderBy(resolveInfo, schemaType);
 
   let usesFragments = isFragmentedSelection({ selections });
-  const isFragmentedInterfaceType = isInterfaceType && usesFragments;
-  const isFragmentedObjectType = isObjectType && usesFragments;
+  const isFragmentedInterfaceType = usesFragments && isInterfaceType;
+  const isFragmentedObjectType = usesFragments && isObjectType;
   const [schemaTypeFields, derivedTypeMap] = mergeSelectionFragments({
     schemaType,
     selections,
     isFragmentedObjectType,
+    isFragmentedInterfaceType,
     isUnionType,
     typeMap,
     resolveInfo
   });
+
   const hasOnlySchemaTypeFragments =
     schemaTypeFields.length > 0 && Object.keys(derivedTypeMap).length === 0;
-  if (hasOnlySchemaTypeFragments) usesFragments = false;
+  if (hasOnlySchemaTypeFragments) {
+    usesFragments = false;
+  }
   if (queryTypeCypherDirective) {
     return customQuery({
       resolveInfo,
@@ -1072,7 +1072,7 @@ const buildTypeCompositionPredicate = ({
   resolveInfo
 }) => {
   const schemaTypeName = schemaType.name;
-  const isFragmentedInterfaceType = isInterfaceType && usesFragments;
+  const isFragmentedInterfaceType = usesFragments && isInterfaceType;
   let labelPredicate = '';
   if (isFragmentedInterfaceType || isUnionType) {
     let derivedTypes = [];
@@ -1432,7 +1432,8 @@ export const translateMutation = ({
   const isUnionType = isGraphqlUnionType(schemaType);
 
   const usesFragments = isFragmentedSelection({ selections });
-  const isFragmentedObjectType = isObjectType && usesFragments;
+  const isFragmentedObjectType = usesFragments && isObjectType;
+  const isFragmentedInterfaceType = usesFragments && isInterfaceType;
 
   const interfaceLabels =
     typeof schemaType.getInterfaces === 'function'
@@ -1450,6 +1451,7 @@ export const translateMutation = ({
     schemaType,
     selections,
     isFragmentedObjectType,
+    isFragmentedInterfaceType,
     isUnionType,
     typeMap,
     resolveInfo
@@ -2179,6 +2181,7 @@ const nodeMergeOrUpdate = ({
     schemaType,
     resolveInfo
   });
+  if (!preparedParams.params) preparedParams.params = {};
   preparedParams.params[primaryKeyArgName] = primaryKeyParam[primaryKeyArgName];
   params = { ...preparedParams, ...subParams };
   query += `RETURN ${safeVariableName} {${subQuery}} AS ${safeVariableName}`;
