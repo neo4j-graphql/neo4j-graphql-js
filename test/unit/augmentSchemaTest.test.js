@@ -1,5 +1,5 @@
 import test from 'ava';
-import { parse, print, Kind, isTypeSystemExtensionNode } from 'graphql';
+import { parse, print, Kind } from 'graphql';
 import { printSchemaDocument } from '../../src/augment/augment';
 import { makeAugmentedSchema } from '../../src/index';
 import { testSchema } from '../helpers/testSchema';
@@ -12,6 +12,9 @@ test.cb('Test augmented schema', t => {
   const sourceSchema = makeAugmentedSchema({
     typeDefs: parseTypeDefs,
     config: {
+      query: {
+        exclude: ['NodeTypeMutationTest']
+      },
       auth: true
     }
   });
@@ -160,6 +163,16 @@ test.cb('Test augmented schema', t => {
         filter: _CameraFilter
         offset: Int
       ): [Camera]
+      Person(
+        userId: ID
+        name: String
+        extensionScalar: String
+        _id: String
+        first: Int
+        offset: Int
+        orderBy: [_PersonOrdering]
+        filter: _PersonFilter
+      ): [Person]
       InterfaceNoScalars(
         orderBy: _InterfaceNoScalarsOrdering
         first: Int
@@ -180,16 +193,6 @@ test.cb('Test augmented schema', t => {
         orderBy: [_GenreOrdering]
         filter: _GenreFilter
       ): [Genre] @hasScope(scopes: ["Genre: Read"])
-      Person(
-        userId: ID
-        name: String
-        extensionScalar: String
-        _id: String
-        first: Int
-        offset: Int
-        orderBy: [_PersonOrdering]
-        filter: _PersonFilter
-      ): [Person] @hasScope(scopes: ["Person: Read"])
       Actor(
         userId: ID
         name: String
@@ -525,6 +528,7 @@ test.cb('Test augmented schema', t => {
       to: Genre
       string: String!
       boolean: Boolean
+      _id: String
     }
 
     type _RemoveGenreInterfacedRelationshipTypePayload
@@ -547,6 +551,7 @@ test.cb('Test augmented schema', t => {
       to: Genre
       string: String!
       boolean: Boolean
+      _id: String
     }
 
     type _MergeGenreInterfacedRelationshipTypePayload
@@ -559,6 +564,7 @@ test.cb('Test augmented schema', t => {
       to: Genre
       string: String!
       boolean: Boolean
+      _id: String
     }
 
     input _ActorFilter {
@@ -1075,6 +1081,7 @@ test.cb('Test augmented schema', t => {
       ) {
       string: String!
       boolean: Boolean
+      _id: String
       Person: Person
     }
 
@@ -1083,6 +1090,8 @@ test.cb('Test augmented schema', t => {
       string_desc
       boolean_asc
       boolean_desc
+      _id_asc
+      _id_desc
     }
 
     input _GenreInterfacedRelationshipTypeFilter {
@@ -1191,6 +1200,7 @@ test.cb('Test augmented schema', t => {
       ) {
       string: String!
       boolean: Boolean
+      _id: String
       Genre: Genre
     }
 
@@ -1226,6 +1236,7 @@ test.cb('Test augmented schema', t => {
       localdatetime: _Neo4jLocalDateTime
       datetimes: [_Neo4jDateTime]
       location: _Neo4jPoint
+      _id: String
       User: User
     }
 
@@ -1372,6 +1383,7 @@ test.cb('Test augmented schema', t => {
       to: Genre
       string: String!
       boolean: Boolean
+      _id: String
     }
 
     type _RemoveUserInterfacedRelationshipTypePayload
@@ -1394,6 +1406,7 @@ test.cb('Test augmented schema', t => {
       to: Genre
       string: String!
       boolean: Boolean
+      _id: String
     }
 
     type _MergeUserInterfacedRelationshipTypePayload
@@ -1406,6 +1419,7 @@ test.cb('Test augmented schema', t => {
       to: Genre
       string: String!
       boolean: Boolean
+      _id: String
     }
 
     type _AddUserReflexiveInterfacedRelationshipTypePayload
@@ -1417,6 +1431,7 @@ test.cb('Test augmented schema', t => {
       from: Person
       to: Person
       boolean: Boolean
+      _id: String
     }
 
     type _RemoveUserReflexiveInterfacedRelationshipTypePayload
@@ -1438,6 +1453,7 @@ test.cb('Test augmented schema', t => {
       from: Person
       to: Person
       boolean: Boolean
+      _id: String
     }
 
     type _MergeUserReflexiveInterfacedRelationshipTypePayload
@@ -1449,6 +1465,7 @@ test.cb('Test augmented schema', t => {
       from: Person
       to: Person
       boolean: Boolean
+      _id: String
     }
 
     type _UserRated @relation(name: "RATED", from: "User", to: "Movie") {
@@ -1465,6 +1482,7 @@ test.cb('Test augmented schema', t => {
       localdatetime: _Neo4jLocalDateTime
       datetimes: [_Neo4jDateTime]
       location: _Neo4jPoint
+      _id: String
       Movie: Movie
     }
 
@@ -1511,6 +1529,7 @@ test.cb('Test augmented schema', t => {
       localtime: _Neo4jLocalTime
       localdatetime: _Neo4jLocalDateTime
       location: _Neo4jPoint
+      _id: String
       User: User
     }
 
@@ -1575,6 +1594,14 @@ test.cb('Test augmented schema', t => {
     type Book {
       genre: BookGenre
       _id: String
+    }
+
+    type NodeTypeMutationTest {
+      NodeTypeMutationTest: BookGenre
+    }
+
+    input _NodeTypeMutationTestInput {
+      NodeTypeMutationTest: BookGenre!
     }
 
     type currentUserId {
@@ -2513,8 +2540,10 @@ test.cb('Test augmented schema', t => {
         @hasScope(scopes: ["Person: Merge", "Genre: Merge"])
       CreateGenre(name: String): Genre @hasScope(scopes: ["Genre: Create"])
       DeleteGenre(name: String!): Genre @hasScope(scopes: ["Genre: Delete"])
+      MergeGenre(name: String!): Genre @hasScope(scopes: ["Genre: Merge"])
       CreateState(name: String!): State @hasScope(scopes: ["State: Create"])
       DeleteState(name: String!): State @hasScope(scopes: ["State: Delete"])
+      MergeState(name: String!): State @hasScope(scopes: ["State: Merge"])
       AddPersonInterfacedRelationshipType(
         from: _PersonInput!
         to: _GenreInput!
@@ -2897,10 +2926,24 @@ test.cb('Test augmented schema', t => {
         @hasScope(scopes: ["User: Merge"])
       CreateBook(genre: BookGenre): Book @hasScope(scopes: ["Book: Create"])
       DeleteBook(genre: BookGenre!): Book @hasScope(scopes: ["Book: Delete"])
+      MergeBook(genre: BookGenre!): Book @hasScope(scopes: ["Book: Merge"])
+      CreateNodeTypeMutationTest(
+        NodeTypeMutationTest: BookGenre
+      ): NodeTypeMutationTest
+        @hasScope(scopes: ["NodeTypeMutationTest: Create"])
+      DeleteNodeTypeMutationTest(
+        NodeTypeMutationTest: BookGenre!
+      ): NodeTypeMutationTest
+        @hasScope(scopes: ["NodeTypeMutationTest: Delete"])
+      MergeNodeTypeMutationTest(
+        NodeTypeMutationTest: BookGenre!
+      ): NodeTypeMutationTest @hasScope(scopes: ["NodeTypeMutationTest: Merge"])
       CreatecurrentUserId(userId: String): currentUserId
         @hasScope(scopes: ["currentUserId: Create"])
       DeletecurrentUserId(userId: String!): currentUserId
         @hasScope(scopes: ["currentUserId: Delete"])
+      MergecurrentUserId(userId: String!): currentUserId
+        @hasScope(scopes: ["currentUserId: Merge"])
       AddTemporalNodeTemporalNodes(
         from: _TemporalNodeInput!
         to: _TemporalNodeInput!
@@ -3020,6 +3063,8 @@ test.cb('Test augmented schema', t => {
         @hasScope(scopes: ["CasedType: Create"])
       DeleteCasedType(name: String!): CasedType
         @hasScope(scopes: ["CasedType: Delete"])
+      MergeCasedType(name: String!): CasedType
+        @hasScope(scopes: ["CasedType: Merge"])
       AddCameraOperators(
         from: _PersonInput!
         to: _CameraInput!
@@ -3512,6 +3557,7 @@ test.cb('Test augmented schema', t => {
       localdatetime: _Neo4jLocalDateTime
       datetimes: [_Neo4jDateTime]
       location: _Neo4jPoint
+      _id: String
     }
 
     type _RemoveMovieRatingsPayload
@@ -3537,6 +3583,7 @@ test.cb('Test augmented schema', t => {
       localdatetime: _Neo4jLocalDateTime
       datetimes: [_Neo4jDateTime]
       location: _Neo4jPoint
+      _id: String
     }
 
     type _MergeMovieRatingsPayload
@@ -3556,6 +3603,7 @@ test.cb('Test augmented schema', t => {
       localdatetime: _Neo4jLocalDateTime
       datetimes: [_Neo4jDateTime]
       location: _Neo4jPoint
+      _id: String
     }
 
     type _AddGenreMoviesPayload
@@ -3628,6 +3676,7 @@ test.cb('Test augmented schema', t => {
       to: Genre
       string: String!
       boolean: Boolean
+      _id: String
     }
 
     type _RemoveActorInterfacedRelationshipTypePayload
@@ -3650,6 +3699,7 @@ test.cb('Test augmented schema', t => {
       to: Genre
       string: String!
       boolean: Boolean
+      _id: String
     }
 
     type _MergeActorInterfacedRelationshipTypePayload
@@ -3662,6 +3712,7 @@ test.cb('Test augmented schema', t => {
       to: Genre
       string: String!
       boolean: Boolean
+      _id: String
     }
 
     type _AddActorReflexiveInterfacedRelationshipTypePayload
@@ -3673,6 +3724,7 @@ test.cb('Test augmented schema', t => {
       from: Person
       to: Person
       boolean: Boolean
+      _id: String
     }
 
     type _RemoveActorReflexiveInterfacedRelationshipTypePayload
@@ -3694,6 +3746,7 @@ test.cb('Test augmented schema', t => {
       from: Person
       to: Person
       boolean: Boolean
+      _id: String
     }
 
     type _MergeActorReflexiveInterfacedRelationshipTypePayload
@@ -3705,6 +3758,7 @@ test.cb('Test augmented schema', t => {
       from: Person
       to: Person
       boolean: Boolean
+      _id: String
     }
 
     type _RemoveActorKnowsPayload
@@ -3728,6 +3782,8 @@ test.cb('Test augmented schema', t => {
       localtime_desc
       localdatetime_asc
       localdatetime_desc
+      _id_asc
+      _id_desc
     }
 
     type _AddUserRatedPayload
@@ -3747,6 +3803,7 @@ test.cb('Test augmented schema', t => {
       localdatetime: _Neo4jLocalDateTime
       datetimes: [_Neo4jDateTime]
       location: _Neo4jPoint
+      _id: String
     }
 
     type _RemoveUserRatedPayload
@@ -3772,6 +3829,7 @@ test.cb('Test augmented schema', t => {
       localdatetime: _Neo4jLocalDateTime
       datetimes: [_Neo4jDateTime]
       location: _Neo4jPoint
+      _id: String
     }
 
     type _MergeUserRatedPayload
@@ -3791,6 +3849,7 @@ test.cb('Test augmented schema', t => {
       localdatetime: _Neo4jLocalDateTime
       datetimes: [_Neo4jDateTime]
       location: _Neo4jPoint
+      _id: String
     }
 
     enum _FriendOfOrdering {
@@ -3808,6 +3867,8 @@ test.cb('Test augmented schema', t => {
       localtime_desc
       localdatetime_asc
       localdatetime_desc
+      _id_asc
+      _id_desc
     }
 
     input _FriendOfInput {
@@ -3837,6 +3898,7 @@ test.cb('Test augmented schema', t => {
       localtime: _Neo4jLocalTime
       localdatetime: _Neo4jLocalDateTime
       location: _Neo4jPoint
+      _id: String
     }
 
     type _RemoveUserFriendsPayload
@@ -3861,6 +3923,7 @@ test.cb('Test augmented schema', t => {
       localtime: _Neo4jLocalTime
       localdatetime: _Neo4jLocalDateTime
       location: _Neo4jPoint
+      _id: String
     }
 
     type _MergeUserFriendsPayload
@@ -3879,6 +3942,7 @@ test.cb('Test augmented schema', t => {
       localtime: _Neo4jLocalTime
       localdatetime: _Neo4jLocalDateTime
       location: _Neo4jPoint
+      _id: String
     }
 
     type _AddUserFavoritesPayload
@@ -3975,6 +4039,7 @@ test.cb('Test augmented schema', t => {
       to: Genre
       string: String!
       boolean: Boolean
+      _id: String
     }
 
     type _RemoveCameraManInterfacedRelationshipTypePayload
@@ -3997,6 +4062,7 @@ test.cb('Test augmented schema', t => {
       to: Genre
       string: String!
       boolean: Boolean
+      _id: String
     }
 
     type _MergeCameraManInterfacedRelationshipTypePayload
@@ -4009,6 +4075,7 @@ test.cb('Test augmented schema', t => {
       to: Genre
       string: String!
       boolean: Boolean
+      _id: String
     }
 
     type _AddCameraManReflexiveInterfacedRelationshipTypePayload
@@ -4020,6 +4087,7 @@ test.cb('Test augmented schema', t => {
       from: Person
       to: Person
       boolean: Boolean
+      _id: String
     }
 
     type _RemoveCameraManReflexiveInterfacedRelationshipTypePayload
@@ -4041,6 +4109,7 @@ test.cb('Test augmented schema', t => {
       from: Person
       to: Person
       boolean: Boolean
+      _id: String
     }
 
     type _MergeCameraManReflexiveInterfacedRelationshipTypePayload
@@ -4052,6 +4121,7 @@ test.cb('Test augmented schema', t => {
       from: Person
       to: Person
       boolean: Boolean
+      _id: String
     }
 
     input _CameraManInput {
@@ -4149,6 +4219,8 @@ test.cb('Test augmented schema', t => {
       string_desc
       boolean_asc
       boolean_desc
+      _id_asc
+      _id_desc
     }
 
     type _AddPersonInterfacedRelationshipTypePayload
@@ -4161,6 +4233,7 @@ test.cb('Test augmented schema', t => {
       to: Genre
       string: String!
       boolean: Boolean
+      _id: String
     }
 
     type _RemovePersonInterfacedRelationshipTypePayload
@@ -4183,6 +4256,7 @@ test.cb('Test augmented schema', t => {
       to: Genre
       string: String!
       boolean: Boolean
+      _id: String
     }
 
     type _MergePersonInterfacedRelationshipTypePayload
@@ -4195,6 +4269,7 @@ test.cb('Test augmented schema', t => {
       to: Genre
       string: String!
       boolean: Boolean
+      _id: String
     }
     type _PersonReflexiveInterfacedRelationshipTypeDirections
       @relation(
@@ -4223,6 +4298,7 @@ test.cb('Test augmented schema', t => {
         to: "Person"
       ) {
       boolean: Boolean
+      _id: String
       Person: Person
     }
 
@@ -4234,6 +4310,8 @@ test.cb('Test augmented schema', t => {
     enum _ReflexiveInterfacedRelationshipTypeOrdering {
       boolean_asc
       boolean_desc
+      _id_asc
+      _id_desc
     }
 
     input _ReflexiveInterfacedRelationshipTypeFilter {
@@ -4257,6 +4335,7 @@ test.cb('Test augmented schema', t => {
       from: Person
       to: Person
       boolean: Boolean
+      _id: String
     }
 
     type _RemovePersonReflexiveInterfacedRelationshipTypePayload
@@ -4278,6 +4357,7 @@ test.cb('Test augmented schema', t => {
       from: Person
       to: Person
       boolean: Boolean
+      _id: String
     }
 
     type _MergePersonReflexiveInterfacedRelationshipTypePayload
@@ -4289,6 +4369,7 @@ test.cb('Test augmented schema', t => {
       from: Person
       to: Person
       boolean: Boolean
+      _id: String
     }
 
     input _PersonInput {
@@ -4349,6 +4430,7 @@ test.cb('Test augmented schema', t => {
       localdatetime: _Neo4jLocalDateTime
       datetimes: [_Neo4jDateTime]
       location: _Neo4jPoint
+      _id: String
       to: Movie
     }
 
