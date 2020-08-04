@@ -495,6 +495,60 @@ test(`Query for null value combined with internal ID and another param`, t => {
   ]);
 });
 
+test(`query for relationship internal ID`, t => {
+  const graphQLQuery = `query {
+    Movie(title: "River Runs Through It, A") {
+      movieId
+      title
+      ratings {
+        rating
+        _id
+      }
+    }
+  }`,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {title:$title}) RETURN \`movie\` { .movieId , .title ,ratings: [(\`movie\`)<-[\`movie_ratings_relation\`:\`RATED\`]-(:\`User\`) | movie_ratings_relation { .rating ,_id: ID(\`movie_ratings_relation\`)}] } AS \`movie\``;
+
+  t.plan(1);
+  return Promise.all([
+    augmentedSchemaCypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery, {
+      offset: 0,
+      first: -1,
+      title: 'River Runs Through It, A',
+      cypherParams: CYPHER_PARAMS
+    })
+  ]);
+});
+
+test('query for interfaced relationship internal ID', t => {
+  const graphQLQuery = `query {
+    Genre {
+      name
+      interfacedRelationshipType {
+        string
+        _id
+      }
+    }
+  }
+  `,
+    expectedCypherQuery = `MATCH (\`genre\`:\`Genre\`) RETURN \`genre\` { .name ,interfacedRelationshipType: [(\`genre\`)<-[\`genre_interfacedRelationshipType_relation\`:\`INTERFACED_RELATIONSHIP_TYPE\`]-(:\`Person\`) | genre_interfacedRelationshipType_relation { .string ,_id: ID(\`genre_interfacedRelationshipType_relation\`)}] } AS \`genre\``;
+
+  t.plan(1);
+
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {},
+    expectedCypherQuery,
+    {
+      offset: 0,
+      first: -1,
+      title: 'River Runs Through It, A',
+      '1_orderBy': ['datetime_asc'],
+      cypherParams: CYPHER_PARAMS
+    }
+  );
+});
+
 test('Cypher subquery filters', t => {
   const graphQLQuery = `
   {
@@ -694,6 +748,83 @@ test.cb('Merge node mutation (interface implemented)', t => {
     first: -1,
     offset: 0
   });
+});
+
+test('Merge node mutation using only primary key', t => {
+  const graphQLQuery = `mutation MergeBook {
+    MergeBook(
+      genre: Mystery
+    ) {
+      genre
+    }
+  }`,
+    expectedCypherQuery = `MERGE (\`book\`:\`Book\`:\`MovieSearch\`{genre: $params.genre})
+  RETURN \`book\` { .genre } AS \`book\``;
+
+  t.plan(3);
+
+  return Promise.all([
+    cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery, {
+      params: {
+        genre: 'Mystery'
+      },
+      first: -1,
+      offset: 0
+    }),
+    augmentedSchemaCypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery, {
+      params: {
+        genre: 'Mystery'
+      },
+      first: -1,
+      offset: 0
+    })
+  ]);
+});
+
+test('Merge node mutation using argument for field with the same name as merged type', t => {
+  const graphQLQuery = `mutation MergeNodeTypeMutationTest($example: BookGenre!) {
+    MergeNodeTypeMutationTest(NodeTypeMutationTest: $example) {
+      NodeTypeMutationTest
+    }
+  }
+`,
+    expectedCypherQuery = `MERGE (\`nodeTypeMutationTest\`:\`NodeTypeMutationTest\`{NodeTypeMutationTest: $params.NodeTypeMutationTest})
+  RETURN \`nodeTypeMutationTest\` { .NodeTypeMutationTest } AS \`nodeTypeMutationTest\``;
+
+  t.plan(3);
+
+  return Promise.all([
+    cypherTestRunner(
+      t,
+      graphQLQuery,
+      {
+        example: 'Mystery'
+      },
+      expectedCypherQuery,
+      {
+        first: -1,
+        offset: 0,
+        params: {
+          NodeTypeMutationTest: 'Mystery'
+        }
+      }
+    ),
+    augmentedSchemaCypherTestRunner(
+      t,
+      graphQLQuery,
+      {
+        example: 'Mystery'
+      },
+      expectedCypherQuery,
+      {
+        first: -1,
+        offset: 0,
+        params: {
+          NodeTypeMutationTest: 'Mystery'
+        }
+      }
+    )
+  ]);
 });
 
 test.cb('Update node mutation', t => {
@@ -2346,7 +2477,7 @@ test('query for relationship properties', t => {
   );
 });
 
-test('query for relationship properties using orderBy argument', t => {
+test('query relationship properties and order by unselected field', t => {
   const graphQLQuery = `query {
     Movie(title: "River Runs Through It, A") {
       title
@@ -2361,6 +2492,37 @@ test('query for relationship properties using orderBy argument', t => {
   }
   `,
     expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`:\`u_user-id\`:\`newMovieLabel\` {title:$title}) RETURN \`movie\` { .title ,ratings: [sortedElement IN apoc.coll.sortMulti([(\`movie\`)<-[\`movie_ratings_relation\`:\`RATED\`]-(:\`User\`) | movie_ratings_relation { .rating ,User: head([(:\`Movie\`:\`u_user-id\`:\`newMovieLabel\`)<-[\`movie_ratings_relation\`]-(\`movie_ratings_User\`:\`User\`) | movie_ratings_User { .userId , .name }]) ,datetime: \`movie_ratings_relation\`.datetime}], ['^datetime']) | sortedElement { .* }] } AS \`movie\``;
+
+  t.plan(1);
+
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {},
+    expectedCypherQuery,
+    {
+      offset: 0,
+      first: -1,
+      title: 'River Runs Through It, A',
+      '1_orderBy': ['datetime_asc'],
+      cypherParams: CYPHER_PARAMS
+    }
+  );
+});
+
+test('query relationship properties and order by internal ID', t => {
+  const graphQLQuery = `query {
+    Movie(title: "River Runs Through It, A") {
+      movieId
+      title
+      ratings(orderBy: [_id_asc]) {
+        rating
+        _id
+      }
+    }
+  }
+  `,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {title:$title}) RETURN \`movie\` { .movieId , .title ,ratings: apoc.coll.sortMulti([(\`movie\`)<-[\`movie_ratings_relation\`:\`RATED\`]-(:\`User\`) | movie_ratings_relation { .rating ,_id: ID(\`movie_ratings_relation\`)}], ['^_id']) } AS \`movie\``;
 
   t.plan(1);
 
@@ -6737,6 +6899,165 @@ test('query only fields on an implementing type using an inline fragment', t => 
       cypherParams: CYPHER_PARAMS
     }),
     augmentedSchemaCypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery)
+  ]);
+});
+
+test('query only interface type fields using fragments', t => {
+  const graphQLQuery = `query {
+    Person {
+      userId
+      ... on Person {
+        name
+      }
+      ...Person
+    }
+  }
+  
+  fragment Person on Person {
+    __typename
+  }`,
+    expectedCypherQuery = `MATCH (\`person\`:\`Person\`) RETURN \`person\` {FRAGMENT_TYPE: head( [ label IN labels(\`person\`) WHERE label IN $Person_derivedTypes ] ), .userId , .name } AS \`person\``;
+
+  t.plan(3);
+  return Promise.all([
+    cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery, {
+      first: -1,
+      offset: 0,
+      cypherParams: CYPHER_PARAMS,
+      Person_derivedTypes: ['Actor', 'CameraMan', 'User']
+    }),
+    augmentedSchemaCypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery, {
+      first: -1,
+      offset: 0,
+      cypherParams: CYPHER_PARAMS,
+      Person_derivedTypes: ['Actor', 'CameraMan', 'User']
+    })
+  ]);
+});
+
+test('query fields on interface and implementing object type using only fragments', t => {
+  const graphQLQuery = `query {
+    Person {
+      ... on Person {
+        userId
+        __typename      
+      }
+      ...Person    
+    }
+  }
+
+  fragment Person on Person {
+    ... on CameraMan {
+      name
+    }
+  }`,
+    expectedCypherQuery = `MATCH (\`person\`:\`Person\`) WHERE ("Actor" IN labels(\`person\`) OR "CameraMan" IN labels(\`person\`) OR "User" IN labels(\`person\`)) RETURN head([\`person\` IN [\`person\`] WHERE "Actor" IN labels(\`person\`) | \`person\` { FRAGMENT_TYPE: "Actor",  .userId  }] + [\`person\` IN [\`person\`] WHERE "CameraMan" IN labels(\`person\`) | \`person\` { FRAGMENT_TYPE: "CameraMan",  .name , .userId  }] + [\`person\` IN [\`person\`] WHERE "User" IN labels(\`person\`) | \`person\` { FRAGMENT_TYPE: "User",  .userId  }]) AS \`person\``;
+
+  t.plan(3);
+  return Promise.all([
+    cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery, {
+      first: -1,
+      offset: 0,
+      cypherParams: CYPHER_PARAMS
+    }),
+    augmentedSchemaCypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery, {
+      first: -1,
+      offset: 0,
+      cypherParams: CYPHER_PARAMS
+    })
+  ]);
+});
+
+test('query fields on interface and implementing object types using only fragments', t => {
+  const graphQLQuery = `query {
+    Person {
+      ...Person
+      ... on Person {
+        ... on User {
+          userId        
+        }
+        __typename      
+      }
+    }
+  }
+
+  fragment Person on Person {
+    ... on Actor {
+      _id
+    }
+  }`,
+    expectedCypherQuery = `MATCH (\`person\`:\`Person\`) WHERE ("Actor" IN labels(\`person\`) OR "User" IN labels(\`person\`)) RETURN head([\`person\` IN [\`person\`] WHERE "Actor" IN labels(\`person\`) | \`person\` { FRAGMENT_TYPE: "Actor", _id: ID(\`person\`) }] + [\`person\` IN [\`person\`] WHERE "User" IN labels(\`person\`) | \`person\` { FRAGMENT_TYPE: "User",  .userId  }]) AS \`person\``;
+
+  t.plan(3);
+  return Promise.all([
+    cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery, {
+      first: -1,
+      offset: 0,
+      cypherParams: CYPHER_PARAMS
+    }),
+    augmentedSchemaCypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery, {
+      first: -1,
+      offset: 0,
+      cypherParams: CYPHER_PARAMS
+    })
+  ]);
+});
+
+test('query fields on object type using inline fragment on implemented interface', t => {
+  const graphQLQuery = `query {
+    User {
+      name
+      ... on Person {
+        userId
+        __typename    
+      }
+    }
+  }`,
+    expectedCypherQuery = `MATCH (\`user\`:\`User\`) RETURN \`user\` { .name , .userId } AS \`user\``;
+
+  t.plan(3);
+  return Promise.all([
+    cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery, {
+      first: -1,
+      offset: 0,
+      cypherParams: CYPHER_PARAMS
+    }),
+    augmentedSchemaCypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery, {
+      first: -1,
+      offset: 0,
+      cypherParams: CYPHER_PARAMS
+    })
+  ]);
+});
+
+test('query fields on object type using only fragments on implemented interface', t => {
+  const graphQLQuery = `query {
+    User {
+      ... on Person {
+        userId
+      }
+      ...Person
+    }
+  }
+  
+  fragment Person on Person {
+    __typename
+  }
+  `,
+    expectedCypherQuery = `MATCH (\`user\`:\`User\`) RETURN \`user\` { .userId } AS \`user\``;
+
+  t.plan(3);
+  return Promise.all([
+    cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery, {
+      first: -1,
+      offset: 0,
+      cypherParams: CYPHER_PARAMS
+    }),
+    augmentedSchemaCypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery, {
+      first: -1,
+      offset: 0,
+      cypherParams: CYPHER_PARAMS
+    })
   ]);
 });
 
