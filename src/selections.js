@@ -37,7 +37,7 @@ import {
 import {
   unwrapNamedType,
   TypeWrappers,
-  Neo4jSystemIDField
+  isNeo4jIDField
 } from './augment/fields';
 import { selectUnselectedOrderedFields } from './augment/input-values';
 
@@ -109,6 +109,7 @@ export function buildCypherSelection({
   const safeVariableName = safeVar(variableName);
 
   const usesFragments = isFragmentedSelection({ selections });
+
   const isScalarType = isGraphqlScalarType(schemaType);
   const schemaTypeField =
     !isScalarType && !isUnionType ? schemaType.getFields()[fieldName] : {};
@@ -147,6 +148,7 @@ export function buildCypherSelection({
       schemaType,
       selections,
       isFragmentedObjectType,
+      isFragmentedInterfaceType,
       isUnionType,
       typeMap,
       resolveInfo
@@ -321,7 +323,8 @@ export function buildCypherSelection({
           fieldType,
           filterParams,
           selections,
-          paramIndex
+          paramIndex,
+          innerSchemaTypeRelation
         },
         secondParentSelectionInfo: parentSelectionInfo,
         isFederatedOperation,
@@ -351,10 +354,13 @@ export function buildCypherSelection({
         selections: fieldSelectionSet
       });
       const isFragmentedObjectTypeField = isObjectTypeField && usesFragments;
+      const isFragmentedInterfaceTypeField =
+        isInterfaceTypeField && usesFragments;
       const [schemaTypeFields, derivedTypeMap] = mergeSelectionFragments({
         schemaType: innerSchemaType,
         selections: fieldSelectionSet,
         isFragmentedObjectType: isFragmentedObjectTypeField,
+        isFragmentedInterfaceType: isFragmentedInterfaceTypeField,
         isUnionType: isUnionTypeField,
         typeMap,
         resolveInfo
@@ -531,10 +537,12 @@ const translateScalarTypeField = ({
   isFederatedOperation,
   context
 }) => {
-  if (fieldName === Neo4jSystemIDField) {
+  if (isNeo4jIDField({ name: fieldName })) {
+    const innerSchemaTypeRelation = parentSelectionInfo.innerSchemaTypeRelation;
+    const isRelationshipTypeField = innerSchemaTypeRelation !== undefined;
     return {
       initial: `${initial}${fieldName}: ID(${safeVar(
-        variableName
+        isRelationshipTypeField ? `${variableName}_relation` : variableName
       )})${commaIfTail}`,
       ...tailParams
     };
@@ -579,16 +587,17 @@ export const mergeSelectionFragments = ({
   schemaType,
   selections,
   isFragmentedObjectType,
+  isFragmentedInterfaceType,
   isUnionType,
   typeMap,
   resolveInfo
 }) => {
-  const schemaTypeName = schemaType.name;
   const fragmentDefinitions = resolveInfo.fragments;
   let [schemaTypeFields, derivedTypeMap] = buildFragmentMaps({
     selections,
-    schemaTypeName,
+    schemaType,
     isFragmentedObjectType,
+    isFragmentedInterfaceType,
     fragmentDefinitions,
     isUnionType,
     typeMap,
@@ -609,18 +618,28 @@ export const mergeSelectionFragments = ({
 
 const buildFragmentMaps = ({
   selections = [],
-  schemaTypeName,
+  schemaType,
   isFragmentedObjectType,
+  isFragmentedInterfaceType,
   fragmentDefinitions,
   isUnionType,
   typeMap = {},
   resolveInfo
 }) => {
+  const schemaTypeName = schemaType.name;
   let schemaTypeFields = [];
   let interfaceFragmentMap = {};
   let objectSelectionMap = {};
   let objectFragmentMap = {};
-  selections.forEach(selection => {
+  const typeSelections = mergeSchemaTypeSelections({
+    schemaTypeName,
+    selections,
+    fragmentDefinitions,
+    isFragmentedObjectType,
+    isFragmentedInterfaceType,
+    resolveInfo
+  });
+  typeSelections.forEach(selection => {
     const fieldKind = selection.kind;
     if (fieldKind === Kind.FIELD) {
       schemaTypeFields.push(selection);
@@ -665,6 +684,52 @@ const buildFragmentMaps = ({
     selections: schemaTypeFields
   });
   return [schemaTypeFields, derivedTypeMap];
+};
+
+const mergeSchemaTypeSelections = ({
+  schemaTypeName,
+  selections,
+  fragmentDefinitions,
+  isFragmentedObjectType,
+  isFragmentedInterfaceType,
+  resolveInfo
+}) => {
+  return selections.reduce((typeSelections, selection) => {
+    const kind = selection.kind;
+    let selected = [selection];
+    if (isFragmentedInterfaceType) {
+      const fragmentTypeName = getFragmentTypeName({
+        selection,
+        kind,
+        fragmentDefinitions
+      });
+      if (fragmentTypeName === schemaTypeName) {
+        selected = getFragmentSelections({
+          selection,
+          kind,
+          fragmentDefinitions
+        });
+      }
+    } else if (isFragmentedObjectType) {
+      if (isSelectionFragment({ kind })) {
+        const fragmentTypeName = getFragmentTypeName({
+          selection,
+          kind,
+          fragmentDefinitions
+        });
+        const fragmentType = resolveInfo.schema.getType(fragmentTypeName);
+        if (isInterfaceTypeDefinition({ definition: fragmentType.astNode })) {
+          selected = getFragmentSelections({
+            selection,
+            kind,
+            fragmentDefinitions
+          });
+        }
+      }
+    }
+    typeSelections.push(...selected);
+    return typeSelections;
+  }, []);
 };
 
 const aggregateFragmentedSelections = ({
