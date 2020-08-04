@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.15.1
+
+- [Fix invalid input in generated query when using inline fragments inside fragment](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/492)
+- [Fixed issue with fragment used on an interface implemented by that object](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/492)
+- [Add \_id to relationship types](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/492)
+- [Fix schema augmentation issue when schema contains array of properties on relationship](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/492)
+- [Fixed issue that didn't generate merge mutations when types only had a single field](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/492)
+
 ## 2.15.0
 
 - [Fix for relationship mutation issue when only to field is requested](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/485)
