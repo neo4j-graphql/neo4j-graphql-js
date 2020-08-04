@@ -118,11 +118,12 @@ const buildNodeMutationField = ({
     };
     if (mutationAction === NodeMutation.CREATE) {
       mutationFields.push(buildField(mutationField));
-    } else if (
-      mutationAction === NodeMutation.UPDATE ||
-      mutationAction === NodeMutation.MERGE
-    ) {
+    } else if (mutationAction === NodeMutation.UPDATE) {
       if (primaryKey && mutationField.args.length > 1) {
+        mutationFields.push(buildField(mutationField));
+      }
+    } else if (mutationAction === NodeMutation.MERGE) {
+      if (primaryKey) {
         mutationFields.push(buildField(mutationField));
       }
     } else if (mutationAction === NodeMutation.DELETE) {

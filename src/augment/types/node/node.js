@@ -134,10 +134,8 @@ export const augmentNodeType = ({
     if (!isIgnoredType) {
       if (!isOperationType && !isInterfaceType && !isUnionType) {
         [propertyOutputFields, nodeInputTypeMap] = buildNeo4jSystemIDField({
-          definition,
           typeName,
           propertyOutputFields,
-          operationTypeMap,
           nodeInputTypeMap,
           config
         });

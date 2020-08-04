@@ -17,6 +17,7 @@ import {
   TypeWrappers,
   getFieldDefinition,
   getTypeExtensionFieldDefinition,
+  isNeo4jIDField,
   Neo4jSystemIDField
 } from '../../fields';
 import {
@@ -216,11 +217,12 @@ const buildNodeQueryArguments = ({
         })
       })
     );
-    if (
-      !propertyInputValues.some(
-        field => field.name.value === Neo4jSystemIDField
-      )
-    ) {
+    const hasNeo4jIDField = propertyInputValues.some(field =>
+      isNeo4jIDField({
+        name: field.name.value
+      })
+    );
+    if (!hasNeo4jIDField) {
       propertyInputValues.push(
         buildInputValue({
           name: buildName({ name: Neo4jSystemIDField }),
