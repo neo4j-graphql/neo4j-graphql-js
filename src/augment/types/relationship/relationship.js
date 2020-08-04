@@ -4,7 +4,8 @@ import {
   unwrapNamedType,
   isPropertyTypeField,
   getFieldType,
-  toSnakeCase
+  toSnakeCase,
+  buildNeo4jSystemIDField
 } from '../../fields';
 import {
   OrderingArgument,
@@ -169,7 +170,7 @@ const augmentRelationshipTypeFields = ({
     }
   };
   const propertyInputValues = [];
-  const propertyOutputFields = fields.reduce((outputFields, field) => {
+  let propertyOutputFields = fields.reduce((outputFields, field) => {
     const fieldName = field.name.value;
     const fieldDirectives = field.directives;
     if (!isIgnoredField({ directives: fieldDirectives })) {
@@ -202,6 +203,12 @@ const augmentRelationshipTypeFields = ({
     }
     return outputFields;
   }, []);
+  [propertyOutputFields, relationshipInputTypeMap] = buildNeo4jSystemIDField({
+    typeName,
+    propertyOutputFields,
+    nodeInputTypeMap: relationshipInputTypeMap,
+    config
+  });
   return [
     fromTypeName,
     toTypeName,
