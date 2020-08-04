@@ -254,11 +254,16 @@ export const propertyFieldExists = ({
     const fieldType = field.type;
     const unwrappedType = unwrapNamedType({ type: fieldType });
     const outputType = unwrappedType.name;
+    const typeWrappers = unwrappedType.wrappers;
     const outputDefinition = typeDefinitionMap[outputType];
     const outputKind = outputDefinition ? outputDefinition.kind : '';
-    return isPropertyTypeField({
-      kind: outputKind,
-      type: outputType
-    });
+    const isListType = typeWrappers[TypeWrappers.LIST_TYPE];
+    return (
+      !isListType &&
+      isPropertyTypeField({
+        kind: outputKind,
+        type: outputType
+      })
+    );
   });
 };
