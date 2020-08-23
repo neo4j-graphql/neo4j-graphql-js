@@ -11,7 +11,8 @@ import {
   TypeWrappers,
   unwrapNamedType,
   isPropertyTypeField,
-  buildNeo4jSystemIDField
+  buildNeo4jSystemIDField,
+  getTypeFields
 } from '../../fields';
 import {
   FilteringArgument,
@@ -23,7 +24,12 @@ import {
   getRelationName,
   getDirective,
   isIgnoredField,
-  DirectiveDefinition
+  isPrimaryKeyField,
+  isUniqueField,
+  isIndexedField,
+  isCypherField,
+  DirectiveDefinition,
+  validateFieldDirectives
 } from '../../directives';
 import {
   buildName,
@@ -40,7 +46,8 @@ import {
   isObjectTypeExtensionDefinition,
   isInterfaceTypeExtensionDefinition
 } from '../../types/types';
-import { getPrimaryKey } from '../../../utils';
+import { getPrimaryKey } from './selection';
+import { ApolloError } from 'apollo-server-errors';
 
 /**
  * The main export for the augmentation process of a GraphQL
@@ -216,7 +223,8 @@ export const augmentNodeTypeFields = ({
       let fieldType = field.type;
       let fieldArguments = field.arguments;
       const fieldDirectives = field.directives;
-      if (!isIgnoredField({ directives: fieldDirectives })) {
+      const isIgnored = isIgnoredField({ directives: fieldDirectives });
+      if (!isIgnored) {
         isIgnoredType = false;
         const fieldName = field.name.value;
         const unwrappedType = unwrapNamedType({ type: fieldType });
@@ -236,6 +244,10 @@ export const augmentNodeTypeFields = ({
             type: outputType
           })
         ) {
+          validateFieldDirectives({
+            fields,
+            directives: fieldDirectives
+          });
           nodeInputTypeMap = augmentInputTypePropertyFields({
             inputTypeMap: nodeInputTypeMap,
             fieldName,
@@ -361,6 +373,21 @@ const augmentNodeTypeField = ({
   relationshipDirective,
   outputTypeWrappers
 }) => {
+  const isPrimaryKey = isPrimaryKeyField({ directives: fieldDirectives });
+  const isUnique = isUniqueField({ directives: fieldDirectives });
+  const isIndex = isIndexedField({ directives: fieldDirectives });
+  if (isPrimaryKey)
+    throw new ApolloError(
+      `The @id directive cannot be used on @relation fields.`
+    );
+  if (isUnique)
+    throw new ApolloError(
+      `The @unique directive cannot be used on @relation fields.`
+    );
+  if (isIndex)
+    throw new ApolloError(
+      `The @index directive cannot be used on @relation fields.`
+    );
   const isUnionType = isUnionTypeDefinition({ definition: outputDefinition });
   fieldArguments = augmentNodeTypeFieldArguments({
     fieldArguments,
@@ -458,6 +485,7 @@ const augmentNodeTypeAPI = ({
       typeName,
       propertyInputValues,
       generatedTypeMap,
+      typeExtensionDefinitionMap,
       config
     });
   }
@@ -490,12 +518,18 @@ const buildNodeSelectionInputType = ({
   typeName,
   propertyInputValues,
   generatedTypeMap,
+  typeExtensionDefinitionMap,
   config
 }) => {
   const mutationTypeName = OperationType.MUTATION;
   const mutationTypeNameLower = mutationTypeName.toLowerCase();
   if (shouldAugmentType(config, mutationTypeNameLower, typeName)) {
-    const primaryKey = getPrimaryKey(definition);
+    const fields = getTypeFields({
+      typeName,
+      definition,
+      typeExtensionDefinitionMap
+    });
+    const primaryKey = getPrimaryKey({ fields });
     const propertyInputName = `_${typeName}Input`;
     if (primaryKey) {
       const primaryKeyName = primaryKey.name.value;
