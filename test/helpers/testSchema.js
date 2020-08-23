@@ -15,7 +15,7 @@ export const testSchema = `
     ) {
     _id: String
     "Field line description"
-    movieId: ID!
+    movieId: ID! @index
     """
     Field
     block
@@ -102,7 +102,8 @@ export const testSchema = `
 
   type State {
     customField: String @neo4j_ignore
-    name: String!
+    name: String! @index
+    id: ID
   }
 
   """
@@ -110,9 +111,9 @@ export const testSchema = `
   block description
   """
   interface Person {
-    userId: ID!
     name: String
     interfacedRelationshipType: [InterfacedRelationshipType]
+    userId: ID! @id
     reflexiveInterfacedRelationshipType: [ReflexiveInterfacedRelationshipType]    
   }
 
@@ -644,8 +645,8 @@ export const testSchema = `
   }
 
   interface Camera {
-    id: ID!
     type: String
+    id: ID! @unique
     make: String
     weight: Int
     operators(
@@ -671,8 +672,8 @@ export const testSchema = `
   }
 
   type OldCamera implements Camera {
-    id: ID!
     type: String
+    id: ID! @unique
     make: String
     weight: Int
     smell: String
@@ -688,8 +689,8 @@ export const testSchema = `
   }
 
   type NewCamera implements Camera {
-    id: ID!
     type: String
+    id: ID! @unique
     make: String
     weight: Int
     features: [String]
@@ -725,6 +726,25 @@ export const testSchema = `
     extensionScalar: String
     interfacedRelationshipType: [InterfacedRelationshipType]
     reflexiveInterfacedRelationshipType: [ReflexiveInterfacedRelationshipType]
+  }
+
+  # Normal primary key field selection applied to use the id field
+  type UniqueNode {
+    string: String @unique
+    id: ID @id
+    anotherId: ID @index
+    testRelation: [UniqueStringNode] @relation(name: "TEST_RELATION", direction: OUT)
+  }
+
+  # Priority applied for @unique uniqueString field as primary
+  # key, independent of ordering of non-unique fields
+  type UniqueStringNode {
+    id: ID!
+  }
+
+  extend type UniqueStringNode {
+    uniqueString: String @unique
+    testRelation: [UniqueNode] @relation(name: "TEST_RELATION", direction: IN)
   }
 
   type SubscriptionC {
