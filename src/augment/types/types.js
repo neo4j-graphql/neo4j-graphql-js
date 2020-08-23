@@ -36,7 +36,6 @@ import {
   getFieldDefinition,
   isTemporalField
 } from '../fields';
-
 import { augmentNodeType, augmentNodeTypeFields } from './node/node';
 import { RelationshipDirectionField } from '../types/relationship/relationship';
 
