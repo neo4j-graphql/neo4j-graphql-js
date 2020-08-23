@@ -11,14 +11,15 @@ import {
   useAuthDirective,
   isCypherField
 } from '../../directives';
-import { getPrimaryKey } from '../../../utils';
+import { getPrimaryKey } from './selection';
 import { shouldAugmentType } from '../../augment';
 import { OperationType } from '../../types/types';
 import {
   TypeWrappers,
   getFieldDefinition,
   isNeo4jIDField,
-  getTypeExtensionFieldDefinition
+  getTypeExtensionFieldDefinition,
+  getTypeFields
 } from '../../fields';
 
 /**
@@ -46,7 +47,12 @@ export const augmentNodeMutationAPI = ({
   typeExtensionDefinitionMap,
   config
 }) => {
-  const primaryKey = getPrimaryKey(definition);
+  const fields = getTypeFields({
+    typeName,
+    definition,
+    typeExtensionDefinitionMap
+  });
+  const primaryKey = getPrimaryKey({ fields });
   const mutationTypeName = OperationType.MUTATION;
   const mutationType = operationTypeMap[mutationTypeName];
   const mutationTypeNameLower = mutationTypeName.toLowerCase();
