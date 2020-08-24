@@ -15,7 +15,7 @@ export const testSchema = `
     ) {
     _id: String
     "Field line description"
-    movieId: ID! @index
+    movieId: ID! @id
     """
     Field
     block
