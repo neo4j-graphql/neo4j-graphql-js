@@ -27,7 +27,6 @@ import {
   isPrimaryKeyField,
   isUniqueField,
   isIndexedField,
-  isCypherField,
   DirectiveDefinition,
   validateFieldDirectives
 } from '../../directives';
