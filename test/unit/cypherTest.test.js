@@ -7230,44 +7230,7 @@ test('Create interfaced object type node with additional union label', t => {
   ]);
 });
 
-// TODO rename the tests that test @index
-
-// TODO figure out one of them for @id
-
-test('Create object type node with @unique field', t => {
-  const graphQLQuery = `mutation {
-    CreateState(name: "California", id: "123") {
-      name
-    }
-  }
-  `,
-    expectedCypherQuery = `
-    CREATE (\`state\`:\`State\` {name:$params.name,id:$params.id})
-    RETURN \`state\` { .name } AS \`state\`
-  `;
-
-  t.plan(3);
-  return Promise.all([
-    cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery, {
-      params: {
-        name: 'California',
-        id: '123'
-      },
-      offset: 0,
-      first: -1
-    }),
-    augmentedSchemaCypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery, {
-      params: {
-        name: 'California',
-        id: '123'
-      },
-      offset: 0,
-      first: -1
-    })
-  ]);
-});
-
-test('Create object type node with @unique ID type field', t => {
+test('Create object type node with @id field', t => {
   const graphQLQuery = `mutation someMutation {
     CreateMovie(
       title: "My Super Awesome Movie"
@@ -7316,41 +7279,7 @@ test('Create object type node with @unique ID type field', t => {
   ]);
 });
 
-test('Create object type node with multiple @unique ID type fields', t => {
-  const graphQLQuery = `mutation {
-    CreateUniqueNode(string: "hello world", anotherId: "123") {
-      string
-      id
-      anotherId
-    }
-  }`,
-    expectedCypherQuery = `
-    CREATE (\`uniqueNode\`:\`UniqueNode\` {id: apoc.create.uuid(),string:$params.string,anotherId:$params.anotherId})
-    RETURN \`uniqueNode\` { .string , .id , .anotherId } AS \`uniqueNode\`
-  `;
-
-  t.plan(3);
-  return Promise.all([
-    cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery, {
-      params: {
-        string: 'hello world',
-        anotherId: '123'
-      },
-      offset: 0,
-      first: -1
-    }),
-    augmentedSchemaCypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery, {
-      params: {
-        string: 'hello world',
-        anotherId: '123'
-      },
-      offset: 0,
-      first: -1
-    })
-  ]);
-});
-
-test('Create interfaced object type node with @unique ID type field', t => {
+test('Create interfaced object type node with @unique field', t => {
   const graphQLQuery = `mutation {
     CreateNewCamera(
       type: "floating"
@@ -7388,7 +7317,74 @@ test('Create interfaced object type node with @unique ID type field', t => {
   ]);
 });
 
-test('Merge object type node with @unique ID type field', t => {
+test('Create object type node with @index field', t => {
+  const graphQLQuery = `mutation {
+    CreateState(name: "California", id: "123") {
+      name
+    }
+  }
+  `,
+    expectedCypherQuery = `
+    CREATE (\`state\`:\`State\` {name:$params.name,id:$params.id})
+    RETURN \`state\` { .name } AS \`state\`
+  `;
+
+  t.plan(3);
+  return Promise.all([
+    cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery, {
+      params: {
+        name: 'California',
+        id: '123'
+      },
+      offset: 0,
+      first: -1
+    }),
+    augmentedSchemaCypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery, {
+      params: {
+        name: 'California',
+        id: '123'
+      },
+      offset: 0,
+      first: -1
+    })
+  ]);
+});
+
+test('Create object type node with multiple @unique ID type fields', t => {
+  const graphQLQuery = `mutation {
+    CreateUniqueNode(string: "hello world", anotherId: "123") {
+      string
+      id
+      anotherId
+    }
+  }`,
+    expectedCypherQuery = `
+    CREATE (\`uniqueNode\`:\`UniqueNode\` {id: apoc.create.uuid(),string:$params.string,anotherId:$params.anotherId})
+    RETURN \`uniqueNode\` { .string , .id , .anotherId } AS \`uniqueNode\`
+  `;
+
+  t.plan(3);
+  return Promise.all([
+    cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery, {
+      params: {
+        string: 'hello world',
+        anotherId: '123'
+      },
+      offset: 0,
+      first: -1
+    }),
+    augmentedSchemaCypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery, {
+      params: {
+        string: 'hello world',
+        anotherId: '123'
+      },
+      offset: 0,
+      first: -1
+    })
+  ]);
+});
+
+test('Merge object type node with @unique field', t => {
   const graphQLQuery = `mutation {
     MergeUniqueStringNode(id: "123", uniqueString: "abc") {
       id
@@ -7420,7 +7416,7 @@ test('Merge object type node with @unique ID type field', t => {
   ]);
 });
 
-test('Delete object type node with @unique ID type field', t => {
+test('Delete object type node with @unique field', t => {
   const graphQLQuery = `mutation {
     DeleteUniqueStringNode(uniqueString: "abc") {
       id
@@ -7447,7 +7443,7 @@ RETURN \`uniqueStringNode\``;
   ]);
 });
 
-test('Add relationship using @unique fields for node selection', t => {
+test('Add relationship using @id and @unique node type for node selection', t => {
   const graphQLQuery = `mutation {
     AddUniqueNodeTestRelation(
       from: { id: "123" }
@@ -7485,7 +7481,7 @@ test('Add relationship using @unique fields for node selection', t => {
   ]);
 });
 
-test('Merge relationship using @unique fields for node selection', t => {
+test('Merge relationship using @id and @unique node type fields for node selection', t => {
   const graphQLQuery = `mutation {
     MergeUniqueNodeTestRelation(
       from: { id: "123" }
@@ -7523,7 +7519,7 @@ test('Merge relationship using @unique fields for node selection', t => {
   ]);
 });
 
-test('Remove relationship using @unique fields for node selection', t => {
+test('Remove relationship using @id and @unique node type fields for node selection', t => {
   const graphQLQuery = `mutation {
     RemoveUniqueNodeTestRelation(
       from: { id: "123" }
