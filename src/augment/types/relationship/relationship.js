@@ -204,6 +204,21 @@ const augmentRelationshipTypeFields = ({
           type: outputType
         })
       ) {
+        const isPrimaryKey = isPrimaryKeyField({ directives: fieldDirectives });
+        const isIndex = isIndexedField({ directives: fieldDirectives });
+        const isUnique = isUniqueField({ directives: fieldDirectives });
+        if (isPrimaryKey)
+          throw new ApolloError(
+            `The @id directive cannot be used on @relation types.`
+          );
+        if (isUnique)
+          throw new ApolloError(
+            `The @unique directive cannot be used on @relation types.`
+          );
+        if (isIndex)
+          throw new ApolloError(
+            `The @index directive cannot be used on @relation types.`
+          );
         relationshipInputTypeMap = augmentInputTypePropertyFields({
           inputTypeMap: relationshipInputTypeMap,
           fieldName,
