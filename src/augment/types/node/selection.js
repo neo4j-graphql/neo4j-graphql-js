@@ -30,7 +30,7 @@ export const getPrimaryKey = ({ fields = [] }) => {
     pk = inferPrimaryKey(uniqueFields);
   }
   if (!pk) {
-    // Try getting a single key from @unique fields
+    // Try getting a single key from @index fields
     const indexedFields = getIndexedFields(keyFields);
     pk = inferPrimaryKey(indexedFields);
   }
