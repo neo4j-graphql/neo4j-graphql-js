@@ -967,7 +967,7 @@ test.cb('Test augmented schema', t => {
       ) {
       _id: String
       "Field line description"
-      movieId: ID! @index
+      movieId: ID! @id
       """
       Field
       block
