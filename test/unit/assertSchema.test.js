@@ -5,7 +5,7 @@ import { schemaAssert } from '../../src/schemaAssert';
 import { gql } from 'apollo-server';
 import { ApolloError } from 'apollo-server-errors';
 
-test('Assert property constraints for @unique directive fields on Node types', t => {
+test('Call assertSchema for @id, @unique, and @index fields on node types', t => {
   t.plan(1);
   const schema = makeAugmentedSchema({
     typeDefs: testSchema,
