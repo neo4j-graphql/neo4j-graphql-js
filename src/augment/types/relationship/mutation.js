@@ -2,7 +2,12 @@ import { RelationshipDirectionField } from './relationship';
 import { buildNodeOutputFields } from './query';
 import { shouldAugmentRelationshipField } from '../../augment';
 import { OperationType } from '../../types/types';
-import { TypeWrappers, getFieldDefinition, isNeo4jIDField } from '../../fields';
+import {
+  TypeWrappers,
+  getFieldDefinition,
+  isNeo4jIDField,
+  getTypeFields
+} from '../../fields';
 import {
   DirectiveDefinition,
   buildAuthScopeDirective,
@@ -20,7 +25,7 @@ import {
   buildObjectType,
   buildInputObjectType
 } from '../../ast';
-import { getPrimaryKey } from '../../../utils';
+import { getPrimaryKey } from '../node/selection';
 import { isExternalTypeExtension } from '../../../federation';
 
 /**
@@ -86,8 +91,21 @@ export const augmentRelationshipMutationAPI = ({
         typeDefinitionMap,
         typeExtensionDefinitionMap
       });
-      const fromTypePk = getPrimaryKey(fromTypeDefinition);
-      const toTypePk = getPrimaryKey(toTypeDefinition);
+
+      const fromFields = getTypeFields({
+        typeName: fromType,
+        definition: fromTypeDefinition,
+        typeExtensionDefinitionMap
+      });
+      const fromTypePk = getPrimaryKey({ fields: fromFields });
+
+      const toFields = getTypeFields({
+        typeName: toType,
+        definition: toTypeDefinition,
+        typeExtensionDefinitionMap
+      });
+      const toTypePk = getPrimaryKey({ fields: toFields });
+
       if (
         !getFieldDefinition({
           fields: mutationType.fields,

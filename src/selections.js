@@ -13,7 +13,8 @@ import {
   decideNestedVariableName,
   safeVar,
   isNeo4jType,
-  isNeo4jTypeField,
+  isTemporalField,
+  isSpatialField,
   getNeo4jTypeArguments,
   removeIgnoredFields,
   getInterfaceDerivedTypeNames
@@ -564,7 +565,10 @@ const translateScalarTypeField = ({
         )}}, false)${commaIfTail}`,
         ...tailParams
       };
-    } else if (isNeo4jTypeField(schemaType, fieldName)) {
+    } else if (
+      isTemporalField(schemaType, fieldName) ||
+      isSpatialField(schemaType, fieldName)
+    ) {
       return neo4jTypeField({
         initial,
         fieldName,

@@ -17,9 +17,13 @@ import {
   getDirective,
   isIgnoredField,
   isCypherField,
+  isPrimaryKeyField,
+  isUniqueField,
+  isIndexedField,
   getDirectiveArgument
 } from '../../directives';
 import { isOperationTypeDefinition } from '../../types/types';
+import { ApolloError } from 'apollo-server-errors';
 
 // An enum for the semantics of the directed fields of a relationship type
 export const RelationshipDirectionField = {
@@ -49,6 +53,21 @@ export const augmentRelationshipTypeField = ({
   outputTypeWrappers
 }) => {
   if (!isOperationTypeDefinition({ definition, operationTypeMap })) {
+    const isPrimaryKey = isPrimaryKeyField({ directives: fieldDirectives });
+    const isIndex = isIndexedField({ directives: fieldDirectives });
+    const isUnique = isUniqueField({ directives: fieldDirectives });
+    if (isPrimaryKey)
+      throw new ApolloError(
+        `The @id directive cannot be used on @relation type fields.`
+      );
+    if (isUnique)
+      throw new ApolloError(
+        `The @unique directive cannot be used on @relation type fields.`
+      );
+    if (isIndex)
+      throw new ApolloError(
+        `The @index directive cannot be used on @relation type fields.`
+      );
     if (!isCypherField({ directives: fieldDirectives })) {
       const relationshipTypeDirective = getDirective({
         directives: outputDefinition.directives,
@@ -185,6 +204,21 @@ const augmentRelationshipTypeFields = ({
           type: outputType
         })
       ) {
+        const isPrimaryKey = isPrimaryKeyField({ directives: fieldDirectives });
+        const isIndex = isIndexedField({ directives: fieldDirectives });
+        const isUnique = isUniqueField({ directives: fieldDirectives });
+        if (isPrimaryKey)
+          throw new ApolloError(
+            `The @id directive cannot be used on @relation types.`
+          );
+        if (isUnique)
+          throw new ApolloError(
+            `The @unique directive cannot be used on @relation types.`
+          );
+        if (isIndex)
+          throw new ApolloError(
+            `The @index directive cannot be used on @relation types.`
+          );
         relationshipInputTypeMap = augmentInputTypePropertyFields({
           inputTypeMap: relationshipInputTypeMap,
           fieldName,

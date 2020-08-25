@@ -10,6 +10,7 @@ import {
   buildDirective,
   buildName
 } from './ast';
+import { ApolloError } from 'apollo-server-errors';
 
 /**
  * An enum describing the names of directive definitions and instances
@@ -23,7 +24,10 @@ export const DirectiveDefinition = {
   IS_AUTHENTICATED: 'isAuthenticated',
   HAS_ROLE: 'hasRole',
   HAS_SCOPE: 'hasScope',
-  ADDITIONAL_LABELS: 'additionalLabels'
+  ADDITIONAL_LABELS: 'additionalLabels',
+  ID: 'id',
+  UNIQUE: 'unique',
+  INDEX: 'index'
 };
 
 // The name of Role type used in authorization logic
@@ -37,23 +41,83 @@ const RelationshipDirectionField = {
   TO: 'to'
 };
 
-/**
- * A predicate function for cypher directive fields
- */
 export const isCypherField = ({ directives = [] }) =>
   getDirective({
     directives,
     name: DirectiveDefinition.CYPHER
   });
 
-/**
- * A predicate function for neo4j_ignore directive fields
- */
 export const isIgnoredField = ({ directives = [] }) =>
   getDirective({
     directives,
     name: DirectiveDefinition.NEO4J_IGNORE
   });
+
+export const isRelationField = ({ directives = [] }) =>
+  getDirective({
+    directives,
+    name: DirectiveDefinition.RELATION
+  });
+
+export const isPrimaryKeyField = ({ directives = [] }) =>
+  getDirective({
+    directives,
+    name: DirectiveDefinition.ID
+  });
+
+export const isUniqueField = ({ directives = [] }) =>
+  getDirective({
+    directives,
+    name: DirectiveDefinition.UNIQUE
+  });
+
+export const isIndexedField = ({ directives = [] }) =>
+  getDirective({
+    directives,
+    name: DirectiveDefinition.INDEX
+  });
+
+export const validateFieldDirectives = ({ fields = [], directives = [] }) => {
+  const primaryKeyFields = fields.filter(field =>
+    isPrimaryKeyField({
+      directives: field.directives
+    })
+  );
+  if (primaryKeyFields.length > 1)
+    throw new ApolloError(
+      `The @id directive can only be used once per node type.`
+    );
+  const isPrimaryKey = isPrimaryKeyField({ directives });
+  const isUnique = isUniqueField({ directives });
+  const isIndex = isIndexedField({ directives });
+  const isComputed = isCypherField({ directives });
+  if (isComputed) {
+    if (isPrimaryKey)
+      throw new ApolloError(
+        `The @id directive cannot be used with the @cypher directive because computed fields are not stored as properties.`
+      );
+    if (isUnique)
+      throw new ApolloError(
+        `The @unique directive cannot be used with the @cypher directive because computed fields are not stored as properties.`
+      );
+    if (isIndex)
+      throw new ApolloError(
+        `The @index directive cannot used with the @cypher directive because computed fields are not stored as properties.`
+      );
+  }
+  if (isPrimaryKey && isUnique)
+    throw new ApolloError(
+      `The @id and @unique directive combined are redunant. The @id directive already sets a unique property constraint and an index.`
+    );
+  if (isPrimaryKey && isIndex)
+    throw new ApolloError(
+      `The @id and @index directive combined are redundant. The @id directive already sets a unique property constraint and an index.`
+    );
+  if (isUnique && isIndex)
+    throw new ApolloError(
+      `The @unique and @index directive combined are redunant. The @unique directive sets both a unique property constraint and an index.`
+    );
+};
 
 /**
  * The main export for augmenting directive definitions
@@ -361,6 +425,24 @@ const directiveDefinitionBuilderMap = {
   [DirectiveDefinition.NEO4J_IGNORE]: ({ config }) => {
     return {
       name: DirectiveDefinition.NEO4J_IGNORE,
+      locations: [DirectiveLocation.FIELD_DEFINITION]
+    };
+  },
+  [DirectiveDefinition.ID]: ({ config }) => {
+    return {
+      name: DirectiveDefinition.ID,
+      locations: [DirectiveLocation.FIELD_DEFINITION]
+    };
+  },
+  [DirectiveDefinition.UNIQUE]: ({ config }) => {
+    return {
+      name: DirectiveDefinition.UNIQUE,
+      locations: [DirectiveLocation.FIELD_DEFINITION]
+    };
+  },
+  [DirectiveDefinition.INDEX]: ({ config }) => {
+    return {
+      name: DirectiveDefinition.INDEX,
       locations: [DirectiveLocation.FIELD_DEFINITION]
     };
   }

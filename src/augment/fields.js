@@ -267,3 +267,20 @@ export const propertyFieldExists = ({
     );
   });
 };
+
+export const getTypeFields = ({
+  typeName = '',
+  definition = {},
+  typeExtensionDefinitionMap = {}
+}) => {
+  const allFields = [];
+  const fields = definition.fields;
+  if (fields && fields.length) {
+    // if there are .fields, return them
+    allFields.push(...fields);
+    const extensions = typeExtensionDefinitionMap[typeName] || [];
+    // also return any .fields of extensions of this type
+    extensions.forEach(extension => allFields.push(...extension.fields));
+  }
+  return allFields;
+};

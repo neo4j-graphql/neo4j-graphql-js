@@ -24,6 +24,7 @@ import {
 import { buildDocument } from './augment/ast';
 import { augmentDirectiveDefinitions } from './augment/directives';
 import { isFederatedOperation, executeFederatedOperation } from './federation';
+import { schemaAssert } from './schemaAssert';
 
 const neo4jGraphQLVersion = require('../package.json').version;
 
@@ -305,4 +306,30 @@ export const cypher = (statement, ...substitutions) => {
   // Add the last literal
   composed.push(literals[literals.length - 1]);
   return `statement: """${composed.join('')}"""`;
+};
+
+export const assertSchema = ({
+  driver,
+  schema,
+  dropExisting = true,
+  debug = false
+}) => {
+  const statement = schemaAssert({ schema, dropExisting });
+  const executeQuery = driver => {
+    const session = driver.session();
+    return session
+      .writeTransaction(tx => tx.run(statement))
+      .then(result => {
+        if (debug === true) {
+          const recordsJSON = result.records.map(record => record.toObject());
+          recordsJSON.sort((lhs, rhs) => lhs.label < rhs.label);
+          console.table(recordsJSON);
+        }
+        return result;
+      })
+      .finally(() => session.close());
+  };
+  return executeQuery(driver).catch(error => {
+    console.error(error);
+  });
 };
