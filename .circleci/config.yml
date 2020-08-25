@@ -135,43 +135,43 @@ references:
       DATASTORE_VERSION: '3_4'
   env_neo4j35ce: &env_neo4j35ce
       NEO4J_DIST: 'community'
-      NEO4J_VERSION: '3.5.4'
-      APOC_VERSION: '3.5.0.2'
+      NEO4J_VERSION: '3.5.21'
+      APOC_VERSION: '3.5.0.14'
       DATASTORE_VERSION: '3_5'
   env_neo4j35ee: &env_neo4j35ee
       NEO4J_DIST: 'enterprise'
-      NEO4J_VERSION: '3.5.4'
-      APOC_VERSION: '3.5.0.2'
+      NEO4J_VERSION: '3.5.21'
+      APOC_VERSION: '3.5.0.14'
       DATASTORE_VERSION: '3_5'
   env_neo4j40ce: &env_neo4j40ce
       NEO4J_DIST: 'community'
-      NEO4J_VERSION: '4.0.6'
-      APOC_VERSION: '4.0.0.15'
+      NEO4J_VERSION: '4.0.7'
+      APOC_VERSION: '4.0.0.18'
       DATASTORE_VERSION: '4_0'
   env_neo4j40ee: &env_neo4j40ee
       NEO4J_DIST: 'enterprise'
-      NEO4J_VERSION: '4.0.6'
-      APOC_VERSION: '4.0.0.15'
+      NEO4J_VERSION: '4.0.7'
+      APOC_VERSION: '4.0.0.18'
       DATASTORE_VERSION: '4_0'
   env_neo4j41ee: &env_neo4j41ee
       NEO4J_DIST: 'enterprise'
       NEO4J_VERSION: '4.1.0'
-      APOC_VERSION: '4.1.0-rc01'
+      APOC_VERSION: '4.1.0.2'
       DATASTORE_VERSION: '4_0'
   env_neo4j41ce: &env_neo4j41ce
       NEO4J_DIST: 'community'
       NEO4J_VERSION: '4.1.0'
-      APOC_VERSION: '4.1.0-rc01'
+      APOC_VERSION: '4.1.0.2'
       DATASTORE_VERSION: '4_0'
   env_neo4j40_3ce: &env_neo4j40_3ce
       NEO4J_DIST: 'community'
       NEO4J_VERSION: '4.0.3'
-      APOC_VERSION: '4.0.0.15'
+      APOC_VERSION: '4.0.0.18'
       DATASTORE_VERSION: '4_0'
   env_neo4j40_3ee: &env_neo4j40_3ee
       NEO4J_DIST: 'enterprise'
       NEO4J_VERSION: '4.0.3'
-      APOC_VERSION: '4.0.0.15'
+      APOC_VERSION: '4.0.0.18'
       DATASTORE_VERSION: '4_0'
 
   install_neo4j_steps: &install_neo4j_steps
