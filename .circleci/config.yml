@@ -49,7 +49,7 @@ references:
   create_neo4j_cache_key: &create_neo4j_cache_key
     run:
         name: Create Neo4j cache key
-        command: echo "$NEO4J_DIST\n$NEO4J_VERSION\n$APOC_VERSION\n$DATASTORE_VERSION" > neo4j-version
+        command: echo "v1-$NEO4J_DIST\n$NEO4J_VERSION\n$APOC_VERSION\n$DATASTORE_VERSION" > neo4j-version
 
   report_coverage: &report_coverage
     run:
