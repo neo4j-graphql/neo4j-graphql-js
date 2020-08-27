@@ -71,7 +71,7 @@
     "apollo-server-errors": "^2.4.1",
     "debug": "^4.1.1",
     "graphql": "^14.2.1",
-    "graphql-auth-directives": "^2.2.0",
+    "graphql-auth-directives": "^2.2.1",
     "lodash": "^4.17.19",
     "neo4j-driver": "^4.1.0"
   },
