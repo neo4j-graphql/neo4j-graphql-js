@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.16.1
+
+- [Upgrade graphql-auth-directives dependency](https://github.com/neo4j-graphql/neo4j-graphql-js/commit/ef59179eadadcfce5138d1813f7c949fe3f1223f)
+
 ## 2.16.0
 
 - [Add optional @id, @unique, and @index schema directives](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/499)
