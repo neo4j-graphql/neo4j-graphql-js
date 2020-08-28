@@ -44,6 +44,12 @@ test.cb('Test augmented schema', t => {
 
     directive @neo4j_ignore on FIELD_DEFINITION
 
+    directive @id on FIELD_DEFINITION
+
+    directive @unique on FIELD_DEFINITION
+
+    directive @index on FIELD_DEFINITION
+
     directive @isAuthenticated on OBJECT | FIELD_DEFINITION
 
     directive @hasRole(roles: [Role]) on OBJECT | FIELD_DEFINITION
@@ -236,8 +242,8 @@ test.cb('Test augmented schema', t => {
         filter: _SpatialNodeFilter
       ): [SpatialNode] @hasScope(scopes: ["SpatialNode: Read"])
       OldCamera(
-        id: ID
         type: String
+        id: ID
         make: String
         weight: Int
         smell: String
@@ -248,8 +254,8 @@ test.cb('Test augmented schema', t => {
         filter: _OldCameraFilter
       ): [OldCamera] @hasScope(scopes: ["OldCamera: Read"])
       NewCamera(
-        id: ID
         type: String
+        id: ID
         make: String
         weight: Int
         features: String
@@ -269,6 +275,25 @@ test.cb('Test augmented schema', t => {
         orderBy: [_CameraManOrdering]
         filter: _CameraManFilter
       ): [CameraMan] @hasScope(scopes: ["CameraMan: Read"])
+      UniqueNode(
+        string: String
+        id: ID
+        anotherId: ID
+        _id: String
+        first: Int
+        offset: Int
+        orderBy: [_UniqueNodeOrdering]
+        filter: _UniqueNodeFilter
+      ): [UniqueNode] @hasScope(scopes: ["UniqueNode: Read"])
+      UniqueStringNode(
+        id: ID
+        uniqueString: String
+        _id: String
+        first: Int
+        offset: Int
+        orderBy: [_UniqueStringNodeOrdering]
+        filter: _UniqueStringNodeFilter
+      ): [UniqueStringNode] @hasScope(scopes: ["UniqueStringNode: Read"])
     }
 
     extend type QueryA {
@@ -647,6 +672,16 @@ test.cb('Test augmented schema', t => {
       name_not_starts_with: String
       name_ends_with: String
       name_not_ends_with: String
+      id: ID
+      id_not: ID
+      id_in: [ID!]
+      id_not_in: [ID!]
+      id_contains: ID
+      id_not_contains: ID
+      id_starts_with: ID
+      id_not_starts_with: ID
+      id_ends_with: ID
+      id_not_ends_with: ID
     }
 
     input _MovieRatedFilter {
@@ -932,7 +967,7 @@ test.cb('Test augmented schema', t => {
       ) {
       _id: String
       "Field line description"
-      movieId: ID!
+      movieId: ID! @id
       """
       Field
       block
@@ -1156,7 +1191,6 @@ test.cb('Test augmented schema', t => {
     block description
     """
     interface Person {
-      userId: ID!
       name: String
       interfacedRelationshipType(
         first: Int
@@ -1164,6 +1198,7 @@ test.cb('Test augmented schema', t => {
         orderBy: [_InterfacedRelationshipTypeOrdering]
         filter: _PersonInterfacedRelationshipTypeFilter
       ): [_PersonInterfacedRelationshipType]
+      userId: ID! @id
       reflexiveInterfacedRelationshipType: _PersonReflexiveInterfacedRelationshipTypeDirections
     }
 
@@ -1188,7 +1223,8 @@ test.cb('Test augmented schema', t => {
 
     type State {
       customField: String @neo4j_ignore
-      name: String!
+      name: String! @index
+      id: ID
       _id: String
     }
 
@@ -1549,6 +1585,8 @@ test.cb('Test augmented schema', t => {
     enum _StateOrdering {
       name_asc
       name_desc
+      id_asc
+      id_desc
       _id_asc
       _id_desc
     }
@@ -1709,6 +1747,28 @@ test.cb('Test augmented schema', t => {
       extensionScalar_not_starts_with: String
       extensionScalar_ends_with: String
       extensionScalar_not_ends_with: String
+    }
+
+    type _AddTemporalNodeTemporalNodesPayload
+      @relation(name: "TEMPORAL", from: "TemporalNode", to: "TemporalNode") {
+      from: TemporalNode
+      to: TemporalNode
+    }
+
+    type _RemoveTemporalNodeTemporalNodesPayload
+      @relation(name: "TEMPORAL", from: "TemporalNode", to: "TemporalNode") {
+      from: TemporalNode
+      to: TemporalNode
+    }
+
+    type _MergeTemporalNodeTemporalNodesPayload
+      @relation(name: "TEMPORAL", from: "TemporalNode", to: "TemporalNode") {
+      from: TemporalNode
+      to: TemporalNode
+    }
+
+    input _TemporalNodeInput {
+      name: String!
     }
 
     enum _TemporalNodeOrdering {
@@ -1900,8 +1960,8 @@ test.cb('Test augmented schema', t => {
     }
 
     interface Camera {
-      id: ID!
       type: String
+      id: ID! @unique
       make: String
       weight: Int
       operators(
@@ -1927,10 +1987,10 @@ test.cb('Test augmented schema', t => {
     }
 
     enum _OldCameraOrdering {
-      id_asc
-      id_desc
       type_asc
       type_desc
+      id_asc
+      id_desc
       make_asc
       make_desc
       weight_asc
@@ -1944,16 +2004,6 @@ test.cb('Test augmented schema', t => {
     input _OldCameraFilter {
       AND: [_OldCameraFilter!]
       OR: [_OldCameraFilter!]
-      id: ID
-      id_not: ID
-      id_in: [ID!]
-      id_not_in: [ID!]
-      id_contains: ID
-      id_not_contains: ID
-      id_starts_with: ID
-      id_not_starts_with: ID
-      id_ends_with: ID
-      id_not_ends_with: ID
       type: String
       type_not: String
       type_in: [String!]
@@ -1964,6 +2014,16 @@ test.cb('Test augmented schema', t => {
       type_not_starts_with: String
       type_ends_with: String
       type_not_ends_with: String
+      id: ID
+      id_not: ID
+      id_in: [ID!]
+      id_not_in: [ID!]
+      id_contains: ID
+      id_not_contains: ID
+      id_starts_with: ID
+      id_not_starts_with: ID
+      id_ends_with: ID
+      id_not_ends_with: ID
       make: String
       make_not: String
       make_in: [String!]
@@ -2011,8 +2071,8 @@ test.cb('Test augmented schema', t => {
     }
 
     type OldCamera implements Camera {
-      id: ID!
       type: String
+      id: ID! @unique
       make: String
       weight: Int
       smell: String
@@ -2040,10 +2100,10 @@ test.cb('Test augmented schema', t => {
     }
 
     enum _NewCameraOrdering {
-      id_asc
-      id_desc
       type_asc
       type_desc
+      id_asc
+      id_desc
       make_asc
       make_desc
       weight_asc
@@ -2055,16 +2115,6 @@ test.cb('Test augmented schema', t => {
     input _NewCameraFilter {
       AND: [_NewCameraFilter!]
       OR: [_NewCameraFilter!]
-      id: ID
-      id_not: ID
-      id_in: [ID!]
-      id_not_in: [ID!]
-      id_contains: ID
-      id_not_contains: ID
-      id_starts_with: ID
-      id_not_starts_with: ID
-      id_ends_with: ID
-      id_not_ends_with: ID
       type: String
       type_not: String
       type_in: [String!]
@@ -2075,6 +2125,16 @@ test.cb('Test augmented schema', t => {
       type_not_starts_with: String
       type_ends_with: String
       type_not_ends_with: String
+      id: ID
+      id_not: ID
+      id_in: [ID!]
+      id_not_in: [ID!]
+      id_contains: ID
+      id_not_contains: ID
+      id_starts_with: ID
+      id_not_starts_with: ID
+      id_ends_with: ID
+      id_not_ends_with: ID
       make: String
       make_not: String
       make_in: [String!]
@@ -2112,8 +2172,8 @@ test.cb('Test augmented schema', t => {
     }
 
     type NewCamera implements Camera {
-      id: ID!
       type: String
+      id: ID! @unique
       make: String
       weight: Int
       features: [String]
@@ -2541,9 +2601,13 @@ test.cb('Test augmented schema', t => {
       CreateGenre(name: String): Genre @hasScope(scopes: ["Genre: Create"])
       DeleteGenre(name: String!): Genre @hasScope(scopes: ["Genre: Delete"])
       MergeGenre(name: String!): Genre @hasScope(scopes: ["Genre: Merge"])
-      CreateState(name: String!): State @hasScope(scopes: ["State: Create"])
+      CreateState(name: String!, id: ID): State
+        @hasScope(scopes: ["State: Create"])
+      UpdateState(name: String!, id: ID): State
+        @hasScope(scopes: ["State: Update"])
       DeleteState(name: String!): State @hasScope(scopes: ["State: Delete"])
-      MergeState(name: String!): State @hasScope(scopes: ["State: Merge"])
+      MergeState(name: String!, id: ID): State
+        @hasScope(scopes: ["State: Merge"])
       AddPersonInterfacedRelationshipType(
         from: _PersonInput!
         to: _GenreInput!
@@ -2984,19 +3048,19 @@ test.cb('Test augmented schema', t => {
         localdatetimes: [_Neo4jLocalDateTimeInput]
       ): TemporalNode @hasScope(scopes: ["TemporalNode: Create"])
       UpdateTemporalNode(
-        datetime: _Neo4jDateTimeInput!
-        name: String
+        datetime: _Neo4jDateTimeInput
+        name: String!
         time: _Neo4jTimeInput
         date: _Neo4jDateInput
         localtime: _Neo4jLocalTimeInput
         localdatetime: _Neo4jLocalDateTimeInput
         localdatetimes: [_Neo4jLocalDateTimeInput]
       ): TemporalNode @hasScope(scopes: ["TemporalNode: Update"])
-      DeleteTemporalNode(datetime: _Neo4jDateTimeInput!): TemporalNode
+      DeleteTemporalNode(name: String!): TemporalNode
         @hasScope(scopes: ["TemporalNode: Delete"])
       MergeTemporalNode(
-        datetime: _Neo4jDateTimeInput!
-        name: String
+        datetime: _Neo4jDateTimeInput
+        name: String!
         time: _Neo4jTimeInput
         date: _Neo4jDateInput
         localtime: _Neo4jLocalTimeInput
@@ -3162,15 +3226,15 @@ test.cb('Test augmented schema', t => {
         )
         @hasScope(scopes: ["OldCamera: Merge", "Camera: Merge"])
       CreateOldCamera(
-        id: ID
         type: String
+        id: ID
         make: String
         weight: Int
         smell: String
       ): OldCamera @hasScope(scopes: ["OldCamera: Create"])
       UpdateOldCamera(
-        id: ID!
         type: String
+        id: ID!
         make: String
         weight: Int
         smell: String
@@ -3178,8 +3242,8 @@ test.cb('Test augmented schema', t => {
       DeleteOldCamera(id: ID!): OldCamera
         @hasScope(scopes: ["OldCamera: Delete"])
       MergeOldCamera(
-        id: ID!
         type: String
+        id: ID!
         make: String
         weight: Int
         smell: String
@@ -3233,15 +3297,15 @@ test.cb('Test augmented schema', t => {
         )
         @hasScope(scopes: ["NewCamera: Merge", "Camera: Merge"])
       CreateNewCamera(
-        id: ID
         type: String
+        id: ID
         make: String
         weight: Int
         features: [String]
       ): NewCamera @hasScope(scopes: ["NewCamera: Create"])
       UpdateNewCamera(
-        id: ID!
         type: String
+        id: ID!
         make: String
         weight: Int
         features: [String]
@@ -3249,8 +3313,8 @@ test.cb('Test augmented schema', t => {
       DeleteNewCamera(id: ID!): NewCamera
         @hasScope(scopes: ["NewCamera: Delete"])
       MergeNewCamera(
-        id: ID!
         type: String
+        id: ID!
         make: String
         weight: Int
         features: [String]
@@ -3436,6 +3500,82 @@ test.cb('Test augmented schema', t => {
         name: String
         extensionScalar: String
       ): CameraMan @hasScope(scopes: ["CameraMan: Merge"])
+      AddUniqueNodeTestRelation(
+        from: _UniqueNodeInput!
+        to: _UniqueStringNodeInput!
+      ): _AddUniqueNodeTestRelationPayload
+        @MutationMeta(
+          relationship: "TEST_RELATION"
+          from: "UniqueNode"
+          to: "UniqueStringNode"
+        )
+        @hasScope(scopes: ["UniqueNode: Create", "UniqueStringNode: Create"])
+      RemoveUniqueNodeTestRelation(
+        from: _UniqueNodeInput!
+        to: _UniqueStringNodeInput!
+      ): _RemoveUniqueNodeTestRelationPayload
+        @MutationMeta(
+          relationship: "TEST_RELATION"
+          from: "UniqueNode"
+          to: "UniqueStringNode"
+        )
+        @hasScope(scopes: ["UniqueNode: Delete", "UniqueStringNode: Delete"])
+      MergeUniqueNodeTestRelation(
+        from: _UniqueNodeInput!
+        to: _UniqueStringNodeInput!
+      ): _MergeUniqueNodeTestRelationPayload
+        @MutationMeta(
+          relationship: "TEST_RELATION"
+          from: "UniqueNode"
+          to: "UniqueStringNode"
+        )
+        @hasScope(scopes: ["UniqueNode: Merge", "UniqueStringNode: Merge"])
+      CreateUniqueNode(string: String, id: ID, anotherId: ID): UniqueNode
+        @hasScope(scopes: ["UniqueNode: Create"])
+      UpdateUniqueNode(string: String, id: ID!, anotherId: ID): UniqueNode
+        @hasScope(scopes: ["UniqueNode: Update"])
+      DeleteUniqueNode(id: ID!): UniqueNode
+        @hasScope(scopes: ["UniqueNode: Delete"])
+      MergeUniqueNode(string: String, id: ID!, anotherId: ID): UniqueNode
+        @hasScope(scopes: ["UniqueNode: Merge"])
+      AddUniqueStringNodeTestRelation(
+        from: _UniqueNodeInput!
+        to: _UniqueStringNodeInput!
+      ): _AddUniqueStringNodeTestRelationPayload
+        @MutationMeta(
+          relationship: "TEST_RELATION"
+          from: "UniqueNode"
+          to: "UniqueStringNode"
+        )
+        @hasScope(scopes: ["UniqueNode: Create", "UniqueStringNode: Create"])
+      RemoveUniqueStringNodeTestRelation(
+        from: _UniqueNodeInput!
+        to: _UniqueStringNodeInput!
+      ): _RemoveUniqueStringNodeTestRelationPayload
+        @MutationMeta(
+          relationship: "TEST_RELATION"
+          from: "UniqueNode"
+          to: "UniqueStringNode"
+        )
+        @hasScope(scopes: ["UniqueNode: Delete", "UniqueStringNode: Delete"])
+      MergeUniqueStringNodeTestRelation(
+        from: _UniqueNodeInput!
+        to: _UniqueStringNodeInput!
+      ): _MergeUniqueStringNodeTestRelationPayload
+        @MutationMeta(
+          relationship: "TEST_RELATION"
+          from: "UniqueNode"
+          to: "UniqueStringNode"
+        )
+        @hasScope(scopes: ["UniqueNode: Merge", "UniqueStringNode: Merge"])
+      CreateUniqueStringNode(id: ID!, uniqueString: String): UniqueStringNode
+        @hasScope(scopes: ["UniqueStringNode: Create"])
+      UpdateUniqueStringNode(id: ID, uniqueString: String!): UniqueStringNode
+        @hasScope(scopes: ["UniqueStringNode: Update"])
+      DeleteUniqueStringNode(uniqueString: String!): UniqueStringNode
+        @hasScope(scopes: ["UniqueStringNode: Delete"])
+      MergeUniqueStringNode(id: ID, uniqueString: String!): UniqueStringNode
+        @hasScope(scopes: ["UniqueStringNode: Merge"])
     }
 
     extend type Mutation {
@@ -3963,28 +4103,6 @@ test.cb('Test augmented schema', t => {
       to: Movie
     }
 
-    input _TemporalNodeInput {
-      datetime: _Neo4jDateTimeInput!
-    }
-
-    type _AddTemporalNodeTemporalNodesPayload
-      @relation(name: "TEMPORAL", from: "TemporalNode", to: "TemporalNode") {
-      from: TemporalNode
-      to: TemporalNode
-    }
-
-    type _RemoveTemporalNodeTemporalNodesPayload
-      @relation(name: "TEMPORAL", from: "TemporalNode", to: "TemporalNode") {
-      from: TemporalNode
-      to: TemporalNode
-    }
-
-    type _MergeTemporalNodeTemporalNodesPayload
-      @relation(name: "TEMPORAL", from: "TemporalNode", to: "TemporalNode") {
-      from: TemporalNode
-      to: TemporalNode
-    }
-
     input _SpatialNodeInput {
       id: ID!
     }
@@ -4392,6 +4510,198 @@ test.cb('Test augmented schema', t => {
       @relation(name: "cameraBuddy", from: "CameraMan", to: "Person") {
       from: CameraMan
       to: Person
+    }
+
+    type _AddUniqueNodeTestRelationPayload
+      @relation(
+        name: "TEST_RELATION"
+        from: "UniqueNode"
+        to: "UniqueStringNode"
+      ) {
+      from: UniqueNode
+      to: UniqueStringNode
+    }
+
+    type _RemoveUniqueNodeTestRelationPayload
+      @relation(
+        name: "TEST_RELATION"
+        from: "UniqueNode"
+        to: "UniqueStringNode"
+      ) {
+      from: UniqueNode
+      to: UniqueStringNode
+    }
+
+    type _MergeUniqueNodeTestRelationPayload
+      @relation(
+        name: "TEST_RELATION"
+        from: "UniqueNode"
+        to: "UniqueStringNode"
+      ) {
+      from: UniqueNode
+      to: UniqueStringNode
+    }
+
+    input _UniqueNodeInput {
+      id: ID!
+    }
+
+    enum _UniqueNodeOrdering {
+      string_asc
+      string_desc
+      id_asc
+      id_desc
+      anotherId_asc
+      anotherId_desc
+      _id_asc
+      _id_desc
+    }
+
+    input _UniqueNodeFilter {
+      AND: [_UniqueNodeFilter!]
+      OR: [_UniqueNodeFilter!]
+      string: String
+      string_not: String
+      string_in: [String!]
+      string_not_in: [String!]
+      string_contains: String
+      string_not_contains: String
+      string_starts_with: String
+      string_not_starts_with: String
+      string_ends_with: String
+      string_not_ends_with: String
+      id: ID
+      id_not: ID
+      id_in: [ID!]
+      id_not_in: [ID!]
+      id_contains: ID
+      id_not_contains: ID
+      id_starts_with: ID
+      id_not_starts_with: ID
+      id_ends_with: ID
+      id_not_ends_with: ID
+      anotherId: ID
+      anotherId_not: ID
+      anotherId_in: [ID!]
+      anotherId_not_in: [ID!]
+      anotherId_contains: ID
+      anotherId_not_contains: ID
+      anotherId_starts_with: ID
+      anotherId_not_starts_with: ID
+      anotherId_ends_with: ID
+      anotherId_not_ends_with: ID
+      testRelation: _UniqueStringNodeFilter
+      testRelation_not: _UniqueStringNodeFilter
+      testRelation_in: [_UniqueStringNodeFilter!]
+      testRelation_not_in: [_UniqueStringNodeFilter!]
+      testRelation_some: _UniqueStringNodeFilter
+      testRelation_none: _UniqueStringNodeFilter
+      testRelation_single: _UniqueStringNodeFilter
+      testRelation_every: _UniqueStringNodeFilter
+    }
+
+    type UniqueNode {
+      string: String @unique
+      id: ID @id
+      anotherId: ID @index
+      testRelation(
+        first: Int
+        offset: Int
+        orderBy: [_UniqueStringNodeOrdering]
+        filter: _UniqueStringNodeFilter
+      ): [UniqueStringNode] @relation(name: "TEST_RELATION", direction: OUT)
+      _id: String
+    }
+
+    type _AddUniqueStringNodeTestRelationPayload
+      @relation(
+        name: "TEST_RELATION"
+        from: "UniqueNode"
+        to: "UniqueStringNode"
+      ) {
+      from: UniqueNode
+      to: UniqueStringNode
+    }
+
+    type _RemoveUniqueStringNodeTestRelationPayload
+      @relation(
+        name: "TEST_RELATION"
+        from: "UniqueNode"
+        to: "UniqueStringNode"
+      ) {
+      from: UniqueNode
+      to: UniqueStringNode
+    }
+
+    type _MergeUniqueStringNodeTestRelationPayload
+      @relation(
+        name: "TEST_RELATION"
+        from: "UniqueNode"
+        to: "UniqueStringNode"
+      ) {
+      from: UniqueNode
+      to: UniqueStringNode
+    }
+
+    input _UniqueStringNodeInput {
+      uniqueString: String!
+    }
+
+    enum _UniqueStringNodeOrdering {
+      id_asc
+      id_desc
+      uniqueString_asc
+      uniqueString_desc
+      _id_asc
+      _id_desc
+    }
+
+    input _UniqueStringNodeFilter {
+      AND: [_UniqueStringNodeFilter!]
+      OR: [_UniqueStringNodeFilter!]
+      id: ID
+      id_not: ID
+      id_in: [ID!]
+      id_not_in: [ID!]
+      id_contains: ID
+      id_not_contains: ID
+      id_starts_with: ID
+      id_not_starts_with: ID
+      id_ends_with: ID
+      id_not_ends_with: ID
+      uniqueString: String
+      uniqueString_not: String
+      uniqueString_in: [String!]
+      uniqueString_not_in: [String!]
+      uniqueString_contains: String
+      uniqueString_not_contains: String
+      uniqueString_starts_with: String
+      uniqueString_not_starts_with: String
+      uniqueString_ends_with: String
+      uniqueString_not_ends_with: String
+      testRelation: _UniqueNodeFilter
+      testRelation_not: _UniqueNodeFilter
+      testRelation_in: [_UniqueNodeFilter!]
+      testRelation_not_in: [_UniqueNodeFilter!]
+      testRelation_some: _UniqueNodeFilter
+      testRelation_none: _UniqueNodeFilter
+      testRelation_single: _UniqueNodeFilter
+      testRelation_every: _UniqueNodeFilter
+    }
+
+    type UniqueStringNode {
+      id: ID!
+      _id: String
+    }
+
+    extend type UniqueStringNode {
+      uniqueString: String @unique
+      testRelation(
+        first: Int
+        offset: Int
+        orderBy: [_UniqueNodeOrdering]
+        filter: _UniqueNodeFilter
+      ): [UniqueNode] @relation(name: "TEST_RELATION", direction: IN)
     }
 
     type SubscriptionC {

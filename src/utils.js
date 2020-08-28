@@ -1,11 +1,9 @@
 import { parse, GraphQLInt, Kind } from 'graphql';
-import neo4j from 'neo4j-driver';
-import _ from 'lodash';
-import { Neo4jTypeName } from './augment/types/types';
-import { SpatialType } from './augment/types/spatial';
 import { unwrapNamedType } from './augment/fields';
 import { Neo4jTypeFormatted } from './augment/types/types';
 import { getFederatedOperationData } from './federation';
+import neo4j from 'neo4j-driver';
+import _ from 'lodash';
 
 function parseArg(arg, variableValues) {
   switch (arg.value.kind) {
@@ -378,12 +376,23 @@ export const computeOrderBy = (resolveInfo, schemaType) => {
   };
 };
 
-export const possiblySetFirstId = ({ args, statements = [], params }) => {
-  const arg = args.find(e => _getNamedType(e).name.value === 'ID');
-  // arg is the first ID field if it exists, and we set the value
-  // if no value is provided for the field name (arg.name.value) in params
-  if (arg && arg.name.value && params[arg.name.value] === undefined) {
-    statements.push(`${arg.name.value}: apoc.create.uuid()`);
+export const setPrimaryKeyValue = ({
+  args = [],
+  statements = [],
+  params,
+  primaryKey
+}) => {
+  if (primaryKey) {
+    const fieldName = primaryKey.name.value;
+    const primaryKeyArgument = args.find(arg => arg.name.value === fieldName);
+    if (primaryKeyArgument) {
+      const type = primaryKeyArgument.type;
+      const unwrappedType = unwrapNamedType({ type });
+      const isIDTypePrimaryKey = unwrappedType.name === 'ID';
+      if (isIDTypePrimaryKey && params[fieldName] === undefined) {
+        statements.push(`${fieldName}: apoc.create.uuid()`);
+      }
+    }
   }
   return statements;
 };
@@ -429,8 +438,7 @@ export const buildCypherParameters = ({
       // Get the AST definition for the argument matching this param name
       const fieldAst = args.find(arg => arg.name.value === paramName);
       if (fieldAst) {
-        const fieldType = _getNamedType(fieldAst.type);
-        const fieldTypeName = fieldType.name.value;
+        const fieldTypeName = unwrapNamedType({ type: fieldAst.type }).name;
         if (isNeo4jTypeInput(fieldTypeName)) {
           paramStatements = buildNeo4jTypeCypherParameters({
             paramStatements,
@@ -668,74 +676,6 @@ export const getRelationTypeDirective = relationshipType => {
     : undefined;
 };
 
-const firstNonNullAndIdField = fields => {
-  let valueTypeName = '';
-  return fields.find(e => {
-    valueTypeName = _getNamedType(e).name.value;
-    return (
-      e.name.value !== '_id' &&
-      e.type.kind === 'NonNullType' &&
-      valueTypeName === 'ID'
-    );
-  });
-};
-
-const firstIdField = fields => {
-  let valueTypeName = '';
-  return fields.find(e => {
-    valueTypeName = _getNamedType(e).name.value;
-    return e.name.value !== '_id' && valueTypeName === 'ID';
-  });
-};
-
-const firstNonNullField = fields => {
-  let valueTypeName = '';
-  return fields.find(e => {
-    valueTypeName = _getNamedType(e).name.value;
-    return valueTypeName === 'NonNullType';
-  });
-};
-
-const firstField = fields => {
-  return fields.find(e => {
-    return e.name.value !== '_id';
-  });
-};
-
-export const getPrimaryKey = astNode => {
-  let fields = astNode.fields;
-  let pk = undefined;
-  // prevent ignored, relation, and computed fields
-  // from being used as primary keys
-  fields = fields.filter(
-    field =>
-      !getFieldDirective(field, 'neo4j_ignore') &&
-      !getFieldDirective(field, 'relation') &&
-      !getFieldDirective(field, 'cypher')
-  );
-  if (!fields.length) return pk;
-  pk = firstNonNullAndIdField(fields);
-  if (!pk) {
-    pk = firstIdField(fields);
-  }
-  if (!pk) {
-    pk = firstNonNullField(fields);
-  }
-  if (!pk) {
-    pk = firstField(fields);
-  }
-  // Do not allow Point primary key
-  if (pk) {
-    const type = pk.type;
-    const unwrappedType = unwrapNamedType({ type });
-    const typeName = unwrappedType.name;
-    if (isSpatialType(typeName) || typeName === SpatialType.POINT) {
-      pk = undefined;
-    }
-  }
-  return pk;
-};
-
 /**
  * Render safe a variable name according to cypher rules
  * @param {String} i input variable name
@@ -900,10 +840,6 @@ export const splitSelectionParameters = (
 
 export const isNeo4jType = name => isTemporalType(name) || isSpatialType(name);
 
-export const isNeo4jTypeField = (schemaType, fieldName) =>
-  isTemporalField(schemaType, fieldName) ||
-  isSpatialField(schemaType, fieldName);
-
 export const isNeo4jTypeInput = name =>
   isTemporalInputType(name) ||
   isSpatialInputType(name) ||
@@ -1018,7 +954,7 @@ export const neo4jTypePredicateClauses = (
       if (paramValue) neo4jTypeParam = paramValue;
       if (neo4jTypeParam[Neo4jTypeFormatted.FORMATTED]) {
         // Only the dedicated 'formatted' arg is used if it is provided
-        const type = t ? _getNamedType(t.type).name.value : '';
+        const type = unwrapNamedType({ type: t.type }).name;
         acc.push(
           `${variableName}.${argName} = ${decideNeo4jTypeConstructor(type)}($${
             // use index if provided, for nested arguments
@@ -1053,7 +989,7 @@ export const getNeo4jTypeArguments = args => {
         if (!t) {
           return acc;
         }
-        const fieldType = _getNamedType(t.type).name.value;
+        const fieldType = unwrapNamedType({ type: t.type }).name;
         if (isNeo4jTypeInput(fieldType)) acc.push(t);
         return acc;
       }, [])
@@ -1082,13 +1018,6 @@ export const removeIgnoredFields = (schemaType, selections) => {
     });
   }
   return selections;
-};
-
-const _getNamedType = type => {
-  if (type.kind !== 'NamedType') {
-    return _getNamedType(type.type);
-  }
-  return type;
 };
 
 export const getInterfaceDerivedTypeNames = (schema, interfaceName) => {

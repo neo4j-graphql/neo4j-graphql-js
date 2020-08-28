@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.16.0
+
+- [Add optional @id, @unique, and @index schema directives](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/499)
+
 ## 2.15.1
 
 - [Fix invalid input in generated query when using inline fragments inside fragment](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/492)

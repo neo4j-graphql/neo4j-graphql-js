@@ -18,7 +18,7 @@ import {
   getOuterSkipLimit,
   getQueryCypherDirective,
   getMutationArguments,
-  possiblySetFirstId,
+  setPrimaryKeyValue,
   buildCypherParameters,
   getQueryArguments,
   initializeMutationParams,
@@ -46,6 +46,7 @@ import {
   getPayloadSelections,
   isGraphqlObjectType
 } from './utils';
+import { getPrimaryKey } from './augment/types/node/selection';
 import {
   getNamedType,
   isScalarType,
@@ -1659,10 +1660,14 @@ const nodeCreate = ({
   const safeLabelName = safeLabel([typeName, ...additionalLabels]);
   let statements = [];
   const args = getMutationArguments(resolveInfo);
-  statements = possiblySetFirstId({
+  const fieldMap = schemaType.getFields();
+  const fields = Object.values(fieldMap).map(field => field.astNode);
+  const primaryKey = getPrimaryKey({ fields });
+  statements = setPrimaryKeyValue({
     args,
     statements,
-    params: params.params
+    params: params.params,
+    primaryKey
   });
   const [preparedParams, paramStatements] = buildCypherParameters({
     args,
@@ -1699,8 +1704,10 @@ const nodeDelete = ({
   const safeVariableName = safeVar(variableName);
   const safeLabelName = safeLabel(typeName);
   const args = getMutationArguments(resolveInfo);
-  const primaryKeyArg = args[0];
-  const primaryKeyArgName = primaryKeyArg.name.value;
+  const fieldMap = schemaType.getFields();
+  const fields = Object.values(fieldMap).map(field => field.astNode);
+  const primaryKey = getPrimaryKey({ fields });
+  const primaryKeyArgName = primaryKey.name.value;
   const neo4jTypeArgs = getNeo4jTypeArguments(args);
   const [primaryKeyParam] = splitSelectionParameters(params, primaryKeyArgName);
   const neo4jTypeClauses = neo4jTypePredicateClauses(
@@ -2137,8 +2144,10 @@ const nodeMergeOrUpdate = ({
 }) => {
   const safeVariableName = safeVar(variableName);
   const args = getMutationArguments(resolveInfo);
-  const primaryKeyArg = args[0];
-  const primaryKeyArgName = primaryKeyArg.name.value;
+  const fieldMap = schemaType.getFields();
+  const fields = Object.values(fieldMap).map(field => field.astNode);
+  const primaryKey = getPrimaryKey({ fields });
+  const primaryKeyArgName = primaryKey.name.value;
   const neo4jTypeArgs = getNeo4jTypeArguments(args);
   const [primaryKeyParam, updateParams] = splitSelectionParameters(
     params,
