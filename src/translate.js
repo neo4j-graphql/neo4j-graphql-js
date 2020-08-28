@@ -1480,6 +1480,7 @@ export const translateMutation = ({
       schemaType,
       selections,
       params,
+      context,
       variableName,
       typeName,
       additionalLabels
@@ -1651,7 +1652,8 @@ const nodeCreate = ({
   schemaType,
   resolveInfo,
   additionalLabels,
-  params
+  params,
+  context
 }) => {
   const safeVariableName = safeVar(variableName);
   const safeLabelName = safeLabel([typeName, ...additionalLabels]);
@@ -1674,7 +1676,8 @@ const nodeCreate = ({
     selections,
     variableName,
     schemaType,
-    resolveInfo
+    resolveInfo,
+    cypherParams: getCypherParams(context)
   });
 
   params = { ...preparedParams, ...subParams };
