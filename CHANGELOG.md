@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.16.2
+## 2.16.3
 
 - [Better align with conventions for scopes added to hasScope directive](https://github.com/neo4j-graphql/neo4j-graphql-js/commit/34125ba75e03f9cb06044d4cae31783d501935f1)
 - [Fix issue with cypher directive mutation when used with additionalLabels directive](https://github.com/neo4j-graphql/neo4j-graphql-js/issues/502)
