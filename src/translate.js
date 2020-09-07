@@ -1481,6 +1481,7 @@ export const translateMutation = ({
       schemaType,
       selections,
       params,
+      context,
       variableName,
       typeName,
       additionalLabels
@@ -1525,7 +1526,8 @@ export const translateMutation = ({
         selections,
         schemaType,
         additionalLabels,
-        params
+        params,
+        context
       });
     }
   } else if (isRemoveMutation(resolveInfo)) {
@@ -1652,7 +1654,8 @@ const nodeCreate = ({
   schemaType,
   resolveInfo,
   additionalLabels,
-  params
+  params,
+  context
 }) => {
   const safeVariableName = safeVar(variableName);
   const safeLabelName = safeLabel([typeName, ...additionalLabels]);
@@ -1679,7 +1682,8 @@ const nodeCreate = ({
     selections,
     variableName,
     schemaType,
-    resolveInfo
+    resolveInfo,
+    cypherParams: getCypherParams(context)
   });
 
   params = { ...preparedParams, ...subParams };
@@ -2137,7 +2141,8 @@ const nodeMergeOrUpdate = ({
   selections,
   schemaType,
   additionalLabels,
-  params
+  params,
+  context
 }) => {
   const safeVariableName = safeVar(variableName);
   const args = getMutationArguments(resolveInfo);
@@ -2165,7 +2170,8 @@ const nodeMergeOrUpdate = ({
     args,
     params: updateParams,
     paramKey: 'params',
-    resolveInfo
+    resolveInfo,
+    cypherParams: getCypherParams(context)
   });
   let cypherOperation = '';
   let safeLabelName = safeLabel(typeName);
@@ -2188,7 +2194,8 @@ const nodeMergeOrUpdate = ({
     selections,
     variableName,
     schemaType,
-    resolveInfo
+    resolveInfo,
+    cypherParams: getCypherParams(context)
   });
   if (!preparedParams.params) preparedParams.params = {};
   preparedParams.params[primaryKeyArgName] = primaryKeyParam[primaryKeyArgName];
