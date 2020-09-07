@@ -11,6 +11,7 @@
     "start-interface": "DEBUG=neo4j-graphql.js nodemon ./example/apollo-server/interface-union-example.js --exec babel-node -e js",
     "start-gateway": "nodemon ./example/apollo-federation/gateway.js --exec babel-node -e js",
     "start-bookmark-example": "nodemon ./example/apollo-server/bookmarks.js --exec babel-node -e js",
+    "start-auth-example": "JWT_SECRET=oqldBPU1yMXcrTwcha1a9PGi9RHlPVzQ nodemon ./example/apollo-server/authScopes.js --exec babel-node -e js", 
     "build": "babel src --presets @babel/preset-env --out-dir dist",
     "build-with-sourcemaps": "babel src --presets @babel/preset-env --out-dir dist --source-maps",
     "precommit": "lint-staged",

@@ -198,7 +198,7 @@ test.cb('Test augmented schema', t => {
         offset: Int
         orderBy: [_GenreOrdering]
         filter: _GenreFilter
-      ): [Genre] @hasScope(scopes: ["Genre: Read"])
+      ): [Genre] @hasScope(scopes: ["Genre: Read", "read:genre"])
       Actor(
         userId: ID
         name: String
@@ -208,7 +208,7 @@ test.cb('Test augmented schema', t => {
         offset: Int
         orderBy: [_ActorOrdering]
         filter: _ActorFilter
-      ): [Actor] @hasScope(scopes: ["Actor: Read"])
+      ): [Actor] @hasScope(scopes: ["Actor: Read", "read:actor"])
       Book(
         genre: BookGenre
         _id: String
@@ -216,7 +216,7 @@ test.cb('Test augmented schema', t => {
         offset: Int
         orderBy: [_BookOrdering]
         filter: _BookFilter
-      ): [Book] @hasScope(scopes: ["Book: Read"])
+      ): [Book] @hasScope(scopes: ["Book: Read", "read:book"])
       TemporalNode(
         datetime: _Neo4jDateTimeInput
         name: String
@@ -231,7 +231,8 @@ test.cb('Test augmented schema', t => {
         offset: Int
         orderBy: [_TemporalNodeOrdering]
         filter: _TemporalNodeFilter
-      ): [TemporalNode] @hasScope(scopes: ["TemporalNode: Read"])
+      ): [TemporalNode]
+        @hasScope(scopes: ["TemporalNode: Read", "read:temporalnode"])
       SpatialNode(
         id: ID
         point: _Neo4jPointInput
@@ -240,7 +241,8 @@ test.cb('Test augmented schema', t => {
         offset: Int
         orderBy: [_SpatialNodeOrdering]
         filter: _SpatialNodeFilter
-      ): [SpatialNode] @hasScope(scopes: ["SpatialNode: Read"])
+      ): [SpatialNode]
+        @hasScope(scopes: ["SpatialNode: Read", "read:spatialnode"])
       OldCamera(
         type: String
         id: ID
@@ -252,7 +254,7 @@ test.cb('Test augmented schema', t => {
         offset: Int
         orderBy: [_OldCameraOrdering]
         filter: _OldCameraFilter
-      ): [OldCamera] @hasScope(scopes: ["OldCamera: Read"])
+      ): [OldCamera] @hasScope(scopes: ["OldCamera: Read", "read:oldcamera"])
       NewCamera(
         type: String
         id: ID
@@ -264,7 +266,7 @@ test.cb('Test augmented schema', t => {
         offset: Int
         orderBy: [_NewCameraOrdering]
         filter: _NewCameraFilter
-      ): [NewCamera] @hasScope(scopes: ["NewCamera: Read"])
+      ): [NewCamera] @hasScope(scopes: ["NewCamera: Read", "read:newcamera"])
       CameraMan(
         userId: ID
         name: String
@@ -274,7 +276,7 @@ test.cb('Test augmented schema', t => {
         offset: Int
         orderBy: [_CameraManOrdering]
         filter: _CameraManFilter
-      ): [CameraMan] @hasScope(scopes: ["CameraMan: Read"])
+      ): [CameraMan] @hasScope(scopes: ["CameraMan: Read", "read:cameraman"])
       UniqueNode(
         string: String
         id: ID
@@ -284,7 +286,7 @@ test.cb('Test augmented schema', t => {
         offset: Int
         orderBy: [_UniqueNodeOrdering]
         filter: _UniqueNodeFilter
-      ): [UniqueNode] @hasScope(scopes: ["UniqueNode: Read"])
+      ): [UniqueNode] @hasScope(scopes: ["UniqueNode: Read", "read:uniquenode"])
       UniqueStringNode(
         id: ID
         uniqueString: String
@@ -293,7 +295,8 @@ test.cb('Test augmented schema', t => {
         offset: Int
         orderBy: [_UniqueStringNodeOrdering]
         filter: _UniqueStringNodeFilter
-      ): [UniqueStringNode] @hasScope(scopes: ["UniqueStringNode: Read"])
+      ): [UniqueStringNode]
+        @hasScope(scopes: ["UniqueStringNode: Read", "read:uniquestringnode"])
     }
 
     extend type QueryA {
@@ -2388,100 +2391,187 @@ test.cb('Test augmented schema', t => {
         to: _GenreInput!
       ): _AddMovieExtensionNodePayload
         @MutationMeta(relationship: "IN_GENRE", from: "Movie", to: "Genre")
-        @hasScope(scopes: ["Movie: Create", "Genre: Create"])
+        @hasScope(
+          scopes: [
+            "Movie: Create"
+            "create:movie"
+            "Genre: Create"
+            "create:genre"
+          ]
+        )
       RemoveMovieExtensionNode(
         from: _MovieInput!
         to: _GenreInput!
       ): _RemoveMovieExtensionNodePayload
         @MutationMeta(relationship: "IN_GENRE", from: "Movie", to: "Genre")
-        @hasScope(scopes: ["Movie: Delete", "Genre: Delete"])
+        @hasScope(
+          scopes: [
+            "Movie: Delete"
+            "delete:movie"
+            "Genre: Delete"
+            "delete:genre"
+          ]
+        )
       MergeMovieExtensionNode(
         from: _MovieInput!
         to: _GenreInput!
       ): _MergeMovieExtensionNodePayload
         @MutationMeta(relationship: "IN_GENRE", from: "Movie", to: "Genre")
-        @hasScope(scopes: ["Movie: Merge", "Genre: Merge"])
+        @hasScope(
+          scopes: ["Movie: Merge", "merge:movie", "Genre: Merge", "merge:genre"]
+        )
       AddMovieGenres(
         from: _MovieInput!
         to: _GenreInput!
       ): _AddMovieGenresPayload
         @MutationMeta(relationship: "IN_GENRE", from: "Movie", to: "Genre")
-        @hasScope(scopes: ["Movie: Create", "Genre: Create"])
+        @hasScope(
+          scopes: [
+            "Movie: Create"
+            "create:movie"
+            "Genre: Create"
+            "create:genre"
+          ]
+        )
       RemoveMovieGenres(
         from: _MovieInput!
         to: _GenreInput!
       ): _RemoveMovieGenresPayload
         @MutationMeta(relationship: "IN_GENRE", from: "Movie", to: "Genre")
-        @hasScope(scopes: ["Movie: Delete", "Genre: Delete"])
+        @hasScope(
+          scopes: [
+            "Movie: Delete"
+            "delete:movie"
+            "Genre: Delete"
+            "delete:genre"
+          ]
+        )
       MergeMovieGenres(
         from: _MovieInput!
         to: _GenreInput!
       ): _MergeMovieGenresPayload
         @MutationMeta(relationship: "IN_GENRE", from: "Movie", to: "Genre")
-        @hasScope(scopes: ["Movie: Merge", "Genre: Merge"])
+        @hasScope(
+          scopes: ["Movie: Merge", "merge:movie", "Genre: Merge", "merge:genre"]
+        )
       AddMovieActors(
         from: _ActorInput!
         to: _MovieInput!
       ): _AddMovieActorsPayload
         @MutationMeta(relationship: "ACTED_IN", from: "Actor", to: "Movie")
-        @hasScope(scopes: ["Actor: Create", "Movie: Create"])
+        @hasScope(
+          scopes: [
+            "Actor: Create"
+            "create:actor"
+            "Movie: Create"
+            "create:movie"
+          ]
+        )
       RemoveMovieActors(
         from: _ActorInput!
         to: _MovieInput!
       ): _RemoveMovieActorsPayload
         @MutationMeta(relationship: "ACTED_IN", from: "Actor", to: "Movie")
-        @hasScope(scopes: ["Actor: Delete", "Movie: Delete"])
+        @hasScope(
+          scopes: [
+            "Actor: Delete"
+            "delete:actor"
+            "Movie: Delete"
+            "delete:movie"
+          ]
+        )
       MergeMovieActors(
         from: _ActorInput!
         to: _MovieInput!
       ): _MergeMovieActorsPayload
         @MutationMeta(relationship: "ACTED_IN", from: "Actor", to: "Movie")
-        @hasScope(scopes: ["Actor: Merge", "Movie: Merge"])
+        @hasScope(
+          scopes: ["Actor: Merge", "merge:actor", "Movie: Merge", "merge:movie"]
+        )
       AddMovieFilmedIn(
         from: _MovieInput!
         to: _StateInput!
       ): _AddMovieFilmedInPayload
         @MutationMeta(relationship: "FILMED_IN", from: "Movie", to: "State")
-        @hasScope(scopes: ["Movie: Create", "State: Create"])
+        @hasScope(
+          scopes: [
+            "Movie: Create"
+            "create:movie"
+            "State: Create"
+            "create:state"
+          ]
+        )
       RemoveMovieFilmedIn(
         from: _MovieInput!
         to: _StateInput!
       ): _RemoveMovieFilmedInPayload
         @MutationMeta(relationship: "FILMED_IN", from: "Movie", to: "State")
-        @hasScope(scopes: ["Movie: Delete", "State: Delete"])
+        @hasScope(
+          scopes: [
+            "Movie: Delete"
+            "delete:movie"
+            "State: Delete"
+            "delete:state"
+          ]
+        )
       MergeMovieFilmedIn(
         from: _MovieInput!
         to: _StateInput!
       ): _MergeMovieFilmedInPayload
         @MutationMeta(relationship: "FILMED_IN", from: "Movie", to: "State")
-        @hasScope(scopes: ["Movie: Merge", "State: Merge"])
+        @hasScope(
+          scopes: ["Movie: Merge", "merge:movie", "State: Merge", "merge:state"]
+        )
       AddMovieRatings(
         from: _UserInput!
         to: _MovieInput!
         data: _RatedInput!
       ): _AddMovieRatingsPayload
         @MutationMeta(relationship: "RATED", from: "User", to: "Movie")
-        @hasScope(scopes: ["User: Create", "Movie: Create"])
+        @hasScope(
+          scopes: [
+            "User: Create"
+            "create:user"
+            "Movie: Create"
+            "create:movie"
+          ]
+        )
       RemoveMovieRatings(
         from: _UserInput!
         to: _MovieInput!
       ): _RemoveMovieRatingsPayload
         @MutationMeta(relationship: "RATED", from: "User", to: "Movie")
-        @hasScope(scopes: ["User: Delete", "Movie: Delete"])
+        @hasScope(
+          scopes: [
+            "User: Delete"
+            "delete:user"
+            "Movie: Delete"
+            "delete:movie"
+          ]
+        )
       UpdateMovieRatings(
         from: _UserInput!
         to: _MovieInput!
         data: _RatedInput!
       ): _UpdateMovieRatingsPayload
         @MutationMeta(relationship: "RATED", from: "User", to: "Movie")
-        @hasScope(scopes: ["User: Update", "Movie: Update"])
+        @hasScope(
+          scopes: [
+            "User: Update"
+            "update:user"
+            "Movie: Update"
+            "update:movie"
+          ]
+        )
       MergeMovieRatings(
         from: _UserInput!
         to: _MovieInput!
         data: _RatedInput!
       ): _MergeMovieRatingsPayload
         @MutationMeta(relationship: "RATED", from: "User", to: "Movie")
-        @hasScope(scopes: ["User: Merge", "Movie: Merge"])
+        @hasScope(
+          scopes: ["User: Merge", "merge:user", "Movie: Merge", "merge:movie"]
+        )
       CreateMovie(
         movieId: ID
         title: String
@@ -2499,7 +2589,7 @@ test.cb('Test augmented schema', t => {
         imdbRatings: [Float]
         releases: [_Neo4jDateTimeInput]
         extensionScalar: String
-      ): Movie @hasScope(scopes: ["Movie: Create"])
+      ): Movie @hasScope(scopes: ["Movie: Create", "create:movie"])
       UpdateMovie(
         movieId: ID!
         title: String
@@ -2517,8 +2607,9 @@ test.cb('Test augmented schema', t => {
         imdbRatings: [Float]
         releases: [_Neo4jDateTimeInput]
         extensionScalar: String
-      ): Movie @hasScope(scopes: ["Movie: Update"])
-      DeleteMovie(movieId: ID!): Movie @hasScope(scopes: ["Movie: Delete"])
+      ): Movie @hasScope(scopes: ["Movie: Update", "update:movie"])
+      DeleteMovie(movieId: ID!): Movie
+        @hasScope(scopes: ["Movie: Delete", "delete:movie"])
       MergeMovie(
         movieId: ID!
         title: String
@@ -2536,25 +2627,41 @@ test.cb('Test augmented schema', t => {
         imdbRatings: [Float]
         releases: [_Neo4jDateTimeInput]
         extensionScalar: String
-      ): Movie @hasScope(scopes: ["Movie: Merge"])
+      ): Movie @hasScope(scopes: ["Movie: Merge", "merge:movie"])
       AddGenreMovies(
         from: _MovieInput!
         to: _GenreInput!
       ): _AddGenreMoviesPayload
         @MutationMeta(relationship: "IN_GENRE", from: "Movie", to: "Genre")
-        @hasScope(scopes: ["Movie: Create", "Genre: Create"])
+        @hasScope(
+          scopes: [
+            "Movie: Create"
+            "create:movie"
+            "Genre: Create"
+            "create:genre"
+          ]
+        )
       RemoveGenreMovies(
         from: _MovieInput!
         to: _GenreInput!
       ): _RemoveGenreMoviesPayload
         @MutationMeta(relationship: "IN_GENRE", from: "Movie", to: "Genre")
-        @hasScope(scopes: ["Movie: Delete", "Genre: Delete"])
+        @hasScope(
+          scopes: [
+            "Movie: Delete"
+            "delete:movie"
+            "Genre: Delete"
+            "delete:genre"
+          ]
+        )
       MergeGenreMovies(
         from: _MovieInput!
         to: _GenreInput!
       ): _MergeGenreMoviesPayload
         @MutationMeta(relationship: "IN_GENRE", from: "Movie", to: "Genre")
-        @hasScope(scopes: ["Movie: Merge", "Genre: Merge"])
+        @hasScope(
+          scopes: ["Movie: Merge", "merge:movie", "Genre: Merge", "merge:genre"]
+        )
       AddGenreInterfacedRelationshipType(
         from: _PersonInput!
         to: _GenreInput!
@@ -2565,7 +2672,14 @@ test.cb('Test augmented schema', t => {
           from: "Person"
           to: "Genre"
         )
-        @hasScope(scopes: ["Person: Create", "Genre: Create"])
+        @hasScope(
+          scopes: [
+            "Person: Create"
+            "create:person"
+            "Genre: Create"
+            "create:genre"
+          ]
+        )
       RemoveGenreInterfacedRelationshipType(
         from: _PersonInput!
         to: _GenreInput!
@@ -2575,7 +2689,14 @@ test.cb('Test augmented schema', t => {
           from: "Person"
           to: "Genre"
         )
-        @hasScope(scopes: ["Person: Delete", "Genre: Delete"])
+        @hasScope(
+          scopes: [
+            "Person: Delete"
+            "delete:person"
+            "Genre: Delete"
+            "delete:genre"
+          ]
+        )
       UpdateGenreInterfacedRelationshipType(
         from: _PersonInput!
         to: _GenreInput!
@@ -2586,7 +2707,14 @@ test.cb('Test augmented schema', t => {
           from: "Person"
           to: "Genre"
         )
-        @hasScope(scopes: ["Person: Update", "Genre: Update"])
+        @hasScope(
+          scopes: [
+            "Person: Update"
+            "update:person"
+            "Genre: Update"
+            "update:genre"
+          ]
+        )
       MergeGenreInterfacedRelationshipType(
         from: _PersonInput!
         to: _GenreInput!
@@ -2597,17 +2725,28 @@ test.cb('Test augmented schema', t => {
           from: "Person"
           to: "Genre"
         )
-        @hasScope(scopes: ["Person: Merge", "Genre: Merge"])
-      CreateGenre(name: String): Genre @hasScope(scopes: ["Genre: Create"])
-      DeleteGenre(name: String!): Genre @hasScope(scopes: ["Genre: Delete"])
-      MergeGenre(name: String!): Genre @hasScope(scopes: ["Genre: Merge"])
+        @hasScope(
+          scopes: [
+            "Person: Merge"
+            "merge:person"
+            "Genre: Merge"
+            "merge:genre"
+          ]
+        )
+      CreateGenre(name: String): Genre
+        @hasScope(scopes: ["Genre: Create", "create:genre"])
+      DeleteGenre(name: String!): Genre
+        @hasScope(scopes: ["Genre: Delete", "delete:genre"])
+      MergeGenre(name: String!): Genre
+        @hasScope(scopes: ["Genre: Merge", "merge:genre"])
       CreateState(name: String!, id: ID): State
-        @hasScope(scopes: ["State: Create"])
+        @hasScope(scopes: ["State: Create", "create:state"])
       UpdateState(name: String!, id: ID): State
-        @hasScope(scopes: ["State: Update"])
-      DeleteState(name: String!): State @hasScope(scopes: ["State: Delete"])
+        @hasScope(scopes: ["State: Update", "update:state"])
+      DeleteState(name: String!): State
+        @hasScope(scopes: ["State: Delete", "delete:state"])
       MergeState(name: String!, id: ID): State
-        @hasScope(scopes: ["State: Merge"])
+        @hasScope(scopes: ["State: Merge", "merge:state"])
       AddPersonInterfacedRelationshipType(
         from: _PersonInput!
         to: _GenreInput!
@@ -2618,7 +2757,14 @@ test.cb('Test augmented schema', t => {
           from: "Person"
           to: "Genre"
         )
-        @hasScope(scopes: ["Person: Create", "Genre: Create"])
+        @hasScope(
+          scopes: [
+            "Person: Create"
+            "create:person"
+            "Genre: Create"
+            "create:genre"
+          ]
+        )
       RemovePersonInterfacedRelationshipType(
         from: _PersonInput!
         to: _GenreInput!
@@ -2628,7 +2774,14 @@ test.cb('Test augmented schema', t => {
           from: "Person"
           to: "Genre"
         )
-        @hasScope(scopes: ["Person: Delete", "Genre: Delete"])
+        @hasScope(
+          scopes: [
+            "Person: Delete"
+            "delete:person"
+            "Genre: Delete"
+            "delete:genre"
+          ]
+        )
       UpdatePersonInterfacedRelationshipType(
         from: _PersonInput!
         to: _GenreInput!
@@ -2639,7 +2792,14 @@ test.cb('Test augmented schema', t => {
           from: "Person"
           to: "Genre"
         )
-        @hasScope(scopes: ["Person: Update", "Genre: Update"])
+        @hasScope(
+          scopes: [
+            "Person: Update"
+            "update:person"
+            "Genre: Update"
+            "update:genre"
+          ]
+        )
       MergePersonInterfacedRelationshipType(
         from: _PersonInput!
         to: _GenreInput!
@@ -2650,7 +2810,14 @@ test.cb('Test augmented schema', t => {
           from: "Person"
           to: "Genre"
         )
-        @hasScope(scopes: ["Person: Merge", "Genre: Merge"])
+        @hasScope(
+          scopes: [
+            "Person: Merge"
+            "merge:person"
+            "Genre: Merge"
+            "merge:genre"
+          ]
+        )
       AddPersonReflexiveInterfacedRelationshipType(
         from: _PersonInput!
         to: _PersonInput!
@@ -2661,7 +2828,14 @@ test.cb('Test augmented schema', t => {
           from: "Person"
           to: "Person"
         )
-        @hasScope(scopes: ["Person: Create", "Person: Create"])
+        @hasScope(
+          scopes: [
+            "Person: Create"
+            "create:person"
+            "Person: Create"
+            "create:person"
+          ]
+        )
       RemovePersonReflexiveInterfacedRelationshipType(
         from: _PersonInput!
         to: _PersonInput!
@@ -2671,7 +2845,14 @@ test.cb('Test augmented schema', t => {
           from: "Person"
           to: "Person"
         )
-        @hasScope(scopes: ["Person: Delete", "Person: Delete"])
+        @hasScope(
+          scopes: [
+            "Person: Delete"
+            "delete:person"
+            "Person: Delete"
+            "delete:person"
+          ]
+        )
       UpdatePersonReflexiveInterfacedRelationshipType(
         from: _PersonInput!
         to: _PersonInput!
@@ -2682,7 +2863,14 @@ test.cb('Test augmented schema', t => {
           from: "Person"
           to: "Person"
         )
-        @hasScope(scopes: ["Person: Update", "Person: Update"])
+        @hasScope(
+          scopes: [
+            "Person: Update"
+            "update:person"
+            "Person: Update"
+            "update:person"
+          ]
+        )
       MergePersonReflexiveInterfacedRelationshipType(
         from: _PersonInput!
         to: _PersonInput!
@@ -2693,43 +2881,87 @@ test.cb('Test augmented schema', t => {
           from: "Person"
           to: "Person"
         )
-        @hasScope(scopes: ["Person: Merge", "Person: Merge"])
+        @hasScope(
+          scopes: [
+            "Person: Merge"
+            "merge:person"
+            "Person: Merge"
+            "merge:person"
+          ]
+        )
       AddActorMovies(
         from: _ActorInput!
         to: _MovieInput!
       ): _AddActorMoviesPayload
         @MutationMeta(relationship: "ACTED_IN", from: "Actor", to: "Movie")
-        @hasScope(scopes: ["Actor: Create", "Movie: Create"])
+        @hasScope(
+          scopes: [
+            "Actor: Create"
+            "create:actor"
+            "Movie: Create"
+            "create:movie"
+          ]
+        )
       RemoveActorMovies(
         from: _ActorInput!
         to: _MovieInput!
       ): _RemoveActorMoviesPayload
         @MutationMeta(relationship: "ACTED_IN", from: "Actor", to: "Movie")
-        @hasScope(scopes: ["Actor: Delete", "Movie: Delete"])
+        @hasScope(
+          scopes: [
+            "Actor: Delete"
+            "delete:actor"
+            "Movie: Delete"
+            "delete:movie"
+          ]
+        )
       MergeActorMovies(
         from: _ActorInput!
         to: _MovieInput!
       ): _MergeActorMoviesPayload
         @MutationMeta(relationship: "ACTED_IN", from: "Actor", to: "Movie")
-        @hasScope(scopes: ["Actor: Merge", "Movie: Merge"])
+        @hasScope(
+          scopes: ["Actor: Merge", "merge:actor", "Movie: Merge", "merge:movie"]
+        )
       AddActorKnows(
         from: _ActorInput!
         to: _PersonInput!
       ): _AddActorKnowsPayload
         @MutationMeta(relationship: "KNOWS", from: "Actor", to: "Person")
-        @hasScope(scopes: ["Actor: Create", "Person: Create"])
+        @hasScope(
+          scopes: [
+            "Actor: Create"
+            "create:actor"
+            "Person: Create"
+            "create:person"
+          ]
+        )
       RemoveActorKnows(
         from: _ActorInput!
         to: _PersonInput!
       ): _RemoveActorKnowsPayload
         @MutationMeta(relationship: "KNOWS", from: "Actor", to: "Person")
-        @hasScope(scopes: ["Actor: Delete", "Person: Delete"])
+        @hasScope(
+          scopes: [
+            "Actor: Delete"
+            "delete:actor"
+            "Person: Delete"
+            "delete:person"
+          ]
+        )
       MergeActorKnows(
         from: _ActorInput!
         to: _PersonInput!
       ): _MergeActorKnowsPayload
         @MutationMeta(relationship: "KNOWS", from: "Actor", to: "Person")
-        @hasScope(scopes: ["Actor: Merge", "Person: Merge"])
+        @hasScope(
+          scopes: [
+            "Actor: Merge"
+            "merge:actor"
+            "Person: Merge"
+            "merge:person"
+          ]
+        )
       AddActorInterfacedRelationshipType(
         from: _PersonInput!
         to: _GenreInput!
@@ -2740,7 +2972,14 @@ test.cb('Test augmented schema', t => {
           from: "Person"
           to: "Genre"
         )
-        @hasScope(scopes: ["Person: Create", "Genre: Create"])
+        @hasScope(
+          scopes: [
+            "Person: Create"
+            "create:person"
+            "Genre: Create"
+            "create:genre"
+          ]
+        )
       RemoveActorInterfacedRelationshipType(
         from: _PersonInput!
         to: _GenreInput!
@@ -2750,7 +2989,14 @@ test.cb('Test augmented schema', t => {
           from: "Person"
           to: "Genre"
         )
-        @hasScope(scopes: ["Person: Delete", "Genre: Delete"])
+        @hasScope(
+          scopes: [
+            "Person: Delete"
+            "delete:person"
+            "Genre: Delete"
+            "delete:genre"
+          ]
+        )
       UpdateActorInterfacedRelationshipType(
         from: _PersonInput!
         to: _GenreInput!
@@ -2761,7 +3007,14 @@ test.cb('Test augmented schema', t => {
           from: "Person"
           to: "Genre"
         )
-        @hasScope(scopes: ["Person: Update", "Genre: Update"])
+        @hasScope(
+          scopes: [
+            "Person: Update"
+            "update:person"
+            "Genre: Update"
+            "update:genre"
+          ]
+        )
       MergeActorInterfacedRelationshipType(
         from: _PersonInput!
         to: _GenreInput!
@@ -2772,7 +3025,14 @@ test.cb('Test augmented schema', t => {
           from: "Person"
           to: "Genre"
         )
-        @hasScope(scopes: ["Person: Merge", "Genre: Merge"])
+        @hasScope(
+          scopes: [
+            "Person: Merge"
+            "merge:person"
+            "Genre: Merge"
+            "merge:genre"
+          ]
+        )
       AddActorReflexiveInterfacedRelationshipType(
         from: _PersonInput!
         to: _PersonInput!
@@ -2783,7 +3043,14 @@ test.cb('Test augmented schema', t => {
           from: "Person"
           to: "Person"
         )
-        @hasScope(scopes: ["Person: Create", "Person: Create"])
+        @hasScope(
+          scopes: [
+            "Person: Create"
+            "create:person"
+            "Person: Create"
+            "create:person"
+          ]
+        )
       RemoveActorReflexiveInterfacedRelationshipType(
         from: _PersonInput!
         to: _PersonInput!
@@ -2793,7 +3060,14 @@ test.cb('Test augmented schema', t => {
           from: "Person"
           to: "Person"
         )
-        @hasScope(scopes: ["Person: Delete", "Person: Delete"])
+        @hasScope(
+          scopes: [
+            "Person: Delete"
+            "delete:person"
+            "Person: Delete"
+            "delete:person"
+          ]
+        )
       UpdateActorReflexiveInterfacedRelationshipType(
         from: _PersonInput!
         to: _PersonInput!
@@ -2804,7 +3078,14 @@ test.cb('Test augmented schema', t => {
           from: "Person"
           to: "Person"
         )
-        @hasScope(scopes: ["Person: Update", "Person: Update"])
+        @hasScope(
+          scopes: [
+            "Person: Update"
+            "update:person"
+            "Person: Update"
+            "update:person"
+          ]
+        )
       MergeActorReflexiveInterfacedRelationshipType(
         from: _PersonInput!
         to: _PersonInput!
@@ -2815,14 +3096,22 @@ test.cb('Test augmented schema', t => {
           from: "Person"
           to: "Person"
         )
-        @hasScope(scopes: ["Person: Merge", "Person: Merge"])
+        @hasScope(
+          scopes: [
+            "Person: Merge"
+            "merge:person"
+            "Person: Merge"
+            "merge:person"
+          ]
+        )
       CreateActor(userId: ID, name: String, extensionScalar: String): Actor
-        @hasScope(scopes: ["Actor: Create"])
+        @hasScope(scopes: ["Actor: Create", "create:actor"])
       UpdateActor(userId: ID!, name: String, extensionScalar: String): Actor
-        @hasScope(scopes: ["Actor: Update"])
-      DeleteActor(userId: ID!): Actor @hasScope(scopes: ["Actor: Delete"])
+        @hasScope(scopes: ["Actor: Update", "update:actor"])
+      DeleteActor(userId: ID!): Actor
+        @hasScope(scopes: ["Actor: Delete", "delete:actor"])
       MergeActor(userId: ID!, name: String, extensionScalar: String): Actor
-        @hasScope(scopes: ["Actor: Merge"])
+        @hasScope(scopes: ["Actor: Merge", "merge:actor"])
       AddUserInterfacedRelationshipType(
         from: _PersonInput!
         to: _GenreInput!
@@ -2833,7 +3122,14 @@ test.cb('Test augmented schema', t => {
           from: "Person"
           to: "Genre"
         )
-        @hasScope(scopes: ["Person: Create", "Genre: Create"])
+        @hasScope(
+          scopes: [
+            "Person: Create"
+            "create:person"
+            "Genre: Create"
+            "create:genre"
+          ]
+        )
       RemoveUserInterfacedRelationshipType(
         from: _PersonInput!
         to: _GenreInput!
@@ -2843,7 +3139,14 @@ test.cb('Test augmented schema', t => {
           from: "Person"
           to: "Genre"
         )
-        @hasScope(scopes: ["Person: Delete", "Genre: Delete"])
+        @hasScope(
+          scopes: [
+            "Person: Delete"
+            "delete:person"
+            "Genre: Delete"
+            "delete:genre"
+          ]
+        )
       UpdateUserInterfacedRelationshipType(
         from: _PersonInput!
         to: _GenreInput!
@@ -2854,7 +3157,14 @@ test.cb('Test augmented schema', t => {
           from: "Person"
           to: "Genre"
         )
-        @hasScope(scopes: ["Person: Update", "Genre: Update"])
+        @hasScope(
+          scopes: [
+            "Person: Update"
+            "update:person"
+            "Genre: Update"
+            "update:genre"
+          ]
+        )
       MergeUserInterfacedRelationshipType(
         from: _PersonInput!
         to: _GenreInput!
@@ -2865,7 +3175,14 @@ test.cb('Test augmented schema', t => {
           from: "Person"
           to: "Genre"
         )
-        @hasScope(scopes: ["Person: Merge", "Genre: Merge"])
+        @hasScope(
+          scopes: [
+            "Person: Merge"
+            "merge:person"
+            "Genre: Merge"
+            "merge:genre"
+          ]
+        )
       AddUserReflexiveInterfacedRelationshipType(
         from: _PersonInput!
         to: _PersonInput!
@@ -2876,7 +3193,14 @@ test.cb('Test augmented schema', t => {
           from: "Person"
           to: "Person"
         )
-        @hasScope(scopes: ["Person: Create", "Person: Create"])
+        @hasScope(
+          scopes: [
+            "Person: Create"
+            "create:person"
+            "Person: Create"
+            "create:person"
+          ]
+        )
       RemoveUserReflexiveInterfacedRelationshipType(
         from: _PersonInput!
         to: _PersonInput!
@@ -2886,7 +3210,14 @@ test.cb('Test augmented schema', t => {
           from: "Person"
           to: "Person"
         )
-        @hasScope(scopes: ["Person: Delete", "Person: Delete"])
+        @hasScope(
+          scopes: [
+            "Person: Delete"
+            "delete:person"
+            "Person: Delete"
+            "delete:person"
+          ]
+        )
       UpdateUserReflexiveInterfacedRelationshipType(
         from: _PersonInput!
         to: _PersonInput!
@@ -2897,7 +3228,14 @@ test.cb('Test augmented schema', t => {
           from: "Person"
           to: "Person"
         )
-        @hasScope(scopes: ["Person: Update", "Person: Update"])
+        @hasScope(
+          scopes: [
+            "Person: Update"
+            "update:person"
+            "Person: Update"
+            "update:person"
+          ]
+        )
       MergeUserReflexiveInterfacedRelationshipType(
         from: _PersonInput!
         to: _PersonInput!
@@ -2908,106 +3246,177 @@ test.cb('Test augmented schema', t => {
           from: "Person"
           to: "Person"
         )
-        @hasScope(scopes: ["Person: Merge", "Person: Merge"])
+        @hasScope(
+          scopes: [
+            "Person: Merge"
+            "merge:person"
+            "Person: Merge"
+            "merge:person"
+          ]
+        )
       AddUserRated(
         from: _UserInput!
         to: _MovieInput!
         data: _RatedInput!
       ): _AddUserRatedPayload
         @MutationMeta(relationship: "RATED", from: "User", to: "Movie")
-        @hasScope(scopes: ["User: Create", "Movie: Create"])
+        @hasScope(
+          scopes: [
+            "User: Create"
+            "create:user"
+            "Movie: Create"
+            "create:movie"
+          ]
+        )
       RemoveUserRated(
         from: _UserInput!
         to: _MovieInput!
       ): _RemoveUserRatedPayload
         @MutationMeta(relationship: "RATED", from: "User", to: "Movie")
-        @hasScope(scopes: ["User: Delete", "Movie: Delete"])
+        @hasScope(
+          scopes: [
+            "User: Delete"
+            "delete:user"
+            "Movie: Delete"
+            "delete:movie"
+          ]
+        )
       UpdateUserRated(
         from: _UserInput!
         to: _MovieInput!
         data: _RatedInput!
       ): _UpdateUserRatedPayload
         @MutationMeta(relationship: "RATED", from: "User", to: "Movie")
-        @hasScope(scopes: ["User: Update", "Movie: Update"])
+        @hasScope(
+          scopes: [
+            "User: Update"
+            "update:user"
+            "Movie: Update"
+            "update:movie"
+          ]
+        )
       MergeUserRated(
         from: _UserInput!
         to: _MovieInput!
         data: _RatedInput!
       ): _MergeUserRatedPayload
         @MutationMeta(relationship: "RATED", from: "User", to: "Movie")
-        @hasScope(scopes: ["User: Merge", "Movie: Merge"])
+        @hasScope(
+          scopes: ["User: Merge", "merge:user", "Movie: Merge", "merge:movie"]
+        )
       AddUserFriends(
         from: _UserInput!
         to: _UserInput!
         data: _FriendOfInput!
       ): _AddUserFriendsPayload
         @MutationMeta(relationship: "FRIEND_OF", from: "User", to: "User")
-        @hasScope(scopes: ["User: Create", "User: Create"])
+        @hasScope(
+          scopes: ["User: Create", "create:user", "User: Create", "create:user"]
+        )
       RemoveUserFriends(
         from: _UserInput!
         to: _UserInput!
       ): _RemoveUserFriendsPayload
         @MutationMeta(relationship: "FRIEND_OF", from: "User", to: "User")
-        @hasScope(scopes: ["User: Delete", "User: Delete"])
+        @hasScope(
+          scopes: ["User: Delete", "delete:user", "User: Delete", "delete:user"]
+        )
       UpdateUserFriends(
         from: _UserInput!
         to: _UserInput!
         data: _FriendOfInput!
       ): _UpdateUserFriendsPayload
         @MutationMeta(relationship: "FRIEND_OF", from: "User", to: "User")
-        @hasScope(scopes: ["User: Update", "User: Update"])
+        @hasScope(
+          scopes: ["User: Update", "update:user", "User: Update", "update:user"]
+        )
       MergeUserFriends(
         from: _UserInput!
         to: _UserInput!
         data: _FriendOfInput!
       ): _MergeUserFriendsPayload
         @MutationMeta(relationship: "FRIEND_OF", from: "User", to: "User")
-        @hasScope(scopes: ["User: Merge", "User: Merge"])
+        @hasScope(
+          scopes: ["User: Merge", "merge:user", "User: Merge", "merge:user"]
+        )
       AddUserFavorites(
         from: _UserInput!
         to: _MovieInput!
       ): _AddUserFavoritesPayload
         @MutationMeta(relationship: "FAVORITED", from: "User", to: "Movie")
-        @hasScope(scopes: ["User: Create", "Movie: Create"])
+        @hasScope(
+          scopes: [
+            "User: Create"
+            "create:user"
+            "Movie: Create"
+            "create:movie"
+          ]
+        )
       RemoveUserFavorites(
         from: _UserInput!
         to: _MovieInput!
       ): _RemoveUserFavoritesPayload
         @MutationMeta(relationship: "FAVORITED", from: "User", to: "Movie")
-        @hasScope(scopes: ["User: Delete", "Movie: Delete"])
+        @hasScope(
+          scopes: [
+            "User: Delete"
+            "delete:user"
+            "Movie: Delete"
+            "delete:movie"
+          ]
+        )
       MergeUserFavorites(
         from: _UserInput!
         to: _MovieInput!
       ): _MergeUserFavoritesPayload
         @MutationMeta(relationship: "FAVORITED", from: "User", to: "Movie")
-        @hasScope(scopes: ["User: Merge", "Movie: Merge"])
+        @hasScope(
+          scopes: ["User: Merge", "merge:user", "Movie: Merge", "merge:movie"]
+        )
       CreateUser(userId: ID, name: String, extensionScalar: String): User
-        @hasScope(scopes: ["User: Create"])
+        @hasScope(scopes: ["User: Create", "create:user"])
       UpdateUser(userId: ID!, name: String, extensionScalar: String): User
-        @hasScope(scopes: ["User: Update"])
-      DeleteUser(userId: ID!): User @hasScope(scopes: ["User: Delete"])
+        @hasScope(scopes: ["User: Update", "update:user"])
+      DeleteUser(userId: ID!): User
+        @hasScope(scopes: ["User: Delete", "delete:user"])
       MergeUser(userId: ID!, name: String, extensionScalar: String): User
-        @hasScope(scopes: ["User: Merge"])
-      CreateBook(genre: BookGenre): Book @hasScope(scopes: ["Book: Create"])
-      DeleteBook(genre: BookGenre!): Book @hasScope(scopes: ["Book: Delete"])
-      MergeBook(genre: BookGenre!): Book @hasScope(scopes: ["Book: Merge"])
+        @hasScope(scopes: ["User: Merge", "merge:user"])
+      CreateBook(genre: BookGenre): Book
+        @hasScope(scopes: ["Book: Create", "create:book"])
+      DeleteBook(genre: BookGenre!): Book
+        @hasScope(scopes: ["Book: Delete", "delete:book"])
+      MergeBook(genre: BookGenre!): Book
+        @hasScope(scopes: ["Book: Merge", "merge:book"])
       CreateNodeTypeMutationTest(
         NodeTypeMutationTest: BookGenre
       ): NodeTypeMutationTest
-        @hasScope(scopes: ["NodeTypeMutationTest: Create"])
+        @hasScope(
+          scopes: [
+            "NodeTypeMutationTest: Create"
+            "create:nodetypemutationtest"
+          ]
+        )
       DeleteNodeTypeMutationTest(
         NodeTypeMutationTest: BookGenre!
       ): NodeTypeMutationTest
-        @hasScope(scopes: ["NodeTypeMutationTest: Delete"])
+        @hasScope(
+          scopes: [
+            "NodeTypeMutationTest: Delete"
+            "delete:nodetypemutationtest"
+          ]
+        )
       MergeNodeTypeMutationTest(
         NodeTypeMutationTest: BookGenre!
-      ): NodeTypeMutationTest @hasScope(scopes: ["NodeTypeMutationTest: Merge"])
+      ): NodeTypeMutationTest
+        @hasScope(
+          scopes: ["NodeTypeMutationTest: Merge", "merge:nodetypemutationtest"]
+        )
       CreatecurrentUserId(userId: String): currentUserId
-        @hasScope(scopes: ["currentUserId: Create"])
+        @hasScope(scopes: ["currentUserId: Create", "create:currentuserid"])
       DeletecurrentUserId(userId: String!): currentUserId
-        @hasScope(scopes: ["currentUserId: Delete"])
+        @hasScope(scopes: ["currentUserId: Delete", "delete:currentuserid"])
       MergecurrentUserId(userId: String!): currentUserId
-        @hasScope(scopes: ["currentUserId: Merge"])
+        @hasScope(scopes: ["currentUserId: Merge", "merge:currentuserid"])
       AddTemporalNodeTemporalNodes(
         from: _TemporalNodeInput!
         to: _TemporalNodeInput!
@@ -3017,7 +3426,14 @@ test.cb('Test augmented schema', t => {
           from: "TemporalNode"
           to: "TemporalNode"
         )
-        @hasScope(scopes: ["TemporalNode: Create", "TemporalNode: Create"])
+        @hasScope(
+          scopes: [
+            "TemporalNode: Create"
+            "create:temporalnode"
+            "TemporalNode: Create"
+            "create:temporalnode"
+          ]
+        )
       RemoveTemporalNodeTemporalNodes(
         from: _TemporalNodeInput!
         to: _TemporalNodeInput!
@@ -3027,7 +3443,14 @@ test.cb('Test augmented schema', t => {
           from: "TemporalNode"
           to: "TemporalNode"
         )
-        @hasScope(scopes: ["TemporalNode: Delete", "TemporalNode: Delete"])
+        @hasScope(
+          scopes: [
+            "TemporalNode: Delete"
+            "delete:temporalnode"
+            "TemporalNode: Delete"
+            "delete:temporalnode"
+          ]
+        )
       MergeTemporalNodeTemporalNodes(
         from: _TemporalNodeInput!
         to: _TemporalNodeInput!
@@ -3037,7 +3460,14 @@ test.cb('Test augmented schema', t => {
           from: "TemporalNode"
           to: "TemporalNode"
         )
-        @hasScope(scopes: ["TemporalNode: Merge", "TemporalNode: Merge"])
+        @hasScope(
+          scopes: [
+            "TemporalNode: Merge"
+            "merge:temporalnode"
+            "TemporalNode: Merge"
+            "merge:temporalnode"
+          ]
+        )
       CreateTemporalNode(
         datetime: _Neo4jDateTimeInput
         name: String
@@ -3046,7 +3476,8 @@ test.cb('Test augmented schema', t => {
         localtime: _Neo4jLocalTimeInput
         localdatetime: _Neo4jLocalDateTimeInput
         localdatetimes: [_Neo4jLocalDateTimeInput]
-      ): TemporalNode @hasScope(scopes: ["TemporalNode: Create"])
+      ): TemporalNode
+        @hasScope(scopes: ["TemporalNode: Create", "create:temporalnode"])
       UpdateTemporalNode(
         datetime: _Neo4jDateTimeInput
         name: String!
@@ -3055,9 +3486,10 @@ test.cb('Test augmented schema', t => {
         localtime: _Neo4jLocalTimeInput
         localdatetime: _Neo4jLocalDateTimeInput
         localdatetimes: [_Neo4jLocalDateTimeInput]
-      ): TemporalNode @hasScope(scopes: ["TemporalNode: Update"])
+      ): TemporalNode
+        @hasScope(scopes: ["TemporalNode: Update", "update:temporalnode"])
       DeleteTemporalNode(name: String!): TemporalNode
-        @hasScope(scopes: ["TemporalNode: Delete"])
+        @hasScope(scopes: ["TemporalNode: Delete", "delete:temporalnode"])
       MergeTemporalNode(
         datetime: _Neo4jDateTimeInput
         name: String!
@@ -3066,7 +3498,8 @@ test.cb('Test augmented schema', t => {
         localtime: _Neo4jLocalTimeInput
         localdatetime: _Neo4jLocalDateTimeInput
         localdatetimes: [_Neo4jLocalDateTimeInput]
-      ): TemporalNode @hasScope(scopes: ["TemporalNode: Merge"])
+      ): TemporalNode
+        @hasScope(scopes: ["TemporalNode: Merge", "merge:temporalnode"])
       AddSpatialNodeSpatialNodes(
         from: _SpatialNodeInput!
         to: _SpatialNodeInput!
@@ -3076,7 +3509,14 @@ test.cb('Test augmented schema', t => {
           from: "SpatialNode"
           to: "SpatialNode"
         )
-        @hasScope(scopes: ["SpatialNode: Create", "SpatialNode: Create"])
+        @hasScope(
+          scopes: [
+            "SpatialNode: Create"
+            "create:spatialnode"
+            "SpatialNode: Create"
+            "create:spatialnode"
+          ]
+        )
       RemoveSpatialNodeSpatialNodes(
         from: _SpatialNodeInput!
         to: _SpatialNodeInput!
@@ -3086,7 +3526,14 @@ test.cb('Test augmented schema', t => {
           from: "SpatialNode"
           to: "SpatialNode"
         )
-        @hasScope(scopes: ["SpatialNode: Delete", "SpatialNode: Delete"])
+        @hasScope(
+          scopes: [
+            "SpatialNode: Delete"
+            "delete:spatialnode"
+            "SpatialNode: Delete"
+            "delete:spatialnode"
+          ]
+        )
       MergeSpatialNodeSpatialNodes(
         from: _SpatialNodeInput!
         to: _SpatialNodeInput!
@@ -3096,57 +3543,106 @@ test.cb('Test augmented schema', t => {
           from: "SpatialNode"
           to: "SpatialNode"
         )
-        @hasScope(scopes: ["SpatialNode: Merge", "SpatialNode: Merge"])
+        @hasScope(
+          scopes: [
+            "SpatialNode: Merge"
+            "merge:spatialnode"
+            "SpatialNode: Merge"
+            "merge:spatialnode"
+          ]
+        )
       CreateSpatialNode(id: ID, point: _Neo4jPointInput): SpatialNode
-        @hasScope(scopes: ["SpatialNode: Create"])
+        @hasScope(scopes: ["SpatialNode: Create", "create:spatialnode"])
       UpdateSpatialNode(id: ID!, point: _Neo4jPointInput): SpatialNode
-        @hasScope(scopes: ["SpatialNode: Update"])
+        @hasScope(scopes: ["SpatialNode: Update", "update:spatialnode"])
       DeleteSpatialNode(id: ID!): SpatialNode
-        @hasScope(scopes: ["SpatialNode: Delete"])
+        @hasScope(scopes: ["SpatialNode: Delete", "delete:spatialnode"])
       MergeSpatialNode(id: ID!, point: _Neo4jPointInput): SpatialNode
-        @hasScope(scopes: ["SpatialNode: Merge"])
+        @hasScope(scopes: ["SpatialNode: Merge", "merge:spatialnode"])
       AddCasedTypeState(
         from: _CasedTypeInput!
         to: _StateInput!
       ): _AddCasedTypeStatePayload
         @MutationMeta(relationship: "FILMED_IN", from: "CasedType", to: "State")
-        @hasScope(scopes: ["CasedType: Create", "State: Create"])
+        @hasScope(
+          scopes: [
+            "CasedType: Create"
+            "create:casedtype"
+            "State: Create"
+            "create:state"
+          ]
+        )
       RemoveCasedTypeState(
         from: _CasedTypeInput!
         to: _StateInput!
       ): _RemoveCasedTypeStatePayload
         @MutationMeta(relationship: "FILMED_IN", from: "CasedType", to: "State")
-        @hasScope(scopes: ["CasedType: Delete", "State: Delete"])
+        @hasScope(
+          scopes: [
+            "CasedType: Delete"
+            "delete:casedtype"
+            "State: Delete"
+            "delete:state"
+          ]
+        )
       MergeCasedTypeState(
         from: _CasedTypeInput!
         to: _StateInput!
       ): _MergeCasedTypeStatePayload
         @MutationMeta(relationship: "FILMED_IN", from: "CasedType", to: "State")
-        @hasScope(scopes: ["CasedType: Merge", "State: Merge"])
+        @hasScope(
+          scopes: [
+            "CasedType: Merge"
+            "merge:casedtype"
+            "State: Merge"
+            "merge:state"
+          ]
+        )
       CreateCasedType(name: String): CasedType
-        @hasScope(scopes: ["CasedType: Create"])
+        @hasScope(scopes: ["CasedType: Create", "create:casedtype"])
       DeleteCasedType(name: String!): CasedType
-        @hasScope(scopes: ["CasedType: Delete"])
+        @hasScope(scopes: ["CasedType: Delete", "delete:casedtype"])
       MergeCasedType(name: String!): CasedType
-        @hasScope(scopes: ["CasedType: Merge"])
+        @hasScope(scopes: ["CasedType: Merge", "merge:casedtype"])
       AddCameraOperators(
         from: _PersonInput!
         to: _CameraInput!
       ): _AddCameraOperatorsPayload
         @MutationMeta(relationship: "cameras", from: "Person", to: "Camera")
-        @hasScope(scopes: ["Person: Create", "Camera: Create"])
+        @hasScope(
+          scopes: [
+            "Person: Create"
+            "create:person"
+            "Camera: Create"
+            "create:camera"
+          ]
+        )
       RemoveCameraOperators(
         from: _PersonInput!
         to: _CameraInput!
       ): _RemoveCameraOperatorsPayload
         @MutationMeta(relationship: "cameras", from: "Person", to: "Camera")
-        @hasScope(scopes: ["Person: Delete", "Camera: Delete"])
+        @hasScope(
+          scopes: [
+            "Person: Delete"
+            "delete:person"
+            "Camera: Delete"
+            "delete:camera"
+          ]
+        )
       MergeCameraOperators(
         from: _PersonInput!
         to: _CameraInput!
       ): _MergeCameraOperatorsPayload
         @MutationMeta(relationship: "cameras", from: "Person", to: "Camera")
-        @hasScope(scopes: ["Person: Merge", "Camera: Merge"])
+        @hasScope(
+          scopes: [
+            "Person: Merge"
+            "merge:person"
+            "Camera: Merge"
+            "merge:camera"
+          ]
+        )
       AddCameraReflexiveInterfaceRelationship(
         from: _CameraInput!
         to: _CameraInput!
@@ -3156,7 +3652,14 @@ test.cb('Test augmented schema', t => {
           from: "Camera"
           to: "Camera"
         )
-        @hasScope(scopes: ["Camera: Create", "Camera: Create"])
+        @hasScope(
+          scopes: [
+            "Camera: Create"
+            "create:camera"
+            "Camera: Create"
+            "create:camera"
+          ]
+        )
       RemoveCameraReflexiveInterfaceRelationship(
         from: _CameraInput!
         to: _CameraInput!
@@ -3166,7 +3669,14 @@ test.cb('Test augmented schema', t => {
           from: "Camera"
           to: "Camera"
         )
-        @hasScope(scopes: ["Camera: Delete", "Camera: Delete"])
+        @hasScope(
+          scopes: [
+            "Camera: Delete"
+            "delete:camera"
+            "Camera: Delete"
+            "delete:camera"
+          ]
+        )
       MergeCameraReflexiveInterfaceRelationship(
         from: _CameraInput!
         to: _CameraInput!
@@ -3176,25 +3686,53 @@ test.cb('Test augmented schema', t => {
           from: "Camera"
           to: "Camera"
         )
-        @hasScope(scopes: ["Camera: Merge", "Camera: Merge"])
+        @hasScope(
+          scopes: [
+            "Camera: Merge"
+            "merge:camera"
+            "Camera: Merge"
+            "merge:camera"
+          ]
+        )
       AddOldCameraOperators(
         from: _PersonInput!
         to: _OldCameraInput!
       ): _AddOldCameraOperatorsPayload
         @MutationMeta(relationship: "cameras", from: "Person", to: "OldCamera")
-        @hasScope(scopes: ["Person: Create", "OldCamera: Create"])
+        @hasScope(
+          scopes: [
+            "Person: Create"
+            "create:person"
+            "OldCamera: Create"
+            "create:oldcamera"
+          ]
+        )
       RemoveOldCameraOperators(
         from: _PersonInput!
         to: _OldCameraInput!
       ): _RemoveOldCameraOperatorsPayload
         @MutationMeta(relationship: "cameras", from: "Person", to: "OldCamera")
-        @hasScope(scopes: ["Person: Delete", "OldCamera: Delete"])
+        @hasScope(
+          scopes: [
+            "Person: Delete"
+            "delete:person"
+            "OldCamera: Delete"
+            "delete:oldcamera"
+          ]
+        )
       MergeOldCameraOperators(
         from: _PersonInput!
         to: _OldCameraInput!
       ): _MergeOldCameraOperatorsPayload
         @MutationMeta(relationship: "cameras", from: "Person", to: "OldCamera")
-        @hasScope(scopes: ["Person: Merge", "OldCamera: Merge"])
+        @hasScope(
+          scopes: [
+            "Person: Merge"
+            "merge:person"
+            "OldCamera: Merge"
+            "merge:oldcamera"
+          ]
+        )
       AddOldCameraReflexiveInterfaceRelationship(
         from: _OldCameraInput!
         to: _CameraInput!
@@ -3204,7 +3742,14 @@ test.cb('Test augmented schema', t => {
           from: "OldCamera"
           to: "Camera"
         )
-        @hasScope(scopes: ["OldCamera: Create", "Camera: Create"])
+        @hasScope(
+          scopes: [
+            "OldCamera: Create"
+            "create:oldcamera"
+            "Camera: Create"
+            "create:camera"
+          ]
+        )
       RemoveOldCameraReflexiveInterfaceRelationship(
         from: _OldCameraInput!
         to: _CameraInput!
@@ -3214,7 +3759,14 @@ test.cb('Test augmented schema', t => {
           from: "OldCamera"
           to: "Camera"
         )
-        @hasScope(scopes: ["OldCamera: Delete", "Camera: Delete"])
+        @hasScope(
+          scopes: [
+            "OldCamera: Delete"
+            "delete:oldcamera"
+            "Camera: Delete"
+            "delete:camera"
+          ]
+        )
       MergeOldCameraReflexiveInterfaceRelationship(
         from: _OldCameraInput!
         to: _CameraInput!
@@ -3224,48 +3776,76 @@ test.cb('Test augmented schema', t => {
           from: "OldCamera"
           to: "Camera"
         )
-        @hasScope(scopes: ["OldCamera: Merge", "Camera: Merge"])
+        @hasScope(
+          scopes: [
+            "OldCamera: Merge"
+            "merge:oldcamera"
+            "Camera: Merge"
+            "merge:camera"
+          ]
+        )
       CreateOldCamera(
         type: String
         id: ID
         make: String
         weight: Int
         smell: String
-      ): OldCamera @hasScope(scopes: ["OldCamera: Create"])
+      ): OldCamera @hasScope(scopes: ["OldCamera: Create", "create:oldcamera"])
       UpdateOldCamera(
         type: String
         id: ID!
         make: String
         weight: Int
         smell: String
-      ): OldCamera @hasScope(scopes: ["OldCamera: Update"])
+      ): OldCamera @hasScope(scopes: ["OldCamera: Update", "update:oldcamera"])
       DeleteOldCamera(id: ID!): OldCamera
-        @hasScope(scopes: ["OldCamera: Delete"])
+        @hasScope(scopes: ["OldCamera: Delete", "delete:oldcamera"])
       MergeOldCamera(
         type: String
         id: ID!
         make: String
         weight: Int
         smell: String
-      ): OldCamera @hasScope(scopes: ["OldCamera: Merge"])
+      ): OldCamera @hasScope(scopes: ["OldCamera: Merge", "merge:oldcamera"])
       AddNewCameraOperators(
         from: _PersonInput!
         to: _NewCameraInput!
       ): _AddNewCameraOperatorsPayload
         @MutationMeta(relationship: "cameras", from: "Person", to: "NewCamera")
-        @hasScope(scopes: ["Person: Create", "NewCamera: Create"])
+        @hasScope(
+          scopes: [
+            "Person: Create"
+            "create:person"
+            "NewCamera: Create"
+            "create:newcamera"
+          ]
+        )
       RemoveNewCameraOperators(
         from: _PersonInput!
         to: _NewCameraInput!
       ): _RemoveNewCameraOperatorsPayload
         @MutationMeta(relationship: "cameras", from: "Person", to: "NewCamera")
-        @hasScope(scopes: ["Person: Delete", "NewCamera: Delete"])
+        @hasScope(
+          scopes: [
+            "Person: Delete"
+            "delete:person"
+            "NewCamera: Delete"
+            "delete:newcamera"
+          ]
+        )
       MergeNewCameraOperators(
         from: _PersonInput!
         to: _NewCameraInput!
       ): _MergeNewCameraOperatorsPayload
         @MutationMeta(relationship: "cameras", from: "Person", to: "NewCamera")
-        @hasScope(scopes: ["Person: Merge", "NewCamera: Merge"])
+        @hasScope(
+          scopes: [
+            "Person: Merge"
+            "merge:person"
+            "NewCamera: Merge"
+            "merge:newcamera"
+          ]
+        )
       AddNewCameraReflexiveInterfaceRelationship(
         from: _NewCameraInput!
         to: _CameraInput!
@@ -3275,7 +3855,14 @@ test.cb('Test augmented schema', t => {
           from: "NewCamera"
           to: "Camera"
         )
-        @hasScope(scopes: ["NewCamera: Create", "Camera: Create"])
+        @hasScope(
+          scopes: [
+            "NewCamera: Create"
+            "create:newcamera"
+            "Camera: Create"
+            "create:camera"
+          ]
+        )
       RemoveNewCameraReflexiveInterfaceRelationship(
         from: _NewCameraInput!
         to: _CameraInput!
@@ -3285,7 +3872,14 @@ test.cb('Test augmented schema', t => {
           from: "NewCamera"
           to: "Camera"
         )
-        @hasScope(scopes: ["NewCamera: Delete", "Camera: Delete"])
+        @hasScope(
+          scopes: [
+            "NewCamera: Delete"
+            "delete:newcamera"
+            "Camera: Delete"
+            "delete:camera"
+          ]
+        )
       MergeNewCameraReflexiveInterfaceRelationship(
         from: _NewCameraInput!
         to: _CameraInput!
@@ -3295,30 +3889,37 @@ test.cb('Test augmented schema', t => {
           from: "NewCamera"
           to: "Camera"
         )
-        @hasScope(scopes: ["NewCamera: Merge", "Camera: Merge"])
+        @hasScope(
+          scopes: [
+            "NewCamera: Merge"
+            "merge:newcamera"
+            "Camera: Merge"
+            "merge:camera"
+          ]
+        )
       CreateNewCamera(
         type: String
         id: ID
         make: String
         weight: Int
         features: [String]
-      ): NewCamera @hasScope(scopes: ["NewCamera: Create"])
+      ): NewCamera @hasScope(scopes: ["NewCamera: Create", "create:newcamera"])
       UpdateNewCamera(
         type: String
         id: ID!
         make: String
         weight: Int
         features: [String]
-      ): NewCamera @hasScope(scopes: ["NewCamera: Update"])
+      ): NewCamera @hasScope(scopes: ["NewCamera: Update", "update:newcamera"])
       DeleteNewCamera(id: ID!): NewCamera
-        @hasScope(scopes: ["NewCamera: Delete"])
+        @hasScope(scopes: ["NewCamera: Delete", "delete:newcamera"])
       MergeNewCamera(
         type: String
         id: ID!
         make: String
         weight: Int
         features: [String]
-      ): NewCamera @hasScope(scopes: ["NewCamera: Merge"])
+      ): NewCamera @hasScope(scopes: ["NewCamera: Merge", "merge:newcamera"])
       AddCameraManFavoriteCamera(
         from: _CameraManInput!
         to: _CameraInput!
@@ -3328,7 +3929,14 @@ test.cb('Test augmented schema', t => {
           from: "CameraMan"
           to: "Camera"
         )
-        @hasScope(scopes: ["CameraMan: Create", "Camera: Create"])
+        @hasScope(
+          scopes: [
+            "CameraMan: Create"
+            "create:cameraman"
+            "Camera: Create"
+            "create:camera"
+          ]
+        )
       RemoveCameraManFavoriteCamera(
         from: _CameraManInput!
         to: _CameraInput!
@@ -3338,7 +3946,14 @@ test.cb('Test augmented schema', t => {
           from: "CameraMan"
           to: "Camera"
         )
-        @hasScope(scopes: ["CameraMan: Delete", "Camera: Delete"])
+        @hasScope(
+          scopes: [
+            "CameraMan: Delete"
+            "delete:cameraman"
+            "Camera: Delete"
+            "delete:camera"
+          ]
+        )
       MergeCameraManFavoriteCamera(
         from: _CameraManInput!
         to: _CameraInput!
@@ -3348,25 +3963,53 @@ test.cb('Test augmented schema', t => {
           from: "CameraMan"
           to: "Camera"
         )
-        @hasScope(scopes: ["CameraMan: Merge", "Camera: Merge"])
+        @hasScope(
+          scopes: [
+            "CameraMan: Merge"
+            "merge:cameraman"
+            "Camera: Merge"
+            "merge:camera"
+          ]
+        )
       AddCameraManCameras(
         from: _CameraManInput!
         to: _CameraInput!
       ): _AddCameraManCamerasPayload
         @MutationMeta(relationship: "cameras", from: "CameraMan", to: "Camera")
-        @hasScope(scopes: ["CameraMan: Create", "Camera: Create"])
+        @hasScope(
+          scopes: [
+            "CameraMan: Create"
+            "create:cameraman"
+            "Camera: Create"
+            "create:camera"
+          ]
+        )
       RemoveCameraManCameras(
         from: _CameraManInput!
         to: _CameraInput!
       ): _RemoveCameraManCamerasPayload
         @MutationMeta(relationship: "cameras", from: "CameraMan", to: "Camera")
-        @hasScope(scopes: ["CameraMan: Delete", "Camera: Delete"])
+        @hasScope(
+          scopes: [
+            "CameraMan: Delete"
+            "delete:cameraman"
+            "Camera: Delete"
+            "delete:camera"
+          ]
+        )
       MergeCameraManCameras(
         from: _CameraManInput!
         to: _CameraInput!
       ): _MergeCameraManCamerasPayload
         @MutationMeta(relationship: "cameras", from: "CameraMan", to: "Camera")
-        @hasScope(scopes: ["CameraMan: Merge", "Camera: Merge"])
+        @hasScope(
+          scopes: [
+            "CameraMan: Merge"
+            "merge:cameraman"
+            "Camera: Merge"
+            "merge:camera"
+          ]
+        )
       AddCameraManCameraBuddy(
         from: _CameraManInput!
         to: _PersonInput!
@@ -3376,7 +4019,14 @@ test.cb('Test augmented schema', t => {
           from: "CameraMan"
           to: "Person"
         )
-        @hasScope(scopes: ["CameraMan: Create", "Person: Create"])
+        @hasScope(
+          scopes: [
+            "CameraMan: Create"
+            "create:cameraman"
+            "Person: Create"
+            "create:person"
+          ]
+        )
       RemoveCameraManCameraBuddy(
         from: _CameraManInput!
         to: _PersonInput!
@@ -3386,7 +4036,14 @@ test.cb('Test augmented schema', t => {
           from: "CameraMan"
           to: "Person"
         )
-        @hasScope(scopes: ["CameraMan: Delete", "Person: Delete"])
+        @hasScope(
+          scopes: [
+            "CameraMan: Delete"
+            "delete:cameraman"
+            "Person: Delete"
+            "delete:person"
+          ]
+        )
       MergeCameraManCameraBuddy(
         from: _CameraManInput!
         to: _PersonInput!
@@ -3396,7 +4053,14 @@ test.cb('Test augmented schema', t => {
           from: "CameraMan"
           to: "Person"
         )
-        @hasScope(scopes: ["CameraMan: Merge", "Person: Merge"])
+        @hasScope(
+          scopes: [
+            "CameraMan: Merge"
+            "merge:cameraman"
+            "Person: Merge"
+            "merge:person"
+          ]
+        )
       AddCameraManInterfacedRelationshipType(
         from: _PersonInput!
         to: _GenreInput!
@@ -3407,7 +4071,14 @@ test.cb('Test augmented schema', t => {
           from: "Person"
           to: "Genre"
         )
-        @hasScope(scopes: ["Person: Create", "Genre: Create"])
+        @hasScope(
+          scopes: [
+            "Person: Create"
+            "create:person"
+            "Genre: Create"
+            "create:genre"
+          ]
+        )
       RemoveCameraManInterfacedRelationshipType(
         from: _PersonInput!
         to: _GenreInput!
@@ -3417,7 +4088,14 @@ test.cb('Test augmented schema', t => {
           from: "Person"
           to: "Genre"
         )
-        @hasScope(scopes: ["Person: Delete", "Genre: Delete"])
+        @hasScope(
+          scopes: [
+            "Person: Delete"
+            "delete:person"
+            "Genre: Delete"
+            "delete:genre"
+          ]
+        )
       UpdateCameraManInterfacedRelationshipType(
         from: _PersonInput!
         to: _GenreInput!
@@ -3428,7 +4106,14 @@ test.cb('Test augmented schema', t => {
           from: "Person"
           to: "Genre"
         )
-        @hasScope(scopes: ["Person: Update", "Genre: Update"])
+        @hasScope(
+          scopes: [
+            "Person: Update"
+            "update:person"
+            "Genre: Update"
+            "update:genre"
+          ]
+        )
       MergeCameraManInterfacedRelationshipType(
         from: _PersonInput!
         to: _GenreInput!
@@ -3439,7 +4124,14 @@ test.cb('Test augmented schema', t => {
           from: "Person"
           to: "Genre"
         )
-        @hasScope(scopes: ["Person: Merge", "Genre: Merge"])
+        @hasScope(
+          scopes: [
+            "Person: Merge"
+            "merge:person"
+            "Genre: Merge"
+            "merge:genre"
+          ]
+        )
       AddCameraManReflexiveInterfacedRelationshipType(
         from: _PersonInput!
         to: _PersonInput!
@@ -3450,7 +4142,14 @@ test.cb('Test augmented schema', t => {
           from: "Person"
           to: "Person"
         )
-        @hasScope(scopes: ["Person: Create", "Person: Create"])
+        @hasScope(
+          scopes: [
+            "Person: Create"
+            "create:person"
+            "Person: Create"
+            "create:person"
+          ]
+        )
       RemoveCameraManReflexiveInterfacedRelationshipType(
         from: _PersonInput!
         to: _PersonInput!
@@ -3460,7 +4159,14 @@ test.cb('Test augmented schema', t => {
           from: "Person"
           to: "Person"
         )
-        @hasScope(scopes: ["Person: Delete", "Person: Delete"])
+        @hasScope(
+          scopes: [
+            "Person: Delete"
+            "delete:person"
+            "Person: Delete"
+            "delete:person"
+          ]
+        )
       UpdateCameraManReflexiveInterfacedRelationshipType(
         from: _PersonInput!
         to: _PersonInput!
@@ -3471,7 +4177,14 @@ test.cb('Test augmented schema', t => {
           from: "Person"
           to: "Person"
         )
-        @hasScope(scopes: ["Person: Update", "Person: Update"])
+        @hasScope(
+          scopes: [
+            "Person: Update"
+            "update:person"
+            "Person: Update"
+            "update:person"
+          ]
+        )
       MergeCameraManReflexiveInterfacedRelationshipType(
         from: _PersonInput!
         to: _PersonInput!
@@ -3482,24 +4195,31 @@ test.cb('Test augmented schema', t => {
           from: "Person"
           to: "Person"
         )
-        @hasScope(scopes: ["Person: Merge", "Person: Merge"])
+        @hasScope(
+          scopes: [
+            "Person: Merge"
+            "merge:person"
+            "Person: Merge"
+            "merge:person"
+          ]
+        )
       CreateCameraMan(
         userId: ID
         name: String
         extensionScalar: String
-      ): CameraMan @hasScope(scopes: ["CameraMan: Create"])
+      ): CameraMan @hasScope(scopes: ["CameraMan: Create", "create:cameraman"])
       UpdateCameraMan(
         userId: ID!
         name: String
         extensionScalar: String
-      ): CameraMan @hasScope(scopes: ["CameraMan: Update"])
+      ): CameraMan @hasScope(scopes: ["CameraMan: Update", "update:cameraman"])
       DeleteCameraMan(userId: ID!): CameraMan
-        @hasScope(scopes: ["CameraMan: Delete"])
+        @hasScope(scopes: ["CameraMan: Delete", "delete:cameraman"])
       MergeCameraMan(
         userId: ID!
         name: String
         extensionScalar: String
-      ): CameraMan @hasScope(scopes: ["CameraMan: Merge"])
+      ): CameraMan @hasScope(scopes: ["CameraMan: Merge", "merge:cameraman"])
       AddUniqueNodeTestRelation(
         from: _UniqueNodeInput!
         to: _UniqueStringNodeInput!
@@ -3509,7 +4229,14 @@ test.cb('Test augmented schema', t => {
           from: "UniqueNode"
           to: "UniqueStringNode"
         )
-        @hasScope(scopes: ["UniqueNode: Create", "UniqueStringNode: Create"])
+        @hasScope(
+          scopes: [
+            "UniqueNode: Create"
+            "create:uniquenode"
+            "UniqueStringNode: Create"
+            "create:uniquestringnode"
+          ]
+        )
       RemoveUniqueNodeTestRelation(
         from: _UniqueNodeInput!
         to: _UniqueStringNodeInput!
@@ -3519,7 +4246,14 @@ test.cb('Test augmented schema', t => {
           from: "UniqueNode"
           to: "UniqueStringNode"
         )
-        @hasScope(scopes: ["UniqueNode: Delete", "UniqueStringNode: Delete"])
+        @hasScope(
+          scopes: [
+            "UniqueNode: Delete"
+            "delete:uniquenode"
+            "UniqueStringNode: Delete"
+            "delete:uniquestringnode"
+          ]
+        )
       MergeUniqueNodeTestRelation(
         from: _UniqueNodeInput!
         to: _UniqueStringNodeInput!
@@ -3529,15 +4263,22 @@ test.cb('Test augmented schema', t => {
           from: "UniqueNode"
           to: "UniqueStringNode"
         )
-        @hasScope(scopes: ["UniqueNode: Merge", "UniqueStringNode: Merge"])
+        @hasScope(
+          scopes: [
+            "UniqueNode: Merge"
+            "merge:uniquenode"
+            "UniqueStringNode: Merge"
+            "merge:uniquestringnode"
+          ]
+        )
       CreateUniqueNode(string: String, id: ID, anotherId: ID): UniqueNode
-        @hasScope(scopes: ["UniqueNode: Create"])
+        @hasScope(scopes: ["UniqueNode: Create", "create:uniquenode"])
       UpdateUniqueNode(string: String, id: ID!, anotherId: ID): UniqueNode
-        @hasScope(scopes: ["UniqueNode: Update"])
+        @hasScope(scopes: ["UniqueNode: Update", "update:uniquenode"])
       DeleteUniqueNode(id: ID!): UniqueNode
-        @hasScope(scopes: ["UniqueNode: Delete"])
+        @hasScope(scopes: ["UniqueNode: Delete", "delete:uniquenode"])
       MergeUniqueNode(string: String, id: ID!, anotherId: ID): UniqueNode
-        @hasScope(scopes: ["UniqueNode: Merge"])
+        @hasScope(scopes: ["UniqueNode: Merge", "merge:uniquenode"])
       AddUniqueStringNodeTestRelation(
         from: _UniqueNodeInput!
         to: _UniqueStringNodeInput!
@@ -3547,7 +4288,14 @@ test.cb('Test augmented schema', t => {
           from: "UniqueNode"
           to: "UniqueStringNode"
         )
-        @hasScope(scopes: ["UniqueNode: Create", "UniqueStringNode: Create"])
+        @hasScope(
+          scopes: [
+            "UniqueNode: Create"
+            "create:uniquenode"
+            "UniqueStringNode: Create"
+            "create:uniquestringnode"
+          ]
+        )
       RemoveUniqueStringNodeTestRelation(
         from: _UniqueNodeInput!
         to: _UniqueStringNodeInput!
@@ -3557,7 +4305,14 @@ test.cb('Test augmented schema', t => {
           from: "UniqueNode"
           to: "UniqueStringNode"
         )
-        @hasScope(scopes: ["UniqueNode: Delete", "UniqueStringNode: Delete"])
+        @hasScope(
+          scopes: [
+            "UniqueNode: Delete"
+            "delete:uniquenode"
+            "UniqueStringNode: Delete"
+            "delete:uniquestringnode"
+          ]
+        )
       MergeUniqueStringNodeTestRelation(
         from: _UniqueNodeInput!
         to: _UniqueStringNodeInput!
@@ -3567,15 +4322,28 @@ test.cb('Test augmented schema', t => {
           from: "UniqueNode"
           to: "UniqueStringNode"
         )
-        @hasScope(scopes: ["UniqueNode: Merge", "UniqueStringNode: Merge"])
+        @hasScope(
+          scopes: [
+            "UniqueNode: Merge"
+            "merge:uniquenode"
+            "UniqueStringNode: Merge"
+            "merge:uniquestringnode"
+          ]
+        )
       CreateUniqueStringNode(id: ID!, uniqueString: String): UniqueStringNode
-        @hasScope(scopes: ["UniqueStringNode: Create"])
+        @hasScope(
+          scopes: ["UniqueStringNode: Create", "create:uniquestringnode"]
+        )
       UpdateUniqueStringNode(id: ID, uniqueString: String!): UniqueStringNode
-        @hasScope(scopes: ["UniqueStringNode: Update"])
+        @hasScope(
+          scopes: ["UniqueStringNode: Update", "update:uniquestringnode"]
+        )
       DeleteUniqueStringNode(uniqueString: String!): UniqueStringNode
-        @hasScope(scopes: ["UniqueStringNode: Delete"])
+        @hasScope(
+          scopes: ["UniqueStringNode: Delete", "delete:uniquestringnode"]
+        )
       MergeUniqueStringNode(id: ID, uniqueString: String!): UniqueStringNode
-        @hasScope(scopes: ["UniqueStringNode: Merge"])
+        @hasScope(scopes: ["UniqueStringNode: Merge", "merge:uniquestringnode"])
     }
 
     extend type Mutation {

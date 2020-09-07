@@ -251,10 +251,16 @@ export const buildAuthScopeDirective = ({ scopes = [] }) =>
         name: buildName({ name: 'scopes' }),
         value: {
           kind: Kind.LIST,
-          values: scopes.map(scope => ({
-            kind: Kind.STRING,
-            value: `${scope.typeName}: ${scope.mutation}`
-          }))
+          values: scopes.flatMap(scope => [
+            {
+              kind: Kind.STRING,
+              value: `${scope.typeName}: ${scope.mutation}`
+            },
+            {
+              kind: Kind.STRING,
+              value: `${scope.mutation}:${scope.typeName}`.toLowerCase()
+            }
+          ])
         }
       })
     ]
