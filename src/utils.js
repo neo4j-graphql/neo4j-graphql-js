@@ -1,5 +1,5 @@
-import { parse, GraphQLInt, Kind } from 'graphql';
-import { unwrapNamedType } from './augment/fields';
+import { parse, Kind } from 'graphql';
+import { unwrapNamedType, isListTypeField } from './augment/fields';
 import { Neo4jTypeFormatted } from './augment/types/types';
 import { getFederatedOperationData } from './federation';
 import neo4j from 'neo4j-driver';
@@ -427,8 +427,7 @@ export const buildCypherParameters = ({
   args,
   statements = [],
   params,
-  paramKey,
-  resolveInfo
+  paramKey
 }) => {
   const dataParams = paramKey ? params[paramKey] : params;
   const paramKeys = dataParams ? Object.keys(dataParams) : [];
@@ -438,7 +437,8 @@ export const buildCypherParameters = ({
       // Get the AST definition for the argument matching this param name
       const fieldAst = args.find(arg => arg.name.value === paramName);
       if (fieldAst) {
-        const fieldTypeName = unwrapNamedType({ type: fieldAst.type }).name;
+        const unwrappedType = unwrapNamedType({ type: fieldAst.type });
+        const fieldTypeName = unwrappedType.name;
         if (isNeo4jTypeInput(fieldTypeName)) {
           paramStatements = buildNeo4jTypeCypherParameters({
             paramStatements,
@@ -446,8 +446,7 @@ export const buildCypherParameters = ({
             param,
             paramKey,
             paramName,
-            fieldTypeName,
-            resolveInfo
+            fieldTypeName
           });
         } else {
           // normal case
@@ -459,10 +458,7 @@ export const buildCypherParameters = ({
       return paramStatements;
     }, statements);
   }
-  if (paramKey) {
-    params[paramKey] = dataParams;
-  }
-  return [params, statements];
+  return statements;
 };
 
 const buildNeo4jTypeCypherParameters = ({
@@ -471,8 +467,7 @@ const buildNeo4jTypeCypherParameters = ({
   param,
   paramKey,
   paramName,
-  fieldTypeName,
-  resolveInfo
+  fieldTypeName
 }) => {
   const formatted = param.formatted;
   const neo4jTypeConstructor = decideNeo4jTypeConstructor(fieldTypeName);
@@ -495,18 +490,8 @@ const buildNeo4jTypeCypherParameters = ({
           neo4jTypeParam = param[paramIndex];
           if (neo4jTypeParam.formatted) {
             const formatted = neo4jTypeParam.formatted;
-            if (paramKey) params[paramKey][paramName] = formatted;
-            else params[paramName] = formatted;
-          } else {
-            params = serializeNeo4jIntegers({
-              paramKey,
-              fieldTypeName,
-              paramName,
-              paramIndex: paramIndex,
-              neo4jTypeParam,
-              params,
-              resolveInfo
-            });
+            if (paramKey) params[paramKey][paramName][paramIndex] = formatted;
+            else params[paramName][paramIndex] = formatted;
           }
         }
         paramStatements.push(
@@ -521,15 +506,6 @@ const buildNeo4jTypeCypherParameters = ({
         if (neo4jTypeParam.formatted) {
           if (paramKey) params[paramKey][paramName] = formatted;
           else params[paramName] = formatted;
-        } else {
-          params = serializeNeo4jIntegers({
-            paramKey,
-            fieldTypeName,
-            paramName,
-            neo4jTypeParam,
-            params,
-            resolveInfo
-          });
         }
         paramStatements.push(
           `${paramName}: ${neo4jTypeConstructor}($${
@@ -540,41 +516,6 @@ const buildNeo4jTypeCypherParameters = ({
     }
   }
   return paramStatements;
-};
-
-const serializeNeo4jIntegers = ({
-  paramKey,
-  fieldTypeName,
-  paramName,
-  paramIndex,
-  neo4jTypeParam = {},
-  params = {},
-  resolveInfo
-}) => {
-  const schema = resolveInfo.schema;
-  const neo4jTypeDefinition = schema.getType(fieldTypeName);
-  const neo4jTypeAst = neo4jTypeDefinition.astNode;
-  const neo4jTypeFields = neo4jTypeAst.fields;
-  Object.keys(neo4jTypeParam).forEach(paramFieldName => {
-    const fieldAst = neo4jTypeFields.find(
-      field => field.name.value === paramFieldName
-    );
-    const unwrappedFieldType = unwrapNamedType({ type: fieldAst.type });
-    const fieldTypeName = unwrappedFieldType.name;
-    if (
-      fieldTypeName === GraphQLInt.name &&
-      Number.isInteger(neo4jTypeParam[paramFieldName])
-    ) {
-      const serialized = neo4j.int(neo4jTypeParam[paramFieldName]);
-      let param = params[paramName];
-      if (paramIndex >= 0) {
-        if (paramKey) param = params[paramKey][paramName][paramIndex];
-        else param = param[paramIndex];
-      } else if (paramKey) param = params[paramKey][paramName];
-      param[paramFieldName] = serialized;
-    }
-  });
-  return params;
 };
 
 // TODO refactor to handle Query/Mutation type schema directives
@@ -941,42 +882,40 @@ export const neo4jTypePredicateClauses = (
   fieldArguments,
   parentParam
 ) => {
-  return fieldArguments.reduce((acc, t) => {
-    // For every temporal argument
-    const argName = t.name.value;
-    let neo4jTypeParam = filters[argName];
-    if (neo4jTypeParam) {
-      // If a parameter value has been provided for it check whether
-      // the provided param value is in an indexed object for a nested argument
-      const paramIndex = neo4jTypeParam.index;
-      const paramValue = neo4jTypeParam.value;
-      // If it is, set and use its .value
-      if (paramValue) neo4jTypeParam = paramValue;
-      if (neo4jTypeParam[Neo4jTypeFormatted.FORMATTED]) {
-        // Only the dedicated 'formatted' arg is used if it is provided
-        const type = unwrapNamedType({ type: t.type }).name;
-        acc.push(
-          `${variableName}.${argName} = ${decideNeo4jTypeConstructor(type)}($${
-            // use index if provided, for nested arguments
-            typeof paramIndex === 'undefined'
-              ? `${parentParam ? `${parentParam}.` : ''}${argName}.formatted`
-              : `${
-                  parentParam ? `${parentParam}.` : ''
-                }${paramIndex}_${argName}.formatted`
-          })`
-        );
-      } else {
-        Object.keys(neo4jTypeParam).forEach(e => {
+  return fieldArguments.reduce((acc, fieldArgument) => {
+    if (!isListTypeField({ field: fieldArgument })) {
+      // For every temporal argument
+      const argName = fieldArgument.name.value;
+      let argValue = filters[argName];
+      if (argValue) {
+        const type = fieldArgument.type;
+        const unwrappedType = unwrapNamedType({ type });
+        const typeName = unwrappedType.name;
+        // If a parameter value has been provided for it check whether
+        // the provided param value is in an indexed object for a nested argument
+        const paramIndex = argValue.index;
+        const paramValue = argValue.value;
+        // If it is, set and use its .value
+        if (paramValue) argValue = paramValue;
+        const parentParamPath = parentParam ? `${parentParam}.` : '';
+        const paramPath = `${parentParamPath}${
+          paramIndex >= 1 ? `${paramIndex}_` : ''
+        }${argName}`;
+        const propertyPath = `${variableName}.${argName}`;
+        const cypherTypeConstructor = decideNeo4jTypeConstructor(typeName);
+        const isTemporalFormattedField = argValue[Neo4jTypeFormatted.FORMATTED];
+        if (isTemporalFormattedField) {
+          // Only the dedicated 'formatted' arg is used if it is provided
           acc.push(
-            `${variableName}.${argName}.${e} = $${
-              typeof paramIndex === 'undefined'
-                ? `${parentParam ? `${parentParam}.` : ''}${argName}`
-                : `${
-                    parentParam ? `${parentParam}.` : ''
-                  }${paramIndex}_${argName}`
-            }.${e}`
+            `${propertyPath} = ${cypherTypeConstructor}($${paramPath}.${Neo4jTypeFormatted.FORMATTED})`
           );
-        });
+        } else {
+          Object.keys(argValue).forEach(paramName => {
+            acc.push(
+              `${propertyPath}.${paramName} = $${paramPath}.${paramName}`
+            );
+          });
+        }
       }
     }
     return acc;
