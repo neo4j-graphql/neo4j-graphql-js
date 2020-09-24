@@ -1,3 +1,4 @@
+import { Kind } from 'graphql';
 import { augmentRelationshipQueryAPI } from './query';
 import { augmentRelationshipMutationAPI } from './mutation';
 import {
@@ -20,7 +21,8 @@ import {
   isPrimaryKeyField,
   isUniqueField,
   isIndexedField,
-  getDirectiveArgument
+  getDirectiveArgument,
+  augmentDirectives
 } from '../../directives';
 import { isOperationTypeDefinition } from '../../types/types';
 import { ApolloError } from 'apollo-server-errors';
@@ -37,6 +39,7 @@ export const RelationshipDirectionField = {
  */
 export const augmentRelationshipTypeField = ({
   typeName,
+  field,
   definition,
   fieldType,
   fieldArguments,
@@ -49,8 +52,7 @@ export const augmentRelationshipTypeField = ({
   generatedTypeMap,
   operationTypeMap,
   outputType,
-  config,
-  outputTypeWrappers
+  config
 }) => {
   if (!isOperationTypeDefinition({ definition, operationTypeMap })) {
     const isPrimaryKey = isPrimaryKeyField({ directives: fieldDirectives });
@@ -104,6 +106,7 @@ export const augmentRelationshipTypeField = ({
       ] = augmentRelationshipQueryAPI({
         typeName,
         definition,
+        field,
         fieldArguments,
         fieldName,
         outputType,
@@ -114,7 +117,6 @@ export const augmentRelationshipTypeField = ({
         generatedTypeMap,
         nodeInputTypeMap,
         relationshipInputTypeMap,
-        outputTypeWrappers,
         config,
         relationshipName,
         fieldType,
@@ -195,7 +197,6 @@ const augmentRelationshipTypeFields = ({
     if (!isIgnoredField({ directives: fieldDirectives })) {
       const unwrappedType = unwrapNamedType({ type: field.type });
       const outputType = unwrappedType.name;
-      const outputTypeWrappers = unwrappedType.wrappers;
       const fieldDefinition = typeDefinitionMap[outputType];
       const outputKind = fieldDefinition ? fieldDefinition.kind : '';
       if (
@@ -219,19 +220,23 @@ const augmentRelationshipTypeFields = ({
           throw new ApolloError(
             `The @index directive cannot be used on @relation types.`
           );
+        // escapes unescaped double quotes in @cypher statements
+        field.directives = augmentDirectives({ directives: fieldDirectives });
         relationshipInputTypeMap = augmentInputTypePropertyFields({
           inputTypeMap: relationshipInputTypeMap,
+          field,
           fieldName,
           fieldDirectives,
           outputType,
-          outputKind,
-          outputTypeWrappers
+          outputKind
         });
-        propertyInputValues.push({
-          name: fieldName,
-          type: unwrappedType,
-          directives: fieldDirectives
-        });
+        if (!isCypherField({ directives: fieldDirectives })) {
+          propertyInputValues.push({
+            name: fieldName,
+            type: unwrappedType,
+            directives: fieldDirectives
+          });
+        }
         outputFields.push(field);
       }
     }
