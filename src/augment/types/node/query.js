@@ -18,7 +18,8 @@ import {
   getFieldDefinition,
   getTypeExtensionFieldDefinition,
   isNeo4jIDField,
-  Neo4jSystemIDField
+  Neo4jSystemIDField,
+  isListTypeField
 } from '../../fields';
 import {
   FilteringArgument,
@@ -92,23 +93,23 @@ export const augmentNodeQueryAPI = ({
  * node type Query field arguments
  */
 export const augmentNodeTypeFieldArguments = ({
+  field,
   fieldArguments,
   fieldDirectives,
   isUnionType,
   outputType,
-  outputTypeWrappers,
   typeDefinitionMap,
   config
 }) => {
   const queryTypeNameLower = OperationType.QUERY.toLowerCase();
   if (shouldAugmentType(config, queryTypeNameLower, outputType)) {
     fieldArguments = buildQueryFieldArguments({
+      field,
       argumentMap: NodeQueryArgument,
       isUnionType,
       fieldArguments,
       fieldDirectives,
       outputType,
-      outputTypeWrappers,
       typeDefinitionMap
     });
   }
@@ -122,9 +123,9 @@ export const augmentNodeTypeFieldArguments = ({
  */
 export const augmentNodeQueryArgumentTypes = ({
   typeName,
+  field,
   fieldName,
   outputType,
-  outputTypeWrappers,
   nodeInputTypeMap,
   config
 }) => {
@@ -133,10 +134,10 @@ export const augmentNodeQueryArgumentTypes = ({
     nodeInputTypeMap[FilteringArgument.FILTER].fields.push(
       ...buildRelationshipFilters({
         typeName,
+        field,
         fieldName,
         outputType: `_${outputType}Filter`,
         relatedType: outputType,
-        outputTypeWrappers,
         config
       })
     );
@@ -209,14 +210,22 @@ const buildNodeQueryArguments = ({
 }) => {
   if (!isUnionType) {
     // Do not persist type wrappers
-    propertyInputValues = propertyInputValues.map(arg =>
-      buildInputValue({
+    propertyInputValues = propertyInputValues.map(arg => {
+      const isListArgument = arg.type.wrappers[TypeWrappers.LIST_TYPE];
+      let wrappers = {};
+      if (isListArgument) {
+        wrappers = {
+          [TypeWrappers.LIST_TYPE]: true
+        };
+      }
+      return buildInputValue({
         name: buildName({ name: arg.name }),
         type: buildNamedType({
-          name: arg.type.name
+          name: arg.type.name,
+          wrappers
         })
-      })
-    );
+      });
+    });
     const hasNeo4jIDField = propertyInputValues.some(field =>
       isNeo4jIDField({
         name: field.name.value
@@ -237,9 +246,7 @@ const buildNodeQueryArguments = ({
     argumentMap: NodeQueryArgument,
     fieldArguments: propertyInputValues,
     outputType: typeName,
-    outputTypeWrappers: {
-      [TypeWrappers.LIST_TYPE]: true
-    },
+    isListType: true,
     isUnionType,
     typeDefinitionMap
   });
