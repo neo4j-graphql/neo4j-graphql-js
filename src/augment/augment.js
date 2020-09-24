@@ -18,6 +18,7 @@ import {
 import { augmentDirectiveDefinitions } from './directives';
 import { extractResolversFromSchema, augmentResolvers } from './resolvers';
 import { addAuthDirectiveImplementations } from '../auth';
+
 /**
  * The main export for augmenting an SDL document
  */
