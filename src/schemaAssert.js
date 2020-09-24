@@ -71,9 +71,8 @@ const cypherMap = ({ typeMap = {} }) => {
   const cypherMapFormat = Object.entries(typeMap).map(([typeName, astNode]) => {
     const fields = astNode.fields || [];
     const fieldNames = fields.map(field => field.name.value);
-    return `${typeName}:${cypherList({ values: fieldNames })}`;
+    const assertions = JSON.stringify(fieldNames);
+    return `${typeName}:${assertions}`;
   });
   return `{${cypherMapFormat}}`;
 };
-
-const cypherList = ({ values = [] }) => JSON.stringify(values);
