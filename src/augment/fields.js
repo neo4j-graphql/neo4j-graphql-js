@@ -70,25 +70,15 @@ export const TypeWrappers = {
 };
 
 /**
- * Predicate function identifying whether a GraphQL NamedType
- * contained in a type was wrapped with a NonNullType wrapper
- */
-export const isNonNullNamedTypeField = ({ wrappers = {} }) =>
-  wrappers[TypeWrappers.NON_NULL_NAMED_TYPE];
-
-/**
  * Predicate function identifying whether a type was wrapped
  * with a GraphQL ListType wrapper
  */
-export const isListTypeField = ({ wrappers = {} }) =>
-  wrappers[TypeWrappers.LIST_TYPE];
-
-/**
- * Predicate function identifying whether a GraphQL ListType
- * contained in a type was wrapped with a NonNullType wrapper
- */
-export const isNonNullListTypeField = ({ wrappers = {} }) =>
-  wrappers[TypeWrappers.NON_NULL_LIST_TYPE];
+export const isListTypeField = ({ field = {} }) => {
+  const type = field.type;
+  const unwrappedType = unwrapNamedType({ type });
+  const typeWrappers = unwrappedType.wrappers;
+  return typeWrappers[TypeWrappers.LIST_TYPE];
+};
 
 /**
  * A helper function that reduces the type wrappers of a given type
