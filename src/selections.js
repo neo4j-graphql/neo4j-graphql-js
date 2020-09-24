@@ -229,12 +229,6 @@ export function buildCypherSelection({
     const fieldType =
       schemaTypeField && schemaTypeField.type ? schemaTypeField.type : {};
     const innerSchemaType = innerType(fieldType); // for target "type" aka label
-
-    // TODO Switch to using schemaTypeField.astNode instead of schemaTypeField
-    // so the field type could be extracted using unwrapNamedType. We could explicitly check
-    // the ast for list type wrappers (changing isArrayType calls in translate.js) and we
-    // could use in the branching logic here, the same astNode.kind based predicate functions
-    // used in the  augmentation code (ex: from isObjectType to isObjectTypeDefinition from ast.js)
     const fieldAstNode = schemaTypeField ? schemaTypeField.astNode : {};
     const fieldTypeWrappers = unwrapNamedType({ type: fieldAstNode });
     const fieldTypeName = fieldTypeWrappers[TypeWrappers.NAME];
@@ -337,9 +331,6 @@ export function buildCypherSelection({
           ? schemaTypeField.args.map(e => e.astNode)
           : [];
       const neo4jTypeArgs = getNeo4jTypeArguments(fieldArgs);
-      const queryParams = paramsToString(
-        innerFilterParams(filterParams, neo4jTypeArgs)
-      );
       const skipLimit = computeSkipLimit(
         headSelection,
         resolveInfo.variableValues
@@ -460,7 +451,6 @@ export function buildCypherSelection({
           fieldType,
           variableName,
           nestedVariable,
-          queryParams,
           subSelection,
           skipLimit,
           commaIfTail,
@@ -502,7 +492,6 @@ export function buildCypherSelection({
           schemaType,
           innerSchemaType,
           nestedVariable,
-          queryParams,
           filterParams,
           neo4jTypeArgs,
           resolveInfo,
