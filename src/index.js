@@ -127,18 +127,20 @@ export async function neo4jgraphql(
 
     try {
       if (isMutation(resolveInfo)) {
-        result = await session.writeTransaction(tx => {
-          return tx.run(query, cypherParams);
+        result = await session.writeTransaction(async tx => {
+          const result = await tx.run(query, cypherParams);
+          return extractQueryResult(result, resolveInfo.returnType);
         });
       } else {
-        result = await session.readTransaction(tx => {
-          return tx.run(query, cypherParams);
+        result = await session.readTransaction(async tx => {
+          const result = await tx.run(query, cypherParams);
+          return extractQueryResult(result, resolveInfo.returnType);
         });
       }
     } finally {
       session.close();
     }
-    return extractQueryResult(result, resolveInfo.returnType);
+    return result;
   }
 }
 
@@ -318,15 +320,16 @@ export const assertSchema = ({
   const executeQuery = driver => {
     const session = driver.session();
     return session
-      .writeTransaction(tx => tx.run(statement))
-      .then(result => {
-        if (debug === true) {
-          const recordsJSON = result.records.map(record => record.toObject());
-          recordsJSON.sort((lhs, rhs) => lhs.label < rhs.label);
-          console.table(recordsJSON);
-        }
-        return result;
-      })
+      .writeTransaction(tx =>
+        tx.run(statement).then(result => {
+          if (debug === true) {
+            const recordsJSON = result.records.map(record => record.toObject());
+            recordsJSON.sort((lhs, rhs) => lhs.label < rhs.label);
+            console.table(recordsJSON);
+          }
+          return result;
+        })
+      )
       .finally(() => session.close());
   };
   return executeQuery(driver).catch(error => {
