@@ -24,10 +24,12 @@ import {
   getRelationName,
   getDirective,
   isIgnoredField,
+  isCypherField,
   isPrimaryKeyField,
   isUniqueField,
   isIndexedField,
   DirectiveDefinition,
+  augmentDirectives,
   validateFieldDirectives
 } from '../../directives';
 import {
@@ -47,6 +49,7 @@ import {
 } from '../../types/types';
 import { getPrimaryKey } from './selection';
 import { ApolloError } from 'apollo-server-errors';
+import { Kind } from 'graphql';
 
 /**
  * The main export for the augmentation process of a GraphQL
@@ -230,10 +233,15 @@ export const augmentNodeTypeFields = ({
         const outputType = unwrappedType.name;
         const outputDefinition = typeDefinitionMap[outputType];
         const outputKind = outputDefinition ? outputDefinition.kind : '';
-        const outputTypeWrappers = unwrappedType.wrappers;
         const relationshipDirective = getDirective({
           directives: fieldDirectives,
           name: DirectiveDefinition.RELATION
+        });
+        // escapes unescaped double quotes in @cypher statements
+        field.directives = augmentDirectives({ directives: fieldDirectives });
+        validateFieldDirectives({
+          fields,
+          directives: fieldDirectives
         });
         if (
           !isObjectExtension &&
@@ -243,23 +251,21 @@ export const augmentNodeTypeFields = ({
             type: outputType
           })
         ) {
-          validateFieldDirectives({
-            fields,
-            directives: fieldDirectives
-          });
           nodeInputTypeMap = augmentInputTypePropertyFields({
             inputTypeMap: nodeInputTypeMap,
+            field,
             fieldName,
             fieldDirectives,
             outputType,
-            outputKind,
-            outputTypeWrappers
+            outputKind
           });
-          propertyInputValues.push({
-            name: fieldName,
-            type: unwrappedType,
-            directives: fieldDirectives
-          });
+          if (!isCypherField({ directives: fieldDirectives })) {
+            propertyInputValues.push({
+              name: fieldName,
+              type: unwrappedType,
+              directives: fieldDirectives
+            });
+          }
         } else if (isNodeType({ definition: outputDefinition })) {
           [
             fieldArguments,
@@ -270,6 +276,7 @@ export const augmentNodeTypeFields = ({
           ] = augmentNodeTypeField({
             typeName,
             definition,
+            field,
             outputDefinition,
             fieldArguments,
             fieldDirectives,
@@ -281,7 +288,6 @@ export const augmentNodeTypeFields = ({
             generatedTypeMap,
             operationTypeMap,
             relationshipDirective,
-            outputTypeWrappers,
             isObjectExtension,
             isInterfaceExtension,
             config
@@ -297,11 +303,11 @@ export const augmentNodeTypeFields = ({
           ] = augmentRelationshipTypeField({
             typeName,
             definition,
+            field,
             fieldType,
             fieldArguments,
             fieldDirectives,
             fieldName,
-            outputTypeWrappers,
             outputType,
             outputDefinition,
             nodeInputTypeMap,
@@ -358,6 +364,7 @@ export const augmentNodeTypeFields = ({
 const augmentNodeTypeField = ({
   typeName,
   definition,
+  field,
   outputDefinition,
   fieldArguments,
   fieldDirectives,
@@ -369,8 +376,7 @@ const augmentNodeTypeField = ({
   generatedTypeMap,
   operationTypeMap,
   config,
-  relationshipDirective,
-  outputTypeWrappers
+  relationshipDirective
 }) => {
   const isPrimaryKey = isPrimaryKeyField({ directives: fieldDirectives });
   const isUnique = isUniqueField({ directives: fieldDirectives });
@@ -389,11 +395,11 @@ const augmentNodeTypeField = ({
     );
   const isUnionType = isUnionTypeDefinition({ definition: outputDefinition });
   fieldArguments = augmentNodeTypeFieldArguments({
+    field,
     fieldArguments,
     fieldDirectives,
     isUnionType,
     outputType,
-    outputTypeWrappers,
     typeDefinitionMap,
     config
   });
@@ -414,9 +420,9 @@ const augmentNodeTypeField = ({
       }
       nodeInputTypeMap = augmentNodeQueryArgumentTypes({
         typeName,
+        field,
         fieldName,
         outputType,
-        outputTypeWrappers,
         nodeInputTypeMap,
         config
       });

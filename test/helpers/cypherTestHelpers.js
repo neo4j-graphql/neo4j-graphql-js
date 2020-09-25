@@ -8,6 +8,7 @@ import { printSchemaDocument } from '../../src/augment/augment';
 import { graphql } from 'graphql';
 import { makeExecutableSchema } from 'graphql-tools';
 import { testSchema } from './testSchema';
+import _ from 'lodash';
 
 export function cypherTestRunner(
   t,
@@ -19,9 +20,28 @@ export function cypherTestRunner(
   const testMovieSchema =
     testSchema +
     `
-type Mutation {
+  type Mutation {
     CreateGenre(name: String): Genre @cypher(statement: "CREATE (g:Genre) SET g.name = $name RETURN g")
-    CreateMovie(movieId: ID, title: String, year: Int, plot: String, poster: String, imdbRating: Float, released: DateTime): Movie
+    CreateMovie(
+      movieId: ID
+      title: String
+      someprefix_title_with_underscores: String
+      year: Int
+      released: _Neo4jDateTimeInput
+      plot: String
+      poster: String
+      imdbRating: Float
+      avgStars: Float
+      location: _Neo4jPointInput
+      locations: [_Neo4jPointInput]
+      years: [Int]
+      titles: [String]
+      imdbRatings: [Float]
+      releases: [_Neo4jDateTimeInput]
+      booleans: [Boolean]
+      enums: [BookGenre]
+      extensionScalar: String
+    ): Movie    
     CreateState(name: String!, id: ID): State
     CreateUniqueNode(string: String, id: ID, anotherId: ID): UniqueNode @hasScope(scopes: ["UniqueNode: Create"])
     MergeUniqueStringNode(id: ID, uniqueString: String!): UniqueStringNode @hasScope(scopes: ["UniqueStringNode: Merge"])
@@ -40,20 +60,63 @@ type Mutation {
     CreateNewCamera(id: ID, type: String, make: String, weight: Int, features: [String]): NewCamera
     CreateActor(userId: ID, name: String): Actor
     computedMovieSearch: [MovieSearch] @cypher(statement: "MATCH (ms:MovieSearch) RETURN ms")
+    customCreateNode(
+      integer: Int
+      datetime: _Neo4jDateTimeInput
+      integers: [Int]
+      datetimes: [_Neo4jDateTimeInput]
+      point: _Neo4jPointInput
+      points: [_Neo4jPointInput]
+    ): Boolean
+      @cypher(statement: "CREATE (n:Node { integer: $integer, datetime: datetime($datetime), point: point($point), integers: $integers, datetimes: [value IN $datetimes | datetime(value)], points: [value IN $points | point(value)] }) RETURN TRUE")
+  }
+
+  extend type QueryA {
+    # Generated
+    "Object type query field line description"
+    Movie(
+      _id: String
+      movieId: ID
+      title: String
+      someprefix_title_with_underscores: String
+      year: Int
+      released: DateTime
+      plot: String
+      poster: String
+      imdbRating: Float
+      avgStars: Float
+      location: Point
+      locations: [Point]
+      years: [Int]
+      titles: [String]
+      imdbRatings: [Float]
+      releases: [DateTime]
+      booleans: [Boolean]
+      enums: [BookGenre]
+      extensionScalar: String
+      first: Int
+      offset: Int
+    ): [Movie] @hasScope(scopes: ["Movie: Read"])
+  }
+
+  enum BookGenre {
+    Mystery
+    Science
   }
   `;
 
   const checkCypherQuery = (object, params, ctx, resolveInfo) => {
     const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
     t.is(query, expectedCypherQuery);
-    t.deepEqual(queryParams, expectedCypherParams);
+    const deserializedParams = JSON.parse(JSON.stringify(queryParams));
+    t.deepEqual(deserializedParams, expectedCypherParams);
   };
 
   const checkCypherMutation = (object, params, ctx, resolveInfo) => {
     const [query, queryParams] = cypherMutation(params, ctx, resolveInfo);
     t.is(query, expectedCypherQuery);
-    t.deepEqual(queryParams, expectedCypherParams);
-    t.end();
+    const deserializedParams = JSON.parse(JSON.stringify(queryParams));
+    t.deepEqual(deserializedParams, expectedCypherParams);
   };
 
   const resolvers = {
@@ -106,7 +169,8 @@ type Mutation {
       CustomCamera: checkCypherMutation,
       CustomCameras: checkCypherMutation,
       CreateNewCamera: checkCypherMutation,
-      computedMovieSearch: checkCypherMutation
+      computedMovieSearch: checkCypherMutation,
+      customCreateNode: checkCypherMutation
     }
   };
   let augmentedTypeDefs = augmentTypeDefs(testMovieSchema, { auth: true });
@@ -160,18 +224,20 @@ export function augmentedSchemaCypherTestRunner(
   t,
   graphqlQuery,
   graphqlParams,
-  expectedCypherQuery
+  expectedCypherQuery,
+  expectedCypherParams
 ) {
   const checkCypherQuery = (object, params, ctx, resolveInfo) => {
     const [query, queryParams] = cypherQuery(params, ctx, resolveInfo);
     t.is(query, expectedCypherQuery);
-    t.deepEqual(queryParams, expectedCypherParams);
+    const deserializedParams = JSON.parse(JSON.stringify(queryParams));
+    t.deepEqual(deserializedParams, expectedCypherParams);
   };
   const checkCypherMutation = (object, params, ctx, resolveInfo) => {
     const [query, queryParams] = cypherMutation(params, ctx, resolveInfo);
     t.is(query, expectedCypherQuery);
-    t.deepEqual(queryParams, expectedCypherParams);
-    t.end();
+    const deserializedParams = JSON.parse(JSON.stringify(queryParams));
+    t.deepEqual(deserializedParams, expectedCypherParams);
   };
 
   const resolvers = {
@@ -219,7 +285,10 @@ export function augmentedSchemaCypherTestRunner(
       computedMovieSearch: checkCypherQuery
     },
     Mutation: {
+      CreateGenre: checkCypherMutation,
       CreateMovie: checkCypherMutation,
+      UpdateMovie: checkCypherMutation,
+      DeleteMovie: checkCypherMutation,
       CreateActor: checkCypherMutation,
       CreateState: checkCypherMutation,
       CreateUniqueNode: checkCypherMutation,
@@ -243,6 +312,7 @@ export function augmentedSchemaCypherTestRunner(
       AddMovieGenres: checkCypherMutation,
       MergeMovieGenres: checkCypherMutation,
       RemoveMovieGenres: checkCypherMutation,
+      MergeUser: checkCypherMutation,
       AddUserRated: checkCypherMutation,
       MergeUserRated: checkCypherMutation,
       UpdateUserRated: checkCypherMutation,
@@ -268,7 +338,8 @@ export function augmentedSchemaCypherTestRunner(
       RemoveActorInterfacedRelationshipType: checkCypherMutation,
       MergeActorInterfacedRelationshipType: checkCypherMutation,
       UpdateActorInterfacedRelationshipType: checkCypherMutation,
-      MergeGenreInterfacedRelationshipType: checkCypherMutation
+      MergeGenreInterfacedRelationshipType: checkCypherMutation,
+      customCreateNode: checkCypherMutation
     }
   };
 

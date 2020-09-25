@@ -58,27 +58,6 @@ test.cb('Test augmented schema', t => {
 
     "Query type line description"
     type QueryA {
-      "Object type query field line description"
-      Movie(
-        _id: String
-        "Query field argument line description"
-        movieId: ID
-        """
-        Query field argument
-        block description
-        """
-        title: String
-        year: Int
-        released: _Neo4jDateTimeInput
-        plot: String
-        poster: String
-        imdbRating: Float
-        location: _Neo4jPointInput
-        first: Int
-        offset: Int
-        orderBy: [_MovieOrdering]
-        filter: _MovieFilter
-      ): [Movie]
       """
       Query field
       block
@@ -93,6 +72,7 @@ test.cb('Test augmented schema', t => {
       ): [Movie]
       MoviesByYears(
         year: [Int]
+        released: [_Neo4jDateTimeInput]
         first: Int
         offset: Int
         orderBy: [_MovieOrdering]
@@ -109,6 +89,7 @@ test.cb('Test augmented schema', t => {
         @cypher(
           statement: "MATCH (g:Genre) WHERE toLower(g.name) CONTAINS toLower($substring) RETURN g"
         )
+      "Object type query field line description"
       State(
         first: Int
         offset: Int
@@ -191,6 +172,31 @@ test.cb('Test augmented schema', t => {
         orderBy: [_CameraOrdering]
       ): [Camera] @cypher(statement: "MATCH (c:Camera) RETURN c")
       CustomCamera: Camera @cypher(statement: "MATCH (c:Camera) RETURN c")
+      Movie(
+        _id: String
+        movieId: ID
+        title: String
+        someprefix_title_with_underscores: String
+        year: Int
+        released: _Neo4jDateTimeInput
+        plot: String
+        poster: String
+        imdbRating: Float
+        avgStars: Float
+        location: _Neo4jPointInput
+        locations: [_Neo4jPointInput]
+        years: [Int]
+        titles: [String]
+        imdbRatings: [Float]
+        releases: [_Neo4jDateTimeInput]
+        booleans: [Boolean]
+        enums: [BookGenre]
+        extensionScalar: String
+        first: Int
+        offset: Int
+        orderBy: [_MovieOrdering]
+        filter: _MovieFilter
+      ): [Movie] @hasScope(scopes: ["Movie: Read", "read:movie"])
       Genre(
         _id: String
         name: String
@@ -203,6 +209,8 @@ test.cb('Test augmented schema', t => {
         userId: ID
         name: String
         extensionScalar: String
+        datetimes: [_Neo4jDateTimeInput]
+        strings: [String]
         _id: String
         first: Int
         offset: Int
@@ -224,8 +232,7 @@ test.cb('Test augmented schema', t => {
         date: _Neo4jDateInput
         localtime: _Neo4jLocalTimeInput
         localdatetime: _Neo4jLocalDateTimeInput
-        localdatetimes: _Neo4jLocalDateTimeInput
-        computedTimestamp: String
+        localdatetimes: [_Neo4jLocalDateTimeInput]
         _id: String
         first: Int
         offset: Int
@@ -260,7 +267,7 @@ test.cb('Test augmented schema', t => {
         id: ID
         make: String
         weight: Int
-        features: String
+        features: [String]
         _id: String
         first: Int
         offset: Int
@@ -464,6 +471,13 @@ test.cb('Test augmented schema', t => {
       location_distance_lte: _Neo4jPointDistanceFilter
       location_distance_gt: _Neo4jPointDistanceFilter
       location_distance_gte: _Neo4jPointDistanceFilter
+      locations: [_Neo4jPointInput!]
+      locations_not: [_Neo4jPointInput!]
+      locations_distance: [_Neo4jPointDistanceFilter!]
+      locations_distance_lt: [_Neo4jPointDistanceFilter!]
+      locations_distance_lte: [_Neo4jPointDistanceFilter!]
+      locations_distance_gt: [_Neo4jPointDistanceFilter!]
+      locations_distance_gte: [_Neo4jPointDistanceFilter!]
       ratings: _MovieRatedFilter
       ratings_not: _MovieRatedFilter
       ratings_in: [_MovieRatedFilter!]
@@ -472,6 +486,36 @@ test.cb('Test augmented schema', t => {
       ratings_none: _MovieRatedFilter
       ratings_single: _MovieRatedFilter
       ratings_every: _MovieRatedFilter
+      years: [Int!]
+      years_not: [Int!]
+      years_lt: [Int!]
+      years_lte: [Int!]
+      years_gt: [Int!]
+      years_gte: [Int!]
+      titles: [String!]
+      titles_not: [String!]
+      titles_contains: [String!]
+      titles_not_contains: [String!]
+      titles_starts_with: [String!]
+      titles_not_starts_with: [String!]
+      titles_ends_with: [String!]
+      titles_not_ends_with: [String!]
+      imdbRatings: [Float!]
+      imdbRatings_not: [Float!]
+      imdbRatings_lt: [Float!]
+      imdbRatings_lte: [Float!]
+      imdbRatings_gt: [Float!]
+      imdbRatings_gte: [Float!]
+      releases: [_Neo4jDateTimeInput!]
+      releases_not: [_Neo4jDateTimeInput!]
+      releases_lt: [_Neo4jDateTimeInput!]
+      releases_lte: [_Neo4jDateTimeInput!]
+      releases_gt: [_Neo4jDateTimeInput!]
+      releases_gte: [_Neo4jDateTimeInput!]
+      booleans: [Boolean!]
+      booleans_not: [Boolean!]
+      enums: [BookGenre!]
+      enums_not: [BookGenre!]
       interfaceNoScalars: _InterfaceNoScalarsFilter
       interfaceNoScalars_not: _InterfaceNoScalarsFilter
       interfaceNoScalars_in: [_InterfaceNoScalarsFilter!]
@@ -644,6 +688,20 @@ test.cb('Test augmented schema', t => {
       extensionScalar_not_starts_with: String
       extensionScalar_ends_with: String
       extensionScalar_not_ends_with: String
+      datetimes: [_Neo4jDateTimeInput!]
+      datetimes_not: [_Neo4jDateTimeInput!]
+      datetimes_lt: [_Neo4jDateTimeInput!]
+      datetimes_lte: [_Neo4jDateTimeInput!]
+      datetimes_gt: [_Neo4jDateTimeInput!]
+      datetimes_gte: [_Neo4jDateTimeInput!]
+      strings: [String!]
+      strings_not: [String!]
+      strings_contains: [String!]
+      strings_not_contains: [String!]
+      strings_starts_with: [String!]
+      strings_not_starts_with: [String!]
+      strings_ends_with: [String!]
+      strings_not_ends_with: [String!]
       interfacedRelationshipType: _PersonInterfacedRelationshipTypeFilter
       interfacedRelationshipType_not: _PersonInterfacedRelationshipTypeFilter
       interfacedRelationshipType_in: [_PersonInterfacedRelationshipTypeFilter!]
@@ -698,6 +756,12 @@ test.cb('Test augmented schema', t => {
       rating_lte: Int
       rating_gt: Int
       rating_gte: Int
+      ratings: [Int!]
+      ratings_not: [Int!]
+      ratings_lt: [Int!]
+      ratings_lte: [Int!]
+      ratings_gt: [Int!]
+      ratings_gte: [Int!]
       time: _Neo4jTimeInput
       time_not: _Neo4jTimeInput
       time_in: [_Neo4jTimeInput!]
@@ -738,6 +802,12 @@ test.cb('Test augmented schema', t => {
       localdatetime_lte: _Neo4jLocalDateTimeInput
       localdatetime_gt: _Neo4jLocalDateTimeInput
       localdatetime_gte: _Neo4jLocalDateTimeInput
+      datetimes: [_Neo4jDateTimeInput!]
+      datetimes_not: [_Neo4jDateTimeInput!]
+      datetimes_lt: [_Neo4jDateTimeInput!]
+      datetimes_lte: [_Neo4jDateTimeInput!]
+      datetimes_gt: [_Neo4jDateTimeInput!]
+      datetimes_gte: [_Neo4jDateTimeInput!]
       location: _Neo4jPointInput
       location_not: _Neo4jPointInput
       location_distance: _Neo4jPointDistanceFilter
@@ -834,6 +904,12 @@ test.cb('Test augmented schema', t => {
       rating_lte: Int
       rating_gt: Int
       rating_gte: Int
+      ratings: [Int!]
+      ratings_not: [Int!]
+      ratings_lt: [Int!]
+      ratings_lte: [Int!]
+      ratings_gt: [Int!]
+      ratings_gte: [Int!]
       time: _Neo4jTimeInput
       time_not: _Neo4jTimeInput
       time_in: [_Neo4jTimeInput!]
@@ -874,6 +950,12 @@ test.cb('Test augmented schema', t => {
       localdatetime_lte: _Neo4jLocalDateTimeInput
       localdatetime_gt: _Neo4jLocalDateTimeInput
       localdatetime_gte: _Neo4jLocalDateTimeInput
+      datetimes: [_Neo4jDateTimeInput!]
+      datetimes_not: [_Neo4jDateTimeInput!]
+      datetimes_lt: [_Neo4jDateTimeInput!]
+      datetimes_lte: [_Neo4jDateTimeInput!]
+      datetimes_gt: [_Neo4jDateTimeInput!]
+      datetimes_gte: [_Neo4jDateTimeInput!]
       location: _Neo4jPointInput
       location_not: _Neo4jPointInput
       location_distance: _Neo4jPointDistanceFilter
@@ -924,6 +1006,20 @@ test.cb('Test augmented schema', t => {
       datetime_lte: _Neo4jDateTimeInput
       datetime_gt: _Neo4jDateTimeInput
       datetime_gte: _Neo4jDateTimeInput
+      ratings: [String!]
+      ratings_not: [String!]
+      ratings_contains: [String!]
+      ratings_not_contains: [String!]
+      ratings_starts_with: [String!]
+      ratings_not_starts_with: [String!]
+      ratings_ends_with: [String!]
+      ratings_not_ends_with: [String!]
+      datetimes: [_Neo4jDateTimeInput!]
+      datetimes_not: [_Neo4jDateTimeInput!]
+      datetimes_lt: [_Neo4jDateTimeInput!]
+      datetimes_lte: [_Neo4jDateTimeInput!]
+      datetimes_gt: [_Neo4jDateTimeInput!]
+      datetimes_gte: [_Neo4jDateTimeInput!]
       localtime: _Neo4jLocalTimeInput
       localtime_not: _Neo4jLocalTimeInput
       localtime_in: [_Neo4jLocalTimeInput!]
@@ -1006,6 +1102,8 @@ test.cb('Test augmented schema', t => {
         offset: Int = 0
         name: String
         names: [String]
+        strings: [String]
+        datetimes: [_Neo4jDateTimeInput]
         orderBy: [_ActorOrdering]
         filter: _ActorFilter
       ): [Actor] @relation(name: "ACTED_IN", direction: "IN")
@@ -1031,6 +1129,8 @@ test.cb('Test augmented schema', t => {
         localtime: _Neo4jLocalTimeInput
         localdatetime: _Neo4jLocalDateTimeInput
         location: _Neo4jPointInput
+        ratings: [Int]
+        datetimes: [_Neo4jDateTimeInput]
         first: Int
         offset: Int
         orderBy: [_RatedOrdering]
@@ -1041,6 +1141,8 @@ test.cb('Test augmented schema', t => {
       imdbRatings: [Float]
       "Temporal type field line description"
       releases: [_Neo4jDateTime]
+      booleans: [Boolean]
+      enums: [BookGenre]
       "Ignored field line description"
       customField: String @neo4j_ignore
     }
@@ -1177,6 +1279,8 @@ test.cb('Test augmented schema', t => {
         filter: _PersonFilter
       ): [Person] @relation(name: "KNOWS", direction: "OUT")
       extensionScalar: String
+      datetimes: [_Neo4jDateTime]
+      strings: [String]
       interfacedRelationshipType(
         first: Int
         offset: Int
@@ -1535,6 +1639,8 @@ test.cb('Test augmented schema', t => {
         localtime: _Neo4jLocalTimeInput
         localdatetime: _Neo4jLocalDateTimeInput
         location: _Neo4jPointInput
+        ratings: [String]
+        datetimes: [_Neo4jDateTimeInput]
         first: Int
         offset: Int
         orderBy: [_FriendOfOrdering]
@@ -1548,6 +1654,8 @@ test.cb('Test augmented schema', t => {
         localtime: _Neo4jLocalTimeInput
         localdatetime: _Neo4jLocalDateTimeInput
         location: _Neo4jPointInput
+        ratings: [String]
+        datetimes: [_Neo4jDateTimeInput]
         first: Int
         offset: Int
         orderBy: [_FriendOfOrdering]
@@ -1564,6 +1672,7 @@ test.cb('Test augmented schema', t => {
       time: _Neo4jTime
       date: _Neo4jDate
       datetime: _Neo4jDateTime
+      ratings: [String]
       datetimes: [_Neo4jDateTime]
       localtime: _Neo4jLocalTime
       localdatetime: _Neo4jLocalDateTime
@@ -1846,6 +1955,12 @@ test.cb('Test augmented schema', t => {
       localdatetime_lte: _Neo4jLocalDateTimeInput
       localdatetime_gt: _Neo4jLocalDateTimeInput
       localdatetime_gte: _Neo4jLocalDateTimeInput
+      localdatetimes: [_Neo4jLocalDateTimeInput!]
+      localdatetimes_not: [_Neo4jLocalDateTimeInput!]
+      localdatetimes_lt: [_Neo4jLocalDateTimeInput!]
+      localdatetimes_lte: [_Neo4jLocalDateTimeInput!]
+      localdatetimes_gt: [_Neo4jLocalDateTimeInput!]
+      localdatetimes_gte: [_Neo4jLocalDateTimeInput!]
       temporalNodes: _TemporalNodeFilter
       temporalNodes_not: _TemporalNodeFilter
       temporalNodes_in: [_TemporalNodeFilter!]
@@ -2156,6 +2271,14 @@ test.cb('Test augmented schema', t => {
       weight_lte: Int
       weight_gt: Int
       weight_gte: Int
+      features: [String!]
+      features_not: [String!]
+      features_contains: [String!]
+      features_not_contains: [String!]
+      features_starts_with: [String!]
+      features_not_starts_with: [String!]
+      features_ends_with: [String!]
+      features_not_ends_with: [String!]
       operators: _PersonFilter
       operators_not: _PersonFilter
       operators_in: [_PersonFilter!]
@@ -2386,6 +2509,17 @@ test.cb('Test augmented schema', t => {
       testPublish: Boolean @neo4j_ignore
       computedMovieSearch: [MovieSearch]
         @cypher(statement: "MATCH (ms:MovieSearch) RETURN ms")
+      customCreateNode(
+        integer: Int
+        datetime: _Neo4jDateTimeInput
+        integers: [Int]
+        datetimes: [_Neo4jDateTimeInput]
+        point: _Neo4jPointInput
+        points: [_Neo4jPointInput]
+      ): Boolean
+        @cypher(
+          statement: "CREATE (n:Node { integer: $integer, datetime: datetime($datetime), point: point($point), integers: $integers, datetimes: [value IN $datetimes | datetime(value)], points: [value IN $points | point(value)] }) RETURN TRUE"
+        )
       AddMovieExtensionNode(
         from: _MovieInput!
         to: _GenreInput!
@@ -2588,6 +2722,8 @@ test.cb('Test augmented schema', t => {
         titles: [String]
         imdbRatings: [Float]
         releases: [_Neo4jDateTimeInput]
+        booleans: [Boolean]
+        enums: [BookGenre]
         extensionScalar: String
       ): Movie @hasScope(scopes: ["Movie: Create", "create:movie"])
       UpdateMovie(
@@ -2606,6 +2742,8 @@ test.cb('Test augmented schema', t => {
         titles: [String]
         imdbRatings: [Float]
         releases: [_Neo4jDateTimeInput]
+        booleans: [Boolean]
+        enums: [BookGenre]
         extensionScalar: String
       ): Movie @hasScope(scopes: ["Movie: Update", "update:movie"])
       DeleteMovie(movieId: ID!): Movie
@@ -2626,6 +2764,8 @@ test.cb('Test augmented schema', t => {
         titles: [String]
         imdbRatings: [Float]
         releases: [_Neo4jDateTimeInput]
+        booleans: [Boolean]
+        enums: [BookGenre]
         extensionScalar: String
       ): Movie @hasScope(scopes: ["Movie: Merge", "merge:movie"])
       AddGenreMovies(
@@ -3104,14 +3244,29 @@ test.cb('Test augmented schema', t => {
             "merge:person"
           ]
         )
-      CreateActor(userId: ID, name: String, extensionScalar: String): Actor
-        @hasScope(scopes: ["Actor: Create", "create:actor"])
-      UpdateActor(userId: ID!, name: String, extensionScalar: String): Actor
-        @hasScope(scopes: ["Actor: Update", "update:actor"])
+      CreateActor(
+        userId: ID
+        name: String
+        extensionScalar: String
+        datetimes: [_Neo4jDateTimeInput]
+        strings: [String]
+      ): Actor @hasScope(scopes: ["Actor: Create", "create:actor"])
+      UpdateActor(
+        userId: ID!
+        name: String
+        extensionScalar: String
+        datetimes: [_Neo4jDateTimeInput]
+        strings: [String]
+      ): Actor @hasScope(scopes: ["Actor: Update", "update:actor"])
       DeleteActor(userId: ID!): Actor
         @hasScope(scopes: ["Actor: Delete", "delete:actor"])
-      MergeActor(userId: ID!, name: String, extensionScalar: String): Actor
-        @hasScope(scopes: ["Actor: Merge", "merge:actor"])
+      MergeActor(
+        userId: ID!
+        name: String
+        extensionScalar: String
+        datetimes: [_Neo4jDateTimeInput]
+        strings: [String]
+      ): Actor @hasScope(scopes: ["Actor: Merge", "merge:actor"])
       AddUserInterfacedRelationshipType(
         from: _PersonInput!
         to: _GenreInput!
@@ -4784,6 +4939,7 @@ test.cb('Test augmented schema', t => {
       time: _Neo4jTimeInput
       date: _Neo4jDateInput
       datetime: _Neo4jDateTimeInput
+      ratings: [String]
       datetimes: [_Neo4jDateTimeInput]
       localtime: _Neo4jLocalTimeInput
       localdatetime: _Neo4jLocalDateTimeInput
@@ -4802,6 +4958,7 @@ test.cb('Test augmented schema', t => {
       time: _Neo4jTime
       date: _Neo4jDate
       datetime: _Neo4jDateTime
+      ratings: [String]
       datetimes: [_Neo4jDateTime]
       localtime: _Neo4jLocalTime
       localdatetime: _Neo4jLocalDateTime
@@ -4827,6 +4984,7 @@ test.cb('Test augmented schema', t => {
       time: _Neo4jTime
       date: _Neo4jDate
       datetime: _Neo4jDateTime
+      ratings: [String]
       datetimes: [_Neo4jDateTime]
       localtime: _Neo4jLocalTime
       localdatetime: _Neo4jLocalDateTime
@@ -4846,6 +5004,7 @@ test.cb('Test augmented schema', t => {
       time: _Neo4jTime
       date: _Neo4jDate
       datetime: _Neo4jDateTime
+      ratings: [String]
       datetimes: [_Neo4jDateTime]
       localtime: _Neo4jLocalTime
       localdatetime: _Neo4jLocalDateTime
@@ -5486,6 +5645,7 @@ test.cb('Test augmented schema', t => {
       time: _Neo4jTime
       date: _Neo4jDate
       datetime: _Neo4jDateTime
+      ratings: [String]
       datetimes: [_Neo4jDateTime]
       localtime: _Neo4jLocalTime
       localdatetime: _Neo4jLocalDateTime

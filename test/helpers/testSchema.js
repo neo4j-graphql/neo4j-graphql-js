@@ -42,6 +42,8 @@ export const testSchema = `
       offset: Int = 0
       name: String
       names: [String]
+      strings: [String]
+      datetimes: [DateTime]
     ): [Actor] @relation(name: "ACTED_IN", direction: "IN")
     avgStars: Float
     filmedIn: State @relation(name: "FILMED_IN", direction: "OUT")
@@ -64,12 +66,16 @@ export const testSchema = `
       localtime: LocalTime
       localdatetime: LocalDateTime
       location: Point
+      ratings: [Int]
+      datetimes: [DateTime]
     ): [Rated]
     years: [Int]
     titles: [String]
     imdbRatings: [Float]
     "Temporal type field line description"
     releases: [DateTime]
+    booleans: [Boolean]
+    enums: [BookGenre]
     "Ignored field line description"
     customField: String @neo4j_ignore
   }
@@ -281,6 +287,8 @@ export const testSchema = `
     movies: [Movie] @relation(name: "ACTED_IN", direction: "OUT")
     knows: [Person] @relation(name: "KNOWS", direction: "OUT")
     extensionScalar: String
+    datetimes: [DateTime]
+    strings: [String]
     interfacedRelationshipType: [InterfacedRelationshipType]
     reflexiveInterfacedRelationshipType: [ReflexiveInterfacedRelationshipType]    
     _id: String
@@ -314,6 +322,8 @@ export const testSchema = `
       localtime: LocalTime
       localdatetime: LocalDateTime
       location: Point
+      ratings: [String]
+      datetimes: [DateTime]  
     ): [FriendOf]
     favorites: [Movie] @relation(name: "FAVORITED", direction: "OUT")
     movieSearch: [MovieSearch]
@@ -332,6 +342,7 @@ export const testSchema = `
     time: Time
     date: Date
     datetime: DateTime
+    ratings: [String]
     datetimes: [DateTime]
     localtime: LocalTime
     localdatetime: LocalDateTime
@@ -386,38 +397,20 @@ export const testSchema = `
   
   "Query type line description"
   type QueryA {
-    "Object type query field line description"
-    Movie(
-      _id: String
-      "Query field argument line description"
-      movieId: ID
-      """
-      Query field argument
-      block description
-      """
-      title: String
-      year: Int
-      released: DateTime
-      plot: String
-      poster: String
-      imdbRating: Float
-      location: Point
-      first: Int
-      offset: Int
-    ): [Movie]
     """
     Query field
     block
     description
     """
     MoviesByYear(year: Int): [Movie]
-    MoviesByYears(year: [Int]): [Movie]
+    MoviesByYears(year: [Int], released: [DateTime]): [Movie]
     MovieById(movieId: ID!): Movie
     MovieBy_Id(_id: String!): Movie
     GenresBySubstring(substring: String): [Genre]
       @cypher(
         statement: "MATCH (g:Genre) WHERE toLower(g.name) CONTAINS toLower($substring) RETURN g"
       )
+    "Object type query field line description"
     State: [State]
     User(userId: ID, name: String, _id: String): [User]
     Books: [Book]
@@ -511,6 +504,15 @@ export const testSchema = `
     testPublish: Boolean @neo4j_ignore
     computedMovieSearch: [MovieSearch]
       @cypher(statement: "MATCH (ms:MovieSearch) RETURN ms")
+    customCreateNode(
+      integer: Int
+      datetime: DateTime
+      integers: [Int]
+      datetimes: [DateTime]
+      point: Point
+      points: [Point]
+    ): Boolean
+      @cypher(statement: "CREATE (n:Node { integer: $integer, datetime: datetime($datetime), point: point($point), integers: $integers, datetimes: [value IN $datetimes | datetime(value)], points: [value IN $points | point(value)] }) RETURN TRUE")  
   }
 
   extend type Mutation {

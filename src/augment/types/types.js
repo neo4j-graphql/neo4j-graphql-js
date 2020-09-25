@@ -10,7 +10,8 @@ import {
 import {
   isIgnoredField,
   DirectiveDefinition,
-  getDirective
+  getDirective,
+  augmentDirectives
 } from '../directives';
 import {
   buildOperationType,
@@ -282,12 +283,17 @@ export const augmentTypes = ({
       operationTypeMap
     });
     const isQueryType = isQueryTypeDefinition({ definition, operationTypeMap });
+    const isMutationType = isMutationTypeDefinition({
+      definition,
+      operationTypeMap
+    });
     if (isOperationType) {
       [definition, typeExtensionDefinitionMap] = augmentOperationType({
         typeName,
         definition,
         typeExtensionDefinitionMap,
         isQueryType,
+        isMutationType,
         isObjectType,
         typeDefinitionMap,
         generatedTypeMap,
@@ -656,61 +662,85 @@ const augmentOperationType = ({
   definition,
   typeExtensionDefinitionMap,
   isQueryType,
+  isMutationType,
   isObjectType,
   typeDefinitionMap,
   generatedTypeMap,
   operationTypeMap,
   config
 }) => {
-  if (isQueryType && isObjectType) {
-    let nodeInputTypeMap = {};
-    let propertyOutputFields = [];
-    let propertyInputValues = [];
+  if (isObjectType) {
     const typeExtensions = typeExtensionDefinitionMap[typeName] || [];
-    if (typeExtensions.length) {
-      typeExtensionDefinitionMap[typeName] = typeExtensions.map(extension => {
-        let isIgnoredType = false;
-        [
-          nodeInputTypeMap,
-          propertyOutputFields,
-          propertyInputValues,
-          isIgnoredType
-        ] = augmentNodeTypeFields({
-          typeName,
-          definition: extension,
-          typeDefinitionMap,
-          typeExtensionDefinitionMap,
-          generatedTypeMap,
-          operationTypeMap,
-          nodeInputTypeMap,
-          propertyOutputFields,
-          propertyInputValues,
-          config
+    if (isQueryType) {
+      // Augment existing Query type fields
+      let nodeInputTypeMap = {};
+      let propertyOutputFields = [];
+      let propertyInputValues = [];
+      if (typeExtensions.length) {
+        typeExtensionDefinitionMap[typeName] = typeExtensions.map(extension => {
+          let isIgnoredType = false;
+          [
+            nodeInputTypeMap,
+            propertyOutputFields,
+            propertyInputValues,
+            isIgnoredType
+          ] = augmentNodeTypeFields({
+            typeName,
+            definition: extension,
+            typeDefinitionMap,
+            typeExtensionDefinitionMap,
+            generatedTypeMap,
+            operationTypeMap,
+            nodeInputTypeMap,
+            propertyOutputFields,
+            propertyInputValues,
+            config
+          });
+          if (!isIgnoredType) {
+            extension.fields = propertyOutputFields;
+          }
+          return extension;
         });
-        if (!isIgnoredType) {
-          extension.fields = propertyOutputFields;
-        }
-        return extension;
+      }
+      let isIgnoredType = false;
+      [
+        nodeInputTypeMap,
+        propertyOutputFields,
+        propertyInputValues,
+        isIgnoredType
+      ] = augmentNodeTypeFields({
+        typeName,
+        definition,
+        typeDefinitionMap,
+        typeExtensionDefinitionMap,
+        generatedTypeMap,
+        propertyOutputFields,
+        operationTypeMap,
+        config
       });
-    }
-    let isIgnoredType = false;
-    [
-      nodeInputTypeMap,
-      propertyOutputFields,
-      propertyInputValues,
-      isIgnoredType
-    ] = augmentNodeTypeFields({
-      typeName,
-      definition,
-      typeDefinitionMap,
-      typeExtensionDefinitionMap,
-      generatedTypeMap,
-      propertyOutputFields,
-      operationTypeMap,
-      config
-    });
-    if (!isIgnoredType) {
-      definition.fields = propertyOutputFields;
+      if (!isIgnoredType) {
+        definition.fields = propertyOutputFields;
+      }
+    } else if (isMutationType) {
+      // Augment existing Mutation type fields
+      definition.fields = definition.fields.map(field => {
+        field.directives = augmentDirectives({ directives: field.directives });
+        return field;
+      });
+      if (typeExtensions.length) {
+        typeExtensionDefinitionMap[typeName] = typeExtensions.map(extension => {
+          const fields = extension.fields;
+          if (fields && fields.length) {
+            extension.fields = fields.map(field => {
+              field.directives = augmentDirectives({
+                directives: field.directives
+              });
+              return field;
+            });
+          }
+          return extension;
+        });
+      }
     }
   }
   return [definition, typeExtensionDefinitionMap];

@@ -519,3 +519,30 @@ export const getDirectiveArgument = ({ directive, name }) => {
   }
   return value;
 };
+
+export const augmentDirectives = ({ directives = [] }) => {
+  let cypherDirective = getDirective({
+    directives,
+    name: DirectiveDefinition.CYPHER
+  });
+  if (cypherDirective) {
+    cypherDirective = escapeCypherStatement({
+      directive: cypherDirective
+    });
+  }
+  return directives;
+};
+
+const escapeCypherStatement = ({ directive }) => {
+  const arg = directive.arguments.find(arg => arg.name.value === 'statement');
+  if (arg) {
+    const value = arg.value;
+    if (value && value.kind === Kind.STRING && value.block) {
+      // Negative lookbehind assertion regex
+      const unescapedDoubleQuotes = /(?<!\\)"/g;
+      const escaped = value.value.replace(unescapedDoubleQuotes, '\\"');
+      arg.value.value = escaped;
+    }
+  }
+  return directive;
+};

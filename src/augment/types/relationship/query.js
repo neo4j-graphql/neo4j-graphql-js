@@ -40,6 +40,7 @@ const RelationshipQueryArgument = {
 export const augmentRelationshipQueryAPI = ({
   typeName,
   definition,
+  field,
   fieldArguments,
   fieldName,
   outputType,
@@ -50,7 +51,6 @@ export const augmentRelationshipQueryAPI = ({
   generatedTypeMap,
   nodeInputTypeMap,
   relationshipInputTypeMap,
-  outputTypeWrappers,
   config,
   relationshipName,
   fieldType,
@@ -76,6 +76,7 @@ export const augmentRelationshipQueryAPI = ({
     });
     [fieldType, generatedTypeMap] = transformRelationshipTypeFieldOutput({
       typeName,
+      field,
       relatedType,
       fieldArguments,
       fieldName,
@@ -84,7 +85,6 @@ export const augmentRelationshipQueryAPI = ({
       toType,
       typeDefinitionMap,
       generatedTypeMap,
-      outputTypeWrappers,
       config,
       relationshipName,
       fieldType,
@@ -96,6 +96,8 @@ export const augmentRelationshipQueryAPI = ({
       nodeInputTypeMap
     ] = augmentRelationshipTypeFieldInput({
       typeName,
+      definition,
+      field,
       relatedType,
       fieldArguments,
       fieldName,
@@ -108,7 +110,6 @@ export const augmentRelationshipQueryAPI = ({
       generatedTypeMap,
       nodeInputTypeMap,
       relationshipInputTypeMap,
-      outputTypeWrappers,
       config
     });
   }
@@ -166,6 +167,8 @@ const getTypeDefiningField = ({
  * for the given field of the given relationship type
  */
 const augmentRelationshipTypeFieldInput = ({
+  definition,
+  field,
   typeName,
   relatedType,
   fieldArguments,
@@ -179,7 +182,6 @@ const augmentRelationshipTypeFieldInput = ({
   generatedTypeMap,
   nodeInputTypeMap,
   relationshipInputTypeMap,
-  outputTypeWrappers,
   config
 }) => {
   if (
@@ -203,14 +205,15 @@ const augmentRelationshipTypeFieldInput = ({
     nodeInputTypeMap[FilteringArgument.FILTER].fields.push(
       ...buildRelationshipFilters({
         typeName,
+        field,
         fieldName,
         outputType: `${relationshipFilterTypeName}Filter`,
         relatedType: outputType,
-        outputTypeWrappers,
         config
       })
     );
     [fieldArguments, generatedTypeMap] = augmentRelationshipTypeFieldArguments({
+      field,
       fieldArguments,
       typeName,
       fromType,
@@ -219,7 +222,6 @@ const augmentRelationshipTypeFieldInput = ({
       outputType,
       relatedType,
       relationshipFilterTypeName,
-      outputTypeWrappers,
       typeDefinitionMap,
       generatedTypeMap,
       relationshipInputTypeMap
@@ -234,6 +236,7 @@ const augmentRelationshipTypeFieldInput = ({
  */
 const augmentRelationshipTypeFieldArguments = ({
   fieldArguments,
+  field,
   typeName,
   fromType,
   toType,
@@ -241,18 +244,17 @@ const augmentRelationshipTypeFieldArguments = ({
   outputType,
   relatedType,
   relationshipFilterTypeName,
-  outputTypeWrappers,
   typeDefinitionMap,
   generatedTypeMap,
   relationshipInputTypeMap
 }) => {
   if (fromType !== toType) {
     fieldArguments = buildQueryFieldArguments({
+      field,
       argumentMap: RelationshipQueryArgument,
       fieldArguments,
       typeName,
       outputType,
-      outputTypeWrappers,
       typeDefinitionMap
     });
   } else {
@@ -283,6 +285,7 @@ const augmentRelationshipTypeFieldArguments = ({
  */
 const transformRelationshipTypeFieldOutput = ({
   typeName,
+  field,
   relatedType,
   fieldArguments,
   fieldName,
@@ -291,7 +294,6 @@ const transformRelationshipTypeFieldOutput = ({
   toType,
   typeDefinitionMap,
   generatedTypeMap,
-  outputTypeWrappers,
   relationshipName,
   fieldType,
   propertyOutputFields
@@ -310,10 +312,10 @@ const transformRelationshipTypeFieldOutput = ({
     fieldType = buildNamedType(unwrappedType);
   }
   generatedTypeMap = buildRelationshipFieldOutputTypes({
+    field,
     outputType,
     fromType,
     toType,
-    outputTypeWrappers,
     fieldArguments,
     relationshipOutputName,
     relationshipName,
@@ -331,10 +333,10 @@ const transformRelationshipTypeFieldOutput = ({
  */
 export const buildRelationshipFilters = ({
   typeName,
+  field,
   fieldName,
   outputType,
   relatedType,
-  outputTypeWrappers,
   config
 }) => {
   let filters = [];
@@ -347,7 +349,7 @@ export const buildRelationshipFilters = ({
       relatedType
     )
   ) {
-    if (isListTypeField({ wrappers: outputTypeWrappers })) {
+    if (isListTypeField({ field })) {
       filters = buildFilters({
         fieldName,
         fieldConfig: {
@@ -414,10 +416,10 @@ export const buildNodeOutputFields = ({
  * for querying relationship type fields on node types
  */
 const buildRelationshipFieldOutputTypes = ({
+  field,
   outputType,
   fromType,
   toType,
-  outputTypeWrappers,
   fieldArguments,
   relationshipOutputName,
   relationshipName,
@@ -433,10 +435,10 @@ const buildRelationshipFieldOutputTypes = ({
   });
   if (fromType === toType) {
     fieldArguments = buildQueryFieldArguments({
+      field,
       argumentMap: RelationshipQueryArgument,
       fieldArguments,
       outputType,
-      outputTypeWrappers,
       typeDefinitionMap
     });
     const reflexiveOutputName = `${relationshipOutputName}Directions`;
