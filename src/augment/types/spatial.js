@@ -71,7 +71,7 @@ export const augmentSpatialTypes = ({ typeMap, config = {} }) => {
   return buildNeo4jTypes({
     typeMap,
     neo4jTypes: SpatialType,
-    config: config.spatial
+    config
   });
 };
 

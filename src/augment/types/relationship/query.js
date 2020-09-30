@@ -18,9 +18,13 @@ import {
   buildName,
   buildNamedType,
   buildObjectType,
-  buildInputValue
+  buildInputValue,
+  buildDescription
 } from '../../ast';
 import { isExternalTypeExtension } from '../../../federation';
+
+const GRANDSTACK_DOCS = `https://grandstack.io/docs`;
+const GRANDSTACK_DOCS_RELATIONSHIP_TYPE_QUERY = `${GRANDSTACK_DOCS}/graphql-relationship-types`;
 
 /**
  * An enum describing which arguments are implemented for
@@ -68,7 +72,7 @@ export const augmentRelationshipQueryAPI = ({
       typeExtensionDefinitionMap
     });
     if (isImplementedField) typeName = definingType;
-    const relatedType = decideRelatedType({
+    const [relatedType, relationDirection] = decideRelatedType({
       typeName,
       definition,
       fromType,
@@ -87,8 +91,10 @@ export const augmentRelationshipQueryAPI = ({
       generatedTypeMap,
       config,
       relationshipName,
+      relationDirection,
       fieldType,
-      propertyOutputFields
+      propertyOutputFields,
+      config
     });
     [
       fieldArguments,
@@ -167,7 +173,6 @@ const getTypeDefiningField = ({
  * for the given field of the given relationship type
  */
 const augmentRelationshipTypeFieldInput = ({
-  definition,
   field,
   typeName,
   relatedType,
@@ -295,8 +300,10 @@ const transformRelationshipTypeFieldOutput = ({
   typeDefinitionMap,
   generatedTypeMap,
   relationshipName,
+  relationDirection,
   fieldType,
-  propertyOutputFields
+  propertyOutputFields,
+  config
 }) => {
   let relationshipOutputName = `_${typeName}${fieldName[0].toUpperCase() +
     fieldName.substr(1)}`;
@@ -319,10 +326,12 @@ const transformRelationshipTypeFieldOutput = ({
     fieldArguments,
     relationshipOutputName,
     relationshipName,
+    relationDirection,
     relatedType,
     propertyOutputFields,
     typeDefinitionMap,
-    generatedTypeMap
+    generatedTypeMap,
+    config
   });
   return [fieldType, generatedTypeMap];
 };
@@ -377,41 +386,6 @@ export const buildRelationshipFilters = ({
 };
 
 /**
- * Builds the AST definitions for the incoming and outgoing node type
- * fields of the output object types generated for querying relationship
- * type fields
- */
-export const buildNodeOutputFields = ({
-  fromType,
-  toType,
-  args = [],
-  wrappers = {}
-}) => {
-  return [
-    buildField({
-      name: buildName({
-        name: RelationshipDirectionField.FROM
-      }),
-      args,
-      type: buildNamedType({
-        name: fromType,
-        wrappers
-      })
-    }),
-    buildField({
-      name: buildName({
-        name: RelationshipDirectionField.TO
-      }),
-      args,
-      type: buildNamedType({
-        name: toType,
-        wrappers
-      })
-    })
-  ];
-};
-
-/**
  * Builds the AST definitions for the object types generated
  * for querying relationship type fields on node types
  */
@@ -424,9 +398,11 @@ const buildRelationshipFieldOutputTypes = ({
   relationshipOutputName,
   relationshipName,
   relatedType,
+  relationDirection,
   propertyOutputFields,
   typeDefinitionMap,
-  generatedTypeMap
+  generatedTypeMap,
+  config
 }) => {
   const relationTypeDirective = buildRelationDirective({
     relationshipName,
@@ -442,18 +418,49 @@ const buildRelationshipFieldOutputTypes = ({
       typeDefinitionMap
     });
     const reflexiveOutputName = `${relationshipOutputName}Directions`;
+    const nodeOutputFields = [
+      buildField({
+        name: buildName({
+          name: RelationshipDirectionField.FROM
+        }),
+        args: fieldArguments,
+        type: buildNamedType({
+          name: relationshipOutputName,
+          wrappers: {
+            [TypeWrappers.LIST_TYPE]: true
+          }
+        }),
+        description: buildDescription({
+          value: `Field for the ${fromType} node this ${relationshipName} [relationship](${GRANDSTACK_DOCS_RELATIONSHIP_TYPE_QUERY}) is coming from.`,
+          config
+        })
+      }),
+      buildField({
+        name: buildName({
+          name: RelationshipDirectionField.TO
+        }),
+        args: fieldArguments,
+        type: buildNamedType({
+          name: relationshipOutputName,
+          wrappers: {
+            [TypeWrappers.LIST_TYPE]: true
+          }
+        }),
+        description: buildDescription({
+          value: `Field for the ${toType} node this ${relationshipName} [relationship](${GRANDSTACK_DOCS_RELATIONSHIP_TYPE_QUERY}) is going to.`,
+          config
+        })
+      })
+    ];
     generatedTypeMap[reflexiveOutputName] = buildObjectType({
       name: buildName({ name: reflexiveOutputName }),
-      fields: buildNodeOutputFields({
-        fromType: relationshipOutputName,
-        toType: relationshipOutputName,
-        args: fieldArguments,
-        wrappers: {
-          [TypeWrappers.LIST_TYPE]: true
-        }
-      }),
+      fields: nodeOutputFields,
       directives: [relationTypeDirective]
     });
+  }
+  let descriptionValue = `Field for the ${toType} node this ${relationshipName} [relationship](${GRANDSTACK_DOCS_RELATIONSHIP_TYPE_QUERY}) is going to.`;
+  if (relationDirection === 'IN') {
+    descriptionValue = `Field for the ${fromType} node this ${relationshipName} [relationship](${GRANDSTACK_DOCS_RELATIONSHIP_TYPE_QUERY}) is coming from.`;
   }
   generatedTypeMap[relationshipOutputName] = buildObjectType({
     name: buildName({ name: relationshipOutputName }),
@@ -463,6 +470,10 @@ const buildRelationshipFieldOutputTypes = ({
         name: buildName({ name: relatedType }),
         type: buildNamedType({
           name: relatedType
+        }),
+        description: buildDescription({
+          value: descriptionValue,
+          config
         })
       })
     ],
@@ -555,12 +566,14 @@ const buildNodeInputFields = ({ fromType, toType }) => {
  */
 const decideRelatedType = ({ typeName, fromType, toType }) => {
   let relatedType = toType;
+  let relationDirection = 'OUT';
   if (fromType !== toType) {
     // Interpret relationship direction
     if (typeName === toType) {
       // Is incoming relationship
       relatedType = fromType;
+      relationDirection = 'IN';
     }
   }
-  return relatedType;
+  return [relatedType, relationDirection];
 };
