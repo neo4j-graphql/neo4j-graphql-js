@@ -1297,14 +1297,14 @@ test.serial('query union type using complex fragments', async t => {
           title: 'My Super Awesome Movie'
         },
         {
-          __typename: 'OldCamera',
-          id: 'cam009',
-          type: 'macro'
-        },
-        {
           userId: 'man009',
           name: 'Johnnie Zoooooooom',
           __typename: 'User'
+        },
+        {
+          __typename: 'OldCamera',
+          id: 'cam009',
+          type: 'macro'
         }
       ]
     }
