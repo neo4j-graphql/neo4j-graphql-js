@@ -6,7 +6,7 @@ import {
   OperationType
 } from './types/types';
 import { OrderingArgument, buildPropertyOrderingValues } from './input-values';
-import { buildField, buildName, buildNamedType } from './ast';
+import { buildField, buildName, buildNamedType, buildDescription } from './ast';
 
 /**
  * The name of the Neo4j system ID field
@@ -194,7 +194,8 @@ export const buildNeo4jSystemIDField = ({
   typeName,
   propertyOutputFields,
   nodeInputTypeMap,
-  config
+  config,
+  isRelationship = false
 }) => {
   const queryTypeNameLower = OperationType.QUERY.toLowerCase();
   if (shouldAugmentType(config, queryTypeNameLower, typeName)) {
@@ -207,10 +208,16 @@ export const buildNeo4jSystemIDField = ({
     const systemIDIndex = propertyOutputFields.findIndex(
       e => e.name.value === Neo4jSystemIDField
     );
+    let entityDescription = 'node';
+    if (isRelationship) entityDescription = 'relationship';
     const systemIDField = buildField({
       name: buildName({ name: neo4jInternalIDConfig.name }),
       type: buildNamedType({
         name: GraphQLString.name
+      }),
+      description: buildDescription({
+        value: `Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this ${entityDescription}.`,
+        config
       })
     });
     if (systemIDIndex >= 0) {

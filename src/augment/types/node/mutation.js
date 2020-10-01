@@ -3,7 +3,8 @@ import {
   buildField,
   buildName,
   buildNamedType,
-  buildInputValue
+  buildInputValue,
+  buildDescription
 } from '../../ast';
 import {
   DirectiveDefinition,
@@ -31,6 +32,9 @@ const NodeMutation = {
   DELETE: 'Delete',
   MERGE: 'Merge'
 };
+
+const GRANDSTACK_DOCS = `https://grandstack.io/docs`;
+const GRANDSTACK_DOCS_SCHEMA_AUGMENTATION = `${GRANDSTACK_DOCS}/graphql-schema-generation-augmentation`;
 
 /**
  * Given the results of augmentNodeTypeFields, builds or augments
@@ -84,7 +88,7 @@ export const augmentNodeMutationAPI = ({
  */
 const buildNodeMutationField = ({
   mutationType,
-  mutationAction,
+  mutationAction = '',
   primaryKey,
   typeName,
   propertyInputValues,
@@ -106,7 +110,7 @@ const buildNodeMutationField = ({
       name: typeName
     })
   ) {
-    const mutationField = {
+    const mutationConfig = {
       name: buildName({ name: mutationName }),
       args: buildNodeMutationArguments({
         operationName: mutationAction,
@@ -122,20 +126,37 @@ const buildNodeMutationField = ({
         config
       })
     };
+    let mutationField = undefined;
+    let mutationDescriptionUrl = '';
     if (mutationAction === NodeMutation.CREATE) {
-      mutationFields.push(buildField(mutationField));
+      mutationField = mutationConfig;
+      mutationDescriptionUrl =
+        '[creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-nodes)';
     } else if (mutationAction === NodeMutation.UPDATE) {
-      if (primaryKey && mutationField.args.length > 1) {
-        mutationFields.push(buildField(mutationField));
+      if (primaryKey && mutationConfig.args.length > 1) {
+        mutationField = mutationConfig;
+        mutationDescriptionUrl =
+          '[updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property)';
       }
     } else if (mutationAction === NodeMutation.MERGE) {
       if (primaryKey) {
-        mutationFields.push(buildField(mutationField));
+        mutationField = mutationConfig;
+        mutationDescriptionUrl =
+          '[merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-node-derived)';
       }
     } else if (mutationAction === NodeMutation.DELETE) {
       if (primaryKey) {
-        mutationFields.push(buildField(mutationField));
+        mutationField = mutationConfig;
+        mutationDescriptionUrl =
+          '[deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-single-node)';
       }
+    }
+    if (mutationField) {
+      mutationField.description = buildDescription({
+        value: `[Generated mutation](${GRANDSTACK_DOCS_SCHEMA_AUGMENTATION}/#${mutationAction.toLowerCase()}) for ${mutationDescriptionUrl} a ${typeName} node.`,
+        config
+      });
+      mutationFields.push(buildField(mutationField));
     }
     operationTypeMap[OperationType.MUTATION].fields = mutationFields;
   }

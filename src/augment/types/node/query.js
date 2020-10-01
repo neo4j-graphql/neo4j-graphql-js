@@ -4,7 +4,8 @@ import {
   buildField,
   buildInputValue,
   buildName,
-  buildNamedType
+  buildNamedType,
+  buildDescription
 } from '../../ast';
 import {
   DirectiveDefinition,
@@ -18,8 +19,7 @@ import {
   getFieldDefinition,
   getTypeExtensionFieldDefinition,
   isNeo4jIDField,
-  Neo4jSystemIDField,
-  isListTypeField
+  Neo4jSystemIDField
 } from '../../fields';
 import {
   FilteringArgument,
@@ -39,6 +39,9 @@ const NodeQueryArgument = {
   ...OrderingArgument,
   ...FilteringArgument
 };
+
+const GRANDSTACK_DOCS = `https://grandstack.io/docs`;
+const GRANDSTACK_DOCS_GENERATED_QUERIES = `${GRANDSTACK_DOCS}/graphql-schema-generation-augmentation#generated-queries`;
 
 /**
  * Given the results of augmentNodeTypeFields, builds or augments
@@ -189,6 +192,10 @@ const buildNodeQueryField = ({
         }),
         directives: buildNodeQueryDirectives({
           typeName,
+          config
+        }),
+        description: buildDescription({
+          value: `[Generated query](${GRANDSTACK_DOCS_GENERATED_QUERIES}) for ${typeName} type nodes.`,
           config
         })
       })

@@ -246,7 +246,8 @@ const augmentRelationshipTypeFields = ({
     typeName,
     propertyOutputFields,
     nodeInputTypeMap: relationshipInputTypeMap,
-    config
+    config,
+    isRelationship: true
   });
   return [
     fromTypeName,

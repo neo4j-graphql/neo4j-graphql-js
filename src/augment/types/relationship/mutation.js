@@ -1,5 +1,4 @@
 import { RelationshipDirectionField } from './relationship';
-import { buildNodeOutputFields } from './query';
 import { shouldAugmentRelationshipField } from '../../augment';
 import { OperationType } from '../../types/types';
 import {
@@ -23,7 +22,8 @@ import {
   buildNamedType,
   buildField,
   buildObjectType,
-  buildInputObjectType
+  buildInputObjectType,
+  buildDescription
 } from '../../ast';
 import { getPrimaryKey } from '../node/selection';
 import { isExternalTypeExtension } from '../../../federation';
@@ -39,6 +39,10 @@ const RelationshipMutation = {
   UPDATE: 'Update',
   MERGE: 'Merge'
 };
+
+const GRANDSTACK_DOCS = `https://grandstack.io/docs`;
+const GRANDSTACK_DOCS_RELATIONSHIP_TYPE_QUERY = `${GRANDSTACK_DOCS}/graphql-relationship-types`;
+const GRANDSTACK_DOCS_SCHEMA_AUGMENTATION = `${GRANDSTACK_DOCS}/graphql-schema-generation-augmentation`;
 
 /**
  * Given the results of augmentRelationshipTypeFields, builds or
@@ -242,7 +246,8 @@ const buildRelationshipMutationAPI = ({
       relationshipName,
       fromType,
       toType,
-      generatedTypeMap
+      generatedTypeMap,
+      config
     });
   }
   return [operationTypeMap, generatedTypeMap];
@@ -272,6 +277,28 @@ const buildRelationshipMutationField = ({
       propertyInputValues.length) ||
     mutationAction === RelationshipMutation.MERGE
   ) {
+    let cypherDocUrl = '';
+    let grandstackDocUrl = '';
+    if (mutationAction === RelationshipMutation.CREATE) {
+      cypherDocUrl =
+        '[creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships)';
+      grandstackDocUrl = '#add--remove-relationship';
+    }
+    if (mutationAction === RelationshipMutation.DELETE) {
+      cypherDocUrl =
+        '[deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only)';
+      grandstackDocUrl = '#add--remove-relationship';
+    }
+    if (mutationAction === RelationshipMutation.UPDATE) {
+      cypherDocUrl =
+        '[updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property)';
+      grandstackDocUrl = '#update-relationship';
+    }
+    if (mutationAction === RelationshipMutation.MERGE) {
+      cypherDocUrl =
+        '[merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships)';
+      grandstackDocUrl = '#merge-relationship';
+    }
     operationTypeMap[OperationType.MUTATION].fields.push(
       buildField({
         name: buildName({
@@ -292,6 +319,10 @@ const buildRelationshipMutationField = ({
           relationshipName,
           fromType,
           toType,
+          config
+        }),
+        description: buildDescription({
+          value: `[Generated mutation](${GRANDSTACK_DOCS_SCHEMA_AUGMENTATION}/#${grandstackDocUrl.toLowerCase()}) for ${cypherDocUrl} the ${relationshipName} relationship.`,
           config
         })
       })
@@ -444,7 +475,8 @@ const buildRelationshipMutationOutputType = ({
   relationshipName,
   fromType,
   toType,
-  generatedTypeMap
+  generatedTypeMap,
+  config
 }) => {
   if (
     mutationAction === RelationshipMutation.CREATE ||
@@ -458,7 +490,32 @@ const buildRelationshipMutationOutputType = ({
       fromType,
       toType
     });
-    let fields = buildNodeOutputFields({ fromType, toType });
+    let fields = [
+      buildField({
+        name: buildName({
+          name: RelationshipDirectionField.FROM
+        }),
+        type: buildNamedType({
+          name: fromType
+        }),
+        description: buildDescription({
+          value: `Field for the ${fromType} node this ${relationshipName} [relationship](${GRANDSTACK_DOCS_RELATIONSHIP_TYPE_QUERY}) is coming from.`,
+          config
+        })
+      }),
+      buildField({
+        name: buildName({
+          name: RelationshipDirectionField.TO
+        }),
+        type: buildNamedType({
+          name: toType
+        }),
+        description: buildDescription({
+          value: `Field for the ${toType} node this ${relationshipName} [relationship](${GRANDSTACK_DOCS_RELATIONSHIP_TYPE_QUERY}) is going to.`,
+          config
+        })
+      })
+    ];
     if (
       mutationAction === RelationshipMutation.CREATE ||
       mutationAction === RelationshipMutation.UPDATE ||
