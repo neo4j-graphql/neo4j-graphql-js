@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.16.4
+
+- [Add documentation descriptions for generated schema](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/515)
+- [Fix for issue with some mutations incorrectly casting integers to floats](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/513)
+- [Escape quotes in Cypher queries used in Cypher schema directive](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/513)
+- [Add query field arguments for list properties](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/513)
+- [Add filters for list properties](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/513)
+- [Consume neo4j-driver results inside transaction functions](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/508)
+
 ## 2.16.3
 
 - [Better align with conventions for scopes added to hasScope directive](https://github.com/neo4j-graphql/neo4j-graphql-js/commit/34125ba75e03f9cb06044d4cae31783d501935f1)
