@@ -69,6 +69,41 @@ export const testSchema = `
       ratings: [Int]
       datetimes: [DateTime]
     ): [Rated]
+    ratingsCustomFrom(
+      rating: Int
+      time: Time
+      date: Date
+      datetime: DateTime
+      localtime: LocalTime
+      localdatetime: LocalDateTime
+      location: Point
+      ratings: [Int]
+      datetimes: [DateTime]
+    ): [RatedCustomFrom]
+    ratingsCustomTo(
+      rating: Int
+      time: Time
+      date: Date
+      datetime: DateTime
+      localtime: LocalTime
+      localdatetime: LocalDateTime
+      location: Point
+      ratings: [Int]
+      datetimes: [DateTime]
+    ): [RatedCustomTo]
+    ratingsCustomFromTo(
+      rating: Int
+      time: Time
+      date: Date
+      datetime: DateTime
+      localtime: LocalTime
+      localdatetime: LocalDateTime
+      location: Point
+      ratings: [Int]
+      datetimes: [DateTime]
+      from: String
+      to: Int  
+    ): [RatedCustomFromTo]
     years: [Int]
     titles: [String]
     imdbRatings: [Float]
@@ -314,6 +349,35 @@ export const testSchema = `
       localdatetime: LocalDateTime
       location: Point
     ): [Rated]
+    ratedCustomFrom(
+      rating: Int
+      time: Time
+      date: Date
+      datetime: DateTime
+      localtime: LocalTime
+      localdatetime: LocalDateTime
+      location: Point
+    ): [RatedCustomFrom]
+    ratedCustomTo(
+      rating: Int
+      time: Time
+      date: Date
+      datetime: DateTime
+      localtime: LocalTime
+      localdatetime: LocalDateTime
+      location: Point
+    ): [RatedCustomTo]
+    ratedCustomFromTo(
+      rating: Int
+      time: Time
+      date: Date
+      datetime: DateTime
+      localtime: LocalTime
+      localdatetime: LocalDateTime
+      location: Point
+      from: String
+      to: Int
+    ): [RatedCustomFromTo]
     friends(
       since: Int
       time: Time
@@ -325,6 +389,41 @@ export const testSchema = `
       ratings: [String]
       datetimes: [DateTime]  
     ): [FriendOf]
+    friendsCustomFrom(
+      since: Int
+      time: Time
+      date: Date
+      datetime: DateTime
+      localtime: LocalTime
+      localdatetime: LocalDateTime
+      location: Point
+      ratings: [String]
+      datetimes: [DateTime]  
+    ): [FriendOfCustomFrom]
+    friendsCustomTo(
+      since: Int
+      time: Time
+      date: Date
+      datetime: DateTime
+      localtime: LocalTime
+      localdatetime: LocalDateTime
+      location: Point
+      ratings: [String]
+      datetimes: [DateTime]  
+    ): [FriendOfCustomTo]
+    friendsCustomFromTo(
+      since: Int
+      time: Time
+      date: Date
+      datetime: DateTime
+      localtime: LocalTime
+      localdatetime: LocalDateTime
+      location: Point
+      ratings: [String]
+      datetimes: [DateTime]
+      from: String
+      to: Int
+    ): [FriendOfCustomFromTo]
     favorites: [Movie] @relation(name: "FAVORITED", direction: "OUT")
     movieSearch: [MovieSearch]
     computedMovieSearch: [MovieSearch]
@@ -350,6 +449,62 @@ export const testSchema = `
     to: User
   }
 
+  type FriendOfCustomFrom @relation(from: "friendedBy") {
+    friendedBy: User
+    currentUserId: String
+      @cypher(
+        statement: "RETURN $cypherParams.currentUserId AS cypherParamsUserId"
+      )
+    since: Int
+    time: Time
+    date: Date
+    datetime: DateTime
+    ratings: [String]
+    datetimes: [DateTime]
+    localtime: LocalTime
+    localdatetime: LocalDateTime
+    location: Point
+    to: User
+  }
+
+  type FriendOfCustomTo @relation(to: "friended") {
+    from: User
+    currentUserId: String
+      @cypher(
+        statement: "RETURN $cypherParams.currentUserId AS cypherParamsUserId"
+      )
+    since: Int
+    time: Time
+    date: Date
+    datetime: DateTime
+    ratings: [String]
+    datetimes: [DateTime]
+    localtime: LocalTime
+    localdatetime: LocalDateTime
+    location: Point
+    friended: User
+  }
+
+  type FriendOfCustomFromTo @relation(from: "friendedBy", to: "friended") {
+    friendedBy: User
+    from: String
+    currentUserId: String
+      @cypher(
+        statement: "RETURN $cypherParams.currentUserId AS cypherParamsUserId"
+      )
+    since: Int
+    time: Time
+    date: Date
+    datetime: DateTime
+    ratings: [String]
+    datetimes: [DateTime]
+    localtime: LocalTime
+    localdatetime: LocalDateTime
+    location: Point
+    friended: User
+    to: Int
+  }
+
   type Rated @relation {
     from: User
     currentUserId(strArg: String): String
@@ -367,6 +522,65 @@ export const testSchema = `
     location: Point
     _id: String
     to: Movie
+  }
+
+  type RatedCustomFrom @relation(from: "ratedBy") {
+    ratedBy: User
+    currentUserId(strArg: String): String
+      @cypher(
+        statement: "RETURN $cypherParams.currentUserId AS cypherParamsUserId"
+      )
+    rating: Int
+    ratings: [Int]
+    time: Time
+    date: Date
+    datetime: DateTime
+    localtime: LocalTime
+    localdatetime: LocalDateTime
+    datetimes: [DateTime]
+    location: Point
+    _id: String
+    to: Movie
+  }
+
+  type RatedCustomTo @relation(to: "movie") {
+    from: User
+    currentUserId(strArg: String): String
+      @cypher(
+        statement: "RETURN $cypherParams.currentUserId AS cypherParamsUserId"
+      )
+    rating: Int
+    ratings: [Int]
+    time: Time
+    date: Date
+    datetime: DateTime
+    localtime: LocalTime
+    localdatetime: LocalDateTime
+    datetimes: [DateTime]
+    location: Point
+    _id: String
+    movie: Movie
+  }
+
+  type RatedCustomFromTo @relation(from: "ratedBy", to: "movie") {
+    ratedBy: User
+    from: String
+    currentUserId(strArg: String): String
+      @cypher(
+        statement: "RETURN $cypherParams.currentUserId AS cypherParamsUserId"
+      )
+    rating: Int
+    ratings: [Int]
+    time: Time
+    date: Date
+    datetime: DateTime
+    localtime: LocalTime
+    localdatetime: LocalDateTime
+    datetimes: [DateTime]
+    location: Point
+    _id: String
+    to: Int
+    movie: Movie
   }
 
   enum BookGenre {
