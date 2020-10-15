@@ -242,14 +242,6 @@ export const interpretType = ({ definition = {} }) => {
         getDirective({
           directives: typeDirectives,
           name: DirectiveDefinition.RELATION
-        }) &&
-        getFieldDefinition({
-          fields,
-          name: RelationshipDirectionField.FROM
-        }) &&
-        getFieldDefinition({
-          fields,
-          name: RelationshipDirectionField.TO
         })
       ) {
         neo4jType = neo4jStructuralTypes.RELATIONSHIP;
