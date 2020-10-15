@@ -1,3 +1,4 @@
+import { Kind } from 'graphql';
 import { RelationshipDirectionField } from './relationship';
 import { shouldAugmentRelationshipField } from '../../augment';
 import { OperationType } from '../../types/types';
@@ -11,16 +12,18 @@ import {
   DirectiveDefinition,
   buildAuthScopeDirective,
   buildMutationMetaDirective,
-  buildRelationDirective,
   useAuthDirective,
   getDirective,
-  isCypherField
+  isCypherField,
+  getDirectiveArgument
 } from '../../directives';
 import {
   buildInputValue,
   buildName,
   buildNamedType,
   buildField,
+  buildDirective,
+  buildDirectiveArgument,
   buildObjectType,
   buildInputObjectType,
   buildDescription
@@ -33,7 +36,7 @@ import { isExternalTypeExtension } from '../../../federation';
  * for node and relationship type fields (field and type
  * relation directive)
  */
-const RelationshipMutation = {
+export const RelationshipMutation = {
   CREATE: 'Add',
   DELETE: 'Remove',
   UPDATE: 'Update',
@@ -56,6 +59,7 @@ export const augmentRelationshipMutationAPI = ({
   fromType,
   toType,
   relationshipName,
+  relationshipDirective,
   propertyInputValues = [],
   propertyOutputFields = [],
   typeDefinitionMap,
@@ -124,6 +128,7 @@ export const augmentRelationshipMutationAPI = ({
           mutationAction,
           mutationName,
           relationshipName,
+          relationshipDirective,
           fromType,
           toType,
           propertyInputValues,
@@ -171,11 +176,25 @@ const getRelatedNodeTypeDefinition = ({
  * field arguments on relationship mutations for selecting
  * the related nodes
  */
-const buildNodeSelectionArguments = ({ fromType, toType }) => {
+const buildNodeSelectionArguments = ({
+  fromType,
+  toType,
+  relationshipDirective
+}) => {
+  let fromFieldName = getDirectiveArgument({
+    directive: relationshipDirective,
+    name: RelationshipDirectionField.FROM
+  });
+  let toFieldName = getDirectiveArgument({
+    directive: relationshipDirective,
+    name: RelationshipDirectionField.TO
+  });
+  if (!fromFieldName) fromFieldName = RelationshipDirectionField.FROM;
+  if (!toFieldName) toFieldName = RelationshipDirectionField.TO;
   return [
     buildInputValue({
       name: buildName({
-        name: RelationshipDirectionField.FROM
+        name: fromFieldName
       }),
       type: buildNamedType({
         name: `_${fromType}Input`,
@@ -186,7 +205,7 @@ const buildNodeSelectionArguments = ({ fromType, toType }) => {
     }),
     buildInputValue({
       name: buildName({
-        name: RelationshipDirectionField.TO
+        name: toFieldName
       }),
       type: buildNamedType({
         name: `_${toType}Input`,
@@ -206,6 +225,7 @@ const buildRelationshipMutationAPI = ({
   mutationAction,
   mutationName,
   relationshipName,
+  relationshipDirective,
   fromType,
   toType,
   propertyInputValues,
@@ -223,6 +243,7 @@ const buildRelationshipMutationAPI = ({
       mutationAction,
       mutationName,
       relationshipName,
+      relationshipDirective,
       fromType,
       toType,
       propertyInputValues,
@@ -244,6 +265,7 @@ const buildRelationshipMutationAPI = ({
       propertyInputValues,
       propertyOutputFields,
       relationshipName,
+      relationshipDirective,
       fromType,
       toType,
       generatedTypeMap,
@@ -261,6 +283,7 @@ const buildRelationshipMutationField = ({
   mutationAction,
   mutationName,
   relationshipName,
+  relationshipDirective,
   fromType,
   toType,
   propertyInputValues,
@@ -309,6 +332,7 @@ const buildRelationshipMutationField = ({
         }),
         args: buildRelationshipMutationArguments({
           mutationAction,
+          relationshipDirective,
           fromType,
           toType,
           propertyOutputFields,
@@ -393,12 +417,17 @@ const buildRelationshipMutationPropertyInputType = ({
  */
 const buildRelationshipMutationArguments = ({
   mutationAction,
+  relationshipDirective,
   fromType,
   toType,
   propertyOutputFields,
   outputType
 }) => {
-  const fieldArguments = buildNodeSelectionArguments({ fromType, toType });
+  const fieldArguments = buildNodeSelectionArguments({
+    relationshipDirective,
+    fromType,
+    toType
+  });
   if (
     (mutationAction === RelationshipMutation.CREATE ||
       mutationAction === RelationshipMutation.UPDATE ||
@@ -473,6 +502,7 @@ const buildRelationshipMutationOutputType = ({
   propertyInputValues,
   propertyOutputFields,
   relationshipName,
+  relationshipDirective,
   fromType,
   toType,
   generatedTypeMap,
@@ -485,15 +515,48 @@ const buildRelationshipMutationOutputType = ({
     (mutationAction === RelationshipMutation.UPDATE &&
       propertyInputValues.length)
   ) {
-    const relationTypeDirective = buildRelationDirective({
-      relationshipName,
-      fromType,
-      toType
+    const relationTypeDirective = buildDirective({
+      name: buildName({ name: DirectiveDefinition.RELATION }),
+      args: [
+        buildDirectiveArgument({
+          name: buildName({ name: 'name' }),
+          value: {
+            kind: Kind.STRING,
+            value: relationshipName
+          }
+        }),
+        buildDirectiveArgument({
+          name: buildName({ name: RelationshipDirectionField.FROM }),
+          value: {
+            kind: Kind.STRING,
+            value: fromType
+          }
+        }),
+        buildDirectiveArgument({
+          name: buildName({ name: RelationshipDirectionField.TO }),
+          value: {
+            kind: Kind.STRING,
+            value: toType
+          }
+        })
+      ]
     });
-    let fields = [
+    // Try to get a provided field name for the .from argument
+    let fromFieldName = getDirectiveArgument({
+      directive: relationshipDirective,
+      name: RelationshipDirectionField.FROM
+    });
+    // @relation 'from' argument is not provided, default to 'from' field
+    let toFieldName = getDirectiveArgument({
+      directive: relationshipDirective,
+      name: RelationshipDirectionField.TO
+    });
+    if (!fromFieldName) fromFieldName = RelationshipDirectionField.FROM;
+    if (!toFieldName) toFieldName = RelationshipDirectionField.TO;
+    const fields = [
       buildField({
         name: buildName({
-          name: RelationshipDirectionField.FROM
+          name: fromFieldName
         }),
         type: buildNamedType({
           name: fromType
@@ -505,7 +568,7 @@ const buildRelationshipMutationOutputType = ({
       }),
       buildField({
         name: buildName({
-          name: RelationshipDirectionField.TO
+          name: toFieldName
         }),
         type: buildNamedType({
           name: toType
