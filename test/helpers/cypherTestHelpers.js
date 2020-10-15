@@ -339,7 +339,15 @@ export function augmentedSchemaCypherTestRunner(
       MergeActorInterfacedRelationshipType: checkCypherMutation,
       UpdateActorInterfacedRelationshipType: checkCypherMutation,
       MergeGenreInterfacedRelationshipType: checkCypherMutation,
-      customCreateNode: checkCypherMutation
+      customCreateNode: checkCypherMutation,
+      AddUserRatedCustomFromTo: checkCypherMutation,
+      UpdateUserRatedCustomFromTo: checkCypherMutation,
+      RemoveUserRatedCustomFromTo: checkCypherMutation,
+      MergeUserRatedCustomFromTo: checkCypherMutation,
+      AddUserFriendsCustomFromTo: checkCypherMutation,
+      UpdateUserFriendsCustomFromTo: checkCypherMutation,
+      RemoveUserFriendsCustomFromTo: checkCypherMutation,
+      MergeUserFriendsCustomFromTo: checkCypherMutation
     }
   };
 
