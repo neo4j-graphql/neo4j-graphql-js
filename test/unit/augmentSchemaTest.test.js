@@ -317,6 +317,644 @@ test.cb('Test augmented schema', t => {
       _id: String
     }
 
+    type _MovieRatingsCustomFrom
+      @relation(name: "RATED_CUSTOM_FROM", from: "User", to: "Movie") {
+      currentUserId(strArg: String): String
+        @cypher(
+          statement: "RETURN $cypherParams.currentUserId AS cypherParamsUserId"
+        )
+      rating: Int
+      ratings: [Int]
+      time: _Neo4jTime
+      date: _Neo4jDate
+      datetime: _Neo4jDateTime
+      localtime: _Neo4jLocalTime
+      localdatetime: _Neo4jLocalDateTime
+      datetimes: [_Neo4jDateTime]
+      location: _Neo4jPoint
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
+      _id: String
+      "Field for the User node this RATED_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
+      ratedBy: User
+    }
+
+    input _MovieRatedCustomFromFilter {
+      AND: [_MovieRatedCustomFromFilter!]
+      OR: [_MovieRatedCustomFromFilter!]
+      rating: Int
+      rating_not: Int
+      rating_in: [Int!]
+      rating_not_in: [Int!]
+      rating_lt: Int
+      rating_lte: Int
+      rating_gt: Int
+      rating_gte: Int
+      ratings: [Int!]
+      ratings_not: [Int!]
+      ratings_lt: [Int!]
+      ratings_lte: [Int!]
+      ratings_gt: [Int!]
+      ratings_gte: [Int!]
+      time: _Neo4jTimeInput
+      time_not: _Neo4jTimeInput
+      time_in: [_Neo4jTimeInput!]
+      time_not_in: [_Neo4jTimeInput!]
+      time_lt: _Neo4jTimeInput
+      time_lte: _Neo4jTimeInput
+      time_gt: _Neo4jTimeInput
+      time_gte: _Neo4jTimeInput
+      date: _Neo4jDateInput
+      date_not: _Neo4jDateInput
+      date_in: [_Neo4jDateInput!]
+      date_not_in: [_Neo4jDateInput!]
+      date_lt: _Neo4jDateInput
+      date_lte: _Neo4jDateInput
+      date_gt: _Neo4jDateInput
+      date_gte: _Neo4jDateInput
+      datetime: _Neo4jDateTimeInput
+      datetime_not: _Neo4jDateTimeInput
+      datetime_in: [_Neo4jDateTimeInput!]
+      datetime_not_in: [_Neo4jDateTimeInput!]
+      datetime_lt: _Neo4jDateTimeInput
+      datetime_lte: _Neo4jDateTimeInput
+      datetime_gt: _Neo4jDateTimeInput
+      datetime_gte: _Neo4jDateTimeInput
+      localtime: _Neo4jLocalTimeInput
+      localtime_not: _Neo4jLocalTimeInput
+      localtime_in: [_Neo4jLocalTimeInput!]
+      localtime_not_in: [_Neo4jLocalTimeInput!]
+      localtime_lt: _Neo4jLocalTimeInput
+      localtime_lte: _Neo4jLocalTimeInput
+      localtime_gt: _Neo4jLocalTimeInput
+      localtime_gte: _Neo4jLocalTimeInput
+      localdatetime: _Neo4jLocalDateTimeInput
+      localdatetime_not: _Neo4jLocalDateTimeInput
+      localdatetime_in: [_Neo4jLocalDateTimeInput!]
+      localdatetime_not_in: [_Neo4jLocalDateTimeInput!]
+      localdatetime_lt: _Neo4jLocalDateTimeInput
+      localdatetime_lte: _Neo4jLocalDateTimeInput
+      localdatetime_gt: _Neo4jLocalDateTimeInput
+      localdatetime_gte: _Neo4jLocalDateTimeInput
+      datetimes: [_Neo4jDateTimeInput!]
+      datetimes_not: [_Neo4jDateTimeInput!]
+      datetimes_lt: [_Neo4jDateTimeInput!]
+      datetimes_lte: [_Neo4jDateTimeInput!]
+      datetimes_gt: [_Neo4jDateTimeInput!]
+      datetimes_gte: [_Neo4jDateTimeInput!]
+      location: _Neo4jPointInput
+      location_not: _Neo4jPointInput
+      location_distance: _Neo4jPointDistanceFilter
+      location_distance_lt: _Neo4jPointDistanceFilter
+      location_distance_lte: _Neo4jPointDistanceFilter
+      location_distance_gt: _Neo4jPointDistanceFilter
+      location_distance_gte: _Neo4jPointDistanceFilter
+      ratedBy: _UserFilter
+    }
+
+    enum _RatedCustomFromOrdering {
+      currentUserId_asc
+      currentUserId_desc
+      rating_asc
+      rating_desc
+      time_asc
+      time_desc
+      date_asc
+      date_desc
+      datetime_asc
+      datetime_desc
+      localtime_asc
+      localtime_desc
+      localdatetime_asc
+      localdatetime_desc
+      _id_asc
+      _id_desc
+    }
+
+    input _RatedCustomFromInput {
+      rating: Int
+      ratings: [Int]
+      time: _Neo4jTimeInput
+      date: _Neo4jDateInput
+      datetime: _Neo4jDateTimeInput
+      localtime: _Neo4jLocalTimeInput
+      localdatetime: _Neo4jLocalDateTimeInput
+      datetimes: [_Neo4jDateTimeInput]
+      location: _Neo4jPointInput
+    }
+
+    type _AddMovieRatingsCustomFromPayload
+      @relation(name: "RATED_CUSTOM_FROM", from: "User", to: "Movie") {
+      "Field for the User node this RATED_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
+      ratedBy: User
+      "Field for the Movie node this RATED_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
+      to: Movie
+      currentUserId: String
+        @cypher(
+          statement: "RETURN $cypherParams.currentUserId AS cypherParamsUserId"
+        )
+      rating: Int
+      ratings: [Int]
+      time: _Neo4jTime
+      date: _Neo4jDate
+      datetime: _Neo4jDateTime
+      localtime: _Neo4jLocalTime
+      localdatetime: _Neo4jLocalDateTime
+      datetimes: [_Neo4jDateTime]
+      location: _Neo4jPoint
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
+      _id: String
+    }
+
+    type _RemoveMovieRatingsCustomFromPayload
+      @relation(name: "RATED_CUSTOM_FROM", from: "User", to: "Movie") {
+      "Field for the User node this RATED_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
+      ratedBy: User
+      "Field for the Movie node this RATED_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
+      to: Movie
+    }
+
+    type _UpdateMovieRatingsCustomFromPayload
+      @relation(name: "RATED_CUSTOM_FROM", from: "User", to: "Movie") {
+      "Field for the User node this RATED_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
+      ratedBy: User
+      "Field for the Movie node this RATED_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
+      to: Movie
+      currentUserId: String
+        @cypher(
+          statement: "RETURN $cypherParams.currentUserId AS cypherParamsUserId"
+        )
+      rating: Int
+      ratings: [Int]
+      time: _Neo4jTime
+      date: _Neo4jDate
+      datetime: _Neo4jDateTime
+      localtime: _Neo4jLocalTime
+      localdatetime: _Neo4jLocalDateTime
+      datetimes: [_Neo4jDateTime]
+      location: _Neo4jPoint
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
+      _id: String
+    }
+
+    type _MergeMovieRatingsCustomFromPayload
+      @relation(name: "RATED_CUSTOM_FROM", from: "User", to: "Movie") {
+      "Field for the User node this RATED_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
+      ratedBy: User
+      "Field for the Movie node this RATED_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
+      to: Movie
+      currentUserId: String
+        @cypher(
+          statement: "RETURN $cypherParams.currentUserId AS cypherParamsUserId"
+        )
+      rating: Int
+      ratings: [Int]
+      time: _Neo4jTime
+      date: _Neo4jDate
+      datetime: _Neo4jDateTime
+      localtime: _Neo4jLocalTime
+      localdatetime: _Neo4jLocalDateTime
+      datetimes: [_Neo4jDateTime]
+      location: _Neo4jPoint
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
+      _id: String
+    }
+
+    type _MovieRatingsCustomTo
+      @relation(name: "RATED_CUSTOM_TO", from: "User", to: "Movie") {
+      currentUserId(strArg: String): String
+        @cypher(
+          statement: "RETURN $cypherParams.currentUserId AS cypherParamsUserId"
+        )
+      rating: Int
+      ratings: [Int]
+      time: _Neo4jTime
+      date: _Neo4jDate
+      datetime: _Neo4jDateTime
+      localtime: _Neo4jLocalTime
+      localdatetime: _Neo4jLocalDateTime
+      datetimes: [_Neo4jDateTime]
+      location: _Neo4jPoint
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
+      _id: String
+      "Field for the User node this RATED_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
+      User: User
+    }
+
+    input _MovieRatedCustomToFilter {
+      AND: [_MovieRatedCustomToFilter!]
+      OR: [_MovieRatedCustomToFilter!]
+      rating: Int
+      rating_not: Int
+      rating_in: [Int!]
+      rating_not_in: [Int!]
+      rating_lt: Int
+      rating_lte: Int
+      rating_gt: Int
+      rating_gte: Int
+      ratings: [Int!]
+      ratings_not: [Int!]
+      ratings_lt: [Int!]
+      ratings_lte: [Int!]
+      ratings_gt: [Int!]
+      ratings_gte: [Int!]
+      time: _Neo4jTimeInput
+      time_not: _Neo4jTimeInput
+      time_in: [_Neo4jTimeInput!]
+      time_not_in: [_Neo4jTimeInput!]
+      time_lt: _Neo4jTimeInput
+      time_lte: _Neo4jTimeInput
+      time_gt: _Neo4jTimeInput
+      time_gte: _Neo4jTimeInput
+      date: _Neo4jDateInput
+      date_not: _Neo4jDateInput
+      date_in: [_Neo4jDateInput!]
+      date_not_in: [_Neo4jDateInput!]
+      date_lt: _Neo4jDateInput
+      date_lte: _Neo4jDateInput
+      date_gt: _Neo4jDateInput
+      date_gte: _Neo4jDateInput
+      datetime: _Neo4jDateTimeInput
+      datetime_not: _Neo4jDateTimeInput
+      datetime_in: [_Neo4jDateTimeInput!]
+      datetime_not_in: [_Neo4jDateTimeInput!]
+      datetime_lt: _Neo4jDateTimeInput
+      datetime_lte: _Neo4jDateTimeInput
+      datetime_gt: _Neo4jDateTimeInput
+      datetime_gte: _Neo4jDateTimeInput
+      localtime: _Neo4jLocalTimeInput
+      localtime_not: _Neo4jLocalTimeInput
+      localtime_in: [_Neo4jLocalTimeInput!]
+      localtime_not_in: [_Neo4jLocalTimeInput!]
+      localtime_lt: _Neo4jLocalTimeInput
+      localtime_lte: _Neo4jLocalTimeInput
+      localtime_gt: _Neo4jLocalTimeInput
+      localtime_gte: _Neo4jLocalTimeInput
+      localdatetime: _Neo4jLocalDateTimeInput
+      localdatetime_not: _Neo4jLocalDateTimeInput
+      localdatetime_in: [_Neo4jLocalDateTimeInput!]
+      localdatetime_not_in: [_Neo4jLocalDateTimeInput!]
+      localdatetime_lt: _Neo4jLocalDateTimeInput
+      localdatetime_lte: _Neo4jLocalDateTimeInput
+      localdatetime_gt: _Neo4jLocalDateTimeInput
+      localdatetime_gte: _Neo4jLocalDateTimeInput
+      datetimes: [_Neo4jDateTimeInput!]
+      datetimes_not: [_Neo4jDateTimeInput!]
+      datetimes_lt: [_Neo4jDateTimeInput!]
+      datetimes_lte: [_Neo4jDateTimeInput!]
+      datetimes_gt: [_Neo4jDateTimeInput!]
+      datetimes_gte: [_Neo4jDateTimeInput!]
+      location: _Neo4jPointInput
+      location_not: _Neo4jPointInput
+      location_distance: _Neo4jPointDistanceFilter
+      location_distance_lt: _Neo4jPointDistanceFilter
+      location_distance_lte: _Neo4jPointDistanceFilter
+      location_distance_gt: _Neo4jPointDistanceFilter
+      location_distance_gte: _Neo4jPointDistanceFilter
+      User: _UserFilter
+    }
+
+    enum _RatedCustomToOrdering {
+      currentUserId_asc
+      currentUserId_desc
+      rating_asc
+      rating_desc
+      time_asc
+      time_desc
+      date_asc
+      date_desc
+      datetime_asc
+      datetime_desc
+      localtime_asc
+      localtime_desc
+      localdatetime_asc
+      localdatetime_desc
+      _id_asc
+      _id_desc
+    }
+
+    input _RatedCustomToInput {
+      rating: Int
+      ratings: [Int]
+      time: _Neo4jTimeInput
+      date: _Neo4jDateInput
+      datetime: _Neo4jDateTimeInput
+      localtime: _Neo4jLocalTimeInput
+      localdatetime: _Neo4jLocalDateTimeInput
+      datetimes: [_Neo4jDateTimeInput]
+      location: _Neo4jPointInput
+    }
+
+    type _AddMovieRatingsCustomToPayload
+      @relation(name: "RATED_CUSTOM_TO", from: "User", to: "Movie") {
+      "Field for the User node this RATED_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
+      from: User
+      "Field for the Movie node this RATED_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
+      movie: Movie
+      currentUserId: String
+        @cypher(
+          statement: "RETURN $cypherParams.currentUserId AS cypherParamsUserId"
+        )
+      rating: Int
+      ratings: [Int]
+      time: _Neo4jTime
+      date: _Neo4jDate
+      datetime: _Neo4jDateTime
+      localtime: _Neo4jLocalTime
+      localdatetime: _Neo4jLocalDateTime
+      datetimes: [_Neo4jDateTime]
+      location: _Neo4jPoint
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
+      _id: String
+    }
+
+    type _RemoveMovieRatingsCustomToPayload
+      @relation(name: "RATED_CUSTOM_TO", from: "User", to: "Movie") {
+      "Field for the User node this RATED_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
+      from: User
+      "Field for the Movie node this RATED_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
+      movie: Movie
+    }
+
+    type _UpdateMovieRatingsCustomToPayload
+      @relation(name: "RATED_CUSTOM_TO", from: "User", to: "Movie") {
+      "Field for the User node this RATED_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
+      from: User
+      "Field for the Movie node this RATED_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
+      movie: Movie
+      currentUserId: String
+        @cypher(
+          statement: "RETURN $cypherParams.currentUserId AS cypherParamsUserId"
+        )
+      rating: Int
+      ratings: [Int]
+      time: _Neo4jTime
+      date: _Neo4jDate
+      datetime: _Neo4jDateTime
+      localtime: _Neo4jLocalTime
+      localdatetime: _Neo4jLocalDateTime
+      datetimes: [_Neo4jDateTime]
+      location: _Neo4jPoint
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
+      _id: String
+    }
+
+    type _MergeMovieRatingsCustomToPayload
+      @relation(name: "RATED_CUSTOM_TO", from: "User", to: "Movie") {
+      "Field for the User node this RATED_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
+      from: User
+      "Field for the Movie node this RATED_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
+      movie: Movie
+      currentUserId: String
+        @cypher(
+          statement: "RETURN $cypherParams.currentUserId AS cypherParamsUserId"
+        )
+      rating: Int
+      ratings: [Int]
+      time: _Neo4jTime
+      date: _Neo4jDate
+      datetime: _Neo4jDateTime
+      localtime: _Neo4jLocalTime
+      localdatetime: _Neo4jLocalDateTime
+      datetimes: [_Neo4jDateTime]
+      location: _Neo4jPoint
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
+      _id: String
+    }
+
+    type _MovieRatingsCustomFromTo
+      @relation(name: "RATED_CUSTOM_FROM_TO", from: "User", to: "Movie") {
+      from: String
+      currentUserId(strArg: String): String
+        @cypher(
+          statement: "RETURN $cypherParams.currentUserId AS cypherParamsUserId"
+        )
+      rating: Int
+      ratings: [Int]
+      time: _Neo4jTime
+      date: _Neo4jDate
+      datetime: _Neo4jDateTime
+      localtime: _Neo4jLocalTime
+      localdatetime: _Neo4jLocalDateTime
+      datetimes: [_Neo4jDateTime]
+      location: _Neo4jPoint
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
+      _id: String
+      to: Int
+      "Field for the User node this RATED_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
+      ratedBy: User
+    }
+
+    input _MovieRatedCustomFromToFilter {
+      AND: [_MovieRatedCustomFromToFilter!]
+      OR: [_MovieRatedCustomFromToFilter!]
+      from: String
+      from_not: String
+      from_in: [String!]
+      from_not_in: [String!]
+      from_contains: String
+      from_not_contains: String
+      from_starts_with: String
+      from_not_starts_with: String
+      from_ends_with: String
+      from_not_ends_with: String
+      rating: Int
+      rating_not: Int
+      rating_in: [Int!]
+      rating_not_in: [Int!]
+      rating_lt: Int
+      rating_lte: Int
+      rating_gt: Int
+      rating_gte: Int
+      ratings: [Int!]
+      ratings_not: [Int!]
+      ratings_lt: [Int!]
+      ratings_lte: [Int!]
+      ratings_gt: [Int!]
+      ratings_gte: [Int!]
+      time: _Neo4jTimeInput
+      time_not: _Neo4jTimeInput
+      time_in: [_Neo4jTimeInput!]
+      time_not_in: [_Neo4jTimeInput!]
+      time_lt: _Neo4jTimeInput
+      time_lte: _Neo4jTimeInput
+      time_gt: _Neo4jTimeInput
+      time_gte: _Neo4jTimeInput
+      date: _Neo4jDateInput
+      date_not: _Neo4jDateInput
+      date_in: [_Neo4jDateInput!]
+      date_not_in: [_Neo4jDateInput!]
+      date_lt: _Neo4jDateInput
+      date_lte: _Neo4jDateInput
+      date_gt: _Neo4jDateInput
+      date_gte: _Neo4jDateInput
+      datetime: _Neo4jDateTimeInput
+      datetime_not: _Neo4jDateTimeInput
+      datetime_in: [_Neo4jDateTimeInput!]
+      datetime_not_in: [_Neo4jDateTimeInput!]
+      datetime_lt: _Neo4jDateTimeInput
+      datetime_lte: _Neo4jDateTimeInput
+      datetime_gt: _Neo4jDateTimeInput
+      datetime_gte: _Neo4jDateTimeInput
+      localtime: _Neo4jLocalTimeInput
+      localtime_not: _Neo4jLocalTimeInput
+      localtime_in: [_Neo4jLocalTimeInput!]
+      localtime_not_in: [_Neo4jLocalTimeInput!]
+      localtime_lt: _Neo4jLocalTimeInput
+      localtime_lte: _Neo4jLocalTimeInput
+      localtime_gt: _Neo4jLocalTimeInput
+      localtime_gte: _Neo4jLocalTimeInput
+      localdatetime: _Neo4jLocalDateTimeInput
+      localdatetime_not: _Neo4jLocalDateTimeInput
+      localdatetime_in: [_Neo4jLocalDateTimeInput!]
+      localdatetime_not_in: [_Neo4jLocalDateTimeInput!]
+      localdatetime_lt: _Neo4jLocalDateTimeInput
+      localdatetime_lte: _Neo4jLocalDateTimeInput
+      localdatetime_gt: _Neo4jLocalDateTimeInput
+      localdatetime_gte: _Neo4jLocalDateTimeInput
+      datetimes: [_Neo4jDateTimeInput!]
+      datetimes_not: [_Neo4jDateTimeInput!]
+      datetimes_lt: [_Neo4jDateTimeInput!]
+      datetimes_lte: [_Neo4jDateTimeInput!]
+      datetimes_gt: [_Neo4jDateTimeInput!]
+      datetimes_gte: [_Neo4jDateTimeInput!]
+      location: _Neo4jPointInput
+      location_not: _Neo4jPointInput
+      location_distance: _Neo4jPointDistanceFilter
+      location_distance_lt: _Neo4jPointDistanceFilter
+      location_distance_lte: _Neo4jPointDistanceFilter
+      location_distance_gt: _Neo4jPointDistanceFilter
+      location_distance_gte: _Neo4jPointDistanceFilter
+      to: Int
+      to_not: Int
+      to_in: [Int!]
+      to_not_in: [Int!]
+      to_lt: Int
+      to_lte: Int
+      to_gt: Int
+      to_gte: Int
+      ratedBy: _UserFilter
+    }
+
+    enum _RatedCustomFromToOrdering {
+      from_asc
+      from_desc
+      currentUserId_asc
+      currentUserId_desc
+      rating_asc
+      rating_desc
+      time_asc
+      time_desc
+      date_asc
+      date_desc
+      datetime_asc
+      datetime_desc
+      localtime_asc
+      localtime_desc
+      localdatetime_asc
+      localdatetime_desc
+      _id_asc
+      _id_desc
+      to_asc
+      to_desc
+    }
+
+    input _RatedCustomFromToInput {
+      from: String
+      rating: Int
+      ratings: [Int]
+      time: _Neo4jTimeInput
+      date: _Neo4jDateInput
+      datetime: _Neo4jDateTimeInput
+      localtime: _Neo4jLocalTimeInput
+      localdatetime: _Neo4jLocalDateTimeInput
+      datetimes: [_Neo4jDateTimeInput]
+      location: _Neo4jPointInput
+      to: Int
+    }
+
+    type _AddMovieRatingsCustomFromToPayload
+      @relation(name: "RATED_CUSTOM_FROM_TO", from: "User", to: "Movie") {
+      "Field for the User node this RATED_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
+      ratedBy: User
+      "Field for the Movie node this RATED_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
+      movie: Movie
+      from: String
+      currentUserId: String
+        @cypher(
+          statement: "RETURN $cypherParams.currentUserId AS cypherParamsUserId"
+        )
+      rating: Int
+      ratings: [Int]
+      time: _Neo4jTime
+      date: _Neo4jDate
+      datetime: _Neo4jDateTime
+      localtime: _Neo4jLocalTime
+      localdatetime: _Neo4jLocalDateTime
+      datetimes: [_Neo4jDateTime]
+      location: _Neo4jPoint
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
+      _id: String
+      to: Int
+    }
+
+    type _RemoveMovieRatingsCustomFromToPayload
+      @relation(name: "RATED_CUSTOM_FROM_TO", from: "User", to: "Movie") {
+      "Field for the User node this RATED_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
+      ratedBy: User
+      "Field for the Movie node this RATED_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
+      movie: Movie
+    }
+
+    type _UpdateMovieRatingsCustomFromToPayload
+      @relation(name: "RATED_CUSTOM_FROM_TO", from: "User", to: "Movie") {
+      "Field for the User node this RATED_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
+      ratedBy: User
+      "Field for the Movie node this RATED_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
+      movie: Movie
+      from: String
+      currentUserId: String
+        @cypher(
+          statement: "RETURN $cypherParams.currentUserId AS cypherParamsUserId"
+        )
+      rating: Int
+      ratings: [Int]
+      time: _Neo4jTime
+      date: _Neo4jDate
+      datetime: _Neo4jDateTime
+      localtime: _Neo4jLocalTime
+      localdatetime: _Neo4jLocalDateTime
+      datetimes: [_Neo4jDateTime]
+      location: _Neo4jPoint
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
+      _id: String
+      to: Int
+    }
+
+    type _MergeMovieRatingsCustomFromToPayload
+      @relation(name: "RATED_CUSTOM_FROM_TO", from: "User", to: "Movie") {
+      "Field for the User node this RATED_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
+      ratedBy: User
+      "Field for the Movie node this RATED_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
+      movie: Movie
+      from: String
+      currentUserId: String
+        @cypher(
+          statement: "RETURN $cypherParams.currentUserId AS cypherParamsUserId"
+        )
+      rating: Int
+      ratings: [Int]
+      time: _Neo4jTime
+      date: _Neo4jDate
+      datetime: _Neo4jDateTime
+      localtime: _Neo4jLocalTime
+      localdatetime: _Neo4jLocalDateTime
+      datetimes: [_Neo4jDateTime]
+      location: _Neo4jPoint
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
+      _id: String
+      to: Int
+    }
+
     input _MovieInput {
       movieId: ID!
     }
@@ -481,6 +1119,30 @@ test.cb('Test augmented schema', t => {
       ratings_none: _MovieRatedFilter
       ratings_single: _MovieRatedFilter
       ratings_every: _MovieRatedFilter
+      ratingsCustomFrom: _MovieRatedCustomFromFilter
+      ratingsCustomFrom_not: _MovieRatedCustomFromFilter
+      ratingsCustomFrom_in: [_MovieRatedCustomFromFilter!]
+      ratingsCustomFrom_not_in: [_MovieRatedCustomFromFilter!]
+      ratingsCustomFrom_some: _MovieRatedCustomFromFilter
+      ratingsCustomFrom_none: _MovieRatedCustomFromFilter
+      ratingsCustomFrom_single: _MovieRatedCustomFromFilter
+      ratingsCustomFrom_every: _MovieRatedCustomFromFilter
+      ratingsCustomTo: _MovieRatedCustomToFilter
+      ratingsCustomTo_not: _MovieRatedCustomToFilter
+      ratingsCustomTo_in: [_MovieRatedCustomToFilter!]
+      ratingsCustomTo_not_in: [_MovieRatedCustomToFilter!]
+      ratingsCustomTo_some: _MovieRatedCustomToFilter
+      ratingsCustomTo_none: _MovieRatedCustomToFilter
+      ratingsCustomTo_single: _MovieRatedCustomToFilter
+      ratingsCustomTo_every: _MovieRatedCustomToFilter
+      ratingsCustomFromTo: _MovieRatedCustomFromToFilter
+      ratingsCustomFromTo_not: _MovieRatedCustomFromToFilter
+      ratingsCustomFromTo_in: [_MovieRatedCustomFromToFilter!]
+      ratingsCustomFromTo_not_in: [_MovieRatedCustomFromToFilter!]
+      ratingsCustomFromTo_some: _MovieRatedCustomFromToFilter
+      ratingsCustomFromTo_none: _MovieRatedCustomFromToFilter
+      ratingsCustomFromTo_single: _MovieRatedCustomFromToFilter
+      ratingsCustomFromTo_every: _MovieRatedCustomFromToFilter
       years: [Int!]
       years_not: [Int!]
       years_lt: [Int!]
@@ -617,6 +1279,53 @@ test.cb('Test augmented schema', t => {
         orderBy: [_RatedOrdering]
         filter: _MovieRatedFilter
       ): [_MovieRatings]
+      ratingsCustomFrom(
+        rating: Int
+        time: _Neo4jTimeInput
+        date: _Neo4jDateInput
+        datetime: _Neo4jDateTimeInput
+        localtime: _Neo4jLocalTimeInput
+        localdatetime: _Neo4jLocalDateTimeInput
+        location: _Neo4jPointInput
+        ratings: [Int]
+        datetimes: [_Neo4jDateTimeInput]
+        first: Int
+        offset: Int
+        orderBy: [_RatedCustomFromOrdering]
+        filter: _MovieRatedCustomFromFilter
+      ): [_MovieRatingsCustomFrom]
+      ratingsCustomTo(
+        rating: Int
+        time: _Neo4jTimeInput
+        date: _Neo4jDateInput
+        datetime: _Neo4jDateTimeInput
+        localtime: _Neo4jLocalTimeInput
+        localdatetime: _Neo4jLocalDateTimeInput
+        location: _Neo4jPointInput
+        ratings: [Int]
+        datetimes: [_Neo4jDateTimeInput]
+        first: Int
+        offset: Int
+        orderBy: [_RatedCustomToOrdering]
+        filter: _MovieRatedCustomToFilter
+      ): [_MovieRatingsCustomTo]
+      ratingsCustomFromTo(
+        rating: Int
+        time: _Neo4jTimeInput
+        date: _Neo4jDateInput
+        datetime: _Neo4jDateTimeInput
+        localtime: _Neo4jLocalTimeInput
+        localdatetime: _Neo4jLocalDateTimeInput
+        location: _Neo4jPointInput
+        ratings: [Int]
+        datetimes: [_Neo4jDateTimeInput]
+        from: String
+        to: Int
+        first: Int
+        offset: Int
+        orderBy: [_RatedCustomFromToOrdering]
+        filter: _MovieRatedCustomFromToFilter
+      ): [_MovieRatingsCustomFromTo]
       years: [Int]
       titles: [String]
       imdbRatings: [Float]
@@ -1742,6 +2451,545 @@ test.cb('Test augmented schema', t => {
       _id: String
     }
 
+    type _UserRatedCustomFrom
+      @relation(name: "RATED_CUSTOM_FROM", from: "User", to: "Movie") {
+      currentUserId(strArg: String): String
+        @cypher(
+          statement: "RETURN $cypherParams.currentUserId AS cypherParamsUserId"
+        )
+      rating: Int
+      ratings: [Int]
+      time: _Neo4jTime
+      date: _Neo4jDate
+      datetime: _Neo4jDateTime
+      localtime: _Neo4jLocalTime
+      localdatetime: _Neo4jLocalDateTime
+      datetimes: [_Neo4jDateTime]
+      location: _Neo4jPoint
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
+      _id: String
+      "Field for the Movie node this RATED_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
+      Movie: Movie
+    }
+
+    input _UserRatedCustomFromFilter {
+      AND: [_UserRatedCustomFromFilter!]
+      OR: [_UserRatedCustomFromFilter!]
+      rating: Int
+      rating_not: Int
+      rating_in: [Int!]
+      rating_not_in: [Int!]
+      rating_lt: Int
+      rating_lte: Int
+      rating_gt: Int
+      rating_gte: Int
+      ratings: [Int!]
+      ratings_not: [Int!]
+      ratings_lt: [Int!]
+      ratings_lte: [Int!]
+      ratings_gt: [Int!]
+      ratings_gte: [Int!]
+      time: _Neo4jTimeInput
+      time_not: _Neo4jTimeInput
+      time_in: [_Neo4jTimeInput!]
+      time_not_in: [_Neo4jTimeInput!]
+      time_lt: _Neo4jTimeInput
+      time_lte: _Neo4jTimeInput
+      time_gt: _Neo4jTimeInput
+      time_gte: _Neo4jTimeInput
+      date: _Neo4jDateInput
+      date_not: _Neo4jDateInput
+      date_in: [_Neo4jDateInput!]
+      date_not_in: [_Neo4jDateInput!]
+      date_lt: _Neo4jDateInput
+      date_lte: _Neo4jDateInput
+      date_gt: _Neo4jDateInput
+      date_gte: _Neo4jDateInput
+      datetime: _Neo4jDateTimeInput
+      datetime_not: _Neo4jDateTimeInput
+      datetime_in: [_Neo4jDateTimeInput!]
+      datetime_not_in: [_Neo4jDateTimeInput!]
+      datetime_lt: _Neo4jDateTimeInput
+      datetime_lte: _Neo4jDateTimeInput
+      datetime_gt: _Neo4jDateTimeInput
+      datetime_gte: _Neo4jDateTimeInput
+      localtime: _Neo4jLocalTimeInput
+      localtime_not: _Neo4jLocalTimeInput
+      localtime_in: [_Neo4jLocalTimeInput!]
+      localtime_not_in: [_Neo4jLocalTimeInput!]
+      localtime_lt: _Neo4jLocalTimeInput
+      localtime_lte: _Neo4jLocalTimeInput
+      localtime_gt: _Neo4jLocalTimeInput
+      localtime_gte: _Neo4jLocalTimeInput
+      localdatetime: _Neo4jLocalDateTimeInput
+      localdatetime_not: _Neo4jLocalDateTimeInput
+      localdatetime_in: [_Neo4jLocalDateTimeInput!]
+      localdatetime_not_in: [_Neo4jLocalDateTimeInput!]
+      localdatetime_lt: _Neo4jLocalDateTimeInput
+      localdatetime_lte: _Neo4jLocalDateTimeInput
+      localdatetime_gt: _Neo4jLocalDateTimeInput
+      localdatetime_gte: _Neo4jLocalDateTimeInput
+      datetimes: [_Neo4jDateTimeInput!]
+      datetimes_not: [_Neo4jDateTimeInput!]
+      datetimes_lt: [_Neo4jDateTimeInput!]
+      datetimes_lte: [_Neo4jDateTimeInput!]
+      datetimes_gt: [_Neo4jDateTimeInput!]
+      datetimes_gte: [_Neo4jDateTimeInput!]
+      location: _Neo4jPointInput
+      location_not: _Neo4jPointInput
+      location_distance: _Neo4jPointDistanceFilter
+      location_distance_lt: _Neo4jPointDistanceFilter
+      location_distance_lte: _Neo4jPointDistanceFilter
+      location_distance_gt: _Neo4jPointDistanceFilter
+      location_distance_gte: _Neo4jPointDistanceFilter
+      Movie: _MovieFilter
+    }
+
+    type _AddUserRatedCustomFromPayload
+      @relation(name: "RATED_CUSTOM_FROM", from: "User", to: "Movie") {
+      "Field for the User node this RATED_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
+      ratedBy: User
+      "Field for the Movie node this RATED_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
+      to: Movie
+      currentUserId: String
+        @cypher(
+          statement: "RETURN $cypherParams.currentUserId AS cypherParamsUserId"
+        )
+      rating: Int
+      ratings: [Int]
+      time: _Neo4jTime
+      date: _Neo4jDate
+      datetime: _Neo4jDateTime
+      localtime: _Neo4jLocalTime
+      localdatetime: _Neo4jLocalDateTime
+      datetimes: [_Neo4jDateTime]
+      location: _Neo4jPoint
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
+      _id: String
+    }
+
+    type _RemoveUserRatedCustomFromPayload
+      @relation(name: "RATED_CUSTOM_FROM", from: "User", to: "Movie") {
+      "Field for the User node this RATED_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
+      ratedBy: User
+      "Field for the Movie node this RATED_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
+      to: Movie
+    }
+
+    type _UpdateUserRatedCustomFromPayload
+      @relation(name: "RATED_CUSTOM_FROM", from: "User", to: "Movie") {
+      "Field for the User node this RATED_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
+      ratedBy: User
+      "Field for the Movie node this RATED_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
+      to: Movie
+      currentUserId: String
+        @cypher(
+          statement: "RETURN $cypherParams.currentUserId AS cypherParamsUserId"
+        )
+      rating: Int
+      ratings: [Int]
+      time: _Neo4jTime
+      date: _Neo4jDate
+      datetime: _Neo4jDateTime
+      localtime: _Neo4jLocalTime
+      localdatetime: _Neo4jLocalDateTime
+      datetimes: [_Neo4jDateTime]
+      location: _Neo4jPoint
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
+      _id: String
+    }
+
+    type _MergeUserRatedCustomFromPayload
+      @relation(name: "RATED_CUSTOM_FROM", from: "User", to: "Movie") {
+      "Field for the User node this RATED_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
+      ratedBy: User
+      "Field for the Movie node this RATED_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
+      to: Movie
+      currentUserId: String
+        @cypher(
+          statement: "RETURN $cypherParams.currentUserId AS cypherParamsUserId"
+        )
+      rating: Int
+      ratings: [Int]
+      time: _Neo4jTime
+      date: _Neo4jDate
+      datetime: _Neo4jDateTime
+      localtime: _Neo4jLocalTime
+      localdatetime: _Neo4jLocalDateTime
+      datetimes: [_Neo4jDateTime]
+      location: _Neo4jPoint
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
+      _id: String
+    }
+
+    type _UserRatedCustomTo
+      @relation(name: "RATED_CUSTOM_TO", from: "User", to: "Movie") {
+      currentUserId(strArg: String): String
+        @cypher(
+          statement: "RETURN $cypherParams.currentUserId AS cypherParamsUserId"
+        )
+      rating: Int
+      ratings: [Int]
+      time: _Neo4jTime
+      date: _Neo4jDate
+      datetime: _Neo4jDateTime
+      localtime: _Neo4jLocalTime
+      localdatetime: _Neo4jLocalDateTime
+      datetimes: [_Neo4jDateTime]
+      location: _Neo4jPoint
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
+      _id: String
+      "Field for the Movie node this RATED_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
+      movie: Movie
+    }
+
+    input _UserRatedCustomToFilter {
+      AND: [_UserRatedCustomToFilter!]
+      OR: [_UserRatedCustomToFilter!]
+      rating: Int
+      rating_not: Int
+      rating_in: [Int!]
+      rating_not_in: [Int!]
+      rating_lt: Int
+      rating_lte: Int
+      rating_gt: Int
+      rating_gte: Int
+      ratings: [Int!]
+      ratings_not: [Int!]
+      ratings_lt: [Int!]
+      ratings_lte: [Int!]
+      ratings_gt: [Int!]
+      ratings_gte: [Int!]
+      time: _Neo4jTimeInput
+      time_not: _Neo4jTimeInput
+      time_in: [_Neo4jTimeInput!]
+      time_not_in: [_Neo4jTimeInput!]
+      time_lt: _Neo4jTimeInput
+      time_lte: _Neo4jTimeInput
+      time_gt: _Neo4jTimeInput
+      time_gte: _Neo4jTimeInput
+      date: _Neo4jDateInput
+      date_not: _Neo4jDateInput
+      date_in: [_Neo4jDateInput!]
+      date_not_in: [_Neo4jDateInput!]
+      date_lt: _Neo4jDateInput
+      date_lte: _Neo4jDateInput
+      date_gt: _Neo4jDateInput
+      date_gte: _Neo4jDateInput
+      datetime: _Neo4jDateTimeInput
+      datetime_not: _Neo4jDateTimeInput
+      datetime_in: [_Neo4jDateTimeInput!]
+      datetime_not_in: [_Neo4jDateTimeInput!]
+      datetime_lt: _Neo4jDateTimeInput
+      datetime_lte: _Neo4jDateTimeInput
+      datetime_gt: _Neo4jDateTimeInput
+      datetime_gte: _Neo4jDateTimeInput
+      localtime: _Neo4jLocalTimeInput
+      localtime_not: _Neo4jLocalTimeInput
+      localtime_in: [_Neo4jLocalTimeInput!]
+      localtime_not_in: [_Neo4jLocalTimeInput!]
+      localtime_lt: _Neo4jLocalTimeInput
+      localtime_lte: _Neo4jLocalTimeInput
+      localtime_gt: _Neo4jLocalTimeInput
+      localtime_gte: _Neo4jLocalTimeInput
+      localdatetime: _Neo4jLocalDateTimeInput
+      localdatetime_not: _Neo4jLocalDateTimeInput
+      localdatetime_in: [_Neo4jLocalDateTimeInput!]
+      localdatetime_not_in: [_Neo4jLocalDateTimeInput!]
+      localdatetime_lt: _Neo4jLocalDateTimeInput
+      localdatetime_lte: _Neo4jLocalDateTimeInput
+      localdatetime_gt: _Neo4jLocalDateTimeInput
+      localdatetime_gte: _Neo4jLocalDateTimeInput
+      datetimes: [_Neo4jDateTimeInput!]
+      datetimes_not: [_Neo4jDateTimeInput!]
+      datetimes_lt: [_Neo4jDateTimeInput!]
+      datetimes_lte: [_Neo4jDateTimeInput!]
+      datetimes_gt: [_Neo4jDateTimeInput!]
+      datetimes_gte: [_Neo4jDateTimeInput!]
+      location: _Neo4jPointInput
+      location_not: _Neo4jPointInput
+      location_distance: _Neo4jPointDistanceFilter
+      location_distance_lt: _Neo4jPointDistanceFilter
+      location_distance_lte: _Neo4jPointDistanceFilter
+      location_distance_gt: _Neo4jPointDistanceFilter
+      location_distance_gte: _Neo4jPointDistanceFilter
+      movie: _MovieFilter
+    }
+
+    type _AddUserRatedCustomToPayload
+      @relation(name: "RATED_CUSTOM_TO", from: "User", to: "Movie") {
+      "Field for the User node this RATED_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
+      from: User
+      "Field for the Movie node this RATED_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
+      movie: Movie
+      currentUserId: String
+        @cypher(
+          statement: "RETURN $cypherParams.currentUserId AS cypherParamsUserId"
+        )
+      rating: Int
+      ratings: [Int]
+      time: _Neo4jTime
+      date: _Neo4jDate
+      datetime: _Neo4jDateTime
+      localtime: _Neo4jLocalTime
+      localdatetime: _Neo4jLocalDateTime
+      datetimes: [_Neo4jDateTime]
+      location: _Neo4jPoint
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
+      _id: String
+    }
+
+    type _RemoveUserRatedCustomToPayload
+      @relation(name: "RATED_CUSTOM_TO", from: "User", to: "Movie") {
+      "Field for the User node this RATED_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
+      from: User
+      "Field for the Movie node this RATED_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
+      movie: Movie
+    }
+
+    type _UpdateUserRatedCustomToPayload
+      @relation(name: "RATED_CUSTOM_TO", from: "User", to: "Movie") {
+      "Field for the User node this RATED_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
+      from: User
+      "Field for the Movie node this RATED_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
+      movie: Movie
+      currentUserId: String
+        @cypher(
+          statement: "RETURN $cypherParams.currentUserId AS cypherParamsUserId"
+        )
+      rating: Int
+      ratings: [Int]
+      time: _Neo4jTime
+      date: _Neo4jDate
+      datetime: _Neo4jDateTime
+      localtime: _Neo4jLocalTime
+      localdatetime: _Neo4jLocalDateTime
+      datetimes: [_Neo4jDateTime]
+      location: _Neo4jPoint
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
+      _id: String
+    }
+
+    type _MergeUserRatedCustomToPayload
+      @relation(name: "RATED_CUSTOM_TO", from: "User", to: "Movie") {
+      "Field for the User node this RATED_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
+      from: User
+      "Field for the Movie node this RATED_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
+      movie: Movie
+      currentUserId: String
+        @cypher(
+          statement: "RETURN $cypherParams.currentUserId AS cypherParamsUserId"
+        )
+      rating: Int
+      ratings: [Int]
+      time: _Neo4jTime
+      date: _Neo4jDate
+      datetime: _Neo4jDateTime
+      localtime: _Neo4jLocalTime
+      localdatetime: _Neo4jLocalDateTime
+      datetimes: [_Neo4jDateTime]
+      location: _Neo4jPoint
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
+      _id: String
+    }
+
+    type _UserRatedCustomFromTo
+      @relation(name: "RATED_CUSTOM_FROM_TO", from: "User", to: "Movie") {
+      from: String
+      currentUserId(strArg: String): String
+        @cypher(
+          statement: "RETURN $cypherParams.currentUserId AS cypherParamsUserId"
+        )
+      rating: Int
+      ratings: [Int]
+      time: _Neo4jTime
+      date: _Neo4jDate
+      datetime: _Neo4jDateTime
+      localtime: _Neo4jLocalTime
+      localdatetime: _Neo4jLocalDateTime
+      datetimes: [_Neo4jDateTime]
+      location: _Neo4jPoint
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
+      _id: String
+      to: Int
+      "Field for the Movie node this RATED_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
+      movie: Movie
+    }
+
+    input _UserRatedCustomFromToFilter {
+      AND: [_UserRatedCustomFromToFilter!]
+      OR: [_UserRatedCustomFromToFilter!]
+      from: String
+      from_not: String
+      from_in: [String!]
+      from_not_in: [String!]
+      from_contains: String
+      from_not_contains: String
+      from_starts_with: String
+      from_not_starts_with: String
+      from_ends_with: String
+      from_not_ends_with: String
+      rating: Int
+      rating_not: Int
+      rating_in: [Int!]
+      rating_not_in: [Int!]
+      rating_lt: Int
+      rating_lte: Int
+      rating_gt: Int
+      rating_gte: Int
+      ratings: [Int!]
+      ratings_not: [Int!]
+      ratings_lt: [Int!]
+      ratings_lte: [Int!]
+      ratings_gt: [Int!]
+      ratings_gte: [Int!]
+      time: _Neo4jTimeInput
+      time_not: _Neo4jTimeInput
+      time_in: [_Neo4jTimeInput!]
+      time_not_in: [_Neo4jTimeInput!]
+      time_lt: _Neo4jTimeInput
+      time_lte: _Neo4jTimeInput
+      time_gt: _Neo4jTimeInput
+      time_gte: _Neo4jTimeInput
+      date: _Neo4jDateInput
+      date_not: _Neo4jDateInput
+      date_in: [_Neo4jDateInput!]
+      date_not_in: [_Neo4jDateInput!]
+      date_lt: _Neo4jDateInput
+      date_lte: _Neo4jDateInput
+      date_gt: _Neo4jDateInput
+      date_gte: _Neo4jDateInput
+      datetime: _Neo4jDateTimeInput
+      datetime_not: _Neo4jDateTimeInput
+      datetime_in: [_Neo4jDateTimeInput!]
+      datetime_not_in: [_Neo4jDateTimeInput!]
+      datetime_lt: _Neo4jDateTimeInput
+      datetime_lte: _Neo4jDateTimeInput
+      datetime_gt: _Neo4jDateTimeInput
+      datetime_gte: _Neo4jDateTimeInput
+      localtime: _Neo4jLocalTimeInput
+      localtime_not: _Neo4jLocalTimeInput
+      localtime_in: [_Neo4jLocalTimeInput!]
+      localtime_not_in: [_Neo4jLocalTimeInput!]
+      localtime_lt: _Neo4jLocalTimeInput
+      localtime_lte: _Neo4jLocalTimeInput
+      localtime_gt: _Neo4jLocalTimeInput
+      localtime_gte: _Neo4jLocalTimeInput
+      localdatetime: _Neo4jLocalDateTimeInput
+      localdatetime_not: _Neo4jLocalDateTimeInput
+      localdatetime_in: [_Neo4jLocalDateTimeInput!]
+      localdatetime_not_in: [_Neo4jLocalDateTimeInput!]
+      localdatetime_lt: _Neo4jLocalDateTimeInput
+      localdatetime_lte: _Neo4jLocalDateTimeInput
+      localdatetime_gt: _Neo4jLocalDateTimeInput
+      localdatetime_gte: _Neo4jLocalDateTimeInput
+      datetimes: [_Neo4jDateTimeInput!]
+      datetimes_not: [_Neo4jDateTimeInput!]
+      datetimes_lt: [_Neo4jDateTimeInput!]
+      datetimes_lte: [_Neo4jDateTimeInput!]
+      datetimes_gt: [_Neo4jDateTimeInput!]
+      datetimes_gte: [_Neo4jDateTimeInput!]
+      location: _Neo4jPointInput
+      location_not: _Neo4jPointInput
+      location_distance: _Neo4jPointDistanceFilter
+      location_distance_lt: _Neo4jPointDistanceFilter
+      location_distance_lte: _Neo4jPointDistanceFilter
+      location_distance_gt: _Neo4jPointDistanceFilter
+      location_distance_gte: _Neo4jPointDistanceFilter
+      to: Int
+      to_not: Int
+      to_in: [Int!]
+      to_not_in: [Int!]
+      to_lt: Int
+      to_lte: Int
+      to_gt: Int
+      to_gte: Int
+      movie: _MovieFilter
+    }
+
+    type _AddUserRatedCustomFromToPayload
+      @relation(name: "RATED_CUSTOM_FROM_TO", from: "User", to: "Movie") {
+      "Field for the User node this RATED_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
+      ratedBy: User
+      "Field for the Movie node this RATED_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
+      movie: Movie
+      from: String
+      currentUserId: String
+        @cypher(
+          statement: "RETURN $cypherParams.currentUserId AS cypherParamsUserId"
+        )
+      rating: Int
+      ratings: [Int]
+      time: _Neo4jTime
+      date: _Neo4jDate
+      datetime: _Neo4jDateTime
+      localtime: _Neo4jLocalTime
+      localdatetime: _Neo4jLocalDateTime
+      datetimes: [_Neo4jDateTime]
+      location: _Neo4jPoint
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
+      _id: String
+      to: Int
+    }
+
+    type _RemoveUserRatedCustomFromToPayload
+      @relation(name: "RATED_CUSTOM_FROM_TO", from: "User", to: "Movie") {
+      "Field for the User node this RATED_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
+      ratedBy: User
+      "Field for the Movie node this RATED_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
+      movie: Movie
+    }
+
+    type _UpdateUserRatedCustomFromToPayload
+      @relation(name: "RATED_CUSTOM_FROM_TO", from: "User", to: "Movie") {
+      "Field for the User node this RATED_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
+      ratedBy: User
+      "Field for the Movie node this RATED_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
+      movie: Movie
+      from: String
+      currentUserId: String
+        @cypher(
+          statement: "RETURN $cypherParams.currentUserId AS cypherParamsUserId"
+        )
+      rating: Int
+      ratings: [Int]
+      time: _Neo4jTime
+      date: _Neo4jDate
+      datetime: _Neo4jDateTime
+      localtime: _Neo4jLocalTime
+      localdatetime: _Neo4jLocalDateTime
+      datetimes: [_Neo4jDateTime]
+      location: _Neo4jPoint
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
+      _id: String
+      to: Int
+    }
+
+    type _MergeUserRatedCustomFromToPayload
+      @relation(name: "RATED_CUSTOM_FROM_TO", from: "User", to: "Movie") {
+      "Field for the User node this RATED_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
+      ratedBy: User
+      "Field for the Movie node this RATED_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
+      movie: Movie
+      from: String
+      currentUserId: String
+        @cypher(
+          statement: "RETURN $cypherParams.currentUserId AS cypherParamsUserId"
+        )
+      rating: Int
+      ratings: [Int]
+      time: _Neo4jTime
+      date: _Neo4jDate
+      datetime: _Neo4jDateTime
+      localtime: _Neo4jLocalTime
+      localdatetime: _Neo4jLocalDateTime
+      datetimes: [_Neo4jDateTime]
+      location: _Neo4jPoint
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
+      _id: String
+      to: Int
+    }
+
     type _UserFriendsDirections
       @relation(name: "FRIEND_OF", from: "User", to: "User") {
       "Field for the User node this FRIEND_OF [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
@@ -1986,6 +3234,777 @@ test.cb('Test augmented schema', t => {
       _id: String
     }
 
+    type _UserFriendsCustomFromDirections
+      @relation(name: "FRIEND_OF_CUSTOM_FROM", from: "User", to: "User") {
+      "Field for the User node this FRIEND_OF_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
+      friendedBy(
+        since: Int
+        time: _Neo4jTimeInput
+        date: _Neo4jDateInput
+        datetime: _Neo4jDateTimeInput
+        localtime: _Neo4jLocalTimeInput
+        localdatetime: _Neo4jLocalDateTimeInput
+        location: _Neo4jPointInput
+        ratings: [String]
+        datetimes: [_Neo4jDateTimeInput]
+        first: Int
+        offset: Int
+        orderBy: [_FriendOfCustomFromOrdering]
+        filter: _FriendOfCustomFromFilter
+      ): [_UserFriendsCustomFrom]
+      "Field for the User node this FRIEND_OF_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
+      to(
+        since: Int
+        time: _Neo4jTimeInput
+        date: _Neo4jDateInput
+        datetime: _Neo4jDateTimeInput
+        localtime: _Neo4jLocalTimeInput
+        localdatetime: _Neo4jLocalDateTimeInput
+        location: _Neo4jPointInput
+        ratings: [String]
+        datetimes: [_Neo4jDateTimeInput]
+        first: Int
+        offset: Int
+        orderBy: [_FriendOfCustomFromOrdering]
+        filter: _FriendOfCustomFromFilter
+      ): [_UserFriendsCustomFrom]
+    }
+
+    type _UserFriendsCustomFrom
+      @relation(name: "FRIEND_OF_CUSTOM_FROM", from: "User", to: "User") {
+      currentUserId: String
+        @cypher(
+          statement: "RETURN $cypherParams.currentUserId AS cypherParamsUserId"
+        )
+      since: Int
+      time: _Neo4jTime
+      date: _Neo4jDate
+      datetime: _Neo4jDateTime
+      ratings: [String]
+      datetimes: [_Neo4jDateTime]
+      localtime: _Neo4jLocalTime
+      localdatetime: _Neo4jLocalDateTime
+      location: _Neo4jPoint
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
+      _id: String
+      "Field for the User node this FRIEND_OF_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
+      User: User
+    }
+
+    input _FriendOfCustomFromDirectionsFilter {
+      friendedBy: _FriendOfCustomFromFilter
+      to: _FriendOfCustomFromFilter
+    }
+
+    input _FriendOfCustomFromFilter {
+      AND: [_FriendOfCustomFromFilter!]
+      OR: [_FriendOfCustomFromFilter!]
+      since: Int
+      since_not: Int
+      since_in: [Int!]
+      since_not_in: [Int!]
+      since_lt: Int
+      since_lte: Int
+      since_gt: Int
+      since_gte: Int
+      time: _Neo4jTimeInput
+      time_not: _Neo4jTimeInput
+      time_in: [_Neo4jTimeInput!]
+      time_not_in: [_Neo4jTimeInput!]
+      time_lt: _Neo4jTimeInput
+      time_lte: _Neo4jTimeInput
+      time_gt: _Neo4jTimeInput
+      time_gte: _Neo4jTimeInput
+      date: _Neo4jDateInput
+      date_not: _Neo4jDateInput
+      date_in: [_Neo4jDateInput!]
+      date_not_in: [_Neo4jDateInput!]
+      date_lt: _Neo4jDateInput
+      date_lte: _Neo4jDateInput
+      date_gt: _Neo4jDateInput
+      date_gte: _Neo4jDateInput
+      datetime: _Neo4jDateTimeInput
+      datetime_not: _Neo4jDateTimeInput
+      datetime_in: [_Neo4jDateTimeInput!]
+      datetime_not_in: [_Neo4jDateTimeInput!]
+      datetime_lt: _Neo4jDateTimeInput
+      datetime_lte: _Neo4jDateTimeInput
+      datetime_gt: _Neo4jDateTimeInput
+      datetime_gte: _Neo4jDateTimeInput
+      ratings: [String!]
+      ratings_not: [String!]
+      ratings_contains: [String!]
+      ratings_not_contains: [String!]
+      ratings_starts_with: [String!]
+      ratings_not_starts_with: [String!]
+      ratings_ends_with: [String!]
+      ratings_not_ends_with: [String!]
+      datetimes: [_Neo4jDateTimeInput!]
+      datetimes_not: [_Neo4jDateTimeInput!]
+      datetimes_lt: [_Neo4jDateTimeInput!]
+      datetimes_lte: [_Neo4jDateTimeInput!]
+      datetimes_gt: [_Neo4jDateTimeInput!]
+      datetimes_gte: [_Neo4jDateTimeInput!]
+      localtime: _Neo4jLocalTimeInput
+      localtime_not: _Neo4jLocalTimeInput
+      localtime_in: [_Neo4jLocalTimeInput!]
+      localtime_not_in: [_Neo4jLocalTimeInput!]
+      localtime_lt: _Neo4jLocalTimeInput
+      localtime_lte: _Neo4jLocalTimeInput
+      localtime_gt: _Neo4jLocalTimeInput
+      localtime_gte: _Neo4jLocalTimeInput
+      localdatetime: _Neo4jLocalDateTimeInput
+      localdatetime_not: _Neo4jLocalDateTimeInput
+      localdatetime_in: [_Neo4jLocalDateTimeInput!]
+      localdatetime_not_in: [_Neo4jLocalDateTimeInput!]
+      localdatetime_lt: _Neo4jLocalDateTimeInput
+      localdatetime_lte: _Neo4jLocalDateTimeInput
+      localdatetime_gt: _Neo4jLocalDateTimeInput
+      localdatetime_gte: _Neo4jLocalDateTimeInput
+      location: _Neo4jPointInput
+      location_not: _Neo4jPointInput
+      location_distance: _Neo4jPointDistanceFilter
+      location_distance_lt: _Neo4jPointDistanceFilter
+      location_distance_lte: _Neo4jPointDistanceFilter
+      location_distance_gt: _Neo4jPointDistanceFilter
+      location_distance_gte: _Neo4jPointDistanceFilter
+      User: _UserFilter
+    }
+
+    enum _FriendOfCustomFromOrdering {
+      currentUserId_asc
+      currentUserId_desc
+      since_asc
+      since_desc
+      time_asc
+      time_desc
+      date_asc
+      date_desc
+      datetime_asc
+      datetime_desc
+      localtime_asc
+      localtime_desc
+      localdatetime_asc
+      localdatetime_desc
+      _id_asc
+      _id_desc
+    }
+
+    input _FriendOfCustomFromInput {
+      since: Int
+      time: _Neo4jTimeInput
+      date: _Neo4jDateInput
+      datetime: _Neo4jDateTimeInput
+      ratings: [String]
+      datetimes: [_Neo4jDateTimeInput]
+      localtime: _Neo4jLocalTimeInput
+      localdatetime: _Neo4jLocalDateTimeInput
+      location: _Neo4jPointInput
+    }
+
+    type _AddUserFriendsCustomFromPayload
+      @relation(name: "FRIEND_OF_CUSTOM_FROM", from: "User", to: "User") {
+      "Field for the User node this FRIEND_OF_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
+      friendedBy: User
+      "Field for the User node this FRIEND_OF_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
+      to: User
+      currentUserId: String
+        @cypher(
+          statement: "RETURN $cypherParams.currentUserId AS cypherParamsUserId"
+        )
+      since: Int
+      time: _Neo4jTime
+      date: _Neo4jDate
+      datetime: _Neo4jDateTime
+      ratings: [String]
+      datetimes: [_Neo4jDateTime]
+      localtime: _Neo4jLocalTime
+      localdatetime: _Neo4jLocalDateTime
+      location: _Neo4jPoint
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
+      _id: String
+    }
+
+    type _RemoveUserFriendsCustomFromPayload
+      @relation(name: "FRIEND_OF_CUSTOM_FROM", from: "User", to: "User") {
+      "Field for the User node this FRIEND_OF_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
+      friendedBy: User
+      "Field for the User node this FRIEND_OF_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
+      to: User
+    }
+
+    type _UpdateUserFriendsCustomFromPayload
+      @relation(name: "FRIEND_OF_CUSTOM_FROM", from: "User", to: "User") {
+      "Field for the User node this FRIEND_OF_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
+      friendedBy: User
+      "Field for the User node this FRIEND_OF_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
+      to: User
+      currentUserId: String
+        @cypher(
+          statement: "RETURN $cypherParams.currentUserId AS cypherParamsUserId"
+        )
+      since: Int
+      time: _Neo4jTime
+      date: _Neo4jDate
+      datetime: _Neo4jDateTime
+      ratings: [String]
+      datetimes: [_Neo4jDateTime]
+      localtime: _Neo4jLocalTime
+      localdatetime: _Neo4jLocalDateTime
+      location: _Neo4jPoint
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
+      _id: String
+    }
+
+    type _MergeUserFriendsCustomFromPayload
+      @relation(name: "FRIEND_OF_CUSTOM_FROM", from: "User", to: "User") {
+      "Field for the User node this FRIEND_OF_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
+      friendedBy: User
+      "Field for the User node this FRIEND_OF_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
+      to: User
+      currentUserId: String
+        @cypher(
+          statement: "RETURN $cypherParams.currentUserId AS cypherParamsUserId"
+        )
+      since: Int
+      time: _Neo4jTime
+      date: _Neo4jDate
+      datetime: _Neo4jDateTime
+      ratings: [String]
+      datetimes: [_Neo4jDateTime]
+      localtime: _Neo4jLocalTime
+      localdatetime: _Neo4jLocalDateTime
+      location: _Neo4jPoint
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
+      _id: String
+    }
+
+    type _UserFriendsCustomToDirections
+      @relation(name: "FRIEND_OF_CUSTOM_TO", from: "User", to: "User") {
+      "Field for the User node this FRIEND_OF_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
+      from(
+        since: Int
+        time: _Neo4jTimeInput
+        date: _Neo4jDateInput
+        datetime: _Neo4jDateTimeInput
+        localtime: _Neo4jLocalTimeInput
+        localdatetime: _Neo4jLocalDateTimeInput
+        location: _Neo4jPointInput
+        ratings: [String]
+        datetimes: [_Neo4jDateTimeInput]
+        first: Int
+        offset: Int
+        orderBy: [_FriendOfCustomToOrdering]
+        filter: _FriendOfCustomToFilter
+      ): [_UserFriendsCustomTo]
+      "Field for the User node this FRIEND_OF_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
+      friended(
+        since: Int
+        time: _Neo4jTimeInput
+        date: _Neo4jDateInput
+        datetime: _Neo4jDateTimeInput
+        localtime: _Neo4jLocalTimeInput
+        localdatetime: _Neo4jLocalDateTimeInput
+        location: _Neo4jPointInput
+        ratings: [String]
+        datetimes: [_Neo4jDateTimeInput]
+        first: Int
+        offset: Int
+        orderBy: [_FriendOfCustomToOrdering]
+        filter: _FriendOfCustomToFilter
+      ): [_UserFriendsCustomTo]
+    }
+
+    type _UserFriendsCustomTo
+      @relation(name: "FRIEND_OF_CUSTOM_TO", from: "User", to: "User") {
+      currentUserId: String
+        @cypher(
+          statement: "RETURN $cypherParams.currentUserId AS cypherParamsUserId"
+        )
+      since: Int
+      time: _Neo4jTime
+      date: _Neo4jDate
+      datetime: _Neo4jDateTime
+      ratings: [String]
+      datetimes: [_Neo4jDateTime]
+      localtime: _Neo4jLocalTime
+      localdatetime: _Neo4jLocalDateTime
+      location: _Neo4jPoint
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
+      _id: String
+      "Field for the User node this FRIEND_OF_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
+      User: User
+    }
+
+    input _FriendOfCustomToDirectionsFilter {
+      from: _FriendOfCustomToFilter
+      friended: _FriendOfCustomToFilter
+    }
+
+    input _FriendOfCustomToFilter {
+      AND: [_FriendOfCustomToFilter!]
+      OR: [_FriendOfCustomToFilter!]
+      since: Int
+      since_not: Int
+      since_in: [Int!]
+      since_not_in: [Int!]
+      since_lt: Int
+      since_lte: Int
+      since_gt: Int
+      since_gte: Int
+      time: _Neo4jTimeInput
+      time_not: _Neo4jTimeInput
+      time_in: [_Neo4jTimeInput!]
+      time_not_in: [_Neo4jTimeInput!]
+      time_lt: _Neo4jTimeInput
+      time_lte: _Neo4jTimeInput
+      time_gt: _Neo4jTimeInput
+      time_gte: _Neo4jTimeInput
+      date: _Neo4jDateInput
+      date_not: _Neo4jDateInput
+      date_in: [_Neo4jDateInput!]
+      date_not_in: [_Neo4jDateInput!]
+      date_lt: _Neo4jDateInput
+      date_lte: _Neo4jDateInput
+      date_gt: _Neo4jDateInput
+      date_gte: _Neo4jDateInput
+      datetime: _Neo4jDateTimeInput
+      datetime_not: _Neo4jDateTimeInput
+      datetime_in: [_Neo4jDateTimeInput!]
+      datetime_not_in: [_Neo4jDateTimeInput!]
+      datetime_lt: _Neo4jDateTimeInput
+      datetime_lte: _Neo4jDateTimeInput
+      datetime_gt: _Neo4jDateTimeInput
+      datetime_gte: _Neo4jDateTimeInput
+      ratings: [String!]
+      ratings_not: [String!]
+      ratings_contains: [String!]
+      ratings_not_contains: [String!]
+      ratings_starts_with: [String!]
+      ratings_not_starts_with: [String!]
+      ratings_ends_with: [String!]
+      ratings_not_ends_with: [String!]
+      datetimes: [_Neo4jDateTimeInput!]
+      datetimes_not: [_Neo4jDateTimeInput!]
+      datetimes_lt: [_Neo4jDateTimeInput!]
+      datetimes_lte: [_Neo4jDateTimeInput!]
+      datetimes_gt: [_Neo4jDateTimeInput!]
+      datetimes_gte: [_Neo4jDateTimeInput!]
+      localtime: _Neo4jLocalTimeInput
+      localtime_not: _Neo4jLocalTimeInput
+      localtime_in: [_Neo4jLocalTimeInput!]
+      localtime_not_in: [_Neo4jLocalTimeInput!]
+      localtime_lt: _Neo4jLocalTimeInput
+      localtime_lte: _Neo4jLocalTimeInput
+      localtime_gt: _Neo4jLocalTimeInput
+      localtime_gte: _Neo4jLocalTimeInput
+      localdatetime: _Neo4jLocalDateTimeInput
+      localdatetime_not: _Neo4jLocalDateTimeInput
+      localdatetime_in: [_Neo4jLocalDateTimeInput!]
+      localdatetime_not_in: [_Neo4jLocalDateTimeInput!]
+      localdatetime_lt: _Neo4jLocalDateTimeInput
+      localdatetime_lte: _Neo4jLocalDateTimeInput
+      localdatetime_gt: _Neo4jLocalDateTimeInput
+      localdatetime_gte: _Neo4jLocalDateTimeInput
+      location: _Neo4jPointInput
+      location_not: _Neo4jPointInput
+      location_distance: _Neo4jPointDistanceFilter
+      location_distance_lt: _Neo4jPointDistanceFilter
+      location_distance_lte: _Neo4jPointDistanceFilter
+      location_distance_gt: _Neo4jPointDistanceFilter
+      location_distance_gte: _Neo4jPointDistanceFilter
+      User: _UserFilter
+    }
+
+    enum _FriendOfCustomToOrdering {
+      currentUserId_asc
+      currentUserId_desc
+      since_asc
+      since_desc
+      time_asc
+      time_desc
+      date_asc
+      date_desc
+      datetime_asc
+      datetime_desc
+      localtime_asc
+      localtime_desc
+      localdatetime_asc
+      localdatetime_desc
+      _id_asc
+      _id_desc
+    }
+
+    input _FriendOfCustomToInput {
+      since: Int
+      time: _Neo4jTimeInput
+      date: _Neo4jDateInput
+      datetime: _Neo4jDateTimeInput
+      ratings: [String]
+      datetimes: [_Neo4jDateTimeInput]
+      localtime: _Neo4jLocalTimeInput
+      localdatetime: _Neo4jLocalDateTimeInput
+      location: _Neo4jPointInput
+    }
+
+    type _AddUserFriendsCustomToPayload
+      @relation(name: "FRIEND_OF_CUSTOM_TO", from: "User", to: "User") {
+      "Field for the User node this FRIEND_OF_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
+      from: User
+      "Field for the User node this FRIEND_OF_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
+      friended: User
+      currentUserId: String
+        @cypher(
+          statement: "RETURN $cypherParams.currentUserId AS cypherParamsUserId"
+        )
+      since: Int
+      time: _Neo4jTime
+      date: _Neo4jDate
+      datetime: _Neo4jDateTime
+      ratings: [String]
+      datetimes: [_Neo4jDateTime]
+      localtime: _Neo4jLocalTime
+      localdatetime: _Neo4jLocalDateTime
+      location: _Neo4jPoint
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
+      _id: String
+    }
+
+    type _RemoveUserFriendsCustomToPayload
+      @relation(name: "FRIEND_OF_CUSTOM_TO", from: "User", to: "User") {
+      "Field for the User node this FRIEND_OF_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
+      from: User
+      "Field for the User node this FRIEND_OF_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
+      friended: User
+    }
+
+    type _UpdateUserFriendsCustomToPayload
+      @relation(name: "FRIEND_OF_CUSTOM_TO", from: "User", to: "User") {
+      "Field for the User node this FRIEND_OF_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
+      from: User
+      "Field for the User node this FRIEND_OF_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
+      friended: User
+      currentUserId: String
+        @cypher(
+          statement: "RETURN $cypherParams.currentUserId AS cypherParamsUserId"
+        )
+      since: Int
+      time: _Neo4jTime
+      date: _Neo4jDate
+      datetime: _Neo4jDateTime
+      ratings: [String]
+      datetimes: [_Neo4jDateTime]
+      localtime: _Neo4jLocalTime
+      localdatetime: _Neo4jLocalDateTime
+      location: _Neo4jPoint
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
+      _id: String
+    }
+
+    type _MergeUserFriendsCustomToPayload
+      @relation(name: "FRIEND_OF_CUSTOM_TO", from: "User", to: "User") {
+      "Field for the User node this FRIEND_OF_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
+      from: User
+      "Field for the User node this FRIEND_OF_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
+      friended: User
+      currentUserId: String
+        @cypher(
+          statement: "RETURN $cypherParams.currentUserId AS cypherParamsUserId"
+        )
+      since: Int
+      time: _Neo4jTime
+      date: _Neo4jDate
+      datetime: _Neo4jDateTime
+      ratings: [String]
+      datetimes: [_Neo4jDateTime]
+      localtime: _Neo4jLocalTime
+      localdatetime: _Neo4jLocalDateTime
+      location: _Neo4jPoint
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
+      _id: String
+    }
+
+    type _UserFriendsCustomFromToDirections
+      @relation(name: "FRIEND_OF_CUSTOM_FROM_TO", from: "User", to: "User") {
+      "Field for the User node this FRIEND_OF_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
+      friendedBy(
+        since: Int
+        time: _Neo4jTimeInput
+        date: _Neo4jDateInput
+        datetime: _Neo4jDateTimeInput
+        localtime: _Neo4jLocalTimeInput
+        localdatetime: _Neo4jLocalDateTimeInput
+        location: _Neo4jPointInput
+        ratings: [String]
+        datetimes: [_Neo4jDateTimeInput]
+        from: String
+        to: Int
+        first: Int
+        offset: Int
+        orderBy: [_FriendOfCustomFromToOrdering]
+        filter: _FriendOfCustomFromToFilter
+      ): [_UserFriendsCustomFromTo]
+      "Field for the User node this FRIEND_OF_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
+      friended(
+        since: Int
+        time: _Neo4jTimeInput
+        date: _Neo4jDateInput
+        datetime: _Neo4jDateTimeInput
+        localtime: _Neo4jLocalTimeInput
+        localdatetime: _Neo4jLocalDateTimeInput
+        location: _Neo4jPointInput
+        ratings: [String]
+        datetimes: [_Neo4jDateTimeInput]
+        from: String
+        to: Int
+        first: Int
+        offset: Int
+        orderBy: [_FriendOfCustomFromToOrdering]
+        filter: _FriendOfCustomFromToFilter
+      ): [_UserFriendsCustomFromTo]
+    }
+
+    type _UserFriendsCustomFromTo
+      @relation(name: "FRIEND_OF_CUSTOM_FROM_TO", from: "User", to: "User") {
+      from: String
+      currentUserId: String
+        @cypher(
+          statement: "RETURN $cypherParams.currentUserId AS cypherParamsUserId"
+        )
+      since: Int
+      time: _Neo4jTime
+      date: _Neo4jDate
+      datetime: _Neo4jDateTime
+      ratings: [String]
+      datetimes: [_Neo4jDateTime]
+      localtime: _Neo4jLocalTime
+      localdatetime: _Neo4jLocalDateTime
+      location: _Neo4jPoint
+      to: Int
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
+      _id: String
+      "Field for the User node this FRIEND_OF_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
+      User: User
+    }
+
+    input _FriendOfCustomFromToDirectionsFilter {
+      friendedBy: _FriendOfCustomFromToFilter
+      friended: _FriendOfCustomFromToFilter
+    }
+
+    input _FriendOfCustomFromToFilter {
+      AND: [_FriendOfCustomFromToFilter!]
+      OR: [_FriendOfCustomFromToFilter!]
+      from: String
+      from_not: String
+      from_in: [String!]
+      from_not_in: [String!]
+      from_contains: String
+      from_not_contains: String
+      from_starts_with: String
+      from_not_starts_with: String
+      from_ends_with: String
+      from_not_ends_with: String
+      since: Int
+      since_not: Int
+      since_in: [Int!]
+      since_not_in: [Int!]
+      since_lt: Int
+      since_lte: Int
+      since_gt: Int
+      since_gte: Int
+      time: _Neo4jTimeInput
+      time_not: _Neo4jTimeInput
+      time_in: [_Neo4jTimeInput!]
+      time_not_in: [_Neo4jTimeInput!]
+      time_lt: _Neo4jTimeInput
+      time_lte: _Neo4jTimeInput
+      time_gt: _Neo4jTimeInput
+      time_gte: _Neo4jTimeInput
+      date: _Neo4jDateInput
+      date_not: _Neo4jDateInput
+      date_in: [_Neo4jDateInput!]
+      date_not_in: [_Neo4jDateInput!]
+      date_lt: _Neo4jDateInput
+      date_lte: _Neo4jDateInput
+      date_gt: _Neo4jDateInput
+      date_gte: _Neo4jDateInput
+      datetime: _Neo4jDateTimeInput
+      datetime_not: _Neo4jDateTimeInput
+      datetime_in: [_Neo4jDateTimeInput!]
+      datetime_not_in: [_Neo4jDateTimeInput!]
+      datetime_lt: _Neo4jDateTimeInput
+      datetime_lte: _Neo4jDateTimeInput
+      datetime_gt: _Neo4jDateTimeInput
+      datetime_gte: _Neo4jDateTimeInput
+      ratings: [String!]
+      ratings_not: [String!]
+      ratings_contains: [String!]
+      ratings_not_contains: [String!]
+      ratings_starts_with: [String!]
+      ratings_not_starts_with: [String!]
+      ratings_ends_with: [String!]
+      ratings_not_ends_with: [String!]
+      datetimes: [_Neo4jDateTimeInput!]
+      datetimes_not: [_Neo4jDateTimeInput!]
+      datetimes_lt: [_Neo4jDateTimeInput!]
+      datetimes_lte: [_Neo4jDateTimeInput!]
+      datetimes_gt: [_Neo4jDateTimeInput!]
+      datetimes_gte: [_Neo4jDateTimeInput!]
+      localtime: _Neo4jLocalTimeInput
+      localtime_not: _Neo4jLocalTimeInput
+      localtime_in: [_Neo4jLocalTimeInput!]
+      localtime_not_in: [_Neo4jLocalTimeInput!]
+      localtime_lt: _Neo4jLocalTimeInput
+      localtime_lte: _Neo4jLocalTimeInput
+      localtime_gt: _Neo4jLocalTimeInput
+      localtime_gte: _Neo4jLocalTimeInput
+      localdatetime: _Neo4jLocalDateTimeInput
+      localdatetime_not: _Neo4jLocalDateTimeInput
+      localdatetime_in: [_Neo4jLocalDateTimeInput!]
+      localdatetime_not_in: [_Neo4jLocalDateTimeInput!]
+      localdatetime_lt: _Neo4jLocalDateTimeInput
+      localdatetime_lte: _Neo4jLocalDateTimeInput
+      localdatetime_gt: _Neo4jLocalDateTimeInput
+      localdatetime_gte: _Neo4jLocalDateTimeInput
+      location: _Neo4jPointInput
+      location_not: _Neo4jPointInput
+      location_distance: _Neo4jPointDistanceFilter
+      location_distance_lt: _Neo4jPointDistanceFilter
+      location_distance_lte: _Neo4jPointDistanceFilter
+      location_distance_gt: _Neo4jPointDistanceFilter
+      location_distance_gte: _Neo4jPointDistanceFilter
+      to: Int
+      to_not: Int
+      to_in: [Int!]
+      to_not_in: [Int!]
+      to_lt: Int
+      to_lte: Int
+      to_gt: Int
+      to_gte: Int
+      User: _UserFilter
+    }
+
+    enum _FriendOfCustomFromToOrdering {
+      from_asc
+      from_desc
+      currentUserId_asc
+      currentUserId_desc
+      since_asc
+      since_desc
+      time_asc
+      time_desc
+      date_asc
+      date_desc
+      datetime_asc
+      datetime_desc
+      localtime_asc
+      localtime_desc
+      localdatetime_asc
+      localdatetime_desc
+      to_asc
+      to_desc
+      _id_asc
+      _id_desc
+    }
+
+    input _FriendOfCustomFromToInput {
+      from: String
+      since: Int
+      time: _Neo4jTimeInput
+      date: _Neo4jDateInput
+      datetime: _Neo4jDateTimeInput
+      ratings: [String]
+      datetimes: [_Neo4jDateTimeInput]
+      localtime: _Neo4jLocalTimeInput
+      localdatetime: _Neo4jLocalDateTimeInput
+      location: _Neo4jPointInput
+      to: Int
+    }
+
+    type _AddUserFriendsCustomFromToPayload
+      @relation(name: "FRIEND_OF_CUSTOM_FROM_TO", from: "User", to: "User") {
+      "Field for the User node this FRIEND_OF_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
+      friendedBy: User
+      "Field for the User node this FRIEND_OF_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
+      friended: User
+      from: String
+      currentUserId: String
+        @cypher(
+          statement: "RETURN $cypherParams.currentUserId AS cypherParamsUserId"
+        )
+      since: Int
+      time: _Neo4jTime
+      date: _Neo4jDate
+      datetime: _Neo4jDateTime
+      ratings: [String]
+      datetimes: [_Neo4jDateTime]
+      localtime: _Neo4jLocalTime
+      localdatetime: _Neo4jLocalDateTime
+      location: _Neo4jPoint
+      to: Int
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
+      _id: String
+    }
+
+    type _RemoveUserFriendsCustomFromToPayload
+      @relation(name: "FRIEND_OF_CUSTOM_FROM_TO", from: "User", to: "User") {
+      "Field for the User node this FRIEND_OF_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
+      friendedBy: User
+      "Field for the User node this FRIEND_OF_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
+      friended: User
+    }
+
+    type _UpdateUserFriendsCustomFromToPayload
+      @relation(name: "FRIEND_OF_CUSTOM_FROM_TO", from: "User", to: "User") {
+      "Field for the User node this FRIEND_OF_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
+      friendedBy: User
+      "Field for the User node this FRIEND_OF_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
+      friended: User
+      from: String
+      currentUserId: String
+        @cypher(
+          statement: "RETURN $cypherParams.currentUserId AS cypherParamsUserId"
+        )
+      since: Int
+      time: _Neo4jTime
+      date: _Neo4jDate
+      datetime: _Neo4jDateTime
+      ratings: [String]
+      datetimes: [_Neo4jDateTime]
+      localtime: _Neo4jLocalTime
+      localdatetime: _Neo4jLocalDateTime
+      location: _Neo4jPoint
+      to: Int
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
+      _id: String
+    }
+
+    type _MergeUserFriendsCustomFromToPayload
+      @relation(name: "FRIEND_OF_CUSTOM_FROM_TO", from: "User", to: "User") {
+      "Field for the User node this FRIEND_OF_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
+      friendedBy: User
+      "Field for the User node this FRIEND_OF_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
+      friended: User
+      from: String
+      currentUserId: String
+        @cypher(
+          statement: "RETURN $cypherParams.currentUserId AS cypherParamsUserId"
+        )
+      since: Int
+      time: _Neo4jTime
+      date: _Neo4jDate
+      datetime: _Neo4jDateTime
+      ratings: [String]
+      datetimes: [_Neo4jDateTime]
+      localtime: _Neo4jLocalTime
+      localdatetime: _Neo4jLocalDateTime
+      location: _Neo4jPoint
+      to: Int
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
+      _id: String
+    }
+
     type _AddUserFavoritesPayload
       @relation(name: "FAVORITED", from: "User", to: "Movie") {
       "Field for the User node this FAVORITED [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
@@ -2074,6 +4093,30 @@ test.cb('Test augmented schema', t => {
       rated_none: _UserRatedFilter
       rated_single: _UserRatedFilter
       rated_every: _UserRatedFilter
+      ratedCustomFrom: _UserRatedCustomFromFilter
+      ratedCustomFrom_not: _UserRatedCustomFromFilter
+      ratedCustomFrom_in: [_UserRatedCustomFromFilter!]
+      ratedCustomFrom_not_in: [_UserRatedCustomFromFilter!]
+      ratedCustomFrom_some: _UserRatedCustomFromFilter
+      ratedCustomFrom_none: _UserRatedCustomFromFilter
+      ratedCustomFrom_single: _UserRatedCustomFromFilter
+      ratedCustomFrom_every: _UserRatedCustomFromFilter
+      ratedCustomTo: _UserRatedCustomToFilter
+      ratedCustomTo_not: _UserRatedCustomToFilter
+      ratedCustomTo_in: [_UserRatedCustomToFilter!]
+      ratedCustomTo_not_in: [_UserRatedCustomToFilter!]
+      ratedCustomTo_some: _UserRatedCustomToFilter
+      ratedCustomTo_none: _UserRatedCustomToFilter
+      ratedCustomTo_single: _UserRatedCustomToFilter
+      ratedCustomTo_every: _UserRatedCustomToFilter
+      ratedCustomFromTo: _UserRatedCustomFromToFilter
+      ratedCustomFromTo_not: _UserRatedCustomFromToFilter
+      ratedCustomFromTo_in: [_UserRatedCustomFromToFilter!]
+      ratedCustomFromTo_not_in: [_UserRatedCustomFromToFilter!]
+      ratedCustomFromTo_some: _UserRatedCustomFromToFilter
+      ratedCustomFromTo_none: _UserRatedCustomFromToFilter
+      ratedCustomFromTo_single: _UserRatedCustomFromToFilter
+      ratedCustomFromTo_every: _UserRatedCustomFromToFilter
       friends: _FriendOfDirectionsFilter
       friends_not: _FriendOfDirectionsFilter
       friends_in: [_FriendOfDirectionsFilter!]
@@ -2082,6 +4125,30 @@ test.cb('Test augmented schema', t => {
       friends_none: _FriendOfDirectionsFilter
       friends_single: _FriendOfDirectionsFilter
       friends_every: _FriendOfDirectionsFilter
+      friendsCustomFrom: _FriendOfCustomFromDirectionsFilter
+      friendsCustomFrom_not: _FriendOfCustomFromDirectionsFilter
+      friendsCustomFrom_in: [_FriendOfCustomFromDirectionsFilter!]
+      friendsCustomFrom_not_in: [_FriendOfCustomFromDirectionsFilter!]
+      friendsCustomFrom_some: _FriendOfCustomFromDirectionsFilter
+      friendsCustomFrom_none: _FriendOfCustomFromDirectionsFilter
+      friendsCustomFrom_single: _FriendOfCustomFromDirectionsFilter
+      friendsCustomFrom_every: _FriendOfCustomFromDirectionsFilter
+      friendsCustomTo: _FriendOfCustomToDirectionsFilter
+      friendsCustomTo_not: _FriendOfCustomToDirectionsFilter
+      friendsCustomTo_in: [_FriendOfCustomToDirectionsFilter!]
+      friendsCustomTo_not_in: [_FriendOfCustomToDirectionsFilter!]
+      friendsCustomTo_some: _FriendOfCustomToDirectionsFilter
+      friendsCustomTo_none: _FriendOfCustomToDirectionsFilter
+      friendsCustomTo_single: _FriendOfCustomToDirectionsFilter
+      friendsCustomTo_every: _FriendOfCustomToDirectionsFilter
+      friendsCustomFromTo: _FriendOfCustomFromToDirectionsFilter
+      friendsCustomFromTo_not: _FriendOfCustomFromToDirectionsFilter
+      friendsCustomFromTo_in: [_FriendOfCustomFromToDirectionsFilter!]
+      friendsCustomFromTo_not_in: [_FriendOfCustomFromToDirectionsFilter!]
+      friendsCustomFromTo_some: _FriendOfCustomFromToDirectionsFilter
+      friendsCustomFromTo_none: _FriendOfCustomFromToDirectionsFilter
+      friendsCustomFromTo_single: _FriendOfCustomFromToDirectionsFilter
+      friendsCustomFromTo_every: _FriendOfCustomFromToDirectionsFilter
       favorites: _MovieFilter
       favorites_not: _MovieFilter
       favorites_in: [_MovieFilter!]
@@ -2129,7 +4196,51 @@ test.cb('Test augmented schema', t => {
         orderBy: [_RatedOrdering]
         filter: _UserRatedFilter
       ): [_UserRated]
+      ratedCustomFrom(
+        rating: Int
+        time: _Neo4jTimeInput
+        date: _Neo4jDateInput
+        datetime: _Neo4jDateTimeInput
+        localtime: _Neo4jLocalTimeInput
+        localdatetime: _Neo4jLocalDateTimeInput
+        location: _Neo4jPointInput
+        first: Int
+        offset: Int
+        orderBy: [_RatedCustomFromOrdering]
+        filter: _UserRatedCustomFromFilter
+      ): [_UserRatedCustomFrom]
+      ratedCustomTo(
+        rating: Int
+        time: _Neo4jTimeInput
+        date: _Neo4jDateInput
+        datetime: _Neo4jDateTimeInput
+        localtime: _Neo4jLocalTimeInput
+        localdatetime: _Neo4jLocalDateTimeInput
+        location: _Neo4jPointInput
+        first: Int
+        offset: Int
+        orderBy: [_RatedCustomToOrdering]
+        filter: _UserRatedCustomToFilter
+      ): [_UserRatedCustomTo]
+      ratedCustomFromTo(
+        rating: Int
+        time: _Neo4jTimeInput
+        date: _Neo4jDateInput
+        datetime: _Neo4jDateTimeInput
+        localtime: _Neo4jLocalTimeInput
+        localdatetime: _Neo4jLocalDateTimeInput
+        location: _Neo4jPointInput
+        from: String
+        to: Int
+        first: Int
+        offset: Int
+        orderBy: [_RatedCustomFromToOrdering]
+        filter: _UserRatedCustomFromToFilter
+      ): [_UserRatedCustomFromTo]
       friends: _UserFriendsDirections
+      friendsCustomFrom: _UserFriendsCustomFromDirections
+      friendsCustomTo: _UserFriendsCustomToDirections
+      friendsCustomFromTo: _UserFriendsCustomFromToDirections
       favorites(
         first: Int
         offset: Int
@@ -2162,6 +4273,62 @@ test.cb('Test augmented schema', t => {
       to: User
     }
 
+    type FriendOfCustomFrom @relation(from: "friendedBy") {
+      friendedBy: User
+      currentUserId: String
+        @cypher(
+          statement: "RETURN $cypherParams.currentUserId AS cypherParamsUserId"
+        )
+      since: Int
+      time: _Neo4jTime
+      date: _Neo4jDate
+      datetime: _Neo4jDateTime
+      ratings: [String]
+      datetimes: [_Neo4jDateTime]
+      localtime: _Neo4jLocalTime
+      localdatetime: _Neo4jLocalDateTime
+      location: _Neo4jPoint
+      to: User
+    }
+
+    type FriendOfCustomTo @relation(to: "friended") {
+      from: User
+      currentUserId: String
+        @cypher(
+          statement: "RETURN $cypherParams.currentUserId AS cypherParamsUserId"
+        )
+      since: Int
+      time: _Neo4jTime
+      date: _Neo4jDate
+      datetime: _Neo4jDateTime
+      ratings: [String]
+      datetimes: [_Neo4jDateTime]
+      localtime: _Neo4jLocalTime
+      localdatetime: _Neo4jLocalDateTime
+      location: _Neo4jPoint
+      friended: User
+    }
+
+    type FriendOfCustomFromTo @relation(from: "friendedBy", to: "friended") {
+      friendedBy: User
+      from: String
+      currentUserId: String
+        @cypher(
+          statement: "RETURN $cypherParams.currentUserId AS cypherParamsUserId"
+        )
+      since: Int
+      time: _Neo4jTime
+      date: _Neo4jDate
+      datetime: _Neo4jDateTime
+      ratings: [String]
+      datetimes: [_Neo4jDateTime]
+      localtime: _Neo4jLocalTime
+      localdatetime: _Neo4jLocalDateTime
+      location: _Neo4jPoint
+      friended: User
+      to: Int
+    }
+
     type Rated @relation {
       from: User
       currentUserId(strArg: String): String
@@ -2179,6 +4346,65 @@ test.cb('Test augmented schema', t => {
       location: _Neo4jPoint
       _id: String
       to: Movie
+    }
+
+    type RatedCustomFrom @relation(from: "ratedBy") {
+      ratedBy: User
+      currentUserId(strArg: String): String
+        @cypher(
+          statement: "RETURN $cypherParams.currentUserId AS cypherParamsUserId"
+        )
+      rating: Int
+      ratings: [Int]
+      time: _Neo4jTime
+      date: _Neo4jDate
+      datetime: _Neo4jDateTime
+      localtime: _Neo4jLocalTime
+      localdatetime: _Neo4jLocalDateTime
+      datetimes: [_Neo4jDateTime]
+      location: _Neo4jPoint
+      _id: String
+      to: Movie
+    }
+
+    type RatedCustomTo @relation(to: "movie") {
+      from: User
+      currentUserId(strArg: String): String
+        @cypher(
+          statement: "RETURN $cypherParams.currentUserId AS cypherParamsUserId"
+        )
+      rating: Int
+      ratings: [Int]
+      time: _Neo4jTime
+      date: _Neo4jDate
+      datetime: _Neo4jDateTime
+      localtime: _Neo4jLocalTime
+      localdatetime: _Neo4jLocalDateTime
+      datetimes: [_Neo4jDateTime]
+      location: _Neo4jPoint
+      _id: String
+      movie: Movie
+    }
+
+    type RatedCustomFromTo @relation(from: "ratedBy", to: "movie") {
+      ratedBy: User
+      from: String
+      currentUserId(strArg: String): String
+        @cypher(
+          statement: "RETURN $cypherParams.currentUserId AS cypherParamsUserId"
+        )
+      rating: Int
+      ratings: [Int]
+      time: _Neo4jTime
+      date: _Neo4jDate
+      datetime: _Neo4jDateTime
+      localtime: _Neo4jLocalTime
+      localdatetime: _Neo4jLocalDateTime
+      datetimes: [_Neo4jDateTime]
+      location: _Neo4jPoint
+      _id: String
+      to: Int
+      movie: Movie
     }
 
     enum BookGenre {
@@ -4381,6 +6607,216 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["User: Merge", "merge:user", "Movie: Merge", "merge:movie"]
         )
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the RATED_CUSTOM_FROM relationship."
+      AddMovieRatingsCustomFrom(
+        ratedBy: _UserInput!
+        to: _MovieInput!
+        data: _RatedCustomFromInput!
+      ): _AddMovieRatingsCustomFromPayload
+        @MutationMeta(
+          relationship: "RATED_CUSTOM_FROM"
+          from: "User"
+          to: "Movie"
+        )
+        @hasScope(
+          scopes: [
+            "User: Create"
+            "create:user"
+            "Movie: Create"
+            "create:movie"
+          ]
+        )
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the RATED_CUSTOM_FROM relationship."
+      RemoveMovieRatingsCustomFrom(
+        ratedBy: _UserInput!
+        to: _MovieInput!
+      ): _RemoveMovieRatingsCustomFromPayload
+        @MutationMeta(
+          relationship: "RATED_CUSTOM_FROM"
+          from: "User"
+          to: "Movie"
+        )
+        @hasScope(
+          scopes: [
+            "User: Delete"
+            "delete:user"
+            "Movie: Delete"
+            "delete:movie"
+          ]
+        )
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the RATED_CUSTOM_FROM relationship."
+      UpdateMovieRatingsCustomFrom(
+        ratedBy: _UserInput!
+        to: _MovieInput!
+        data: _RatedCustomFromInput!
+      ): _UpdateMovieRatingsCustomFromPayload
+        @MutationMeta(
+          relationship: "RATED_CUSTOM_FROM"
+          from: "User"
+          to: "Movie"
+        )
+        @hasScope(
+          scopes: [
+            "User: Update"
+            "update:user"
+            "Movie: Update"
+            "update:movie"
+          ]
+        )
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the RATED_CUSTOM_FROM relationship."
+      MergeMovieRatingsCustomFrom(
+        ratedBy: _UserInput!
+        to: _MovieInput!
+        data: _RatedCustomFromInput!
+      ): _MergeMovieRatingsCustomFromPayload
+        @MutationMeta(
+          relationship: "RATED_CUSTOM_FROM"
+          from: "User"
+          to: "Movie"
+        )
+        @hasScope(
+          scopes: ["User: Merge", "merge:user", "Movie: Merge", "merge:movie"]
+        )
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the RATED_CUSTOM_TO relationship."
+      AddMovieRatingsCustomTo(
+        from: _UserInput!
+        movie: _MovieInput!
+        data: _RatedCustomToInput!
+      ): _AddMovieRatingsCustomToPayload
+        @MutationMeta(
+          relationship: "RATED_CUSTOM_TO"
+          from: "User"
+          to: "Movie"
+        )
+        @hasScope(
+          scopes: [
+            "User: Create"
+            "create:user"
+            "Movie: Create"
+            "create:movie"
+          ]
+        )
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the RATED_CUSTOM_TO relationship."
+      RemoveMovieRatingsCustomTo(
+        from: _UserInput!
+        movie: _MovieInput!
+      ): _RemoveMovieRatingsCustomToPayload
+        @MutationMeta(
+          relationship: "RATED_CUSTOM_TO"
+          from: "User"
+          to: "Movie"
+        )
+        @hasScope(
+          scopes: [
+            "User: Delete"
+            "delete:user"
+            "Movie: Delete"
+            "delete:movie"
+          ]
+        )
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the RATED_CUSTOM_TO relationship."
+      UpdateMovieRatingsCustomTo(
+        from: _UserInput!
+        movie: _MovieInput!
+        data: _RatedCustomToInput!
+      ): _UpdateMovieRatingsCustomToPayload
+        @MutationMeta(
+          relationship: "RATED_CUSTOM_TO"
+          from: "User"
+          to: "Movie"
+        )
+        @hasScope(
+          scopes: [
+            "User: Update"
+            "update:user"
+            "Movie: Update"
+            "update:movie"
+          ]
+        )
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the RATED_CUSTOM_TO relationship."
+      MergeMovieRatingsCustomTo(
+        from: _UserInput!
+        movie: _MovieInput!
+        data: _RatedCustomToInput!
+      ): _MergeMovieRatingsCustomToPayload
+        @MutationMeta(
+          relationship: "RATED_CUSTOM_TO"
+          from: "User"
+          to: "Movie"
+        )
+        @hasScope(
+          scopes: ["User: Merge", "merge:user", "Movie: Merge", "merge:movie"]
+        )
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the RATED_CUSTOM_FROM_TO relationship."
+      AddMovieRatingsCustomFromTo(
+        ratedBy: _UserInput!
+        movie: _MovieInput!
+        data: _RatedCustomFromToInput!
+      ): _AddMovieRatingsCustomFromToPayload
+        @MutationMeta(
+          relationship: "RATED_CUSTOM_FROM_TO"
+          from: "User"
+          to: "Movie"
+        )
+        @hasScope(
+          scopes: [
+            "User: Create"
+            "create:user"
+            "Movie: Create"
+            "create:movie"
+          ]
+        )
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the RATED_CUSTOM_FROM_TO relationship."
+      RemoveMovieRatingsCustomFromTo(
+        ratedBy: _UserInput!
+        movie: _MovieInput!
+      ): _RemoveMovieRatingsCustomFromToPayload
+        @MutationMeta(
+          relationship: "RATED_CUSTOM_FROM_TO"
+          from: "User"
+          to: "Movie"
+        )
+        @hasScope(
+          scopes: [
+            "User: Delete"
+            "delete:user"
+            "Movie: Delete"
+            "delete:movie"
+          ]
+        )
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the RATED_CUSTOM_FROM_TO relationship."
+      UpdateMovieRatingsCustomFromTo(
+        ratedBy: _UserInput!
+        movie: _MovieInput!
+        data: _RatedCustomFromToInput!
+      ): _UpdateMovieRatingsCustomFromToPayload
+        @MutationMeta(
+          relationship: "RATED_CUSTOM_FROM_TO"
+          from: "User"
+          to: "Movie"
+        )
+        @hasScope(
+          scopes: [
+            "User: Update"
+            "update:user"
+            "Movie: Update"
+            "update:movie"
+          ]
+        )
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the RATED_CUSTOM_FROM_TO relationship."
+      MergeMovieRatingsCustomFromTo(
+        ratedBy: _UserInput!
+        movie: _MovieInput!
+        data: _RatedCustomFromToInput!
+      ): _MergeMovieRatingsCustomFromToPayload
+        @MutationMeta(
+          relationship: "RATED_CUSTOM_FROM_TO"
+          from: "User"
+          to: "Movie"
+        )
+        @hasScope(
+          scopes: ["User: Merge", "merge:user", "Movie: Merge", "merge:movie"]
+        )
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#create) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-nodes) a Movie node."
       CreateMovie(
         movieId: ID
@@ -5190,6 +7626,216 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["User: Merge", "merge:user", "Movie: Merge", "merge:movie"]
         )
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the RATED_CUSTOM_FROM relationship."
+      AddUserRatedCustomFrom(
+        ratedBy: _UserInput!
+        to: _MovieInput!
+        data: _RatedCustomFromInput!
+      ): _AddUserRatedCustomFromPayload
+        @MutationMeta(
+          relationship: "RATED_CUSTOM_FROM"
+          from: "User"
+          to: "Movie"
+        )
+        @hasScope(
+          scopes: [
+            "User: Create"
+            "create:user"
+            "Movie: Create"
+            "create:movie"
+          ]
+        )
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the RATED_CUSTOM_FROM relationship."
+      RemoveUserRatedCustomFrom(
+        ratedBy: _UserInput!
+        to: _MovieInput!
+      ): _RemoveUserRatedCustomFromPayload
+        @MutationMeta(
+          relationship: "RATED_CUSTOM_FROM"
+          from: "User"
+          to: "Movie"
+        )
+        @hasScope(
+          scopes: [
+            "User: Delete"
+            "delete:user"
+            "Movie: Delete"
+            "delete:movie"
+          ]
+        )
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the RATED_CUSTOM_FROM relationship."
+      UpdateUserRatedCustomFrom(
+        ratedBy: _UserInput!
+        to: _MovieInput!
+        data: _RatedCustomFromInput!
+      ): _UpdateUserRatedCustomFromPayload
+        @MutationMeta(
+          relationship: "RATED_CUSTOM_FROM"
+          from: "User"
+          to: "Movie"
+        )
+        @hasScope(
+          scopes: [
+            "User: Update"
+            "update:user"
+            "Movie: Update"
+            "update:movie"
+          ]
+        )
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the RATED_CUSTOM_FROM relationship."
+      MergeUserRatedCustomFrom(
+        ratedBy: _UserInput!
+        to: _MovieInput!
+        data: _RatedCustomFromInput!
+      ): _MergeUserRatedCustomFromPayload
+        @MutationMeta(
+          relationship: "RATED_CUSTOM_FROM"
+          from: "User"
+          to: "Movie"
+        )
+        @hasScope(
+          scopes: ["User: Merge", "merge:user", "Movie: Merge", "merge:movie"]
+        )
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the RATED_CUSTOM_TO relationship."
+      AddUserRatedCustomTo(
+        from: _UserInput!
+        movie: _MovieInput!
+        data: _RatedCustomToInput!
+      ): _AddUserRatedCustomToPayload
+        @MutationMeta(
+          relationship: "RATED_CUSTOM_TO"
+          from: "User"
+          to: "Movie"
+        )
+        @hasScope(
+          scopes: [
+            "User: Create"
+            "create:user"
+            "Movie: Create"
+            "create:movie"
+          ]
+        )
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the RATED_CUSTOM_TO relationship."
+      RemoveUserRatedCustomTo(
+        from: _UserInput!
+        movie: _MovieInput!
+      ): _RemoveUserRatedCustomToPayload
+        @MutationMeta(
+          relationship: "RATED_CUSTOM_TO"
+          from: "User"
+          to: "Movie"
+        )
+        @hasScope(
+          scopes: [
+            "User: Delete"
+            "delete:user"
+            "Movie: Delete"
+            "delete:movie"
+          ]
+        )
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the RATED_CUSTOM_TO relationship."
+      UpdateUserRatedCustomTo(
+        from: _UserInput!
+        movie: _MovieInput!
+        data: _RatedCustomToInput!
+      ): _UpdateUserRatedCustomToPayload
+        @MutationMeta(
+          relationship: "RATED_CUSTOM_TO"
+          from: "User"
+          to: "Movie"
+        )
+        @hasScope(
+          scopes: [
+            "User: Update"
+            "update:user"
+            "Movie: Update"
+            "update:movie"
+          ]
+        )
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the RATED_CUSTOM_TO relationship."
+      MergeUserRatedCustomTo(
+        from: _UserInput!
+        movie: _MovieInput!
+        data: _RatedCustomToInput!
+      ): _MergeUserRatedCustomToPayload
+        @MutationMeta(
+          relationship: "RATED_CUSTOM_TO"
+          from: "User"
+          to: "Movie"
+        )
+        @hasScope(
+          scopes: ["User: Merge", "merge:user", "Movie: Merge", "merge:movie"]
+        )
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the RATED_CUSTOM_FROM_TO relationship."
+      AddUserRatedCustomFromTo(
+        ratedBy: _UserInput!
+        movie: _MovieInput!
+        data: _RatedCustomFromToInput!
+      ): _AddUserRatedCustomFromToPayload
+        @MutationMeta(
+          relationship: "RATED_CUSTOM_FROM_TO"
+          from: "User"
+          to: "Movie"
+        )
+        @hasScope(
+          scopes: [
+            "User: Create"
+            "create:user"
+            "Movie: Create"
+            "create:movie"
+          ]
+        )
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the RATED_CUSTOM_FROM_TO relationship."
+      RemoveUserRatedCustomFromTo(
+        ratedBy: _UserInput!
+        movie: _MovieInput!
+      ): _RemoveUserRatedCustomFromToPayload
+        @MutationMeta(
+          relationship: "RATED_CUSTOM_FROM_TO"
+          from: "User"
+          to: "Movie"
+        )
+        @hasScope(
+          scopes: [
+            "User: Delete"
+            "delete:user"
+            "Movie: Delete"
+            "delete:movie"
+          ]
+        )
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the RATED_CUSTOM_FROM_TO relationship."
+      UpdateUserRatedCustomFromTo(
+        ratedBy: _UserInput!
+        movie: _MovieInput!
+        data: _RatedCustomFromToInput!
+      ): _UpdateUserRatedCustomFromToPayload
+        @MutationMeta(
+          relationship: "RATED_CUSTOM_FROM_TO"
+          from: "User"
+          to: "Movie"
+        )
+        @hasScope(
+          scopes: [
+            "User: Update"
+            "update:user"
+            "Movie: Update"
+            "update:movie"
+          ]
+        )
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the RATED_CUSTOM_FROM_TO relationship."
+      MergeUserRatedCustomFromTo(
+        ratedBy: _UserInput!
+        movie: _MovieInput!
+        data: _RatedCustomFromToInput!
+      ): _MergeUserRatedCustomFromToPayload
+        @MutationMeta(
+          relationship: "RATED_CUSTOM_FROM_TO"
+          from: "User"
+          to: "Movie"
+        )
+        @hasScope(
+          scopes: ["User: Merge", "merge:user", "Movie: Merge", "merge:movie"]
+        )
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the FRIEND_OF relationship."
       AddUserFriends(
         from: _UserInput!
@@ -5226,6 +7872,171 @@ test.cb('Test augmented schema', t => {
         data: _FriendOfInput!
       ): _MergeUserFriendsPayload
         @MutationMeta(relationship: "FRIEND_OF", from: "User", to: "User")
+        @hasScope(
+          scopes: ["User: Merge", "merge:user", "User: Merge", "merge:user"]
+        )
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the FRIEND_OF_CUSTOM_FROM relationship."
+      AddUserFriendsCustomFrom(
+        friendedBy: _UserInput!
+        to: _UserInput!
+        data: _FriendOfCustomFromInput!
+      ): _AddUserFriendsCustomFromPayload
+        @MutationMeta(
+          relationship: "FRIEND_OF_CUSTOM_FROM"
+          from: "User"
+          to: "User"
+        )
+        @hasScope(
+          scopes: ["User: Create", "create:user", "User: Create", "create:user"]
+        )
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the FRIEND_OF_CUSTOM_FROM relationship."
+      RemoveUserFriendsCustomFrom(
+        friendedBy: _UserInput!
+        to: _UserInput!
+      ): _RemoveUserFriendsCustomFromPayload
+        @MutationMeta(
+          relationship: "FRIEND_OF_CUSTOM_FROM"
+          from: "User"
+          to: "User"
+        )
+        @hasScope(
+          scopes: ["User: Delete", "delete:user", "User: Delete", "delete:user"]
+        )
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the FRIEND_OF_CUSTOM_FROM relationship."
+      UpdateUserFriendsCustomFrom(
+        friendedBy: _UserInput!
+        to: _UserInput!
+        data: _FriendOfCustomFromInput!
+      ): _UpdateUserFriendsCustomFromPayload
+        @MutationMeta(
+          relationship: "FRIEND_OF_CUSTOM_FROM"
+          from: "User"
+          to: "User"
+        )
+        @hasScope(
+          scopes: ["User: Update", "update:user", "User: Update", "update:user"]
+        )
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the FRIEND_OF_CUSTOM_FROM relationship."
+      MergeUserFriendsCustomFrom(
+        friendedBy: _UserInput!
+        to: _UserInput!
+        data: _FriendOfCustomFromInput!
+      ): _MergeUserFriendsCustomFromPayload
+        @MutationMeta(
+          relationship: "FRIEND_OF_CUSTOM_FROM"
+          from: "User"
+          to: "User"
+        )
+        @hasScope(
+          scopes: ["User: Merge", "merge:user", "User: Merge", "merge:user"]
+        )
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the FRIEND_OF_CUSTOM_TO relationship."
+      AddUserFriendsCustomTo(
+        from: _UserInput!
+        friended: _UserInput!
+        data: _FriendOfCustomToInput!
+      ): _AddUserFriendsCustomToPayload
+        @MutationMeta(
+          relationship: "FRIEND_OF_CUSTOM_TO"
+          from: "User"
+          to: "User"
+        )
+        @hasScope(
+          scopes: ["User: Create", "create:user", "User: Create", "create:user"]
+        )
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the FRIEND_OF_CUSTOM_TO relationship."
+      RemoveUserFriendsCustomTo(
+        from: _UserInput!
+        friended: _UserInput!
+      ): _RemoveUserFriendsCustomToPayload
+        @MutationMeta(
+          relationship: "FRIEND_OF_CUSTOM_TO"
+          from: "User"
+          to: "User"
+        )
+        @hasScope(
+          scopes: ["User: Delete", "delete:user", "User: Delete", "delete:user"]
+        )
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the FRIEND_OF_CUSTOM_TO relationship."
+      UpdateUserFriendsCustomTo(
+        from: _UserInput!
+        friended: _UserInput!
+        data: _FriendOfCustomToInput!
+      ): _UpdateUserFriendsCustomToPayload
+        @MutationMeta(
+          relationship: "FRIEND_OF_CUSTOM_TO"
+          from: "User"
+          to: "User"
+        )
+        @hasScope(
+          scopes: ["User: Update", "update:user", "User: Update", "update:user"]
+        )
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the FRIEND_OF_CUSTOM_TO relationship."
+      MergeUserFriendsCustomTo(
+        from: _UserInput!
+        friended: _UserInput!
+        data: _FriendOfCustomToInput!
+      ): _MergeUserFriendsCustomToPayload
+        @MutationMeta(
+          relationship: "FRIEND_OF_CUSTOM_TO"
+          from: "User"
+          to: "User"
+        )
+        @hasScope(
+          scopes: ["User: Merge", "merge:user", "User: Merge", "merge:user"]
+        )
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the FRIEND_OF_CUSTOM_FROM_TO relationship."
+      AddUserFriendsCustomFromTo(
+        friendedBy: _UserInput!
+        friended: _UserInput!
+        data: _FriendOfCustomFromToInput!
+      ): _AddUserFriendsCustomFromToPayload
+        @MutationMeta(
+          relationship: "FRIEND_OF_CUSTOM_FROM_TO"
+          from: "User"
+          to: "User"
+        )
+        @hasScope(
+          scopes: ["User: Create", "create:user", "User: Create", "create:user"]
+        )
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the FRIEND_OF_CUSTOM_FROM_TO relationship."
+      RemoveUserFriendsCustomFromTo(
+        friendedBy: _UserInput!
+        friended: _UserInput!
+      ): _RemoveUserFriendsCustomFromToPayload
+        @MutationMeta(
+          relationship: "FRIEND_OF_CUSTOM_FROM_TO"
+          from: "User"
+          to: "User"
+        )
+        @hasScope(
+          scopes: ["User: Delete", "delete:user", "User: Delete", "delete:user"]
+        )
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the FRIEND_OF_CUSTOM_FROM_TO relationship."
+      UpdateUserFriendsCustomFromTo(
+        friendedBy: _UserInput!
+        friended: _UserInput!
+        data: _FriendOfCustomFromToInput!
+      ): _UpdateUserFriendsCustomFromToPayload
+        @MutationMeta(
+          relationship: "FRIEND_OF_CUSTOM_FROM_TO"
+          from: "User"
+          to: "User"
+        )
+        @hasScope(
+          scopes: ["User: Update", "update:user", "User: Update", "update:user"]
+        )
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the FRIEND_OF_CUSTOM_FROM_TO relationship."
+      MergeUserFriendsCustomFromTo(
+        friendedBy: _UserInput!
+        friended: _UserInput!
+        data: _FriendOfCustomFromToInput!
+      ): _MergeUserFriendsCustomFromToPayload
+        @MutationMeta(
+          relationship: "FRIEND_OF_CUSTOM_FROM_TO"
+          from: "User"
+          to: "User"
+        )
         @hasScope(
           scopes: ["User: Merge", "merge:user", "User: Merge", "merge:user"]
         )
