@@ -1,10 +1,10 @@
-import { Kind } from 'graphql';
 import { augmentRelationshipQueryAPI } from './query';
 import { augmentRelationshipMutationAPI } from './mutation';
 import {
   unwrapNamedType,
   isPropertyTypeField,
   getFieldType,
+  getFieldDefinition,
   toSnakeCase,
   buildNeo4jSystemIDField
 } from '../../fields';
@@ -84,6 +84,12 @@ export const augmentRelationshipTypeField = ({
         outputType,
         relationshipName
       });
+      // validate if the provided node type field names are defined
+      validateRelationTypeDirective({
+        outputDefinition,
+        relationshipTypeDirective,
+        config
+      });
       let [
         fromType,
         toType,
@@ -95,6 +101,7 @@ export const augmentRelationshipTypeField = ({
         outputType,
         outputDefinition,
         typeDefinitionMap,
+        relationshipTypeDirective,
         config
       });
       [
@@ -110,6 +117,7 @@ export const augmentRelationshipTypeField = ({
         fieldArguments,
         fieldName,
         outputType,
+        relationshipTypeDirective,
         fromType,
         toType,
         typeDefinitionMap,
@@ -132,6 +140,7 @@ export const augmentRelationshipTypeField = ({
         outputType,
         fromType,
         toType,
+        relationshipDirective: relationshipTypeDirective,
         relationshipName,
         propertyInputValues,
         propertyOutputFields,
@@ -153,6 +162,54 @@ export const augmentRelationshipTypeField = ({
   ];
 };
 
+const validateRelationTypeDirective = ({
+  outputDefinition,
+  relationshipTypeDirective,
+  config = {}
+}) => {
+  if (config.query !== false) {
+    const outputTypeName = outputDefinition.name.value;
+    const fields = outputDefinition.fields;
+    validateRelationTypeNodeField({
+      fields,
+      fieldName: RelationshipDirectionField.FROM,
+      outputTypeName,
+      relationshipTypeDirective
+    });
+    validateRelationTypeNodeField({
+      fields,
+      fieldName: RelationshipDirectionField.TO,
+      outputTypeName,
+      relationshipTypeDirective
+    });
+  }
+};
+
+const validateRelationTypeNodeField = ({
+  fields = [],
+  fieldName = '',
+  outputTypeName = '',
+  relationshipTypeDirective = {}
+}) => {
+  let name = getDirectiveArgument({
+    directive: relationshipTypeDirective,
+    name: fieldName
+  });
+  if (!name) name = fieldName;
+  const fromField = getFieldDefinition({ fields, name });
+  if (!fromField) {
+    if (name === fieldName) {
+      throw new ApolloError(
+        `The @relation directive on the ${outputTypeName} type requires either a "${fieldName}" argument value or a "${fieldName}" field definition.`
+      );
+    } else {
+      throw new ApolloError(
+        `The '${fieldName}' argument of the @relation directive on the ${outputTypeName} type is "${name}", but a "${name}" field is not defined.`
+      );
+    }
+  }
+};
+
 /**
  * Iterates through all field definitions of a relationship type, deciding whether
  * to generate the corresponding field or input value definitions that compose
@@ -163,17 +220,38 @@ const augmentRelationshipTypeFields = ({
   outputType,
   outputDefinition,
   typeDefinitionMap,
+  relationshipTypeDirective,
   config
 }) => {
   const fields = outputDefinition.fields;
-  const fromTypeName = getFieldType({
-    fields,
+  let fromFieldName = getDirectiveArgument({
+    directive: relationshipTypeDirective,
     name: RelationshipDirectionField.FROM
   });
-  const toTypeName = getFieldType({
+  let fromTypeName = getFieldType({
     fields,
+    name: fromFieldName
+  });
+  if (!fromTypeName) {
+    fromTypeName = getFieldType({
+      fields,
+      name: RelationshipDirectionField.FROM
+    });
+  }
+  let toFieldName = getDirectiveArgument({
+    directive: relationshipTypeDirective,
     name: RelationshipDirectionField.TO
   });
+  let toTypeName = getFieldType({
+    fields,
+    name: toFieldName
+  });
+  if (!toTypeName) {
+    toTypeName = getFieldType({
+      fields,
+      name: RelationshipDirectionField.TO
+    });
+  }
   let relatedTypeFilterName = `_${typeName}${outputType}Filter`;
   let relatedTypeOrderingName = `_${outputType}Ordering`;
   if (fromTypeName === toTypeName) {
