@@ -3,8 +3,6 @@ import {
   cypherDirective,
   cypherDirectiveArgs,
   filtersFromSelections,
-  innerFilterParams,
-  paramsToString,
   getFilterParams,
   innerType,
   isGraphqlScalarType,
@@ -108,7 +106,6 @@ export function buildCypherSelection({
   const fieldName =
     headSelection && headSelection.name ? headSelection.name.value : '';
   const safeVariableName = safeVar(variableName);
-
   const usesFragments = isFragmentedSelection({ selections });
 
   const isScalarType = isGraphqlScalarType(schemaType);
@@ -283,6 +280,7 @@ export function buildCypherSelection({
       );
       const nestedVariable = decideNestedVariableName({
         schemaTypeRelation,
+        schemaType,
         innerSchemaTypeRelation,
         variableName,
         fieldName,
@@ -468,11 +466,12 @@ export function buildCypherSelection({
           isUnionTypeField,
           usesFragments,
           paramIndex,
-          parentSelectionInfo,
           resolveInfo,
           selectionFilters,
           fieldArgs,
-          cypherParams
+          cypherParams,
+          parentSelectionInfo,
+          secondParentSelectionInfo
         });
       } else if (isRelationshipTypeField) {
         // Relation type field on node type (field payload types...)
