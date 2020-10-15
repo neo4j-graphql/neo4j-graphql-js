@@ -31,7 +31,7 @@ export const DirectiveDefinition = {
 };
 
 // The name of Role type used in authorization logic
-const ROLE_TYPE = 'Role';
+const ROLE_TYPE = process.env.AUTH_ROLE_ENUM_NAME || 'Role';
 
 /**
  * Enum for the names of directed fields on relationship types
