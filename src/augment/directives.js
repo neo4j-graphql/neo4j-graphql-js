@@ -1,5 +1,5 @@
 import { Kind, DirectiveLocation, GraphQLString } from 'graphql';
-import { TypeWrappers } from './fields';
+import { TypeWrappers, getFieldType } from './fields';
 import {
   buildDirectiveDefinition,
   buildInputValue,
@@ -169,41 +169,6 @@ export const augmentDirectiveDefinitions = ({
   });
   return [typeDefinitionMap, directiveDefinitionMap];
 };
-
-/**
- * Builds a relation directive for generated relationship output types
- */
-export const buildRelationDirective = ({
-  relationshipName,
-  fromType,
-  toType
-}) =>
-  buildDirective({
-    name: buildName({ name: DirectiveDefinition.RELATION }),
-    args: [
-      buildDirectiveArgument({
-        name: buildName({ name: 'name' }),
-        value: {
-          kind: Kind.STRING,
-          value: relationshipName
-        }
-      }),
-      buildDirectiveArgument({
-        name: buildName({ name: RelationshipDirectionField.FROM }),
-        value: {
-          kind: Kind.STRING,
-          value: fromType
-        }
-      }),
-      buildDirectiveArgument({
-        name: buildName({ name: RelationshipDirectionField.TO }),
-        value: {
-          kind: Kind.STRING,
-          value: toType
-        }
-      })
-    ]
-  });
 
 /**
  * Builds a MutationMeta directive for translating relationship mutations
@@ -511,12 +476,9 @@ export const getDirective = ({ directives, name }) => {
  */
 export const getDirectiveArgument = ({ directive, name }) => {
   let value = '';
-  const arg = directive.arguments.find(
-    arg => arg.name && arg.name.value === name
-  );
-  if (arg) {
-    value = arg.value.value;
-  }
+  const args = directive ? directive.arguments : [];
+  const arg = args.find(arg => arg.name && arg.name.value === name);
+  if (arg) value = arg.value.value;
   return value;
 };
 
