@@ -1,4 +1,4 @@
-import { Kind, GraphQLInt, isInputObjectType, isObjectType } from 'graphql';
+import { Kind, GraphQLInt, isInputObjectType } from 'graphql';
 import {
   buildName,
   buildNamedType,
@@ -29,7 +29,7 @@ import {
   unwrapNamedType
 } from './fields';
 import { SpatialType, Neo4jPointDistanceFilter } from './types/spatial';
-import { isNeo4jTypeInput, isTemporalInputType } from '../utils';
+import { isNeo4jTypeInput } from '../utils';
 import neo4j from 'neo4j-driver';
 
 /**
@@ -433,6 +433,12 @@ export const buildFilters = ({
   filterTypes = [],
   isListFilter = false
 }) => {
+  if (isListFilter) {
+    fieldConfig.type.wrappers = {
+      [TypeWrappers.NON_NULL_NAMED_TYPE]: true,
+      [TypeWrappers.LIST_TYPE]: true
+    };
+  }
   return filterTypes.reduce(
     (inputValues, name) => {
       const filterName = `${fieldName}_${name}`;
