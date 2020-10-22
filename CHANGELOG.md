@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.17.0
+
+- [Allow user defined Role enum name](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/519)
+- [`@relation` type directive arguments for custom node type field names](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/521)
+- [Allow functional directives via schemaTransforms](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/530)
+
 ## 2.16.4
 
 - [Add documentation descriptions for generated schema](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/515)
