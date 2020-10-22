@@ -49,7 +49,6 @@ import {
 } from '../../types/types';
 import { getPrimaryKey } from './selection';
 import { ApolloError } from 'apollo-server-errors';
-import { Kind } from 'graphql';
 
 /**
  * The main export for the augmentation process of a GraphQL
@@ -437,6 +436,7 @@ const augmentNodeTypeField = ({
         fromType,
         toType,
         relationshipName,
+        relationshipDirective,
         typeDefinitionMap,
         typeExtensionDefinitionMap,
         generatedTypeMap,

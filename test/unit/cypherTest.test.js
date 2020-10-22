@@ -3,6 +3,9 @@ import {
   cypherTestRunner,
   augmentedSchemaCypherTestRunner
 } from '../helpers/cypherTestHelpers';
+import { ApolloError } from 'apollo-server-errors';
+import { makeAugmentedSchema } from '../../src/index';
+import { gql } from 'apollo-server';
 
 const CYPHER_PARAMS = {
   userId: 'user-id'
@@ -11096,6 +11099,1387 @@ test('query computed union type relationship using pagination', t => {
       offset: 2,
       first: 5,
       cypherParams: CYPHER_PARAMS
+    };
+
+  t.plan(2);
+  return Promise.all([
+    augmentedSchemaCypherTestRunner(
+      t,
+      graphQLQuery,
+      {},
+      expectedCypherQuery,
+      expectedParams
+    )
+  ]);
+});
+
+test(`Throws error if @relation type defines neither the 'from' directive argument, nor the default 'from' field.`, t => {
+  const error = t.throws(
+    () => {
+      makeAugmentedSchema({
+        typeDefs: gql`
+          type Movie {
+            ratings: [RatingsCustomFromError]
+          }
+
+          type RatingsCustomFromError @relation(to: "movie") {
+            rating: Int
+            movie: Movie
+          }
+        `
+      });
+    },
+    {
+      instanceOf: ApolloError
+    }
+  );
+  t.is(
+    error.message,
+    `The @relation directive on the RatingsCustomFromError type requires either a "from" argument value or a "from" field definition.`
+  );
+});
+
+test('query relationship type field on tail node type with a custom field name for only the tail node type', t => {
+  const graphQLQuery = `query {
+    Movie {
+      movieId
+      ratingsCustomTo {
+        rating
+        ratings
+        User {
+          userId
+          name
+        }
+      }
+    }
+  }`,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`:\`u_user-id\`:\`newMovieLabel\`) RETURN \`movie\` { .movieId ,ratingsCustomTo: [(\`movie\`)<-[\`movie_ratingsCustomTo_relation\`:\`RATED_CUSTOM_TO\`]-(:\`User\`) | movie_ratingsCustomTo_relation { .rating , .ratings ,User: head([(:\`Movie\`:\`u_user-id\`:\`newMovieLabel\`)<-[\`movie_ratingsCustomTo_relation\`]-(\`movie_ratingsCustomTo_User\`:\`User\`) | movie_ratingsCustomTo_User { .userId , .name }]) }] } AS \`movie\``,
+    expectedParams = {
+      offset: 0,
+      first: -1,
+      cypherParams: CYPHER_PARAMS
+    };
+
+  t.plan(2);
+  return Promise.all([
+    augmentedSchemaCypherTestRunner(
+      t,
+      graphQLQuery,
+      {},
+      expectedCypherQuery,
+      expectedParams
+    )
+  ]);
+});
+
+test('filter relationship type field on tail node type with a custom field name for only the tail node type', t => {
+  const graphQLQuery = `query {
+    Movie(filter: {
+      ratingsCustomTo: {
+        User: {
+          name_not: null
+        }
+      }
+    }) {
+      movieId
+      ratingsCustomTo {
+        rating
+        ratings
+        User {
+          userId
+          name
+        }
+      }
+    }
+  }
+  `,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`:\`u_user-id\`:\`newMovieLabel\`) WHERE (EXISTS((\`movie\`)<-[:RATED_CUSTOM_TO]-(:User)) AND ALL(\`movie_filter_user\` IN [(\`movie\`)<-[\`_movie_filter_user\`:RATED_CUSTOM_TO]-(:User) | \`_movie_filter_user\`] WHERE (ALL(\`user\` IN [(\`movie\`)<-[\`movie_filter_user\`]-(\`_user\`:User) | \`_user\`] WHERE ($filter.ratingsCustomTo.User._name_not_null = TRUE AND EXISTS(\`user\`.name)))))) RETURN \`movie\` { .movieId ,ratingsCustomTo: [(\`movie\`)<-[\`movie_ratingsCustomTo_relation\`:\`RATED_CUSTOM_TO\`]-(:\`User\`) | movie_ratingsCustomTo_relation { .rating , .ratings ,User: head([(:\`Movie\`:\`u_user-id\`:\`newMovieLabel\`)<-[\`movie_ratingsCustomTo_relation\`]-(\`movie_ratingsCustomTo_User\`:\`User\`) | movie_ratingsCustomTo_User { .userId , .name }]) }] } AS \`movie\``,
+    expectedParams = {
+      offset: 0,
+      first: -1,
+      filter: {
+        ratingsCustomTo: {
+          User: {
+            _name_not_null: true
+          }
+        }
+      },
+      cypherParams: CYPHER_PARAMS
+    };
+
+  t.plan(2);
+  return Promise.all([
+    augmentedSchemaCypherTestRunner(
+      t,
+      graphQLQuery,
+      {},
+      expectedCypherQuery,
+      expectedParams
+    )
+  ]);
+});
+
+test('query relationship type field on tail node type with a custom field name for only the head node type', t => {
+  const graphQLQuery = `query {
+    Movie {
+      movieId
+      ratingsCustomFrom {
+        rating
+        ratings
+        ratedBy {
+          userId
+          name
+        }
+      }
+    }
+  }`,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`:\`u_user-id\`:\`newMovieLabel\`) RETURN \`movie\` { .movieId ,ratingsCustomFrom: [(\`movie\`)<-[\`movie_ratingsCustomFrom_relation\`:\`RATED_CUSTOM_FROM\`]-(:\`User\`) | movie_ratingsCustomFrom_relation { .rating , .ratings ,ratedBy: head([(:\`Movie\`:\`u_user-id\`:\`newMovieLabel\`)<-[\`movie_ratingsCustomFrom_relation\`]-(\`movie_ratingsCustomFrom_ratedBy\`:\`User\`) | movie_ratingsCustomFrom_ratedBy { .userId , .name }]) }] } AS \`movie\``,
+    expectedParams = {
+      offset: 0,
+      first: -1,
+      cypherParams: CYPHER_PARAMS
+    };
+
+  t.plan(2);
+  return Promise.all([
+    augmentedSchemaCypherTestRunner(
+      t,
+      graphQLQuery,
+      {},
+      expectedCypherQuery,
+      expectedParams
+    )
+  ]);
+});
+
+test('filter relationship type field on tail node type with a custom field name for only the head node type', t => {
+  const graphQLQuery = `query {
+    Movie(
+      filter: {
+        ratingsCustomFrom: {
+          ratedBy: {
+            userId: "33aaf30b-a792-401e-b1cc-fdaad05cdd5e"
+          }
+        }
+      }
+    ) {
+      movieId
+      ratingsCustomFrom {
+        rating
+        ratings
+        ratedBy {
+          userId
+          name
+        }
+      }
+    }
+  }`,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`:\`u_user-id\`:\`newMovieLabel\`) WHERE (EXISTS((\`movie\`)<-[:RATED_CUSTOM_FROM]-(:User)) AND ALL(\`movie_filter_user\` IN [(\`movie\`)<-[\`_movie_filter_user\`:RATED_CUSTOM_FROM]-(:User) | \`_movie_filter_user\`] WHERE (ALL(\`user\` IN [(\`movie\`)<-[\`movie_filter_user\`]-(\`_user\`:User) | \`_user\`] WHERE (\`user\`.userId = $filter.ratingsCustomFrom.ratedBy.userId))))) RETURN \`movie\` { .movieId ,ratingsCustomFrom: [(\`movie\`)<-[\`movie_ratingsCustomFrom_relation\`:\`RATED_CUSTOM_FROM\`]-(:\`User\`) | movie_ratingsCustomFrom_relation { .rating , .ratings ,ratedBy: head([(:\`Movie\`:\`u_user-id\`:\`newMovieLabel\`)<-[\`movie_ratingsCustomFrom_relation\`]-(\`movie_ratingsCustomFrom_ratedBy\`:\`User\`) | movie_ratingsCustomFrom_ratedBy { .userId , .name }]) }] } AS \`movie\``,
+    expectedParams = {
+      offset: 0,
+      first: -1,
+      filter: {
+        ratingsCustomFrom: {
+          ratedBy: {
+            userId: '33aaf30b-a792-401e-b1cc-fdaad05cdd5e'
+          }
+        }
+      },
+      cypherParams: CYPHER_PARAMS
+    };
+
+  t.plan(2);
+  return Promise.all([
+    augmentedSchemaCypherTestRunner(
+      t,
+      graphQLQuery,
+      {},
+      expectedCypherQuery,
+      expectedParams
+    )
+  ]);
+});
+
+test(`Throws error if @relation type defines neither a 'to' directive argument, nor the default 'to' field.`, t => {
+  const error = t.throws(
+    () => {
+      makeAugmentedSchema({
+        typeDefs: gql`
+          type User {
+            rated: [RatedCustomToError]
+          }
+          type RatedCustomToError @relation(from: "ratedBy") {
+            ratedBy: User
+            rating: Int
+          }
+        `
+      });
+    },
+    {
+      instanceOf: ApolloError
+    }
+  );
+  t.is(
+    error.message,
+    `The @relation directive on the RatedCustomToError type requires either a "to" argument value or a "to" field definition.`
+  );
+});
+
+test('query relationship type field on head node type with a custom field name for only the head node type', t => {
+  const graphQLQuery = `query {
+    User {
+      userId
+      ratedCustomFrom {
+        rating
+        ratings
+        Movie {
+          movieId
+        }
+      }
+    }
+  }`,
+    expectedCypherQuery = `MATCH (\`user\`:\`User\`) RETURN \`user\` { .userId ,ratedCustomFrom: [(\`user\`)-[\`user_ratedCustomFrom_relation\`:\`RATED_CUSTOM_FROM\`]->(:\`Movie\`:\`u_user-id\`:\`newMovieLabel\`) | user_ratedCustomFrom_relation { .rating , .ratings ,Movie: head([(:\`User\`)-[\`user_ratedCustomFrom_relation\`]->(\`user_ratedCustomFrom_Movie\`:\`Movie\`:\`u_user-id\`:\`newMovieLabel\`) | user_ratedCustomFrom_Movie { .movieId }]) }] } AS \`user\``,
+    expectedParams = {
+      offset: 0,
+      first: -1,
+      cypherParams: CYPHER_PARAMS
+    };
+
+  t.plan(2);
+  return Promise.all([
+    augmentedSchemaCypherTestRunner(
+      t,
+      graphQLQuery,
+      {},
+      expectedCypherQuery,
+      expectedParams
+    )
+  ]);
+});
+
+test('filter relationship type field on head node type with a custom field name for only the head node type', t => {
+  const graphQLQuery = `query {
+    User(
+      filter: {
+      	ratedCustomFrom_some: {
+          Movie: {
+            movieId: "cc9fcdb7-2cae-4b58-904f-1e9f6bb5a29e"
+          }
+        }
+      }
+    ) {
+      userId
+      ratedCustomFrom {
+        rating
+        ratings
+        Movie {
+          movieId
+        }
+      }
+    }
+  }
+  `,
+    expectedCypherQuery = `MATCH (\`user\`:\`User\`) WHERE (EXISTS((\`user\`)-[:RATED_CUSTOM_FROM]->(:Movie)) AND ANY(\`user_filter_movie\` IN [(\`user\`)-[\`_user_filter_movie\`:RATED_CUSTOM_FROM]->(:Movie) | \`_user_filter_movie\`] WHERE (ALL(\`movie\` IN [(\`user\`)-[\`user_filter_movie\`]->(\`_movie\`:Movie) | \`_movie\`] WHERE (\`movie\`.movieId = $filter.ratedCustomFrom_some.Movie.movieId))))) RETURN \`user\` { .userId ,ratedCustomFrom: [(\`user\`)-[\`user_ratedCustomFrom_relation\`:\`RATED_CUSTOM_FROM\`]->(:\`Movie\`:\`u_user-id\`:\`newMovieLabel\`) | user_ratedCustomFrom_relation { .rating , .ratings ,Movie: head([(:\`User\`)-[\`user_ratedCustomFrom_relation\`]->(\`user_ratedCustomFrom_Movie\`:\`Movie\`:\`u_user-id\`:\`newMovieLabel\`) | user_ratedCustomFrom_Movie { .movieId }]) }] } AS \`user\``,
+    expectedParams = {
+      offset: 0,
+      first: -1,
+      filter: {
+        ratedCustomFrom_some: {
+          Movie: {
+            movieId: 'cc9fcdb7-2cae-4b58-904f-1e9f6bb5a29e'
+          }
+        }
+      },
+      cypherParams: CYPHER_PARAMS
+    };
+
+  t.plan(2);
+  return Promise.all([
+    augmentedSchemaCypherTestRunner(
+      t,
+      graphQLQuery,
+      {},
+      expectedCypherQuery,
+      expectedParams
+    )
+  ]);
+});
+
+test('query relationship type field on head node type with a custom field name for only the tail node type', t => {
+  const graphQLQuery = `query {
+    User {
+      userId
+      ratedCustomTo {
+        rating
+        ratings
+        movie {
+          movieId
+        }
+      }
+    }
+  }`,
+    expectedCypherQuery = `MATCH (\`user\`:\`User\`) RETURN \`user\` { .userId ,ratedCustomTo: [(\`user\`)-[\`user_ratedCustomTo_relation\`:\`RATED_CUSTOM_TO\`]->(:\`Movie\`:\`u_user-id\`:\`newMovieLabel\`) | user_ratedCustomTo_relation { .rating , .ratings ,movie: head([(:\`User\`)-[\`user_ratedCustomTo_relation\`]->(\`user_ratedCustomTo_movie\`:\`Movie\`:\`u_user-id\`:\`newMovieLabel\`) | user_ratedCustomTo_movie { .movieId }]) }] } AS \`user\``,
+    expectedParams = {
+      offset: 0,
+      first: -1,
+      cypherParams: CYPHER_PARAMS
+    };
+
+  t.plan(2);
+  return Promise.all([
+    augmentedSchemaCypherTestRunner(
+      t,
+      graphQLQuery,
+      {},
+      expectedCypherQuery,
+      expectedParams
+    )
+  ]);
+});
+
+test('filter relationship type field on head node type with a custom field name for only the tail node type', t => {
+  const graphQLQuery = `query {
+    User(
+        filter: {
+          ratedCustomTo: {
+            movie: {
+              movieId_not: null
+            }
+          }
+        }
+      ) {
+      userId
+      ratedCustomTo {
+        rating
+        ratings
+        movie {
+          movieId
+        }
+      }
+    }
+  }  
+  `,
+    expectedCypherQuery = `MATCH (\`user\`:\`User\`) WHERE (EXISTS((\`user\`)-[:RATED_CUSTOM_TO]->(:Movie)) AND ALL(\`user_filter_movie\` IN [(\`user\`)-[\`_user_filter_movie\`:RATED_CUSTOM_TO]->(:Movie) | \`_user_filter_movie\`] WHERE (ALL(\`movie\` IN [(\`user\`)-[\`user_filter_movie\`]->(\`_movie\`:Movie) | \`_movie\`] WHERE ($filter.ratedCustomTo.movie._movieId_not_null = TRUE AND EXISTS(\`movie\`.movieId)))))) RETURN \`user\` { .userId ,ratedCustomTo: [(\`user\`)-[\`user_ratedCustomTo_relation\`:\`RATED_CUSTOM_TO\`]->(:\`Movie\`:\`u_user-id\`:\`newMovieLabel\`) | user_ratedCustomTo_relation { .rating , .ratings ,movie: head([(:\`User\`)-[\`user_ratedCustomTo_relation\`]->(\`user_ratedCustomTo_movie\`:\`Movie\`:\`u_user-id\`:\`newMovieLabel\`) | user_ratedCustomTo_movie { .movieId }]) }] } AS \`user\``,
+    expectedParams = {
+      offset: 0,
+      first: -1,
+      filter: {
+        ratedCustomTo: {
+          movie: {
+            _movieId_not_null: true
+          }
+        }
+      },
+      cypherParams: CYPHER_PARAMS
+    };
+
+  t.plan(2);
+  return Promise.all([
+    augmentedSchemaCypherTestRunner(
+      t,
+      graphQLQuery,
+      {},
+      expectedCypherQuery,
+      expectedParams
+    )
+  ]);
+});
+
+test('query relationship type field with a custom field name for both related node types', t => {
+  const graphQLQuery = `query {
+    Movie {
+      movieId
+      ratingsCustomFromTo{
+        rating
+        ratings
+        ratedBy {
+          userId
+          name
+        }
+      }
+    }
+  }`,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`:\`u_user-id\`:\`newMovieLabel\`) RETURN \`movie\` { .movieId ,ratingsCustomFromTo: [(\`movie\`)<-[\`movie_ratingsCustomFromTo_relation\`:\`RATED_CUSTOM_FROM_TO\`]-(:\`User\`) | movie_ratingsCustomFromTo_relation { .rating , .ratings ,ratedBy: head([(:\`Movie\`:\`u_user-id\`:\`newMovieLabel\`)<-[\`movie_ratingsCustomFromTo_relation\`]-(\`movie_ratingsCustomFromTo_ratedBy\`:\`User\`) | movie_ratingsCustomFromTo_ratedBy { .userId , .name }]) }] } AS \`movie\``,
+    expectedParams = {
+      offset: 0,
+      first: -1,
+      cypherParams: CYPHER_PARAMS
+    };
+
+  t.plan(2);
+  return Promise.all([
+    augmentedSchemaCypherTestRunner(
+      t,
+      graphQLQuery,
+      {},
+      expectedCypherQuery,
+      expectedParams
+    )
+  ]);
+});
+
+test('filter relationship type field with a custom field name for both related node types', t => {
+  const graphQLQuery = `query {
+    Movie(
+      filter: {
+        ratingsCustomFromTo: {
+          from: "hello"
+          to: 10
+          ratedBy: {
+            name_not: null
+          }
+        }
+      }
+    ) {
+      movieId
+      ratingsCustomFromTo(from: "hello", to: 10) {
+        rating
+        ratings
+        from
+        to
+        ratedBy {
+          userId
+          name
+        }
+      }
+    }
+  }
+  `,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`:\`u_user-id\`:\`newMovieLabel\`) WHERE (EXISTS((\`movie\`)<-[:RATED_CUSTOM_FROM_TO]-(:User)) AND ALL(\`movie_filter_user\` IN [(\`movie\`)<-[\`_movie_filter_user\`:RATED_CUSTOM_FROM_TO]-(:User) | \`_movie_filter_user\`] WHERE (\`movie_filter_user\`.from = $filter.ratingsCustomFromTo.from) AND (\`movie_filter_user\`.to = $filter.ratingsCustomFromTo.to) AND (ALL(\`user\` IN [(\`movie\`)<-[\`movie_filter_user\`]-(\`_user\`:User) | \`_user\`] WHERE ($filter.ratingsCustomFromTo.ratedBy._name_not_null = TRUE AND EXISTS(\`user\`.name)))))) RETURN \`movie\` { .movieId ,ratingsCustomFromTo: [(\`movie\`)<-[\`movie_ratingsCustomFromTo_relation\`:\`RATED_CUSTOM_FROM_TO\`{from:$1_from, to:$1_to}]-(:\`User\`) | movie_ratingsCustomFromTo_relation { .rating , .ratings , .from , .to ,ratedBy: head([(:\`Movie\`:\`u_user-id\`:\`newMovieLabel\`)<-[\`movie_ratingsCustomFromTo_relation\`]-(\`movie_ratingsCustomFromTo_ratedBy\`:\`User\`) | movie_ratingsCustomFromTo_ratedBy { .userId , .name }]) }] } AS \`movie\``,
+    expectedParams = {
+      offset: 0,
+      first: -1,
+      filter: {
+        ratingsCustomFromTo: {
+          from: 'hello',
+          to: 10,
+          ratedBy: {
+            _name_not_null: true
+          }
+        }
+      },
+      '1_from': 'hello',
+      '1_to': 10,
+      cypherParams: CYPHER_PARAMS
+    };
+
+  t.plan(2);
+  return Promise.all([
+    augmentedSchemaCypherTestRunner(
+      t,
+      graphQLQuery,
+      {},
+      expectedCypherQuery,
+      expectedParams
+    )
+  ]);
+});
+
+test('query reflexive relationship type field on tail node type with custom a field name for only head node type', t => {
+  const graphQLQuery = `query {
+    User {
+      userId
+      friendsCustomFrom {
+        friendedBy {
+          ratings
+          User {
+            userId
+          }
+        }
+        to {
+          ratings
+          User {
+            userId
+          }        
+        }
+      }
+    }
+  }  
+  `,
+    expectedCypherQuery = `MATCH (\`user\`:\`User\`) RETURN \`user\` { .userId ,friendsCustomFrom: {friendedBy: [(\`user\`)<-[\`user_to_relation\`:\`FRIEND_OF_CUSTOM_FROM\`]-(\`user_friendedBy\`:\`User\`) | user_to_relation { .ratings ,User: user_friendedBy { .userId } }] ,to: [(\`user\`)-[\`user_to_relation\`:\`FRIEND_OF_CUSTOM_FROM\`]->(\`user_to\`:\`User\`) | user_to_relation { .ratings ,User: user_to { .userId } }] } } AS \`user\``,
+    expectedParams = {
+      offset: 0,
+      first: -1,
+      cypherParams: CYPHER_PARAMS
+    };
+
+  t.plan(2);
+  return Promise.all([
+    augmentedSchemaCypherTestRunner(
+      t,
+      graphQLQuery,
+      {},
+      expectedCypherQuery,
+      expectedParams
+    )
+  ]);
+});
+
+test('filter reflexive relationship type field on tail node type with custom a field name for only head node type', t => {
+  const graphQLQuery = `query {
+    User(
+      filter: {
+        friendsCustomFrom: {
+          friendedBy: {
+            User: {
+            	userId_not: null
+            }
+          }
+          to: null
+        }
+      }
+    ) {
+      userId
+      friendsCustomFrom {
+        friendedBy {
+          ratings
+          User {
+            userId
+            name
+          }
+        }
+        to {
+          ratings
+          User {
+            userId
+            name
+          }        
+        }
+      }
+    }
+  } 
+  `,
+    expectedCypherQuery = `MATCH (\`user\`:\`User\`) WHERE ((EXISTS((\`user\`)<-[:FRIEND_OF_CUSTOM_FROM]-(:User)) AND ALL(\`user_filter_user\` IN [(\`user\`)<-[\`_user_filter_user\`:FRIEND_OF_CUSTOM_FROM]-(:User) | \`_user_filter_user\`] WHERE (ALL(\`user\` IN [(\`user\`)-[\`user_filter_user\`]->(\`_user\`:User) | \`_user\`] WHERE ($filter.friendsCustomFrom.friendedBy.User._userId_not_null = TRUE AND EXISTS(\`user\`.userId)))))) AND ($filter.friendsCustomFrom._to_null = TRUE AND NOT EXISTS((\`user\`)-[:FRIEND_OF_CUSTOM_FROM]->(:User)))) RETURN \`user\` { .userId ,friendsCustomFrom: {friendedBy: [(\`user\`)<-[\`user_to_relation\`:\`FRIEND_OF_CUSTOM_FROM\`]-(\`user_friendedBy\`:\`User\`) | user_to_relation { .ratings ,User: user_friendedBy { .userId , .name } }] ,to: [(\`user\`)-[\`user_to_relation\`:\`FRIEND_OF_CUSTOM_FROM\`]->(\`user_to\`:\`User\`) | user_to_relation { .ratings ,User: user_to { .userId , .name } }] } } AS \`user\``,
+    expectedParams = {
+      offset: 0,
+      first: -1,
+      filter: {
+        friendsCustomFrom: {
+          friendedBy: {
+            User: {
+              _userId_not_null: true
+            }
+          },
+          _to_null: true
+        }
+      },
+      cypherParams: CYPHER_PARAMS
+    };
+
+  t.plan(2);
+  return Promise.all([
+    augmentedSchemaCypherTestRunner(
+      t,
+      graphQLQuery,
+      {},
+      expectedCypherQuery,
+      expectedParams
+    )
+  ]);
+});
+
+test(`Throws error if reflexive @relation type defines neither a 'from' directive argument, nor a 'from' field.`, t => {
+  const error = t.throws(
+    () => {
+      makeAugmentedSchema({
+        typeDefs: gql`
+          type User {
+            friends: [FriendOfCustomFromError]
+          }
+
+          type FriendOfCustomFromError @relation(to: "friended") {
+            rating: Int
+            friended: User
+          }
+        `
+      });
+    },
+    {
+      instanceOf: ApolloError
+    }
+  );
+  t.is(
+    error.message,
+    `The @relation directive on the FriendOfCustomFromError type requires either a "from" argument value or a "from" field definition.`
+  );
+});
+
+test(`Throws error if reflexive @relation type defines neither a 'to' directive argument, nor a 'to' field.`, t => {
+  const error = t.throws(
+    () => {
+      makeAugmentedSchema({
+        typeDefs: gql`
+          type User {
+            friends: [FriendOfCustomToError]
+          }
+
+          type FriendOfCustomToError @relation(from: "friendedBy") {
+            rating: Int
+            friendedBy: User
+          }
+        `
+      });
+    },
+    {
+      instanceOf: ApolloError
+    }
+  );
+  t.is(
+    error.message,
+    `The @relation directive on the FriendOfCustomToError type requires either a "to" argument value or a "to" field definition.`
+  );
+});
+
+test('query reflexive relationship type field on tail node type with custom a field name for only tail node type', t => {
+  const graphQLQuery = `query {
+    User {
+      userId
+      friendsCustomTo {
+        from {
+          ratings
+          User {
+            userId
+          }        
+        }
+        friended {
+          ratings
+          User {
+            userId
+          }
+        }
+      }
+    }
+  }  
+  `,
+    expectedCypherQuery = `MATCH (\`user\`:\`User\`) RETURN \`user\` { .userId ,friendsCustomTo: {from: [(\`user\`)<-[\`user_from_relation\`:\`FRIEND_OF_CUSTOM_TO\`]-(\`user_from\`:\`User\`) | user_from_relation { .ratings ,User: user_from { .userId } }] ,friended: [(\`user\`)-[\`user_to_relation\`:\`FRIEND_OF_CUSTOM_TO\`]->(\`user_friended\`:\`User\`) | user_to_relation { .ratings ,User: user_friended { .userId } }] } } AS \`user\``,
+    expectedParams = {
+      offset: 0,
+      first: -1,
+      cypherParams: CYPHER_PARAMS
+    };
+
+  t.plan(2);
+  return Promise.all([
+    augmentedSchemaCypherTestRunner(
+      t,
+      graphQLQuery,
+      {},
+      expectedCypherQuery,
+      expectedParams
+    )
+  ]);
+});
+
+test('filter reflexive relationship type field on tail node type with custom a field name for only tail node type', t => {
+  const graphQLQuery = `query {
+    User(
+      filter: {
+        friendsCustomTo: {
+          from: null
+          friended: { User: { name: null } }
+        }
+      }
+    ) {
+      userId
+      friendsCustomTo {
+        from {
+          ratings
+          User {
+            userId
+          }
+        }
+        friended {
+          ratings
+          User {
+            userId
+          }
+        }
+      }
+    }
+  }  
+  `,
+    expectedCypherQuery = `MATCH (\`user\`:\`User\`) WHERE (($filter.friendsCustomTo._from_null = TRUE AND NOT EXISTS((\`user\`)<-[:FRIEND_OF_CUSTOM_TO]-(:User))) AND (EXISTS((\`user\`)-[:FRIEND_OF_CUSTOM_TO]->(:User)) AND ALL(\`user_filter_user\` IN [(\`user\`)-[\`_user_filter_user\`:FRIEND_OF_CUSTOM_TO]->(:User) | \`_user_filter_user\`] WHERE (ALL(\`user\` IN [(\`user\`)-[\`user_filter_user\`]->(\`_user\`:User) | \`_user\`] WHERE ($filter.friendsCustomTo.friended.User._name_null = TRUE AND NOT EXISTS(\`user\`.name))))))) RETURN \`user\` { .userId ,friendsCustomTo: {from: [(\`user\`)<-[\`user_from_relation\`:\`FRIEND_OF_CUSTOM_TO\`]-(\`user_from\`:\`User\`) | user_from_relation { .ratings ,User: user_from { .userId } }] ,friended: [(\`user\`)-[\`user_to_relation\`:\`FRIEND_OF_CUSTOM_TO\`]->(\`user_friended\`:\`User\`) | user_to_relation { .ratings ,User: user_friended { .userId } }] } } AS \`user\``,
+    expectedParams = {
+      offset: 0,
+      first: -1,
+      filter: {
+        friendsCustomTo: {
+          _from_null: true,
+          friended: {
+            User: {
+              _name_null: true
+            }
+          }
+        }
+      },
+      cypherParams: CYPHER_PARAMS
+    };
+
+  t.plan(2);
+  return Promise.all([
+    augmentedSchemaCypherTestRunner(
+      t,
+      graphQLQuery,
+      {},
+      expectedCypherQuery,
+      expectedParams
+    )
+  ]);
+});
+
+test('query reflexive relationship type field with custom a field name both related node types', t => {
+  const graphQLQuery = `query {
+    User {
+      userId
+      friendsCustomFromTo {
+        friendedBy {
+          from
+          to
+          ratings
+          User {
+            userId
+          }
+        }
+        friended {
+          from
+          to
+          ratings
+          User {
+            userId
+          }
+        }
+      }
+    }
+  }  
+  `,
+    expectedCypherQuery = `MATCH (\`user\`:\`User\`) RETURN \`user\` { .userId ,friendsCustomFromTo: {friendedBy: [(\`user\`)<-[\`user_to_relation\`:\`FRIEND_OF_CUSTOM_FROM_TO\`]-(\`user_friendedBy\`:\`User\`) | user_to_relation { .from , .to , .ratings ,User: user_friendedBy { .userId } }] ,friended: [(\`user\`)-[\`user_to_relation\`:\`FRIEND_OF_CUSTOM_FROM_TO\`]->(\`user_friended\`:\`User\`) | user_to_relation { .from , .to , .ratings ,User: user_friended { .userId } }] } } AS \`user\``,
+    expectedParams = {
+      offset: 0,
+      first: -1,
+      cypherParams: CYPHER_PARAMS
+    };
+
+  t.plan(2);
+  return Promise.all([
+    augmentedSchemaCypherTestRunner(
+      t,
+      graphQLQuery,
+      {},
+      expectedCypherQuery,
+      expectedParams
+    )
+  ]);
+});
+
+test('filter reflexive relationship type field with custom a field name both related node types', t => {
+  const graphQLQuery = `query {
+    User(
+      filter: {
+        friendsCustomFromTo: {
+          friendedBy: {
+            from: "hello"
+            to: 10
+            User: { userId_not: null }
+          }
+          friended: {
+            from: "hello"
+            to: 10
+            User: { name: null }
+          }
+        }
+      }
+    ) {
+      userId
+      friendsCustomFromTo {      
+        friendedBy(from: "hello", to: 10) {
+          from
+          to
+          ratings
+          User {
+            userId
+          }
+        }
+        friended(to: 10, from: "hello") {
+          ratings
+          User {
+            userId
+          }
+          to
+          from
+        }
+      }
+    }
+  }
+  `,
+    expectedCypherQuery = `MATCH (\`user\`:\`User\`) WHERE ((EXISTS((\`user\`)<-[:FRIEND_OF_CUSTOM_FROM_TO]-(:User)) AND ALL(\`user_filter_user\` IN [(\`user\`)<-[\`_user_filter_user\`:FRIEND_OF_CUSTOM_FROM_TO]-(:User) | \`_user_filter_user\`] WHERE (\`user_filter_user\`.from = $filter.friendsCustomFromTo.friendedBy.from) AND (\`user_filter_user\`.to = $filter.friendsCustomFromTo.friendedBy.to) AND (ALL(\`user\` IN [(\`user\`)-[\`user_filter_user\`]->(\`_user\`:User) | \`_user\`] WHERE ($filter.friendsCustomFromTo.friendedBy.User._userId_not_null = TRUE AND EXISTS(\`user\`.userId)))))) AND (EXISTS((\`user\`)-[:FRIEND_OF_CUSTOM_FROM_TO]->(:User)) AND ALL(\`user_filter_user\` IN [(\`user\`)-[\`_user_filter_user\`:FRIEND_OF_CUSTOM_FROM_TO]->(:User) | \`_user_filter_user\`] WHERE (\`user_filter_user\`.from = $filter.friendsCustomFromTo.friended.from) AND (\`user_filter_user\`.to = $filter.friendsCustomFromTo.friended.to) AND (ALL(\`user\` IN [(\`user\`)-[\`user_filter_user\`]->(\`_user\`:User) | \`_user\`] WHERE ($filter.friendsCustomFromTo.friended.User._name_null = TRUE AND NOT EXISTS(\`user\`.name))))))) RETURN \`user\` { .userId ,friendsCustomFromTo: {friendedBy: [(\`user\`)<-[\`user_to_relation\`:\`FRIEND_OF_CUSTOM_FROM_TO\`{from:$1_from, to:$1_to}]-(\`user_friendedBy\`:\`User\`) | user_to_relation { .from , .to , .ratings ,User: user_friendedBy { .userId } }] ,friended: [(\`user\`)-[\`user_to_relation\`:\`FRIEND_OF_CUSTOM_FROM_TO\`{to:$3_to, from:$3_from}]->(\`user_friended\`:\`User\`) | user_to_relation { .ratings ,User: user_friended { .userId } , .to , .from }] } } AS \`user\``,
+    expectedParams = {
+      offset: 0,
+      first: -1,
+      filter: {
+        friendsCustomFromTo: {
+          friendedBy: {
+            from: 'hello',
+            to: 10,
+            User: {
+              _userId_not_null: true
+            }
+          },
+          friended: {
+            from: 'hello',
+            to: 10,
+            User: {
+              _name_null: true
+            }
+          }
+        }
+      },
+      '1_from': 'hello',
+      '1_to': 10,
+      '3_to': 10,
+      '3_from': 'hello',
+      cypherParams: CYPHER_PARAMS
+    };
+
+  t.plan(2);
+  return Promise.all([
+    augmentedSchemaCypherTestRunner(
+      t,
+      graphQLQuery,
+      {},
+      expectedCypherQuery,
+      expectedParams
+    )
+  ]);
+});
+
+test('logical OR filter for reflexive relationship type field with a custom field name both related node types', t => {
+  const graphQLQuery = `query {
+    User(
+      filter: {
+        OR: [
+          {
+            friendsCustomFromTo: {
+              friendedBy: { User: { userId_not: null } }
+            }            
+          }
+          {
+            friendsCustomFromTo: {
+              friended: { User: { name: null } }
+            }            
+          }
+        ]
+      }
+    ) {
+      userId
+      friendsCustomFromTo {      
+        friendedBy {
+          ratings
+          User {
+            userId
+          }
+        }
+        friended {
+          ratings
+          User {
+            userId
+          }
+        }
+      }
+    }
+  }
+  `,
+    expectedCypherQuery = `MATCH (\`user\`:\`User\`) WHERE (ANY(_OR IN $filter.OR WHERE ((_OR.friendsCustomFromTo.friendedBy IS NULL OR EXISTS((\`user\`)<-[:FRIEND_OF_CUSTOM_FROM_TO]-(:User)) AND ALL(\`user_filter_user\` IN [(\`user\`)<-[\`_user_filter_user\`:FRIEND_OF_CUSTOM_FROM_TO]-(:User) | \`_user_filter_user\`] WHERE (_OR.friendsCustomFromTo.friendedBy.User IS NULL OR ALL(\`user\` IN [(\`user\`)-[\`user_filter_user\`]->(\`_user\`:User) | \`_user\`] WHERE (_OR.friendsCustomFromTo.friendedBy.User._userId_not_null IS NULL OR _OR.friendsCustomFromTo.friendedBy.User._userId_not_null = TRUE AND EXISTS(\`user\`.userId)))))) AND (_OR.friendsCustomFromTo.friended IS NULL OR EXISTS((\`user\`)-[:FRIEND_OF_CUSTOM_FROM_TO]->(:User)) AND ALL(\`user_filter_user\` IN [(\`user\`)-[\`_user_filter_user\`:FRIEND_OF_CUSTOM_FROM_TO]->(:User) | \`_user_filter_user\`] WHERE (_OR.friendsCustomFromTo.friended.User IS NULL OR ALL(\`user\` IN [(\`user\`)-[\`user_filter_user\`]->(\`_user\`:User) | \`_user\`] WHERE (_OR.friendsCustomFromTo.friended.User._name_null IS NULL OR _OR.friendsCustomFromTo.friended.User._name_null = TRUE AND NOT EXISTS(\`user\`.name))))))))) RETURN \`user\` { .userId ,friendsCustomFromTo: {friendedBy: [(\`user\`)<-[\`user_to_relation\`:\`FRIEND_OF_CUSTOM_FROM_TO\`]-(\`user_friendedBy\`:\`User\`) | user_to_relation { .ratings ,User: user_friendedBy { .userId } }] ,friended: [(\`user\`)-[\`user_to_relation\`:\`FRIEND_OF_CUSTOM_FROM_TO\`]->(\`user_friended\`:\`User\`) | user_to_relation { .ratings ,User: user_friended { .userId } }] } } AS \`user\``,
+    expectedParams = {
+      offset: 0,
+      first: -1,
+      filter: {
+        OR: [
+          {
+            friendsCustomFromTo: {
+              friendedBy: {
+                User: {
+                  _userId_not_null: true
+                }
+              }
+            }
+          },
+          {
+            friendsCustomFromTo: {
+              friended: {
+                User: {
+                  _name_null: true
+                }
+              }
+            }
+          }
+        ]
+      },
+      cypherParams: CYPHER_PARAMS
+    };
+
+  t.plan(2);
+  return Promise.all([
+    augmentedSchemaCypherTestRunner(
+      t,
+      graphQLQuery,
+      {},
+      expectedCypherQuery,
+      expectedParams
+    )
+  ]);
+});
+
+test('add relationship using custom field names for both related node types', t => {
+  const graphQLQuery = `mutation {
+    AddUserRatedCustomFromTo(
+      ratedBy: {
+        userId: "A"
+      }
+      movie: {
+        movieId: "B"
+      }
+      data: {	
+        ratings: [2, 4, 6]
+      }	
+    ) {
+      ratedBy {
+        userId
+      }
+      movie {
+        movieId
+      }
+      ratings
+    }
+  }
+  `,
+    expectedCypherQuery = `
+      MATCH (\`user_ratedBy\`:\`User\` {userId: $ratedBy.userId})
+      MATCH (\`movie_movie\`:\`Movie\`:\`u_user-id\`:\`newMovieLabel\` {movieId: $movie.movieId})
+      CREATE (\`user_ratedBy\`)-[\`rated_custom_from_to_relation\`:\`RATED_CUSTOM_FROM_TO\` {ratings:$data.ratings}]->(\`movie_movie\`)
+      RETURN \`rated_custom_from_to_relation\` { ratedBy: \`user_ratedBy\` { .userId } ,movie: \`movie_movie\` { .movieId } , .ratings  } AS \`_AddUserRatedCustomFromToPayload\`;
+    `,
+    expectedParams = {
+      offset: 0,
+      first: -1,
+      ratedBy: {
+        userId: 'A'
+      },
+      movie: {
+        movieId: 'B'
+      },
+      data: {
+        ratings: [
+          {
+            low: 2,
+            high: 0
+          },
+          {
+            low: 4,
+            high: 0
+          },
+          {
+            low: 6,
+            high: 0
+          }
+        ]
+      }
+    };
+
+  t.plan(2);
+  return Promise.all([
+    augmentedSchemaCypherTestRunner(
+      t,
+      graphQLQuery,
+      {},
+      expectedCypherQuery,
+      expectedParams
+    )
+  ]);
+});
+
+test('add reflexive relationship using custom field names for both related node types', t => {
+  const graphQLQuery = `mutation {
+    AddUserFriendsCustomFromTo(
+      friended: {
+        userId: "A"
+      }
+      friendedBy: {
+        userId: "B"
+      }
+      data: {	
+        ratings: ["abc", "xyz"]
+      }	
+    ) {
+      friended {
+        userId
+      }
+      friendedBy {
+        userId
+      }
+      ratings
+    }
+  }
+  `,
+    expectedCypherQuery = `
+      MATCH (\`user_friendedBy\`:\`User\` {userId: $friendedBy.userId})
+      MATCH (\`user_friended\`:\`User\` {userId: $friended.userId})
+      CREATE (\`user_friendedBy\`)-[\`friend_of_custom_from_to_relation\`:\`FRIEND_OF_CUSTOM_FROM_TO\` {ratings:$data.ratings}]->(\`user_friended\`)
+      RETURN \`friend_of_custom_from_to_relation\` { friended: \`user_friended\` { .userId } ,friendedBy: \`user_friendedBy\` { .userId } , .ratings  } AS \`_AddUserFriendsCustomFromToPayload\`;
+    `,
+    expectedParams = {
+      offset: 0,
+      first: -1,
+      friendedBy: {
+        userId: 'B'
+      },
+      friended: {
+        userId: 'A'
+      },
+      data: {
+        ratings: ['abc', 'xyz']
+      }
+    };
+
+  t.plan(2);
+  return Promise.all([
+    augmentedSchemaCypherTestRunner(
+      t,
+      graphQLQuery,
+      {},
+      expectedCypherQuery,
+      expectedParams
+    )
+  ]);
+});
+
+test('update relationship using custom field names for both related node types', t => {
+  const graphQLQuery = `mutation {
+    UpdateUserRatedCustomFromTo(
+      ratedBy: {
+        userId: "A"
+      }
+      movie: {
+        movieId: "B"
+      }
+      data: {	
+        ratings: [8, 10]
+      }	
+    ) {
+      ratedBy {
+        userId
+      }
+      movie {
+        movieId
+      }
+      ratings
+    }
+  }
+  `,
+    expectedCypherQuery = `
+      MATCH (\`user_ratedBy\`:\`User\` {userId: $ratedBy.userId})
+      MATCH (\`movie_movie\`:\`Movie\`:\`u_user-id\`:\`newMovieLabel\` {movieId: $movie.movieId})
+      MATCH (\`user_ratedBy\`)-[\`rated_custom_from_to_relation\`:\`RATED_CUSTOM_FROM_TO\`]->(\`movie_movie\`)
+      SET \`rated_custom_from_to_relation\` += {ratings:$data.ratings} 
+      RETURN \`rated_custom_from_to_relation\` { ratedBy: \`user_ratedBy\` { .userId } ,movie: \`movie_movie\` { .movieId } , .ratings  } AS \`_UpdateUserRatedCustomFromToPayload\`;
+    `,
+    expectedParams = {
+      offset: 0,
+      first: -1,
+      ratedBy: {
+        userId: 'A'
+      },
+      movie: {
+        movieId: 'B'
+      },
+      data: {
+        ratings: [
+          {
+            low: 8,
+            high: 0
+          },
+          {
+            low: 10,
+            high: 0
+          }
+        ]
+      }
+    };
+
+  t.plan(2);
+  return Promise.all([
+    augmentedSchemaCypherTestRunner(
+      t,
+      graphQLQuery,
+      {},
+      expectedCypherQuery,
+      expectedParams
+    )
+  ]);
+});
+
+test('update reflexive relationship using custom field names for both related node types', t => {
+  const graphQLQuery = `mutation {
+    UpdateUserFriendsCustomFromTo(
+      friended: {
+        userId: "A"
+      }
+      friendedBy: {
+        userId: "B"
+      }
+      data: {	
+        ratings: ["hello"]
+      }	
+    ) {
+      friended {
+        userId
+      }
+      friendedBy {
+        userId
+      }
+      ratings
+    }
+  }
+  `,
+    expectedCypherQuery = `
+      MATCH (\`user_friendedBy\`:\`User\` {userId: $friendedBy.userId})
+      MATCH (\`user_friended\`:\`User\` {userId: $friended.userId})
+      MATCH (\`user_friendedBy\`)-[\`friend_of_custom_from_to_relation\`:\`FRIEND_OF_CUSTOM_FROM_TO\`]->(\`user_friended\`)
+      SET \`friend_of_custom_from_to_relation\` += {ratings:$data.ratings} 
+      RETURN \`friend_of_custom_from_to_relation\` { friended: \`user_friended\` { .userId } ,friendedBy: \`user_friendedBy\` { .userId } , .ratings  } AS \`_UpdateUserFriendsCustomFromToPayload\`;
+    `,
+    expectedParams = {
+      offset: 0,
+      first: -1,
+      friendedBy: {
+        userId: 'B'
+      },
+      friended: {
+        userId: 'A'
+      },
+      data: {
+        ratings: ['hello']
+      }
+    };
+
+  t.plan(2);
+  return Promise.all([
+    augmentedSchemaCypherTestRunner(
+      t,
+      graphQLQuery,
+      {},
+      expectedCypherQuery,
+      expectedParams
+    )
+  ]);
+});
+
+test('remove relationship using custom field names for both related node types', t => {
+  const graphQLQuery = `mutation {
+    RemoveUserRatedCustomFromTo(
+      ratedBy: {
+        userId: "A"
+      }
+      movie: {
+        movieId: "B"
+      }
+    ) {
+      ratedBy {
+        userId
+      }
+      movie {
+        movieId
+      }
+    }
+  }
+  `,
+    expectedCypherQuery = `
+      MATCH (\`user_ratedBy\`:\`User\` {userId: $ratedBy.userId})
+      MATCH (\`movie_movie\`:\`Movie\`:\`u_user-id\`:\`newMovieLabel\` {movieId: $movie.movieId})
+      OPTIONAL MATCH (\`user_ratedBy\`)-[\`user_ratedBymovie_movie\`:\`RATED_CUSTOM_FROM_TO\`]->(\`movie_movie\`)
+      DELETE \`user_ratedBymovie_movie\`
+      WITH COUNT(*) AS scope, \`user_ratedBy\` AS \`_user_ratedBy\`, \`movie_movie\` AS \`_movie_movie\`
+      RETURN {ratedBy: \`_user_ratedBy\` { .userId } ,movie: \`_movie_movie\` { .movieId } } AS \`_RemoveUserRatedCustomFromToPayload\`;
+    `,
+    expectedParams = {
+      offset: 0,
+      first: -1,
+      ratedBy: {
+        userId: 'A'
+      },
+      movie: {
+        movieId: 'B'
+      }
+    };
+
+  t.plan(2);
+  return Promise.all([
+    augmentedSchemaCypherTestRunner(
+      t,
+      graphQLQuery,
+      {},
+      expectedCypherQuery,
+      expectedParams
+    )
+  ]);
+});
+
+test('remove reflexive relationship using custom field names for both related node types', t => {
+  const graphQLQuery = `mutation {
+    RemoveUserFriendsCustomFromTo(
+      friended: {
+        userId: "A"
+      }
+      friendedBy: {
+        userId: "B"
+      }
+    ) {
+      friended {
+        userId
+      }
+      friendedBy {
+        userId
+      }
+    }
+  }
+  `,
+    expectedCypherQuery = `
+      MATCH (\`user_friendedBy\`:\`User\` {userId: $friendedBy.userId})
+      MATCH (\`user_friended\`:\`User\` {userId: $friended.userId})
+      OPTIONAL MATCH (\`user_friendedBy\`)-[\`user_friendedByuser_friended\`:\`FRIEND_OF_CUSTOM_FROM_TO\`]->(\`user_friended\`)
+      DELETE \`user_friendedByuser_friended\`
+      WITH COUNT(*) AS scope, \`user_friendedBy\` AS \`_user_friendedBy\`, \`user_friended\` AS \`_user_friended\`
+      RETURN {friended: \`_user_friended\` { .userId } ,friendedBy: \`_user_friendedBy\` { .userId } } AS \`_RemoveUserFriendsCustomFromToPayload\`;
+    `,
+    expectedParams = {
+      offset: 0,
+      first: -1,
+      friendedBy: {
+        userId: 'B'
+      },
+      friended: {
+        userId: 'A'
+      }
+    };
+
+  t.plan(2);
+  return Promise.all([
+    augmentedSchemaCypherTestRunner(
+      t,
+      graphQLQuery,
+      {},
+      expectedCypherQuery,
+      expectedParams
+    )
+  ]);
+});
+
+test('merge relationship using custom field names for both related node types', t => {
+  const graphQLQuery = `mutation {
+    MergeUserRatedCustomFromTo(
+      ratedBy: {
+        userId: "A"
+      }
+      movie: {
+        movieId: "B"
+      }
+      data: {	
+        ratings: [8, 10]
+      }	
+    ) {
+      ratedBy {
+        userId
+      }
+      movie {
+        movieId
+      }
+      ratings
+    }
+  }
+  `,
+    expectedCypherQuery = `
+      MATCH (\`user_ratedBy\`:\`User\` {userId: $ratedBy.userId})
+      MATCH (\`movie_movie\`:\`Movie\`:\`u_user-id\`:\`newMovieLabel\` {movieId: $movie.movieId})
+      MERGE (\`user_ratedBy\`)-[\`rated_custom_from_to_relation\`:\`RATED_CUSTOM_FROM_TO\`]->(\`movie_movie\`)
+      SET \`rated_custom_from_to_relation\` += {ratings:$data.ratings} 
+      RETURN \`rated_custom_from_to_relation\` { ratedBy: \`user_ratedBy\` { .userId } ,movie: \`movie_movie\` { .movieId } , .ratings  } AS \`_MergeUserRatedCustomFromToPayload\`;
+    `,
+    expectedParams = {
+      offset: 0,
+      first: -1,
+      ratedBy: {
+        userId: 'A'
+      },
+      movie: {
+        movieId: 'B'
+      },
+      data: {
+        ratings: [
+          {
+            low: 8,
+            high: 0
+          },
+          {
+            low: 10,
+            high: 0
+          }
+        ]
+      }
+    };
+
+  t.plan(2);
+  return Promise.all([
+    augmentedSchemaCypherTestRunner(
+      t,
+      graphQLQuery,
+      {},
+      expectedCypherQuery,
+      expectedParams
+    )
+  ]);
+});
+
+test('merge reflexive relationship using custom field names for both related node types', t => {
+  const graphQLQuery = `mutation {
+    MergeUserFriendsCustomFromTo(
+      friended: {
+        userId: "A"
+      }
+      friendedBy: {
+        userId: "B"
+      }
+      data: {	
+        ratings: ["hello"]
+      }	
+    ) {
+      friended {
+        userId
+      }
+      friendedBy {
+        userId
+      }
+      ratings
+    }
+  }
+  `,
+    expectedCypherQuery = `
+      MATCH (\`user_friendedBy\`:\`User\` {userId: $friendedBy.userId})
+      MATCH (\`user_friended\`:\`User\` {userId: $friended.userId})
+      MERGE (\`user_friendedBy\`)-[\`friend_of_custom_from_to_relation\`:\`FRIEND_OF_CUSTOM_FROM_TO\`]->(\`user_friended\`)
+      SET \`friend_of_custom_from_to_relation\` += {ratings:$data.ratings} 
+      RETURN \`friend_of_custom_from_to_relation\` { friended: \`user_friended\` { .userId } ,friendedBy: \`user_friendedBy\` { .userId } , .ratings  } AS \`_MergeUserFriendsCustomFromToPayload\`;
+    `,
+    expectedParams = {
+      offset: 0,
+      first: -1,
+      friendedBy: {
+        userId: 'B'
+      },
+      friended: {
+        userId: 'A'
+      },
+      data: {
+        ratings: ['hello']
+      }
     };
 
   t.plan(2);
