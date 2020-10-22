@@ -261,6 +261,7 @@ export const makeAugmentedSchema = ({
   resolverValidationOptions = {},
   directiveResolvers = null,
   schemaDirectives = {},
+  schemaTransforms = [],
   parseOptions = {},
   inheritResolversFromInterfaces = false,
   config
@@ -277,6 +278,7 @@ export const makeAugmentedSchema = ({
     resolverValidationOptions,
     directiveResolvers,
     schemaDirectives,
+    schemaTransforms,
     parseOptions,
     inheritResolversFromInterfaces,
     config
