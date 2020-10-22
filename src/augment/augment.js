@@ -30,6 +30,7 @@ export const makeAugmentedExecutableSchema = ({
   resolverValidationOptions,
   directiveResolvers,
   schemaDirectives = {},
+  schemaTransforms = [],
   parseOptions,
   inheritResolversFromInterfaces,
   config
@@ -112,6 +113,7 @@ export const makeAugmentedExecutableSchema = ({
     resolverValidationOptions,
     directiveResolvers,
     schemaDirectives,
+    schemaTransforms,
     parseOptions,
     inheritResolversFromInterfaces
   });
