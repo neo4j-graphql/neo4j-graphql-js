@@ -1555,7 +1555,8 @@ export const translateMutation = ({
       context,
       variableName,
       typeName,
-      additionalLabels
+      additionalLabels,
+      typeMap
     });
   } else if (isDeleteMutation(resolveInfo)) {
     [translation, translationParams] = nodeDelete({
@@ -1598,7 +1599,8 @@ export const translateMutation = ({
         schemaType,
         additionalLabels,
         params,
-        context
+        context,
+        typeMap
       });
     }
   } else if (isRemoveMutation(resolveInfo)) {
@@ -1720,36 +1722,63 @@ const customMutation = ({
 // Generated API
 // Node Create - Update - Delete
 const nodeCreate = ({
+  resolveInfo,
+  schemaType,
+  selections,
+  params,
+  context,
   variableName,
   typeName,
-  selections,
-  schemaType,
-  resolveInfo,
   additionalLabels,
-  params,
-  context
+  typeMap
 }) => {
   const safeVariableName = safeVar(variableName);
   const safeLabelName = safeLabel([typeName, ...additionalLabels]);
   let statements = [];
-  const args = getMutationArguments(resolveInfo);
+  let args = getMutationArguments(resolveInfo);
   const fieldMap = schemaType.getFields();
   const fields = Object.values(fieldMap).map(field => field.astNode);
   const primaryKey = getPrimaryKey({ fields });
+  let createStatement = ``;
+  const dataArgument = args.find(arg => arg.name.value === 'data');
+  let paramKey = 'params';
+  let dataParams = params[paramKey];
+  if (dataArgument) {
+    // config.experimental
+    const unwrappedType = unwrapNamedType({ type: dataArgument.type });
+    const name = unwrappedType.name;
+    const inputType = typeMap[name];
+    const inputValues = inputType.getFields();
+    // get the input value AST definitions of the .data input object
+    args = Object.values(inputValues).map(arg => arg.astNode);
+    // use the .data key instead of the existing .params format
+    paramKey = 'data';
+    dataParams = dataParams[paramKey];
+    // elevate .data to top level
+    params.data = dataParams;
+    // remove .params entry
+    delete params.params;
+  } else {
+    dataParams = params.params;
+  }
+  // use apoc.create.uuid() to set a default value for @id field,
+  // if no value for it is provided in dataParams
   statements = setPrimaryKeyValue({
     args,
     statements,
-    params: params.params,
+    params: dataParams,
     primaryKey
   });
   const paramStatements = buildCypherParameters({
     args,
     statements,
     params,
-    paramKey: 'params',
+    paramKey,
     resolveInfo
   });
-
+  createStatement = `CREATE (${safeVariableName}:${safeLabelName} {${paramStatements.join(
+    ','
+  )}})`;
   const [subQuery, subParams] = buildCypherSelection({
     selections,
     variableName,
@@ -1759,9 +1788,115 @@ const nodeCreate = ({
   });
   params = { ...params, ...subParams };
   const query = `
-    CREATE (${safeVariableName}:${safeLabelName} {${paramStatements.join(',')}})
+    ${createStatement}
     RETURN ${safeVariableName} {${subQuery}} AS ${safeVariableName}
   `;
+  return [query, params];
+};
+
+const nodeMergeOrUpdate = ({
+  resolveInfo,
+  variableName,
+  typeName,
+  selections,
+  schemaType,
+  additionalLabels,
+  params,
+  context,
+  typeMap
+}) => {
+  const safeVariableName = safeVar(variableName);
+  const args = getMutationArguments(resolveInfo);
+
+  const selectionArgument = args.find(arg => arg.name.value === 'where');
+  const dataArgument = args.find(arg => arg.name.value === 'data');
+
+  const fieldMap = schemaType.getFields();
+  const fields = Object.values(fieldMap).map(field => field.astNode);
+  const primaryKey = getPrimaryKey({ fields });
+  const primaryKeyArgName = primaryKey.name.value;
+
+  let cypherOperation = '';
+  let safeLabelName = safeLabel(typeName);
+  if (isMergeMutation(resolveInfo)) {
+    safeLabelName = safeLabel([typeName, ...additionalLabels]);
+    cypherOperation = 'MERGE';
+  } else if (isUpdateMutation(resolveInfo)) {
+    cypherOperation = 'MATCH';
+  }
+  let query = ``;
+  let paramUpdateStatements = [];
+  if (selectionArgument && dataArgument) {
+    // config.experimental
+    // no need to use .params key in this argument design
+    params = params.params;
+    const inputTranslation = translateNodeInputArgument({
+      dataArgument,
+      variableName,
+      params,
+      typeMap,
+      resolveInfo,
+      context
+    });
+    if (isMergeMutation(resolveInfo)) {
+      const unwrappedType = unwrapNamedType({ type: selectionArgument.type });
+      const name = unwrappedType.name;
+      const inputType = typeMap[name];
+      const inputValues = inputType.getFields();
+      const selectionArgs = Object.values(inputValues).map(arg => arg.astNode);
+      const selectionExpression = buildCypherParameters({
+        args: selectionArgs,
+        params,
+        paramKey: 'where',
+        resolveInfo,
+        cypherParams: getCypherParams(context)
+      });
+      query = `${cypherOperation} (${safeVariableName}:${safeLabelName}{${selectionExpression.join(
+        ','
+      )}})${inputTranslation}\n`;
+    } else {
+      const [predicate, serializedFilter] = translateNodeSelectionArgument({
+        variableName,
+        args,
+        params,
+        schemaType,
+        resolveInfo
+      });
+      query = `${cypherOperation} (${safeVariableName}:${safeLabelName})${predicate}${inputTranslation}\n`;
+      params = { ...params, ...serializedFilter };
+    }
+  } else {
+    const [primaryKeyParam, updateParams] = splitSelectionParameters(
+      params,
+      primaryKeyArgName,
+      'params'
+    );
+    paramUpdateStatements = buildCypherParameters({
+      args,
+      params: updateParams,
+      paramKey: 'params',
+      resolveInfo,
+      cypherParams: getCypherParams(context)
+    });
+    query = `${cypherOperation} (${safeVariableName}:${safeLabelName}{${primaryKeyArgName}: $params.${primaryKeyArgName}})
+  `;
+    if (paramUpdateStatements.length > 0) {
+      query += `SET ${safeVariableName} += {${paramUpdateStatements.join(
+        ','
+      )}} `;
+    }
+    if (!params.params) params.params = {};
+    params.params[primaryKeyArgName] = primaryKeyParam[primaryKeyArgName];
+  }
+  const [subQuery, subParams] = buildCypherSelection({
+    selections,
+    variableName,
+    schemaType,
+    resolveInfo,
+    cypherParams: getCypherParams(context)
+  });
+  params = { ...params, ...subParams };
+  query += `RETURN ${safeVariableName} {${subQuery}} AS ${safeVariableName}`;
   return [query, params];
 };
 
@@ -1780,18 +1915,21 @@ const nodeDelete = ({
   const fields = Object.values(fieldMap).map(field => field.astNode);
   const primaryKey = getPrimaryKey({ fields });
   const primaryKeyArgName = primaryKey.name.value;
-  const neo4jTypeArgs = getNeo4jTypeArguments(args);
-  const [primaryKeyParam] = splitSelectionParameters(params, primaryKeyArgName);
-  const neo4jTypeClauses = neo4jTypePredicateClauses(
-    primaryKeyParam,
-    safeVariableName,
-    neo4jTypeArgs
-  );
-  let query = `MATCH (${safeVariableName}:${safeLabelName}${
-    neo4jTypeClauses.length > 0
-      ? `) WHERE ${neo4jTypeClauses.join(' AND ')}`
-      : ` {${primaryKeyArgName}: $${primaryKeyArgName}})`
-  }`;
+  let matchStatement = ``;
+  const selectionArgument = args.find(arg => arg.name.value === 'where');
+  if (selectionArgument) {
+    const [predicate, serializedFilter] = translateNodeSelectionArgument({
+      variableName,
+      args,
+      params,
+      schemaType,
+      resolveInfo
+    });
+    matchStatement = `MATCH (${safeVariableName}:${safeLabelName})${predicate}`;
+    params = { ...params, ...serializedFilter };
+  } else {
+    matchStatement = `MATCH (${safeVariableName}:${safeLabelName} {${primaryKeyArgName}: $${primaryKeyArgName}})`;
+  }
   const [subQuery, subParams] = buildCypherSelection({
     selections,
     variableName,
@@ -1802,11 +1940,67 @@ const nodeDelete = ({
   const deletionVariableName = safeVar(`${variableName}_toDelete`);
   // Cannot execute a map projection on a deleted node in Neo4j
   // so the projection is executed and aliased before the delete
-  query += `
+  const query = `${matchStatement}
 WITH ${safeVariableName} AS ${deletionVariableName}, ${safeVariableName} {${subQuery}} AS ${safeVariableName}
 DETACH DELETE ${deletionVariableName}
 RETURN ${safeVariableName}`;
   return [query, params];
+};
+
+const translateNodeInputArgument = ({
+  dataArgument = {},
+  variableName,
+  params,
+  typeMap,
+  resolveInfo,
+  context
+}) => {
+  const unwrappedType = unwrapNamedType({ type: dataArgument.type });
+  const name = unwrappedType.name;
+  const inputType = typeMap[name];
+  const inputValues = inputType.getFields();
+  const updateArgs = Object.values(inputValues).map(arg => arg.astNode);
+  let translation = '';
+  const paramUpdateStatements = buildCypherParameters({
+    args: updateArgs,
+    params,
+    paramKey: 'data',
+    resolveInfo,
+    cypherParams: getCypherParams(context)
+  });
+  if (paramUpdateStatements.length > 0) {
+    translation = `\nSET ${safeVar(
+      variableName
+    )} += {${paramUpdateStatements.join(',')}} `;
+  }
+  return translation;
+};
+
+const translateNodeSelectionArgument = ({
+  variableName,
+  args,
+  params,
+  schemaType,
+  resolveInfo
+}) => {
+  const [filterPredicates, serializedFilter] = processFilterArgument({
+    argumentName: 'where',
+    fieldArgs: args,
+    schemaType,
+    variableName,
+    resolveInfo,
+    params
+  });
+  const predicateClauses = [...filterPredicates]
+    .filter(predicate => !!predicate)
+    .join(' AND ');
+  let predicate = ``;
+  if (isMergeMutation(resolveInfo)) {
+    predicate = predicateClauses;
+  } else {
+    predicate = predicateClauses ? ` WHERE ${predicateClauses} ` : '';
+  }
+  return [predicate, serializedFilter];
 };
 
 // Relation Add / Remove
@@ -1853,8 +2047,9 @@ const relationshipCreate = ({
   const typeMap = resolveInfo.schema.getTypeMap();
 
   const fromType = fromTypeArg.value.value;
+  const fromSchemaType = resolveInfo.schema.getType(fromType);
   const fromAdditionalLabels = getAdditionalLabels(
-    resolveInfo.schema.getType(fromType),
+    fromSchemaType,
     cypherParams
   );
   const fromLabel = safeLabel([fromType, ...fromAdditionalLabels]);
@@ -1863,27 +2058,24 @@ const relationshipCreate = ({
   const fromVar = `${lowFirstLetter(fromType)}_${fromArgName}`;
   const fromVariable = safeVar(fromVar);
   const fromInputArg = firstArg.type;
-  const fromInputAst =
-    typeMap[getNamedType(fromInputArg).type.name.value].astNode;
+  const fromInputArgType = getNamedType(fromInputArg).type.name.value;
+  const fromInputAst = typeMap[fromInputArgType].astNode;
   const fromFields = fromInputAst.fields;
   const fromCypherParam = fromFields[0].name.value;
-  const fromNodeNeo4jTypeArgs = getNeo4jTypeArguments(fromFields);
 
   const toType = toTypeArg.value.value;
-  const toAdditionalLabels = getAdditionalLabels(
-    resolveInfo.schema.getType(toType),
-    cypherParams
-  );
+  const toSchemaType = resolveInfo.schema.getType(toType);
+  const toAdditionalLabels = getAdditionalLabels(toSchemaType, cypherParams);
   const toLabel = safeLabel([toType, ...toAdditionalLabels]);
   const secondArg = args[1];
   const toArgName = secondArg.name.value;
   const toVar = `${lowFirstLetter(toType)}_${toArgName}`;
   const toVariable = safeVar(toVar);
   const toInputArg = secondArg.type;
-  const toInputAst = typeMap[getNamedType(toInputArg).type.name.value].astNode;
+  const toInputArgType = getNamedType(toInputArg).type.name.value;
+  const toInputAst = typeMap[toInputArgType].astNode;
   const toFields = toInputAst.fields;
   const toCypherParam = toFields[0].name.value;
-  const toNodeNeo4jTypeArgs = getNeo4jTypeArguments(toFields);
 
   const relationshipName = relationshipNameArg.value.value;
   const lowercased = relationshipName.toLowerCase();
@@ -1895,20 +2087,6 @@ const relationshipCreate = ({
     ? typeMap[getNamedType(dataInputArg.type).type.name.value].astNode
     : undefined;
   const dataFields = dataInputAst ? dataInputAst.fields : [];
-
-  const fromNodeNeo4jTypeClauses = neo4jTypePredicateClauses(
-    params.from,
-    fromVariable,
-    fromNodeNeo4jTypeArgs,
-    fromArgName
-  );
-  const toNodeNeo4jTypeClauses = neo4jTypePredicateClauses(
-    params.to,
-    toVariable,
-    toNodeNeo4jTypeArgs,
-    toArgName
-  );
-
   const [subQuery, subParams] = buildCypherSelection({
     selections,
     schemaType,
@@ -1922,7 +2100,48 @@ const relationshipCreate = ({
     },
     cypherParams: getCypherParams(context)
   });
-
+  let nodeSelectionStatements = ``;
+  const fromUsesWhereInput =
+    fromInputArgType.startsWith('_') && fromInputArgType.endsWith('Where');
+  const toUsesWhereInput =
+    toInputArgType.startsWith('_') && toInputArgType.endsWith('Where');
+  if (fromUsesWhereInput && toUsesWhereInput) {
+    const [fromPredicate, serializedFromFilter] = processFilterArgument({
+      argumentName: fromArgName,
+      variableName: fromVar,
+      schemaType: fromSchemaType,
+      fieldArgs: args,
+      resolveInfo,
+      params
+    });
+    const fromClauses = [...fromPredicate]
+      .filter(predicate => !!predicate)
+      .join(' AND ');
+    const [toPredicate, serializedToFilter] = processFilterArgument({
+      argumentName: toArgName,
+      variableName: toVar,
+      schemaType: toSchemaType,
+      fieldArgs: args,
+      resolveInfo,
+      params
+    });
+    const toClauses = [...toPredicate]
+      .filter(predicate => !!predicate)
+      .join(' AND ');
+    const sourceNodeSelectionPredicate = fromClauses
+      ? ` WHERE ${fromClauses} `
+      : '';
+    const targetNodeSelectionPredicate = toClauses
+      ? ` WHERE ${toClauses} `
+      : '';
+    params = { ...params, ...serializedFromFilter };
+    params = { ...params, ...serializedToFilter };
+    nodeSelectionStatements = `MATCH (${fromVariable}:${fromLabel})${sourceNodeSelectionPredicate}
+      MATCH (${toVariable}:${toLabel})${targetNodeSelectionPredicate}`;
+  } else {
+    nodeSelectionStatements = `MATCH (${fromVariable}:${fromLabel} {${fromCypherParam}: $${fromArgName}.${fromCypherParam}})
+      MATCH (${toVariable}:${toLabel} {${toCypherParam}: $${toArgName}.${toCypherParam}})`;
+  }
   const paramStatements = buildCypherParameters({
     args: dataFields,
     params,
@@ -1931,19 +2150,7 @@ const relationshipCreate = ({
   });
   params = { ...params, ...subParams };
   let query = `
-      MATCH (${fromVariable}:${fromLabel}${
-    fromNodeNeo4jTypeClauses && fromNodeNeo4jTypeClauses.length > 0
-      ? // uses either a WHERE clause for managed type primary keys (temporal, etc.)
-        `) WHERE ${fromNodeNeo4jTypeClauses.join(' AND ')} `
-      : // or a an internal matching clause for normal, scalar property primary keys
-        // NOTE this will need to change if we at some point allow for multi field node selection
-        ` {${fromCypherParam}: $${fromArgName}.${fromCypherParam}})`
-  }
-      MATCH (${toVariable}:${toLabel}${
-    toNodeNeo4jTypeClauses && toNodeNeo4jTypeClauses.length > 0
-      ? `) WHERE ${toNodeNeo4jTypeClauses.join(' AND ')} `
-      : ` {${toCypherParam}: $${toArgName}.${toCypherParam}})`
-  }
+      ${nodeSelectionStatements}
       CREATE (${fromVariable})-[${relationshipVariable}:${relationshipLabel}${
     paramStatements.length > 0 ? ` {${paramStatements.join(',')}}` : ''
   }]->(${toVariable})
@@ -1996,6 +2203,7 @@ const relationshipDelete = ({
   const typeMap = resolveInfo.schema.getTypeMap();
 
   const fromType = fromTypeArg.value.value;
+  const fromSchemaType = resolveInfo.schema.getType(fromType);
   const fromAdditionalLabels = getAdditionalLabels(
     resolveInfo.schema.getType(fromType),
     cypherParams
@@ -2006,13 +2214,13 @@ const relationshipDelete = ({
   const fromVar = `${lowFirstLetter(fromType)}_${fromArgName}`;
   const fromVariable = safeVar(fromVar);
   const fromInputArg = firstArg.type;
-  const fromInputAst =
-    typeMap[getNamedType(fromInputArg).type.name.value].astNode;
+  const fromInputArgType = getNamedType(fromInputArg).type.name.value;
+  const fromInputAst = typeMap[fromInputArgType].astNode;
   const fromFields = fromInputAst.fields;
   const fromCypherParam = fromFields[0].name.value;
-  const fromNodeNeo4jTypeArgs = getNeo4jTypeArguments(fromFields);
 
   const toType = toTypeArg.value.value;
+  const toSchemaType = resolveInfo.schema.getType(toType);
   const toAdditionalLabels = getAdditionalLabels(
     resolveInfo.schema.getType(toType),
     cypherParams
@@ -2024,27 +2232,56 @@ const relationshipDelete = ({
   const toVariable = safeVar(toVar);
 
   const toInputArg = secondArg.type;
-  const toInputAst = typeMap[getNamedType(toInputArg).type.name.value].astNode;
+  const toInputArgType = getNamedType(toInputArg).type.name.value;
+  const toInputAst = typeMap[toInputArgType].astNode;
   const toFields = toInputAst.fields;
   const toCypherParam = toFields[0].name.value;
-  const toNodeNeo4jTypeArgs = getNeo4jTypeArguments(toFields);
 
   const relationshipName = relationshipNameArg.value.value;
   const relationshipVariable = safeVar(fromVar + toVar);
   const relationshipLabel = safeLabel(relationshipName);
-
-  const fromNodeNeo4jTypeClauses = neo4jTypePredicateClauses(
-    params.from,
-    fromVariable,
-    fromNodeNeo4jTypeArgs,
-    fromArgName
-  );
-  const toNodeNeo4jTypeClauses = neo4jTypePredicateClauses(
-    params.to,
-    toVariable,
-    toNodeNeo4jTypeArgs,
-    toArgName
-  );
+  let nodeSelectionStatements = ``;
+  const fromUsesWhereInput =
+    fromInputArgType.startsWith('_') && fromInputArgType.endsWith('Where');
+  const toUsesWhereInput =
+    toInputArgType.startsWith('_') && toInputArgType.endsWith('Where');
+  if (fromUsesWhereInput && toUsesWhereInput) {
+    const [fromPredicate, serializedFromFilter] = processFilterArgument({
+      argumentName: fromArgName,
+      variableName: fromVar,
+      schemaType: fromSchemaType,
+      fieldArgs: args,
+      resolveInfo,
+      params
+    });
+    const fromClauses = [...fromPredicate]
+      .filter(predicate => !!predicate)
+      .join(' AND ');
+    const [toPredicate, serializedToFilter] = processFilterArgument({
+      argumentName: toArgName,
+      variableName: toVar,
+      schemaType: toSchemaType,
+      fieldArgs: args,
+      resolveInfo,
+      params
+    });
+    const toClauses = [...toPredicate]
+      .filter(predicate => !!predicate)
+      .join(' AND ');
+    const sourceNodeSelectionPredicate = fromClauses
+      ? ` WHERE ${fromClauses} `
+      : '';
+    const targetNodeSelectionPredicate = toClauses
+      ? ` WHERE ${toClauses} `
+      : '';
+    params = { ...params, ...serializedFromFilter };
+    params = { ...params, ...serializedToFilter };
+    nodeSelectionStatements = `MATCH (${fromVariable}:${fromLabel})${sourceNodeSelectionPredicate}
+      MATCH (${toVariable}:${toLabel})${targetNodeSelectionPredicate}`;
+  } else {
+    nodeSelectionStatements = `MATCH (${fromVariable}:${fromLabel} {${fromCypherParam}: $${fromArgName}.${fromCypherParam}})
+      MATCH (${toVariable}:${toLabel} {${toCypherParam}: $${toArgName}.${toCypherParam}})`;
+  }
 
   const [subQuery, subParams] = buildCypherSelection({
     selections,
@@ -2058,22 +2295,8 @@ const relationshipDelete = ({
     },
     cypherParams: getCypherParams(context)
   });
-
-  params = { ...params, ...subParams };
-  let query = `
-      MATCH (${fromVariable}:${fromLabel}${
-    fromNodeNeo4jTypeClauses && fromNodeNeo4jTypeClauses.length > 0
-      ? // uses either a WHERE clause for managed type primary keys (temporal, etc.)
-        `) WHERE ${fromNodeNeo4jTypeClauses.join(' AND ')} `
-      : // or a an internal matching clause for normal, scalar property primary keys
-        // NOTE this will need to change if we at some point allow for multi field node selection
-        ` {${fromCypherParam}: $${fromArgName}.${fromCypherParam}})`
-  }
-      MATCH (${toVariable}:${toLabel}${
-    toNodeNeo4jTypeClauses && toNodeNeo4jTypeClauses.length > 0
-      ? `) WHERE ${toNodeNeo4jTypeClauses.join(' AND ')} `
-      : ` {${toCypherParam}: $${toArgName}.${toCypherParam}})`
-  }
+  const query = `
+      ${nodeSelectionStatements}
       OPTIONAL MATCH (${fromVariable})-[${relationshipVariable}:${relationshipLabel}]->(${toVariable})
       DELETE ${relationshipVariable}
       WITH COUNT(*) AS scope, ${fromVariable} AS ${safeVar(
@@ -2081,6 +2304,7 @@ const relationshipDelete = ({
   )}, ${toVariable} AS ${safeVar(`_${toVar}`)}
       RETURN {${subQuery}} AS ${schemaTypeName};
     `;
+  params = { ...params, ...subParams };
   return [query, params];
 };
 
@@ -2119,6 +2343,7 @@ const relationshipMergeOrUpdate = ({
     const typeMap = resolveInfo.schema.getTypeMap();
 
     const fromType = fromTypeArg.value.value;
+    const fromSchemaType = resolveInfo.schema.getType(fromType);
     const fromAdditionalLabels = getAdditionalLabels(
       resolveInfo.schema.getType(fromType),
       cypherParams
@@ -2129,13 +2354,13 @@ const relationshipMergeOrUpdate = ({
     const fromVar = `${lowFirstLetter(fromType)}_${fromArgName}`;
     const fromVariable = safeVar(fromVar);
     const fromInputArg = firstArg.type;
-    const fromInputAst =
-      typeMap[getNamedType(fromInputArg).type.name.value].astNode;
+    const fromInputArgType = getNamedType(fromInputArg).type.name.value;
+    const fromInputAst = typeMap[fromInputArgType].astNode;
     const fromFields = fromInputAst.fields;
     const fromCypherParam = fromFields[0].name.value;
-    const fromNodeNeo4jTypeArgs = getNeo4jTypeArguments(fromFields);
 
     const toType = toTypeArg.value.value;
+    const toSchemaType = resolveInfo.schema.getType(toType);
     const toAdditionalLabels = getAdditionalLabels(
       resolveInfo.schema.getType(toType),
       cypherParams
@@ -2146,11 +2371,10 @@ const relationshipMergeOrUpdate = ({
     const toVar = `${lowFirstLetter(toType)}_${toArgName}`;
     const toVariable = safeVar(toVar);
     const toInputArg = secondArg.type;
-    const toInputAst =
-      typeMap[getNamedType(toInputArg).type.name.value].astNode;
+    const toInputArgType = getNamedType(toInputArg).type.name.value;
+    const toInputAst = typeMap[toInputArgType].astNode;
     const toFields = toInputAst.fields;
     const toCypherParam = toFields[0].name.value;
-    const toNodeNeo4jTypeArgs = getNeo4jTypeArguments(toFields);
 
     const relationshipName = relationshipNameArg.value.value;
     const lowercased = relationshipName.toLowerCase();
@@ -2163,18 +2387,48 @@ const relationshipMergeOrUpdate = ({
       : undefined;
     const dataFields = dataInputAst ? dataInputAst.fields : [];
 
-    const fromNodeNeo4jTypeClauses = neo4jTypePredicateClauses(
-      params.from,
-      fromVariable,
-      fromNodeNeo4jTypeArgs,
-      fromArgName
-    );
-    const toNodeNeo4jTypeClauses = neo4jTypePredicateClauses(
-      params.to,
-      toVariable,
-      toNodeNeo4jTypeArgs,
-      toArgName
-    );
+    let nodeSelectionStatements = ``;
+    const fromUsesWhereInput =
+      fromInputArgType.startsWith('_') && fromInputArgType.endsWith('Where');
+    const toUsesWhereInput =
+      toInputArgType.startsWith('_') && toInputArgType.endsWith('Where');
+    if (fromUsesWhereInput && toUsesWhereInput) {
+      const [fromPredicate, serializedFromFilter] = processFilterArgument({
+        argumentName: fromArgName,
+        variableName: fromVar,
+        schemaType: fromSchemaType,
+        fieldArgs: args,
+        resolveInfo,
+        params
+      });
+      const fromClauses = [...fromPredicate]
+        .filter(predicate => !!predicate)
+        .join(' AND ');
+      const [toPredicate, serializedToFilter] = processFilterArgument({
+        argumentName: toArgName,
+        variableName: toVar,
+        schemaType: toSchemaType,
+        fieldArgs: args,
+        resolveInfo,
+        params
+      });
+      const toClauses = [...toPredicate]
+        .filter(predicate => !!predicate)
+        .join(' AND ');
+      const sourceNodeSelectionPredicate = fromClauses
+        ? ` WHERE ${fromClauses} `
+        : '';
+      const targetNodeSelectionPredicate = toClauses
+        ? ` WHERE ${toClauses} `
+        : '';
+      params = { ...params, ...serializedFromFilter };
+      params = { ...params, ...serializedToFilter };
+      nodeSelectionStatements = `  MATCH (${fromVariable}:${fromLabel})${sourceNodeSelectionPredicate}
+      MATCH (${toVariable}:${toLabel})${targetNodeSelectionPredicate}`;
+    } else {
+      nodeSelectionStatements = `  MATCH (${fromVariable}:${fromLabel} {${fromCypherParam}: $${fromArgName}.${fromCypherParam}})
+      MATCH (${toVariable}:${toLabel} {${toCypherParam}: $${toArgName}.${toCypherParam}})`;
+    }
 
     const [subQuery, subParams] = buildCypherSelection({
       selections,
@@ -2204,21 +2458,8 @@ const relationshipMergeOrUpdate = ({
       cypherOperation = 'MATCH';
     }
 
-    params = { ...params, ...subParams };
     query = `
-      MATCH (${fromVariable}:${fromLabel}${
-      fromNodeNeo4jTypeClauses && fromNodeNeo4jTypeClauses.length > 0
-        ? // uses either a WHERE clause for managed type primary keys (temporal, etc.)
-          `) WHERE ${fromNodeNeo4jTypeClauses.join(' AND ')} `
-        : // or a an internal matching clause for normal, scalar property primary keys
-          // NOTE this will need to change if we at some point allow for multi field node selection
-          ` {${fromCypherParam}: $${fromArgName}.${fromCypherParam}})`
-    }
-      MATCH (${toVariable}:${toLabel}${
-      toNodeNeo4jTypeClauses && toNodeNeo4jTypeClauses.length > 0
-        ? `) WHERE ${toNodeNeo4jTypeClauses.join(' AND ')} `
-        : ` {${toCypherParam}: $${toArgName}.${toCypherParam}})`
-    }
+    ${nodeSelectionStatements}
       ${cypherOperation} (${fromVariable})-[${relationshipVariable}:${relationshipLabel}]->(${toVariable})${
       paramStatements.length > 0
         ? `
@@ -2227,77 +2468,8 @@ const relationshipMergeOrUpdate = ({
     }
       RETURN ${relationshipVariable} { ${subQuery} } AS ${schemaTypeName};
     `;
+    params = { ...params, ...subParams };
   }
-  return [query, params];
-};
-
-const nodeMergeOrUpdate = ({
-  resolveInfo,
-  variableName,
-  typeName,
-  selections,
-  schemaType,
-  additionalLabels,
-  params,
-  context
-}) => {
-  const safeVariableName = safeVar(variableName);
-  const args = getMutationArguments(resolveInfo);
-  const fieldMap = schemaType.getFields();
-  const fields = Object.values(fieldMap).map(field => field.astNode);
-  const primaryKey = getPrimaryKey({ fields });
-  const primaryKeyArgName = primaryKey.name.value;
-  const neo4jTypeArgs = getNeo4jTypeArguments(args);
-  const [primaryKeyParam, updateParams] = splitSelectionParameters(
-    params,
-    primaryKeyArgName,
-    'params'
-  );
-  const neo4jTypeClauses = neo4jTypePredicateClauses(
-    primaryKeyParam,
-    safeVariableName,
-    neo4jTypeArgs,
-    'params'
-  );
-  const predicateClauses = [...neo4jTypeClauses]
-    .filter(predicate => !!predicate)
-    .join(' AND ');
-  const predicate = predicateClauses ? `WHERE ${predicateClauses} ` : '';
-  let paramUpdateStatements = buildCypherParameters({
-    args,
-    params: updateParams,
-    paramKey: 'params',
-    resolveInfo,
-    cypherParams: getCypherParams(context)
-  });
-  let cypherOperation = '';
-  let safeLabelName = safeLabel(typeName);
-  if (isMergeMutation(resolveInfo)) {
-    safeLabelName = safeLabel([typeName, ...additionalLabels]);
-    cypherOperation = 'MERGE';
-  } else if (isUpdateMutation(resolveInfo)) {
-    cypherOperation = 'MATCH';
-  }
-  let query = `${cypherOperation} (${safeVariableName}:${safeLabelName}${
-    predicate !== ''
-      ? `) ${predicate} `
-      : `{${primaryKeyArgName}: $params.${primaryKeyArgName}})`
-  }
-  `;
-  if (paramUpdateStatements.length > 0) {
-    query += `SET ${safeVariableName} += {${paramUpdateStatements.join(',')}} `;
-  }
-  const [subQuery, subParams] = buildCypherSelection({
-    selections,
-    variableName,
-    schemaType,
-    resolveInfo,
-    cypherParams: getCypherParams(context)
-  });
-  if (!params.params) params.params = {};
-  params.params[primaryKeyArgName] = primaryKeyParam[primaryKeyArgName];
-  params = { ...params, ...subParams };
-  query += `RETURN ${safeVariableName} {${subQuery}} AS ${safeVariableName}`;
   return [query, params];
 };
 
@@ -2382,6 +2554,7 @@ const buildSortMultiArgs = param => {
 };
 
 const processFilterArgument = ({
+  argumentName = 'filter',
   fieldArgs,
   isFederatedOperation,
   schemaType,
@@ -2392,9 +2565,12 @@ const processFilterArgument = ({
   parentSchemaType,
   rootIsRelationType = false
 }) => {
-  const filterArg = fieldArgs.find(e => e.name.value === 'filter');
-  const filterValue = Object.keys(params).length ? params['filter'] : undefined;
-  const filterParamKey = paramIndex > 1 ? `${paramIndex - 1}_filter` : `filter`;
+  const filterArg = fieldArgs.find(e => e.name.value === argumentName);
+  const filterValue = Object.keys(params).length
+    ? params[argumentName]
+    : undefined;
+  const filterParamKey =
+    paramIndex > 1 ? `${paramIndex - 1}_${argumentName}` : argumentName;
   const filterCypherParam = `$${filterParamKey}`;
   let translations = [];
   // allows an exception for the existence of the filter argument AST
