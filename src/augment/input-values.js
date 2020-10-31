@@ -333,7 +333,7 @@ const LogicalFilteringArgument = {
 /**
  * Builds the AST definitions for logical filtering arguments
  */
-const buildLogicalFilterInputValues = ({ typeName = '' }) => {
+export const buildLogicalFilterInputValues = ({ typeName = '' }) => {
   return [
     buildInputValue({
       name: buildName({ name: LogicalFilteringArgument.AND }),
@@ -361,7 +361,7 @@ const buildLogicalFilterInputValues = ({ typeName = '' }) => {
 /**
  * Builds the AST definitions for filtering Neo4j property type fields
  */
-const buildPropertyFilters = ({
+export const buildPropertyFilters = ({
   field,
   fieldName = '',
   outputType = '',
