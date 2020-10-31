@@ -12,7 +12,11 @@ import {
   useAuthDirective,
   isCypherField
 } from '../../directives';
-import { getPrimaryKey } from './selection';
+import {
+  getPrimaryKey,
+  buildNodeSelectionInputType,
+  buildNodeSelectionInputTypes
+} from './selection';
 import { shouldAugmentType } from '../../augment';
 import { OperationType } from '../../types/types';
 import {
@@ -48,6 +52,7 @@ export const augmentNodeMutationAPI = ({
   propertyInputValues,
   generatedTypeMap,
   operationTypeMap,
+  typeDefinitionMap,
   typeExtensionDefinitionMap,
   config
 }) => {
@@ -78,89 +83,28 @@ export const augmentNodeMutationAPI = ({
       });
     });
   }
-  return [operationTypeMap, generatedTypeMap];
-};
-
-/**
- * Given the results of augmentNodeTypeFields, builds the AST
- * definition for a Mutation operation field of a given
- * NodeMutation name
- */
-const buildNodeMutationField = ({
-  mutationType,
-  mutationAction = '',
-  primaryKey,
-  typeName,
-  propertyInputValues,
-  operationTypeMap,
-  typeExtensionDefinitionMap,
-  config
-}) => {
-  const mutationFields = mutationType.fields;
-  const mutationName = `${mutationAction}${typeName}`;
-  const mutationTypeName = mutationType ? mutationType.name.value : '';
-  const mutationTypeExtensions = typeExtensionDefinitionMap[mutationTypeName];
-  if (
-    !getFieldDefinition({
-      fields: mutationFields,
-      name: mutationName
-    }) &&
-    !getTypeExtensionFieldDefinition({
-      typeExtensions: mutationTypeExtensions,
-      name: typeName
-    })
-  ) {
-    const mutationConfig = {
-      name: buildName({ name: mutationName }),
-      args: buildNodeMutationArguments({
-        operationName: mutationAction,
-        primaryKey,
-        args: propertyInputValues
-      }),
-      type: buildNamedType({
-        name: typeName
-      }),
-      directives: buildNodeMutationDirectives({
-        mutationAction,
-        typeName,
-        config
-      })
-    };
-    let mutationField = undefined;
-    let mutationDescriptionUrl = '';
-    if (mutationAction === NodeMutation.CREATE) {
-      mutationField = mutationConfig;
-      mutationDescriptionUrl =
-        '[creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-nodes)';
-    } else if (mutationAction === NodeMutation.UPDATE) {
-      if (primaryKey && mutationConfig.args.length > 1) {
-        mutationField = mutationConfig;
-        mutationDescriptionUrl =
-          '[updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property)';
-      }
-    } else if (mutationAction === NodeMutation.MERGE) {
-      if (primaryKey) {
-        mutationField = mutationConfig;
-        mutationDescriptionUrl =
-          '[merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-node-derived)';
-      }
-    } else if (mutationAction === NodeMutation.DELETE) {
-      if (primaryKey) {
-        mutationField = mutationConfig;
-        mutationDescriptionUrl =
-          '[deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-single-node)';
-      }
-    }
-    if (mutationField) {
-      mutationField.description = buildDescription({
-        value: `[Generated mutation](${GRANDSTACK_DOCS_SCHEMA_AUGMENTATION}/#${mutationAction.toLowerCase()}) for ${mutationDescriptionUrl} a ${typeName} node.`,
-        config
-      });
-      mutationFields.push(buildField(mutationField));
-    }
-    operationTypeMap[OperationType.MUTATION].fields = mutationFields;
+  if (config.experimental === true) {
+    generatedTypeMap = buildNodeSelectionInputTypes({
+      definition,
+      typeName,
+      propertyInputValues,
+      generatedTypeMap,
+      typeDefinitionMap,
+      typeExtensionDefinitionMap,
+      config
+    });
+  } else {
+    generatedTypeMap = buildNodeSelectionInputType({
+      definition,
+      typeName,
+      propertyInputValues,
+      generatedTypeMap,
+      typeDefinitionMap,
+      typeExtensionDefinitionMap,
+      config
+    });
   }
-  return operationTypeMap;
+  return [operationTypeMap, generatedTypeMap];
 };
 
 /**
@@ -256,6 +200,145 @@ const buildNodeMutationArguments = ({
       type: buildNamedType(arg.type)
     })
   );
+};
+
+const buildNodeMutationObjectArguments = ({ typeName, operationName = '' }) => {
+  const args = [];
+  const nodeSelectionConfig = {
+    name: 'where',
+    type: {
+      name: `_${typeName}Where`,
+      wrappers: {
+        [TypeWrappers.NON_NULL_NAMED_TYPE]: true
+      }
+    }
+  };
+  const propertyInputConfig = {
+    name: 'data',
+    type: {
+      name: `_${typeName}Data`,
+      wrappers: {
+        [TypeWrappers.NON_NULL_NAMED_TYPE]: true
+      }
+    }
+  };
+  if (operationName === NodeMutation.CREATE) {
+    args.push(propertyInputConfig);
+  } else if (operationName === NodeMutation.UPDATE) {
+    args.push(nodeSelectionConfig);
+    args.push(propertyInputConfig);
+  } else if (operationName === NodeMutation.MERGE) {
+    const keySelectionInputConfig = {
+      name: 'where',
+      type: {
+        name: `_${typeName}Keys`,
+        wrappers: {
+          [TypeWrappers.NON_NULL_NAMED_TYPE]: true
+        }
+      }
+    };
+    args.push(keySelectionInputConfig);
+    args.push(propertyInputConfig);
+  } else if (operationName === NodeMutation.DELETE) {
+    args.push(nodeSelectionConfig);
+  }
+  return args.map(arg =>
+    buildInputValue({
+      name: buildName({ name: arg.name }),
+      type: buildNamedType(arg.type)
+    })
+  );
+};
+
+/**
+ * Given the results of augmentNodeTypeFields, builds the AST
+ * definition for a Mutation operation field of a given
+ * NodeMutation name
+ */
+const buildNodeMutationField = ({
+  mutationType,
+  mutationAction = '',
+  primaryKey,
+  typeName,
+  propertyInputValues,
+  operationTypeMap,
+  typeExtensionDefinitionMap,
+  config
+}) => {
+  const mutationFields = mutationType.fields;
+  const mutationName = `${mutationAction}${typeName}`;
+  const mutationTypeName = mutationType ? mutationType.name.value : '';
+  const mutationTypeExtensions = typeExtensionDefinitionMap[mutationTypeName];
+  if (
+    !getFieldDefinition({
+      fields: mutationFields,
+      name: mutationName
+    }) &&
+    !getTypeExtensionFieldDefinition({
+      typeExtensions: mutationTypeExtensions,
+      name: typeName
+    })
+  ) {
+    let mutationArgs = [];
+    if (config.experimental === true) {
+      mutationArgs = buildNodeMutationObjectArguments({
+        typeName,
+        operationName: mutationAction
+      });
+    } else {
+      mutationArgs = buildNodeMutationArguments({
+        operationName: mutationAction,
+        primaryKey,
+        args: propertyInputValues
+      });
+    }
+    const mutationConfig = {
+      name: buildName({ name: mutationName }),
+      args: mutationArgs,
+      type: buildNamedType({
+        name: typeName
+      }),
+      directives: buildNodeMutationDirectives({
+        mutationAction,
+        typeName,
+        config
+      })
+    };
+    let mutationField = undefined;
+    let mutationDescriptionUrl = '';
+    if (mutationAction === NodeMutation.CREATE) {
+      mutationField = mutationConfig;
+      mutationDescriptionUrl =
+        '[creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-nodes)';
+    } else if (mutationAction === NodeMutation.UPDATE) {
+      if (primaryKey && mutationConfig.args.length > 1) {
+        mutationField = mutationConfig;
+        mutationDescriptionUrl =
+          '[updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property)';
+      }
+    } else if (mutationAction === NodeMutation.MERGE) {
+      if (primaryKey) {
+        mutationField = mutationConfig;
+        mutationDescriptionUrl =
+          '[merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-node-derived)';
+      }
+    } else if (mutationAction === NodeMutation.DELETE) {
+      if (primaryKey) {
+        mutationField = mutationConfig;
+        mutationDescriptionUrl =
+          '[deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-single-node)';
+      }
+    }
+    if (mutationField) {
+      mutationField.description = buildDescription({
+        value: `[Generated mutation](${GRANDSTACK_DOCS_SCHEMA_AUGMENTATION}/#${mutationAction.toLowerCase()}) for ${mutationDescriptionUrl} a ${typeName} node.`,
+        config
+      });
+      mutationFields.push(buildField(mutationField));
+    }
+    operationTypeMap[OperationType.MUTATION].fields = mutationFields;
+  }
+  return operationTypeMap;
 };
 
 /**
