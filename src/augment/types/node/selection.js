@@ -194,34 +194,21 @@ export const buildNodeSelectionInputTypes = ({
     });
     // Used by Create, Update, Merge
     generatedTypeMap = buildNodeDataInputObject({
-      definition,
       typeName,
       propertyInputValues,
-      generatedTypeMap,
-      typeDefinitionMap,
-      typeExtensionDefinitionMap,
-      config
+      generatedTypeMap
     });
     // Used by Update, Delete
     generatedTypeMap = buildNodeSelectionInputObject({
-      definition,
       typeName,
-      propertyInputValues,
       generatedTypeMap,
       typeDefinitionMap,
-      typeExtensionDefinitionMap,
-      config,
       fields
     });
     // Used by Merge
     generatedTypeMap = buildNodeKeySelectionInputObject({
-      definition,
       typeName,
-      propertyInputValues,
       generatedTypeMap,
-      typeDefinitionMap,
-      typeExtensionDefinitionMap,
-      config,
       fields
     });
   }
@@ -268,10 +255,12 @@ const buildNodeSelectionInputObject = ({
         })
       );
     });
-    generatedTypeMap[propertyInputName] = buildInputObjectType({
-      name: buildName({ name: propertyInputName }),
-      fields: selectionArguments
-    });
+    if (selectionArguments.length) {
+      generatedTypeMap[propertyInputName] = buildInputObjectType({
+        name: buildName({ name: propertyInputName }),
+        fields: selectionArguments
+      });
+    }
   }
   return generatedTypeMap;
 };
@@ -307,17 +296,19 @@ const buildNodeKeySelectionInputObject = ({
         })
       });
     });
-    generatedTypeMap[propertyInputName] = buildInputObjectType({
-      name: buildName({ name: propertyInputName }),
-      fields: selectionArguments
-    });
+    if (selectionArguments.length) {
+      generatedTypeMap[propertyInputName] = buildInputObjectType({
+        name: buildName({ name: propertyInputName }),
+        fields: selectionArguments
+      });
+    }
   }
   return generatedTypeMap;
 };
 
 const buildNodeDataInputObject = ({
   typeName,
-  propertyInputValues,
+  propertyInputValues = [],
   generatedTypeMap
 }) => {
   const propertyInputName = `_${typeName}Data`;
@@ -330,9 +321,11 @@ const buildNodeDataInputObject = ({
       })
     });
   });
-  generatedTypeMap[propertyInputName] = buildInputObjectType({
-    name: buildName({ name: propertyInputName }),
-    fields: inputValues
-  });
+  if (inputValues.length) {
+    generatedTypeMap[propertyInputName] = buildInputObjectType({
+      name: buildName({ name: propertyInputName }),
+      fields: inputValues
+    });
+  }
   return generatedTypeMap;
 };
