@@ -182,7 +182,7 @@ test('Handle @cypher directive on QueryType', async t => {
     });
 });
 
-test('Mutation with @cypher directive (not-isolated)', async t => {
+test.serial('Mutation with @cypher directive (not-isolated)', async t => {
   t.plan(1);
 
   let expected = {
