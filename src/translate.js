@@ -205,7 +205,6 @@ export const relationFieldOnNodeType = ({
   selectionFilters,
   neo4jTypeArgs,
   fieldsForTranslation,
-  schemaType,
   subSelection,
   skipLimit,
   commaIfTail,
@@ -228,7 +227,6 @@ export const relationFieldOnNodeType = ({
     derivedTypeMap,
     resolveInfo
   });
-
   const allParams = innerFilterParams(filterParams, neo4jTypeArgs);
   const queryParams = paramsToString(
     _.filter(allParams, param => {
@@ -270,6 +268,13 @@ export const relationFieldOnNodeType = ({
     resolveInfo
   });
 
+  const [lhsOrdering, rhsOrdering] = translateNestedOrderingArgument({
+    schemaType: innerSchemaType,
+    selections: fieldsForTranslation,
+    fieldSelectionSet,
+    filterParams
+  });
+
   let whereClauses = [
     labelPredicate,
     ...neo4jTypeClauses,
@@ -277,32 +282,9 @@ export const relationFieldOnNodeType = ({
     ...filterPredicates
   ].filter(predicate => !!predicate);
 
-  const orderByParam = filterParams['orderBy'];
-  const usesTemporalOrdering = temporalOrderingFieldExists(
-    schemaType,
-    filterParams
-  );
-
-  const selectedFieldNames = fieldSelectionSet.reduce((fieldNames, field) => {
-    if (field.name) fieldNames.push(field.name.value);
-    return fieldNames;
-  }, []);
-  const neo4jTypeFieldSelections = buildOrderedNeo4jTypeSelections({
-    schemaType: innerSchemaType,
-    selections: fieldsForTranslation,
-    usesTemporalOrdering,
-    selectedFieldNames
-  });
-
   tailParams.initial = `${initial}${fieldName}: ${
     !isArrayType(fieldType) ? 'head(' : ''
-  }${
-    orderByParam
-      ? usesTemporalOrdering
-        ? `[sortedElement IN apoc.coll.sortMulti(`
-        : `apoc.coll.sortMulti(`
-      : ''
-  }[(${safeVar(variableName)})${
+  }${lhsOrdering}[(${safeVar(variableName)})${
     isUnionTypeField
       ? `--`
       : `${
@@ -318,17 +300,9 @@ export const relationFieldOnNodeType = ({
     )
   ])}`}${queryParams})${
     whereClauses.length > 0 ? ` WHERE ${whereClauses.join(' AND ')}` : ''
-  } | ${mapProjection}]${
-    orderByParam
-      ? `, [${buildSortMultiArgs(orderByParam)}])${
-          usesTemporalOrdering
-            ? ` | sortedElement { .* ${
-                neo4jTypeFieldSelections ? `,  ${neo4jTypeFieldSelections}` : ''
-              }}]`
-            : ``
-        }`
-      : ''
-  }${!isArrayType(fieldType) ? ')' : ''}${skipLimit} ${commaIfTail}`;
+  } | ${mapProjection}]${rhsOrdering}${
+    !isArrayType(fieldType) ? ')' : ''
+  }${skipLimit} ${commaIfTail}`;
 
   return [tailParams, subSelection];
 };
@@ -385,43 +359,6 @@ export const relationTypeFieldOnNodeType = ({
     ) {
       subSelection[1][filterParamKey] = serializedFilterParam[filterParamKey];
     }
-    const orderByParam = filterParams['orderBy'];
-    const usesTemporalOrdering = temporalOrderingFieldExists(
-      innerSchemaType,
-      filterParams
-    );
-    const selectedFieldNames = fieldSelectionSet.reduce((fieldNames, field) => {
-      if (field.name) fieldNames.push(field.name.value);
-      return fieldNames;
-    }, []);
-    const neo4jTypeFieldSelections = buildOrderedNeo4jTypeSelections({
-      schemaType: innerSchemaType,
-      selections: fieldsForTranslation,
-      usesTemporalOrdering,
-      selectedFieldNames
-    });
-
-    const lhsOrdering = `${
-      orderByParam
-        ? usesTemporalOrdering
-          ? `[sortedElement IN apoc.coll.sortMulti(`
-          : `apoc.coll.sortMulti(`
-        : ''
-    }`;
-
-    const rhsOrdering = `${
-      orderByParam
-        ? `, [${buildSortMultiArgs(orderByParam)}])${
-            usesTemporalOrdering
-              ? ` | sortedElement { .* ${
-                  neo4jTypeFieldSelections
-                    ? `,  ${neo4jTypeFieldSelections}`
-                    : ''
-                }}]`
-              : ``
-          }`
-        : ''
-    }`;
 
     const allParams = innerFilterParams(filterParams, neo4jTypeArgs);
     const queryParams = paramsToString(
@@ -438,6 +375,13 @@ export const relationTypeFieldOnNodeType = ({
       filterParams,
       safeVariableName: safeVar(relationshipVariableName),
       resolveInfo
+    });
+
+    const [lhsOrdering, rhsOrdering] = translateNestedOrderingArgument({
+      schemaType: innerSchemaType,
+      selections: fieldsForTranslation,
+      fieldSelectionSet,
+      filterParams
     });
 
     const fromTypeName = innerSchemaTypeRelation.from;
@@ -687,47 +631,6 @@ const directedNodeTypeFieldOnRelationType = ({
     if (isReflexiveRelationshipOutputType({ schemaType })) {
       isFromField = schemaType.astNode.fields[0].name.value === fieldName;
       isToField = schemaType.astNode.fields[1].name.value === fieldName;
-      const orderByParam = filterParams['orderBy'];
-      const usesTemporalOrdering = temporalOrderingFieldExists(
-        innerSchemaType,
-        filterParams
-      );
-      const selectedFieldNames = fieldSelectionSet.reduce(
-        (fieldNames, field) => {
-          if (field.name) fieldNames.push(field.name.value);
-          return fieldNames;
-        },
-        []
-      );
-      const neo4jTypeFieldSelections = buildOrderedNeo4jTypeSelections({
-        schemaType: innerSchemaType,
-        selections: fieldsForTranslation,
-        usesTemporalOrdering,
-        selectedFieldNames
-      });
-
-      const lhsOrdering = `${
-        orderByParam
-          ? usesTemporalOrdering
-            ? `[sortedElement IN apoc.coll.sortMulti(`
-            : `apoc.coll.sortMulti(`
-          : ''
-      }`;
-
-      const rhsOrdering = `${
-        orderByParam
-          ? `, [${buildSortMultiArgs(orderByParam)}])${
-              usesTemporalOrdering
-                ? ` | sortedElement { .* ${
-                    neo4jTypeFieldSelections
-                      ? `,  ${neo4jTypeFieldSelections}`
-                      : ''
-                  }}]`
-                : ``
-            }`
-          : ''
-      }`;
-
       const temporalFieldRelationshipVariableName = `${nestedVariable}_relation`;
       const neo4jTypeClauses = neo4jTypePredicateClauses(
         filterParams,
@@ -760,6 +663,13 @@ const directedNodeTypeFieldOnRelationType = ({
         filterParams,
         safeVariableName: safeVar(relationshipVariableName),
         resolveInfo
+      });
+
+      const [lhsOrdering, rhsOrdering] = translateNestedOrderingArgument({
+        schemaType: innerSchemaType,
+        selections: fieldsForTranslation,
+        fieldSelectionSet,
+        filterParams
       });
 
       const whereClauses = [
@@ -2473,15 +2383,24 @@ const relationshipMergeOrUpdate = ({
   return [query, params];
 };
 
-const buildOrderedNeo4jTypeSelections = ({
+const translateNestedOrderingArgument = ({
   schemaType,
   selections,
-  usesTemporalOrdering,
-  selectedFieldNames
+  fieldSelectionSet,
+  filterParams
 }) => {
-  let neo4jTypeSelections = '';
+  const orderByParam = filterParams['orderBy'];
+  const usesTemporalOrdering = temporalOrderingFieldExists(
+    schemaType,
+    filterParams
+  );
+  const selectedFieldNames = fieldSelectionSet.reduce((fieldNames, field) => {
+    if (field.name) fieldNames.push(field.name.value);
+    return fieldNames;
+  }, []);
+  let neo4jTypeFieldSelections = '';
   if (usesTemporalOrdering) {
-    neo4jTypeSelections = selections
+    neo4jTypeFieldSelections = selections
       .reduce((temporalTypeFields, innerSelection) => {
         // name of temporal type field
         const fieldName = innerSelection.name.value;
@@ -2494,7 +2413,6 @@ const buildOrderedNeo4jTypeSelections = ({
           const innerSelectedTypes = innerSelection.selectionSet
             ? innerSelection.selectionSet.selections
             : [];
-
           temporalTypeFields.push(
             `${fieldName}: {${innerSelectedTypes
               .reduce((temporalSubFields, t) => {
@@ -2518,7 +2436,21 @@ const buildOrderedNeo4jTypeSelections = ({
       }, [])
       .join(',');
   }
-  return neo4jTypeSelections;
+  const lhsOrdering = orderByParam
+    ? usesTemporalOrdering
+      ? `[sortedElement IN apoc.coll.sortMulti(`
+      : `apoc.coll.sortMulti(`
+    : '';
+  const rhsOrdering = orderByParam
+    ? `, [${buildSortMultiArgs(orderByParam)}])${
+        usesTemporalOrdering
+          ? ` | sortedElement { .* ${
+              neo4jTypeFieldSelections ? `,  ${neo4jTypeFieldSelections}` : ''
+            }}]`
+          : ``
+      }`
+    : '';
+  return [lhsOrdering, rhsOrdering];
 };
 
 const getFieldTypeName = (schemaType, fieldName) => {
@@ -3911,6 +3843,7 @@ const translateNeo4jTypeFilter = ({
     nullFieldPredicate,
     rootPredicateFunction,
     cypherTypeConstructor,
+    parentIsListArgument: isListFilterArgument,
     isTemporalFilter,
     isSpatialFilter
   });
@@ -3921,6 +3854,7 @@ const buildNeo4jTypeTranslation = ({
   listVariable,
   isTemporalFilter,
   isSpatialFilter,
+  parentIsListArgument,
   isListFilterArgument,
   filterValue,
   nullFieldPredicate,
@@ -3942,7 +3876,7 @@ const buildNeo4jTypeTranslation = ({
     !filterOperationType || filterOperationType === 'not';
   if (
     (isTemporalFilter || isSpatialFilter) &&
-    (isIdentityFilter || isListFilterArgument)
+    (isIdentityFilter || isListFilterArgument || parentIsListArgument)
   ) {
     const generalizedComparisonPredicates = Object.keys(filterValue).map(
       filterName => {
@@ -3986,6 +3920,7 @@ const buildNeo4jTypePredicate = ({
   nullFieldPredicate,
   rootPredicateFunction,
   cypherTypeConstructor,
+  parentIsListArgument,
   isTemporalFilter,
   isSpatialFilter
 }) => {
@@ -4008,6 +3943,7 @@ const buildNeo4jTypePredicate = ({
     listVariable,
     isTemporalFilter,
     isSpatialFilter,
+    parentIsListArgument,
     isListFilterArgument,
     filterValue,
     nullFieldPredicate,
