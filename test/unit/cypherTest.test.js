@@ -4062,6 +4062,51 @@ test('Create node with temporal properties', t => {
   );
 });
 
+test('Create node with temporal property only using formatted argument value', t => {
+  const graphQLQuery = `mutation {
+    CreateTemporalNode(
+      datetime: {
+        formatted: "2020-11-01T13:23:24.284-08:00[America/Los_Angeles]"
+      }
+    ) {
+      _id
+      datetime {
+        year
+        month
+        day
+        hour
+        minute
+        second
+        millisecond
+        microsecond
+        nanosecond
+        timezone
+        formatted
+      }
+    }
+  }`,
+    expectedCypherQuery = `
+    CREATE (\`temporalNode\`:\`TemporalNode\` {datetime: datetime($params.datetime)})
+    RETURN \`temporalNode\` {_id: ID(\`temporalNode\`),datetime: { year: \`temporalNode\`.datetime.year , month: \`temporalNode\`.datetime.month , day: \`temporalNode\`.datetime.day , hour: \`temporalNode\`.datetime.hour , minute: \`temporalNode\`.datetime.minute , second: \`temporalNode\`.datetime.second , millisecond: \`temporalNode\`.datetime.millisecond , microsecond: \`temporalNode\`.datetime.microsecond , nanosecond: \`temporalNode\`.datetime.nanosecond , timezone: \`temporalNode\`.datetime.timezone , formatted: toString(\`temporalNode\`.datetime) }} AS \`temporalNode\`
+  `,
+    expectedParams = {
+      params: {
+        datetime: '2020-11-01T13:23:24.284-08:00[America/Los_Angeles]'
+      },
+      first: -1,
+      offset: 0
+    };
+
+  t.plan(2);
+  return augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {},
+    expectedCypherQuery,
+    expectedParams
+  );
+});
+
 test('Create node with spatial properties', t => {
   const graphQLQuery = `mutation {
     CreateSpatialNode(
@@ -7592,6 +7637,64 @@ test('Query relationship type using list field filters', t => {
   );
 });
 
+test('Query node using only formatted temporal filter value nested in logical OR filter', t => {
+  const graphQLQuery = `query {
+    TemporalNode(
+      filter: {
+     	  OR: [
+          {
+            datetime_gte: {
+              formatted: "2018-11-23T10:30:01.002003004-08:00[America/Los_Angeles]"
+            }
+          }
+        ]   
+      }
+    ) {
+      _id
+      datetime {
+        year
+        month
+        day
+        hour
+        minute
+        second
+        millisecond
+        microsecond
+        nanosecond
+        timezone
+        formatted
+      }
+    }
+  }
+  `,
+    expectedCypherQuery = `MATCH (\`temporalNode\`:\`TemporalNode\`) WHERE (ANY(_OR IN $filter.OR WHERE (((_OR.datetime_gte.formatted IS NULL OR \`temporalNode\`.datetime = datetime(_OR.datetime_gte.formatted)))))) RETURN \`temporalNode\` {_id: ID(\`temporalNode\`),datetime: { year: \`temporalNode\`.datetime.year , month: \`temporalNode\`.datetime.month , day: \`temporalNode\`.datetime.day , hour: \`temporalNode\`.datetime.hour , minute: \`temporalNode\`.datetime.minute , second: \`temporalNode\`.datetime.second , millisecond: \`temporalNode\`.datetime.millisecond , microsecond: \`temporalNode\`.datetime.microsecond , nanosecond: \`temporalNode\`.datetime.nanosecond , timezone: \`temporalNode\`.datetime.timezone , formatted: toString(\`temporalNode\`.datetime) }} AS \`temporalNode\``,
+    expectedParams = {
+      offset: 0,
+      first: -1,
+      filter: {
+        OR: [
+          {
+            datetime_gte: {
+              formatted:
+                '2018-11-23T10:30:01.002003004-08:00[America/Los_Angeles]'
+            }
+          }
+        ]
+      }
+    };
+
+  t.plan(2);
+  return Promise.all([
+    augmentedSchemaCypherTestRunner(
+      t,
+      graphQLQuery,
+      {},
+      expectedCypherQuery,
+      expectedParams
+    )
+  ]);
+});
+
 test('Create node with non-null field', t => {
   const graphQLQuery = `mutation {
     CreateState(
@@ -7929,7 +8032,7 @@ test('query nested relationship with differences between selected and ordered fi
   ]);
 });
 
-test('Deeply nested query using temporal orderBy without temporal field selection', t => {
+test('Order reflexive relationship field using temporal argument without corresponding field selection', t => {
   const graphQLQuery = `query {
     TemporalNode(orderBy: [datetime_desc]) {
       _id
@@ -7946,6 +8049,38 @@ test('Deeply nested query using temporal orderBy without temporal field selectio
       '1_first': 2,
       '1_offset': 1,
       '1_orderBy': ['datetime_desc', 'time_desc']
+    };
+
+  t.plan(2);
+  return Promise.all([
+    augmentedSchemaCypherTestRunner(
+      t,
+      graphQLQuery,
+      {},
+      expectedCypherQuery,
+      expectedParams
+    )
+  ]);
+});
+
+test('Order relationship field using temporal argument without corresponding field selection', t => {
+  const graphQLQuery = `query {
+    Actor {
+      userId
+      movies(orderBy: released_asc) {
+        movieId
+        released {
+          formatted
+        }
+      }
+    }
+  }`,
+    expectedCypherQuery = `MATCH (\`actor\`:\`Actor\`) RETURN \`actor\` { .userId ,movies: [sortedElement IN apoc.coll.sortMulti([(\`actor\`)-[:\`ACTED_IN\`]->(\`actor_movies\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) | \`actor_movies\` { .movieId ,released: \`actor_movies\`.released}], ['^released']) | sortedElement { .* ,  released: {formatted: toString(sortedElement.released)}}] } AS \`actor\``,
+    expectedParams = {
+      offset: 0,
+      first: -1,
+      '1_orderBy': 'released_asc',
+      cypherParams: CYPHER_PARAMS
     };
 
   t.plan(2);
