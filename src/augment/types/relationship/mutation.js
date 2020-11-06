@@ -179,7 +179,8 @@ const getRelatedNodeTypeDefinition = ({
 const buildNodeSelectionArguments = ({
   fromType,
   toType,
-  relationshipDirective
+  relationshipDirective,
+  config
 }) => {
   let fromFieldName = getDirectiveArgument({
     directive: relationshipDirective,
@@ -191,13 +192,19 @@ const buildNodeSelectionArguments = ({
   });
   if (!fromFieldName) fromFieldName = RelationshipDirectionField.FROM;
   if (!toFieldName) toFieldName = RelationshipDirectionField.TO;
+  let fromTypeName = `_${fromType}Input`;
+  let toTypeName = `_${toType}Input`;
+  if (config.experimental === true) {
+    fromTypeName = `_${fromType}Where`;
+    toTypeName = `_${toType}Where`;
+  }
   return [
     buildInputValue({
       name: buildName({
         name: fromFieldName
       }),
       type: buildNamedType({
-        name: `_${fromType}Input`,
+        name: fromTypeName,
         wrappers: {
           [TypeWrappers.NON_NULL_NAMED_TYPE]: true
         }
@@ -208,7 +215,7 @@ const buildNodeSelectionArguments = ({
         name: toFieldName
       }),
       type: buildNamedType({
-        name: `_${toType}Input`,
+        name: toTypeName,
         wrappers: {
           [TypeWrappers.NON_NULL_NAMED_TYPE]: true
         }
@@ -336,7 +343,8 @@ const buildRelationshipMutationField = ({
           fromType,
           toType,
           propertyOutputFields,
-          outputType
+          outputType,
+          config
         }),
         directives: buildRelationshipMutationDirectives({
           mutationAction,
@@ -421,12 +429,14 @@ const buildRelationshipMutationArguments = ({
   fromType,
   toType,
   propertyOutputFields,
-  outputType
+  outputType,
+  config
 }) => {
   const fieldArguments = buildNodeSelectionArguments({
     relationshipDirective,
     fromType,
-    toType
+    toType,
+    config
   });
   if (
     (mutationAction === RelationshipMutation.CREATE ||

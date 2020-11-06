@@ -6,13 +6,10 @@ import {
 import { augmentNodeMutationAPI } from './mutation';
 import { augmentRelationshipTypeField } from '../relationship/relationship';
 import { augmentRelationshipMutationAPI } from '../relationship/mutation';
-import { shouldAugmentType } from '../../augment';
 import {
-  TypeWrappers,
   unwrapNamedType,
   isPropertyTypeField,
-  buildNeo4jSystemIDField,
-  getTypeFields
+  buildNeo4jSystemIDField
 } from '../../fields';
 import {
   FilteringArgument,
@@ -33,13 +30,6 @@ import {
   validateFieldDirectives
 } from '../../directives';
 import {
-  buildName,
-  buildNamedType,
-  buildInputObjectType,
-  buildInputValue
-} from '../../ast';
-import {
-  OperationType,
   isNodeType,
   isRelationshipType,
   isQueryTypeDefinition,
@@ -47,7 +37,6 @@ import {
   isObjectTypeExtensionDefinition,
   isInterfaceTypeExtensionDefinition
 } from '../../types/types';
-import { getPrimaryKey } from './selection';
 import { ApolloError } from 'apollo-server-errors';
 
 /**
@@ -482,14 +471,7 @@ const augmentNodeTypeAPI = ({
       propertyInputValues,
       generatedTypeMap,
       operationTypeMap,
-      typeExtensionDefinitionMap,
-      config
-    });
-    generatedTypeMap = buildNodeSelectionInputType({
-      definition,
-      typeName,
-      propertyInputValues,
-      generatedTypeMap,
+      typeDefinitionMap,
       typeExtensionDefinitionMap,
       config
     });
@@ -510,54 +492,4 @@ const augmentNodeTypeAPI = ({
     config
   });
   return [typeDefinitionMap, generatedTypeMap, operationTypeMap];
-};
-
-/**
- * Builds the AST definition of the node input object type used
- * by relationship mutations for selecting the nodes of the
- * relationship
- */
-
-const buildNodeSelectionInputType = ({
-  definition,
-  typeName,
-  propertyInputValues,
-  generatedTypeMap,
-  typeExtensionDefinitionMap,
-  config
-}) => {
-  const mutationTypeName = OperationType.MUTATION;
-  const mutationTypeNameLower = mutationTypeName.toLowerCase();
-  if (shouldAugmentType(config, mutationTypeNameLower, typeName)) {
-    const fields = getTypeFields({
-      typeName,
-      definition,
-      typeExtensionDefinitionMap
-    });
-    const primaryKey = getPrimaryKey({ fields });
-    const propertyInputName = `_${typeName}Input`;
-    if (primaryKey) {
-      const primaryKeyName = primaryKey.name.value;
-      const primaryKeyInputConfig = propertyInputValues.find(
-        field => field.name === primaryKeyName
-      );
-      if (primaryKeyInputConfig) {
-        generatedTypeMap[propertyInputName] = buildInputObjectType({
-          name: buildName({ name: propertyInputName }),
-          fields: [
-            buildInputValue({
-              name: buildName({ name: primaryKeyName }),
-              type: buildNamedType({
-                name: primaryKeyInputConfig.type.name,
-                wrappers: {
-                  [TypeWrappers.NON_NULL_NAMED_TYPE]: true
-                }
-              })
-            })
-          ]
-        });
-      }
-    }
-  }
-  return generatedTypeMap;
 };

@@ -333,7 +333,7 @@ const LogicalFilteringArgument = {
 /**
  * Builds the AST definitions for logical filtering arguments
  */
-const buildLogicalFilterInputValues = ({ typeName = '' }) => {
+export const buildLogicalFilterInputValues = ({ typeName = '' }) => {
   return [
     buildInputValue({
       name: buildName({ name: LogicalFilteringArgument.AND }),
@@ -361,7 +361,7 @@ const buildLogicalFilterInputValues = ({ typeName = '' }) => {
 /**
  * Builds the AST definitions for filtering Neo4j property type fields
  */
-const buildPropertyFilters = ({
+export const buildPropertyFilters = ({
   field,
   fieldName = '',
   outputType = '',
@@ -512,11 +512,10 @@ export const selectUnselectedOrderedFields = ({
     );
     const orderingArgumentFieldNames = Object.keys(orderedFieldNameMap);
     orderingArgumentFieldNames.forEach(orderedFieldName => {
-      if (
-        !fieldSelectionSet.some(
-          field => field.name && field.name.value === orderedFieldName
-        )
-      ) {
+      const orderedFieldAlreadySelected = fieldSelectionSet.some(
+        field => field.name && field.name.value === orderedFieldName
+      );
+      if (!orderedFieldAlreadySelected) {
         // add the field so that its data can be used for ordering
         // since as it is not actually selected, it will be removed
         // by default GraphQL post-processing field resolvers

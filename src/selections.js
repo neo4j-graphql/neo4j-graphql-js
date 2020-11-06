@@ -431,7 +431,6 @@ export function buildCypherSelection({
           selectionFilters,
           neo4jTypeArgs,
           fieldsForTranslation,
-          schemaType,
           subSelection,
           skipLimit,
           commaIfTail,

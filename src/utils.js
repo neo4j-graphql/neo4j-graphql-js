@@ -470,7 +470,7 @@ const buildNeo4jTypeCypherParameters = ({
   const neo4jTypeConstructor = decideNeo4jTypeConstructor(fieldTypeName);
   if (neo4jTypeConstructor) {
     // Prefer only using formatted, if provided
-    if (formatted) {
+    if (formatted !== undefined) {
       if (paramKey) params[paramKey][paramName] = formatted;
       else params[paramName] = formatted;
       paramStatements.push(
