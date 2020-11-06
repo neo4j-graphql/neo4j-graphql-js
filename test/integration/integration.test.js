@@ -334,7 +334,7 @@ test.serial('Merge node mutation (not-isolated)', async t => {
     });
 });
 
-test('Update node mutation', async t => {
+test.serial('Update node mutation', async t => {
   t.plan(1);
 
   let expected = {
@@ -544,7 +544,7 @@ test.serial('Remove relationship mutation (not-isolated)', async t => {
     });
 });
 
-test('Delete node mutation', async t => {
+test.serial('Delete node mutation', async t => {
   t.plan(1);
 
   await client
