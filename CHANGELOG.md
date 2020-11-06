@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.17.1
+
+- [Fix bug with mutations using `formatted` field for temporal types](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/531)
+- [Fix bug when ordering using `formatted` field for temporal types](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/531)
+- [Add new (optional) experimental mutation API](https://grandstack.io/docs/graphql-schema-generation-augmentation#experimental-api)
+
 ## 2.17.0
 
 - [Allow user defined Role enum name](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/519)
