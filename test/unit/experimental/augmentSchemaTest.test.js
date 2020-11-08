@@ -115,10 +115,23 @@ test.cb('Test augmented schema', t => {
       _id: String
     }
 
-    input _UserData {
+    input _UserCreate {
       idField: ID
       name: String
+      names: [String]
       birthday: _Neo4jDateTimeInput
+      birthdays: [_Neo4jDateTimeInput]
+      uniqueString: String!
+      indexedInt: Int
+      extensionString: String!
+    }
+
+    input _UserUpdate {
+      idField: ID
+      name: String
+      names: [String]
+      birthday: _Neo4jDateTimeInput
+      birthdays: [_Neo4jDateTimeInput]
       uniqueString: String
       indexedInt: Int
       extensionString: String
@@ -203,6 +216,14 @@ test.cb('Test augmented schema', t => {
       name_not_starts_with: String
       name_ends_with: String
       name_not_ends_with: String
+      names: [String!]
+      names_not: [String!]
+      names_contains: [String!]
+      names_not_contains: [String!]
+      names_starts_with: [String!]
+      names_not_starts_with: [String!]
+      names_ends_with: [String!]
+      names_not_ends_with: [String!]
       birthday: _Neo4jDateTimeInput
       birthday_not: _Neo4jDateTimeInput
       birthday_in: [_Neo4jDateTimeInput!]
@@ -211,6 +232,12 @@ test.cb('Test augmented schema', t => {
       birthday_lte: _Neo4jDateTimeInput
       birthday_gt: _Neo4jDateTimeInput
       birthday_gte: _Neo4jDateTimeInput
+      birthdays: [_Neo4jDateTimeInput!]
+      birthdays_not: [_Neo4jDateTimeInput!]
+      birthdays_lt: [_Neo4jDateTimeInput!]
+      birthdays_lte: [_Neo4jDateTimeInput!]
+      birthdays_gt: [_Neo4jDateTimeInput!]
+      birthdays_gte: [_Neo4jDateTimeInput!]
       uniqueString: String
       uniqueString_not: String
       uniqueString_in: [String!]
@@ -260,7 +287,9 @@ test.cb('Test augmented schema', t => {
     type User {
       idField: ID! @id
       name: String
+      names: [String]
       birthday: _Neo4jDateTime
+      birthdays: [_Neo4jDateTime]
       uniqueString: String! @unique
       indexedInt: Int @index
       liked(
@@ -372,7 +401,13 @@ test.cb('Test augmented schema', t => {
       _id: String
     }
 
-    input _MovieData {
+    input _MovieCreate {
+      id: ID
+      title: String!
+      genre: MovieGenre
+    }
+
+    input _MovieUpdate {
       id: ID
       title: String
       genre: MovieGenre
@@ -705,7 +740,9 @@ test.cb('Test augmented schema', t => {
       User(
         idField: ID
         name: String
+        names: [String]
         birthday: _Neo4jDateTimeInput
+        birthdays: [_Neo4jDateTimeInput]
         uniqueString: String
         indexedInt: Int
         extensionString: String
@@ -818,16 +855,16 @@ test.cb('Test augmented schema', t => {
           scopes: ["User: Merge", "merge:user", "Movie: Merge", "merge:movie"]
         )
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#create) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-nodes) a User node."
-      CreateUser(data: _UserData!): User
+      CreateUser(data: _UserCreate!): User
         @hasScope(scopes: ["User: Create", "create:user"])
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#update) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) a User node."
-      UpdateUser(where: _UserWhere!, data: _UserData!): User
+      UpdateUser(where: _UserWhere!, data: _UserUpdate!): User
         @hasScope(scopes: ["User: Update", "update:user"])
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#delete) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-single-node) a User node."
       DeleteUser(where: _UserWhere!): User
         @hasScope(scopes: ["User: Delete", "delete:user"])
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#merge) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-node-derived) a User node."
-      MergeUser(where: _UserKeys!, data: _UserData!): User
+      MergeUser(where: _UserKeys!, data: _UserCreate!): User
         @hasScope(scopes: ["User: Merge", "merge:user"])
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the RATING relationship."
       AddMovieLikedBy(
@@ -921,16 +958,16 @@ test.cb('Test augmented schema', t => {
           scopes: ["User: Merge", "merge:user", "Movie: Merge", "merge:movie"]
         )
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#create) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-nodes) a Movie node."
-      CreateMovie(data: _MovieData!): Movie
+      CreateMovie(data: _MovieCreate!): Movie
         @hasScope(scopes: ["Movie: Create", "create:movie"])
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#update) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) a Movie node."
-      UpdateMovie(where: _MovieWhere!, data: _MovieData!): Movie
+      UpdateMovie(where: _MovieWhere!, data: _MovieUpdate!): Movie
         @hasScope(scopes: ["Movie: Update", "update:movie"])
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#delete) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-single-node) a Movie node."
       DeleteMovie(where: _MovieWhere!): Movie
         @hasScope(scopes: ["Movie: Delete", "delete:movie"])
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#merge) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-node-derived) a Movie node."
-      MergeMovie(where: _MovieKeys!, data: _MovieData!): Movie
+      MergeMovie(where: _MovieKeys!, data: _MovieCreate!): Movie
         @hasScope(scopes: ["Movie: Merge", "merge:movie"])
     }
 
