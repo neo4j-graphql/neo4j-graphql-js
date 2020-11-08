@@ -74,6 +74,11 @@ import {
   TypeWrappers
 } from './augment/fields';
 import {
+  isPrimaryKeyField,
+  isUniqueField,
+  isIndexedField
+} from './augment/directives';
+import {
   analyzeMutationArguments,
   isNeo4jTypeArgument,
   OrderingArgument
@@ -1740,14 +1745,25 @@ const nodeMergeOrUpdate = ({
     // config.experimental
     // no need to use .params key in this argument design
     params = params.params;
-    const inputTranslation = translateNodeInputArgument({
+    const [
+      createProperties,
+      updateProperties,
+      generatePrimaryKey
+    ] = translateNodeInputArgument({
       dataArgument,
-      variableName,
       params,
+      primaryKey,
       typeMap,
+      fieldMap,
       resolveInfo,
       context
     });
+    let onMatchStatements = ``;
+    if (updateProperties.length > 0) {
+      onMatchStatements = `SET ${safeVar(
+        variableName
+      )} += {${updateProperties.join(',')}} `;
+    }
     if (isMergeMutation(resolveInfo)) {
       const unwrappedType = unwrapNamedType({ type: selectionArgument.type });
       const name = unwrappedType.name;
@@ -1761,9 +1777,19 @@ const nodeMergeOrUpdate = ({
         resolveInfo,
         cypherParams: getCypherParams(context)
       });
-      query = `${cypherOperation} (${safeVariableName}:${safeLabelName}{${selectionExpression.join(
-        ','
-      )}})${inputTranslation}\n`;
+      const onCreateProps = [...createProperties, ...generatePrimaryKey];
+      let onCreateStatements = ``;
+      if (onCreateProps.length > 0) {
+        onCreateStatements = `SET ${safeVar(
+          variableName
+        )} += {${onCreateProps.join(',')}}`;
+      }
+      const keySelectionStatement = selectionExpression.join(',');
+      query = `${cypherOperation} (${safeVariableName}:${safeLabelName}{${keySelectionStatement}})
+ON CREATE
+  ${onCreateStatements}
+ON MATCH
+  ${onMatchStatements}`;
     } else {
       const [predicate, serializedFilter] = translateNodeSelectionArgument({
         variableName,
@@ -1772,7 +1798,8 @@ const nodeMergeOrUpdate = ({
         schemaType,
         resolveInfo
       });
-      query = `${cypherOperation} (${safeVariableName}:${safeLabelName})${predicate}${inputTranslation}\n`;
+      query = `${cypherOperation} (${safeVariableName}:${safeLabelName})${predicate}
+${onMatchStatements}\n`;
       params = { ...params, ...serializedFilter };
     }
   } else {
@@ -1859,9 +1886,10 @@ RETURN ${safeVariableName}`;
 
 const translateNodeInputArgument = ({
   dataArgument = {},
-  variableName,
   params,
+  primaryKey,
   typeMap,
+  fieldMap,
   resolveInfo,
   context
 }) => {
@@ -1870,20 +1898,39 @@ const translateNodeInputArgument = ({
   const inputType = typeMap[name];
   const inputValues = inputType.getFields();
   const updateArgs = Object.values(inputValues).map(arg => arg.astNode);
-  let translation = '';
-  const paramUpdateStatements = buildCypherParameters({
+  let paramUpdateStatements = buildCypherParameters({
     args: updateArgs,
     params,
     paramKey: 'data',
     resolveInfo,
     cypherParams: getCypherParams(context)
   });
-  if (paramUpdateStatements.length > 0) {
-    translation = `\nSET ${safeVar(
-      variableName
-    )} += {${paramUpdateStatements.join(',')}} `;
+  const propertyArgs = updateArgs.filter(arg => {
+    const name = arg.name.value;
+    const field = fieldMap[name];
+    const directives = field.astNode.directives;
+    return (
+      !isPrimaryKeyField({ directives }) &&
+      !isUniqueField({ directives }) &&
+      !isIndexedField({ directives })
+    );
+  });
+  const createProperties = buildCypherParameters({
+    args: propertyArgs,
+    params,
+    paramKey: 'data',
+    resolveInfo,
+    cypherParams: getCypherParams(context)
+  });
+  let primaryKeyStatement = [];
+  if (isMergeMutation(resolveInfo)) {
+    primaryKeyStatement = setPrimaryKeyValue({
+      args: updateArgs,
+      params: params['where'],
+      primaryKey
+    });
   }
-  return translation;
+  return [createProperties, paramUpdateStatements, primaryKeyStatement];
 };
 
 const translateNodeSelectionArgument = ({
