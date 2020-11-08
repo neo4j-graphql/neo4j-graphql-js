@@ -4,7 +4,9 @@ export const testSchema = `
   type User {
     idField: ID! @id
     name: String
+    names: [String]
     birthday: DateTime
+    birthdays: [DateTime]
     uniqueString: String! @unique
     indexedInt: Int @index
     liked: [Movie!]! @relation(
