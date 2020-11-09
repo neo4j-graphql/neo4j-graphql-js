@@ -33,14 +33,36 @@ export function cypherTestRunner(
     testSchema +
     `
     type Mutation {
-      CreateUser(data: _UserData!): User @hasScope(scopes: ["User: Create", "create:user"])
-      UpdateUser(where: _UserWhere!, data: _UserData!): User @hasScope(scopes: ["User: Update", "update:user"])
+      CreateUser(data: _UserCreate!): User @hasScope(scopes: ["User: Create", "create:user"])
+      UpdateUser(where: _UserWhere!, data: _UserUpdate!): User @hasScope(scopes: ["User: Update", "update:user"])
       DeleteUser(where: _UserWhere!): User @hasScope(scopes: ["User: Delete", "delete:user"])
-      MergeUser(where: _UserWhere!, data: _UserData!): User @hasScope(scopes: ["User: Merge", "merge:user"])
+      MergeUser(where: _UserKeys!, data: _UserCreate!): User @hasScope(scopes: ["User: Merge", "merge:user"])
     }
 
     type Query {
       User: [User] @hasScope(scopes: ["User: Read", "read:user"])
+    }
+
+    input _UserCreate {
+      idField: ID
+      name: String
+      names: [String]
+      birthday: _Neo4jDateTimeInput
+      birthdays: [_Neo4jDateTimeInput]
+      uniqueString: String!
+      indexedInt: Int
+      extensionString: String!
+    }
+
+    input _UserUpdate {
+      idField: ID
+      name: String
+      names: [String]
+      birthday: _Neo4jDateTimeInput
+      birthdays: [_Neo4jDateTimeInput]
+      uniqueString: String
+      indexedInt: Int
+      extensionString: String
     }
 
     input _UserWhere {
@@ -80,15 +102,6 @@ export function cypherTestRunner(
       idField: ID
       uniqueString: String
       indexedInt: Int
-    }
-
-    input _UserData {
-      idField: ID
-      name: String
-      birthday: _Neo4jDateTimeInput
-      uniqueString: String
-      indexedInt: Int
-      extensionString: String
     }
     
   `;

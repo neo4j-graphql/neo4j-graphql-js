@@ -74,6 +74,11 @@ import {
   TypeWrappers
 } from './augment/fields';
 import {
+  isPrimaryKeyField,
+  isUniqueField,
+  isIndexedField
+} from './augment/directives';
+import {
   analyzeMutationArguments,
   isNeo4jTypeArgument,
   OrderingArgument
@@ -1740,14 +1745,24 @@ const nodeMergeOrUpdate = ({
     // config.experimental
     // no need to use .params key in this argument design
     params = params.params;
-    const inputTranslation = translateNodeInputArgument({
-      dataArgument,
-      variableName,
-      params,
-      typeMap,
-      resolveInfo,
-      context
-    });
+    const [propertyStatements, generatePrimaryKey] = translateNodeInputArgument(
+      {
+        selectionArgument,
+        dataArgument,
+        params,
+        primaryKey,
+        typeMap,
+        fieldMap,
+        resolveInfo,
+        context
+      }
+    );
+    let onMatchStatements = ``;
+    if (propertyStatements.length > 0) {
+      onMatchStatements = `SET ${safeVar(
+        variableName
+      )} += {${propertyStatements.join(',')}} `;
+    }
     if (isMergeMutation(resolveInfo)) {
       const unwrappedType = unwrapNamedType({ type: selectionArgument.type });
       const name = unwrappedType.name;
@@ -1761,9 +1776,20 @@ const nodeMergeOrUpdate = ({
         resolveInfo,
         cypherParams: getCypherParams(context)
       });
-      query = `${cypherOperation} (${safeVariableName}:${safeLabelName}{${selectionExpression.join(
-        ','
-      )}})${inputTranslation}\n`;
+      // generatePrimaryKey is either empty or contains a call to apoc.create.uuid for @id key
+      const onCreateProps = [...propertyStatements, ...generatePrimaryKey];
+      let onCreateStatements = ``;
+      if (onCreateProps.length > 0) {
+        onCreateStatements = `SET ${safeVar(
+          variableName
+        )} += {${onCreateProps.join(',')}}`;
+      }
+      const keySelectionStatement = selectionExpression.join(',');
+      query = `${cypherOperation} (${safeVariableName}:${safeLabelName}{${keySelectionStatement}})
+ON CREATE
+  ${onCreateStatements}
+ON MATCH
+  ${onMatchStatements}`;
     } else {
       const [predicate, serializedFilter] = translateNodeSelectionArgument({
         variableName,
@@ -1772,7 +1798,8 @@ const nodeMergeOrUpdate = ({
         schemaType,
         resolveInfo
       });
-      query = `${cypherOperation} (${safeVariableName}:${safeLabelName})${predicate}${inputTranslation}\n`;
+      query = `${cypherOperation} (${safeVariableName}:${safeLabelName})${predicate}
+${onMatchStatements}\n`;
       params = { ...params, ...serializedFilter };
     }
   } else {
@@ -1858,9 +1885,10 @@ RETURN ${safeVariableName}`;
 };
 
 const translateNodeInputArgument = ({
+  selectionArgument = {},
   dataArgument = {},
-  variableName,
   params,
+  primaryKey,
   typeMap,
   resolveInfo,
   context
@@ -1870,20 +1898,37 @@ const translateNodeInputArgument = ({
   const inputType = typeMap[name];
   const inputValues = inputType.getFields();
   const updateArgs = Object.values(inputValues).map(arg => arg.astNode);
-  let translation = '';
-  const paramUpdateStatements = buildCypherParameters({
+  let propertyStatements = buildCypherParameters({
     args: updateArgs,
     params,
     paramKey: 'data',
     resolveInfo,
     cypherParams: getCypherParams(context)
   });
-  if (paramUpdateStatements.length > 0) {
-    translation = `\nSET ${safeVar(
-      variableName
-    )} += {${paramUpdateStatements.join(',')}} `;
+  let primaryKeyStatement = [];
+  if (isMergeMutation(resolveInfo)) {
+    const unwrappedType = unwrapNamedType({ type: selectionArgument.type });
+    const name = unwrappedType.name;
+    const inputType = typeMap[name];
+    const inputValues = inputType.getFields();
+    const selectionArgs = Object.values(inputValues).map(arg => arg.astNode);
+    // check key selection values for @id key argument
+    const primaryKeySelectionValue = setPrimaryKeyValue({
+      args: selectionArgs,
+      params: params['where'],
+      primaryKey
+    });
+    const primaryKeyValue = setPrimaryKeyValue({
+      args: updateArgs,
+      params: params['data'],
+      primaryKey
+    });
+    if (primaryKeySelectionValue.length && primaryKeyValue.length) {
+      // apoc.create.uuid() statement returned for both, so a value exists in neither
+      primaryKeyStatement = primaryKeySelectionValue;
+    }
   }
-  return translation;
+  return [propertyStatements, primaryKeyStatement];
 };
 
 const translateNodeSelectionArgument = ({

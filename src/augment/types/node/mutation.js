@@ -30,7 +30,7 @@ import {
 /**
  * An enum describing the names of node type mutations
  */
-const NodeMutation = {
+export const NodeMutation = {
   CREATE: 'Create',
   UPDATE: 'Update',
   DELETE: 'Delete',
@@ -213,20 +213,29 @@ const buildNodeMutationObjectArguments = ({ typeName, operationName = '' }) => {
       }
     }
   };
-  const propertyInputConfig = {
+  const propertyCreateInputConfig = {
     name: 'data',
     type: {
-      name: `_${typeName}Data`,
+      name: `_${typeName}Create`,
+      wrappers: {
+        [TypeWrappers.NON_NULL_NAMED_TYPE]: true
+      }
+    }
+  };
+  const propertyUpdateInputConfig = {
+    name: 'data',
+    type: {
+      name: `_${typeName}Update`,
       wrappers: {
         [TypeWrappers.NON_NULL_NAMED_TYPE]: true
       }
     }
   };
   if (operationName === NodeMutation.CREATE) {
-    args.push(propertyInputConfig);
+    args.push(propertyCreateInputConfig);
   } else if (operationName === NodeMutation.UPDATE) {
     args.push(nodeSelectionConfig);
-    args.push(propertyInputConfig);
+    args.push(propertyUpdateInputConfig);
   } else if (operationName === NodeMutation.MERGE) {
     const keySelectionInputConfig = {
       name: 'where',
@@ -238,7 +247,7 @@ const buildNodeMutationObjectArguments = ({ typeName, operationName = '' }) => {
       }
     };
     args.push(keySelectionInputConfig);
-    args.push(propertyInputConfig);
+    args.push(propertyCreateInputConfig);
   } else if (operationName === NodeMutation.DELETE) {
     args.push(nodeSelectionConfig);
   }

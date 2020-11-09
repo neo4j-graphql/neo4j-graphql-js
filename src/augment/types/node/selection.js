@@ -28,6 +28,7 @@ import {
   buildPropertyFilters,
   buildLogicalFilterInputValues
 } from '../../input-values';
+import { NodeMutation } from './mutation';
 
 /**
  * Gets a single field for use as a primary key
@@ -192,12 +193,19 @@ export const buildNodeSelectionInputTypes = ({
       definition,
       typeExtensionDefinitionMap
     });
-    // Used by Create, Update, Merge
-    generatedTypeMap = buildNodeDataInputObject({
+    // Used by Create, Merge
+    generatedTypeMap = buildNodeCreateInputObject({
       typeName,
       propertyInputValues,
       generatedTypeMap
     });
+    // Used by Update
+    generatedTypeMap = buildNodeUpdateInputObject({
+      typeName,
+      propertyInputValues,
+      generatedTypeMap
+    });
+
     // Used by Update, Delete
     generatedTypeMap = buildNodeSelectionInputObject({
       typeName,
@@ -306,19 +314,47 @@ const buildNodeKeySelectionInputObject = ({
   return generatedTypeMap;
 };
 
-const buildNodeDataInputObject = ({
+const buildNodeCreateInputObject = ({
   typeName,
   propertyInputValues = [],
   generatedTypeMap
 }) => {
-  const propertyInputName = `_${typeName}Data`;
+  const propertyInputName = `_${typeName}Create`;
   const inputValues = propertyInputValues.map(field => {
-    const { name, type } = field;
+    const { name, type, directives } = field;
+    const isPrimaryKey = directives.some(
+      directive => directive.name.value === 'id'
+    );
+    // keep nonnull and list type wrappers for Create and Merge node mutation,
+    // expect for a primary key, so it could be generated if not provided
+    if (isPrimaryKey) type.wrappers = {};
     return buildInputValue({
       name: buildName({ name }),
-      type: buildNamedType({
-        name: type.name
-      })
+      type: buildNamedType(type)
+    });
+  });
+  if (inputValues.length) {
+    generatedTypeMap[propertyInputName] = buildInputObjectType({
+      name: buildName({ name: propertyInputName }),
+      fields: inputValues
+    });
+  }
+  return generatedTypeMap;
+};
+
+const buildNodeUpdateInputObject = ({
+  typeName,
+  propertyInputValues = [],
+  generatedTypeMap
+}) => {
+  const propertyInputName = `_${typeName}Update`;
+  const inputValues = propertyInputValues.map(field => {
+    const { name, type } = field;
+    // set all fields to optional, keep list type wrappers
+    type.wrappers[TypeWrappers.NON_NULL_NAMED_TYPE] = false;
+    return buildInputValue({
+      name: buildName({ name }),
+      type: buildNamedType(type)
     });
   });
   if (inputValues.length) {
