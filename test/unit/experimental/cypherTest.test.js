@@ -225,11 +225,91 @@ RETURN \`user\``,
   ]);
 });
 
-test('Merge node mutation using data input object argument', t => {
+test('Merge node mutation using data input object argument (creating with .where @id value)', t => {
   const graphQLQuery = `mutation {
     MergeUser(
       where: {
         idField: "A"
+        indexedInt: 33
+      }
+      data: {
+        indexedInt: 33
+        uniqueString: "abc"
+        name: "Michael"
+        extensionString: "xyz"
+        birthday: { year: 1987, month: 9, day: 3, hour: 1 }
+      }
+    ) {
+      idField
+      indexedInt
+      name
+      birthday {
+        year
+        month
+        day
+      }
+    }
+  }  
+  `,
+    expectedCypherQuery = `MERGE (\`user\`:\`User\`{idField:$where.idField,indexedInt:$where.indexedInt})
+ON CREATE
+  SET \`user\` += {name:$data.name,birthday: datetime($data.birthday),uniqueString:$data.uniqueString,indexedInt:$data.indexedInt,extensionString:$data.extensionString}
+ON MATCH
+  SET \`user\` += {name:$data.name,birthday: datetime($data.birthday),uniqueString:$data.uniqueString,indexedInt:$data.indexedInt,extensionString:$data.extensionString} RETURN \`user\` { .idField , .indexedInt , .name ,birthday: { year: \`user\`.birthday.year , month: \`user\`.birthday.month , day: \`user\`.birthday.day }} AS \`user\``,
+    expectedParams = {
+      where: {
+        idField: 'A',
+        indexedInt: {
+          low: 33,
+          high: 0
+        }
+      },
+      data: {
+        name: 'Michael',
+        birthday: {
+          year: {
+            low: 1987,
+            high: 0
+          },
+          month: {
+            low: 9,
+            high: 0
+          },
+          day: {
+            low: 3,
+            high: 0
+          },
+          hour: {
+            low: 1,
+            high: 0
+          }
+        },
+        uniqueString: 'abc',
+        indexedInt: {
+          low: 33,
+          high: 0
+        },
+        extensionString: 'xyz'
+      }
+    };
+
+  t.plan(4);
+  return Promise.all([
+    cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery, expectedParams),
+    augmentedSchemaCypherTestRunner(
+      t,
+      graphQLQuery,
+      {},
+      expectedCypherQuery,
+      expectedParams
+    )
+  ]);
+});
+
+test('Merge node mutation using data input object argument (creating with .data @id value)', t => {
+  const graphQLQuery = `mutation {
+    MergeUser(
+      where: {
         indexedInt: 33
       }
       data: {
@@ -252,14 +332,13 @@ test('Merge node mutation using data input object argument', t => {
     }
   }  
   `,
-    expectedCypherQuery = `MERGE (\`user\`:\`User\`{idField:$where.idField,indexedInt:$where.indexedInt})
+    expectedCypherQuery = `MERGE (\`user\`:\`User\`{indexedInt:$where.indexedInt})
 ON CREATE
-  SET \`user\` += {name:$data.name,birthday: datetime($data.birthday),extensionString:$data.extensionString}
+  SET \`user\` += {idField:$data.idField,name:$data.name,birthday: datetime($data.birthday),uniqueString:$data.uniqueString,indexedInt:$data.indexedInt,extensionString:$data.extensionString}
 ON MATCH
   SET \`user\` += {idField:$data.idField,name:$data.name,birthday: datetime($data.birthday),uniqueString:$data.uniqueString,indexedInt:$data.indexedInt,extensionString:$data.extensionString} RETURN \`user\` { .idField , .indexedInt , .name ,birthday: { year: \`user\`.birthday.year , month: \`user\`.birthday.month , day: \`user\`.birthday.day }} AS \`user\``,
     expectedParams = {
       where: {
-        idField: 'A',
         indexedInt: {
           low: 33,
           high: 0
@@ -308,7 +387,7 @@ ON MATCH
   ]);
 });
 
-test('Merge node mutation using multiple keys, generated @id property, and query variables', t => {
+test('Merge node mutation using multiple keys, generated @id property, and query variables (generating @id value)', t => {
   const graphQLQuery = `mutation MergeUser($where: _UserKeys!, $data: _UserCreate!) {
     MergeUser(
       where: $where,
@@ -338,8 +417,6 @@ test('Merge node mutation using multiple keys, generated @id property, and query
         indexedInt: 33
       },
       data: {
-        // Used ON MATCH
-        idField: '123',
         // keys to set on create or match
         uniqueString: 'abc',
         indexedInt: 33,
@@ -353,9 +430,9 @@ test('Merge node mutation using multiple keys, generated @id property, and query
     },
     expectedCypherQuery = `MERGE (\`user\`:\`User\`{uniqueString:$where.uniqueString,indexedInt:$where.indexedInt})
 ON CREATE
-  SET \`user\` += {name:$data.name,names:$data.names,birthday: datetime($data.birthday),extensionString:$data.extensionString,idField: apoc.create.uuid()}
+  SET \`user\` += {name:$data.name,names:$data.names,birthday: datetime($data.birthday),uniqueString:$data.uniqueString,indexedInt:$data.indexedInt,extensionString:$data.extensionString,idField: apoc.create.uuid()}
 ON MATCH
-  SET \`user\` += {idField:$data.idField,name:$data.name,names:$data.names,birthday: datetime($data.birthday),uniqueString:$data.uniqueString,indexedInt:$data.indexedInt,extensionString:$data.extensionString} RETURN \`user\` { .idField , .indexedInt , .name , .names , .uniqueString , .extensionString ,birthday: { year: \`user\`.birthday.year , month: \`user\`.birthday.month , day: \`user\`.birthday.day }} AS \`user\``,
+  SET \`user\` += {name:$data.name,names:$data.names,birthday: datetime($data.birthday),uniqueString:$data.uniqueString,indexedInt:$data.indexedInt,extensionString:$data.extensionString} RETURN \`user\` { .idField , .indexedInt , .name , .names , .uniqueString , .extensionString ,birthday: { year: \`user\`.birthday.year , month: \`user\`.birthday.month , day: \`user\`.birthday.day }} AS \`user\``,
     expectedParams = {
       where: {
         uniqueString: 'abc',
@@ -365,7 +442,6 @@ ON MATCH
         }
       },
       data: {
-        idField: '123',
         name: 'Michael',
         names: ['A', 'B'],
         birthday: {
