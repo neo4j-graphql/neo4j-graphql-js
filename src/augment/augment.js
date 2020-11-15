@@ -18,6 +18,7 @@ import {
 import { augmentDirectiveDefinitions } from './directives';
 import { extractResolversFromSchema, augmentResolvers } from './resolvers';
 import { addAuthDirectiveImplementations } from '../auth';
+import _ from 'lodash';
 
 /**
  * The main export for augmenting an SDL document
@@ -40,7 +41,7 @@ export const makeAugmentedExecutableSchema = ({
   let definitions = [];
   if (isParsedTypeDefs) {
     // Print if we recieved parsed type definitions in a GraphQL Document
-    definitions = typeDefs.definitions;
+    definitions = _.cloneDeep(typeDefs.definitions);
   } else {
     // Otherwise parse the SDL and get its definitions
     definitions = parse(typeDefs).definitions;
