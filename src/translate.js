@@ -51,6 +51,7 @@ import {
   isScalarType,
   isEnumType,
   isObjectType,
+  isInputObjectType,
   isInterfaceType
 } from 'graphql';
 import {
@@ -62,7 +63,10 @@ import {
 } from './selections';
 import _ from 'lodash';
 import neo4j from 'neo4j-driver';
-import { isUnionTypeDefinition } from './augment/types/types';
+import {
+  isUnionTypeDefinition,
+  isRelationshipType
+} from './augment/types/types';
 import {
   getFederatedOperationData,
   setCompoundKeyFilter,
@@ -76,7 +80,11 @@ import {
 import {
   isPrimaryKeyField,
   isUniqueField,
-  isIndexedField
+  isIndexedField,
+  isRelationField,
+  getDirective,
+  DirectiveDefinition,
+  getDirectiveArgument
 } from './augment/directives';
 import {
   analyzeMutationArguments,
@@ -87,6 +95,7 @@ import {
   isRelationshipMutationOutputType,
   isReflexiveRelationshipOutputType
 } from './augment/types/relationship/query';
+import { query } from 'express';
 
 const derivedTypesParamName = schemaTypeName =>
   `${schemaTypeName}_derivedTypes`;
@@ -1459,7 +1468,8 @@ export const translateMutation = ({
       mutationTypeCypherDirective,
       variableName,
       orderByValue,
-      outerSkipLimit
+      outerSkipLimit,
+      typeMap
     });
   } else if (isCreateMutation(resolveInfo)) {
     [translation, translationParams] = nodeCreate({
@@ -1480,7 +1490,8 @@ export const translateMutation = ({
       selections,
       params,
       variableName,
-      typeName
+      typeName,
+      typeMap
     });
   } else if (isAddMutation(resolveInfo)) {
     [translation, translationParams] = relationshipCreate({
@@ -1551,7 +1562,8 @@ const customMutation = ({
   usesFragments,
   resolveInfo,
   orderByValue,
-  outerSkipLimit
+  outerSkipLimit,
+  typeMap
 }) => {
   const cypherParams = getCypherParams(context);
   const safeVariableName = safeVar(variableName);
@@ -1565,8 +1577,15 @@ const customMutation = ({
     ),
     cypherParams
   );
+  const args = getMutationArguments(resolveInfo);
   const cypherQueryArg = mutationTypeCypherDirective.arguments.find(x => {
     return x.name.value === 'statement';
+  });
+  const nestedStatements = translateNestedMutations({
+    args,
+    dataParams: params,
+    typeMap,
+    isRoot: true
   });
   const [subQuery, subParams] = buildCypherSelection({
     selections,
@@ -1599,7 +1618,9 @@ const customMutation = ({
     query = `CALL apoc.cypher.doIt("${
       cypherQueryArg.value.value
     }", ${argString}) YIELD value
-    ${!isScalarField ? labelPredicate : ''}AS ${safeVariableName}
+    ${!isScalarField ? labelPredicate : ''}AS ${safeVariableName}${
+      nestedStatements ? nestedStatements : ''
+    }
     RETURN ${
       !isScalarField
         ? `${mapProjection} AS ${safeVariableName}${orderByClause}${outerSkipLimit}`
@@ -1609,7 +1630,9 @@ const customMutation = ({
     query = `CALL apoc.cypher.doIt("${
       cypherQueryArg.value.value
     }", ${argString}) YIELD value
-    WITH ${listVariable}AS ${safeVariableName}
+    WITH ${listVariable}AS ${safeVariableName}${
+      nestedStatements ? nestedStatements : ''
+    }
     RETURN ${safeVariableName} ${
       !isScalarField
         ? `{${
@@ -1634,8 +1657,6 @@ const customMutation = ({
   return [query, { ...params }];
 };
 
-// Generated API
-// Node Create - Update - Delete
 const nodeCreate = ({
   resolveInfo,
   schemaType,
@@ -1647,17 +1668,12 @@ const nodeCreate = ({
   additionalLabels,
   typeMap
 }) => {
-  const safeVariableName = safeVar(variableName);
-  const safeLabelName = safeLabel([typeName, ...additionalLabels]);
-  let statements = [];
   let args = getMutationArguments(resolveInfo);
-  const fieldMap = schemaType.getFields();
-  const fields = Object.values(fieldMap).map(field => field.astNode);
-  const primaryKey = getPrimaryKey({ fields });
-  let createStatement = ``;
   const dataArgument = args.find(arg => arg.name.value === 'data');
   let paramKey = 'params';
   let dataParams = params[paramKey];
+  let nestedStatements = '';
+  // handle differences with experimental input object argument format
   if (dataArgument) {
     // config.experimental
     const unwrappedType = unwrapNamedType({ type: dataArgument.type });
@@ -1665,35 +1681,61 @@ const nodeCreate = ({
     const inputType = typeMap[name];
     const inputValues = inputType.getFields();
     // get the input value AST definitions of the .data input object
-    args = Object.values(inputValues).map(arg => arg.astNode);
     // use the .data key instead of the existing .params format
     paramKey = 'data';
     dataParams = dataParams[paramKey];
-    // elevate .data to top level
-    params.data = dataParams;
+    // elevate .data to top level so it matches "data" argument
+    params = {
+      ...params,
+      ...params.params,
+      data: dataParams
+    };
     // remove .params entry
     delete params.params;
+    // translate nested mutations discovered in input object arguments
+    nestedStatements = translateNestedMutations({
+      args,
+      dataParams: params,
+      typeMap,
+      isRoot: true
+    });
+    args = Object.values(inputValues).map(arg => arg.astNode);
   } else {
-    dataParams = params.params;
+    // translate nested mutations discovered in input object arguments
+    nestedStatements = translateNestedMutations({
+      args,
+      dataParams,
+      typeMap,
+      paramVariable: paramKey,
+      isRoot: true
+    });
   }
+
   // use apoc.create.uuid() to set a default value for @id field,
   // if no value for it is provided in dataParams
-  statements = setPrimaryKeyValue({
+  const fieldMap = schemaType.getFields();
+  const fields = Object.values(fieldMap).map(field => field.astNode);
+  const primaryKey = getPrimaryKey({ fields });
+  const primaryKeyStatement = setPrimaryKeyValue({
     args,
-    statements,
     params: dataParams,
     primaryKey
   });
+  // build Cypher for root CREATE statement
+  const safeVariableName = safeVar(variableName);
+  const safeLabelName = safeLabel([typeName, ...additionalLabels]);
   const paramStatements = buildCypherParameters({
     args,
-    statements,
+    statements: primaryKeyStatement,
     params,
     paramKey,
-    resolveInfo
+    resolveInfo,
+    typeMap
   });
-  createStatement = `CREATE (${safeVariableName}:${safeLabelName} {${paramStatements.join(
+  const createStatement = `CREATE (${safeVariableName}:${safeLabelName} {${paramStatements.join(
     ','
   )}})`;
+  // translate selection set
   const [subQuery, subParams] = buildCypherSelection({
     selections,
     variableName,
@@ -1702,11 +1744,331 @@ const nodeCreate = ({
     cypherParams: getCypherParams(context)
   });
   params = { ...params, ...subParams };
+  const translation = `${createStatement}${
+    nestedStatements
+      ? `
+  WITH *
+  ${nestedStatements}`
+      : ''
+  }`;
   const query = `
-    ${createStatement}
+    ${translation}
     RETURN ${safeVariableName} {${subQuery}} AS ${safeVariableName}
   `;
   return [query, params];
+};
+
+const translateNestedMutations = ({
+  args = [],
+  dataParams = {},
+  paramVariable,
+  typeMap = {},
+  isRoot = false
+}) => {
+  const mappedDataParams = mapMutationParams({ params: dataParams });
+  const statements = [];
+  args.forEach(arg => {
+    const argName = arg.name.value;
+    const typeName = unwrapNamedType({ type: arg.type }).name;
+    const inputType = typeMap[typeName];
+    if (isInputObjectType(inputType) && dataParams[argName] !== undefined) {
+      let paramName = argName;
+      if (isRoot) paramName = paramVariable;
+      const statement = translateNestedMutation({
+        paramName,
+        dataParams: mappedDataParams,
+        args: [arg],
+        paramVariable,
+        typeMap,
+        isRoot
+      });
+      if (statement.length) {
+        // inputType has at least one @cypher input field
+        statements.push(...statement);
+      } else {
+        // inputType did not have a @cypher input field, so keep looking
+        const nestedParams = mappedDataParams[argName];
+        const nestedArgs = Object.values(inputType.getFields()).map(
+          arg => arg.astNode
+        );
+        const statement = translateNestedMutation({
+          isNestedParam: true,
+          paramName: argName,
+          args: nestedArgs,
+          dataParams: nestedParams,
+          paramVariable,
+          typeMap,
+          isRoot
+        });
+        if (statement.length) statements.push(...statement);
+      }
+    }
+  });
+  return statements.join('\n');
+};
+
+const translateNestedMutation = ({
+  args = [],
+  paramName,
+  isRoot,
+  isNestedParam = false,
+  dataParams = {},
+  paramVariable,
+  typeMap = {}
+}) => {
+  const translations = [];
+  // For each defined argument
+  args.forEach(arg => {
+    const argName = arg.name.value;
+    const argumentTypeName = unwrapNamedType({ type: arg.type }).name;
+    const argumentType = typeMap[argumentTypeName];
+    const argValue = dataParams[argName];
+    if (isInputObjectType(argumentType) && argValue !== undefined) {
+      Object.keys(argValue).forEach(name => {
+        translations.push(
+          ...translateNestedMutationInput({
+            name,
+            argName,
+            argValue,
+            argumentType,
+            paramName,
+            paramVariable,
+            isRoot,
+            isNestedParam,
+            typeMap
+          })
+        );
+      });
+    }
+  });
+  return translations;
+};
+
+const translateNestedMutationInput = ({
+  name,
+  argName,
+  argValue,
+  argumentType,
+  paramName,
+  paramVariable,
+  isRoot,
+  isNestedParam,
+  typeMap
+}) => {
+  const translations = [];
+  const inputFields = argumentType.getFields();
+  const inputField = inputFields[name];
+  if (inputField) {
+    const inputFieldAst = inputFields[name].astNode;
+    const inputFieldTypeName = unwrapNamedType({ type: inputFieldAst.type })
+      .name;
+    const inputFieldType = typeMap[inputFieldTypeName];
+    const customCypher = getDirective({
+      directives: inputFieldAst.directives,
+      name: DirectiveDefinition.CYPHER
+    });
+    if (isInputObjectType(inputFieldType)) {
+      if (customCypher) {
+        const inputFieldTypeName = inputFieldType.name;
+        const statement = getDirectiveArgument({
+          directive: customCypher,
+          name: 'statement'
+        });
+        let nestedParamVariable = paramVariable;
+        if (isRoot) {
+          nestedParamVariable = paramName;
+        } else if (isNestedParam) {
+          nestedParamVariable = `${nestedParamVariable}.${paramName}`;
+        }
+        const translated = buildMutationSubQuery({
+          inputFieldTypeName,
+          inputFieldType,
+          statement,
+          name,
+          paramVariable: nestedParamVariable,
+          argName,
+          argValue,
+          typeMap,
+          isRoot,
+          isNestedParam
+        });
+        if (translated) translations.push(translated);
+      } else if (isNestedParam) {
+        // keep looking
+        const nestedArgs = Object.values(argumentType.getFields()).map(
+          arg => arg.astNode
+        );
+        let nestedParamVariable = `${
+          paramVariable ? `${paramVariable}.` : ''
+        }${paramName}`;
+        let nestedParamName = argName;
+        if (isRoot) {
+          nestedParamName = `${paramName ? `${paramName}.` : ''}${argName}`;
+        }
+        const statement = translateNestedMutation({
+          isNestedParam: true,
+          isRoot,
+          paramName: nestedParamName,
+          args: nestedArgs,
+          dataParams: argValue,
+          paramVariable: nestedParamVariable,
+          typeMap
+        });
+        const nestedStatements = statement.join('\n');
+        if (nestedStatements) translations.push(nestedStatements);
+      }
+    }
+  }
+  return translations;
+};
+
+const augmentCypherSubQuery = ({ statement, inputFieldTypeName }) => {
+  const singleLine = statement.replace(/\r?\n|\r/g, ' ');
+  // find every WITH and add a newline character after each WITH
+  const newlinedWithClauses = singleLine.replace(/\r?WITH|\r/gi, '\nWITH');
+  // split the statement based on newlines
+  const splitOnWithClauses = newlinedWithClauses.split('\n');
+  // get the last line, check if it is a WITH clause
+  const lastWithClause = splitOnWithClauses[splitOnWithClauses.length - 1];
+  const endsWithWithClause = lastWithClause.startsWith('WITH');
+  let continueWith = `WITH ${inputFieldTypeName} AS _${inputFieldTypeName}`;
+  if (endsWithWithClause) {
+    const trimmed = lastWithClause.trim();
+    const withRemoved = trimmed.substr(4);
+    const firstCommentIndex = withRemoved.indexOf('//');
+    const firstParamIndex = withRemoved.indexOf(inputFieldTypeName);
+    // inputFieldTypeName exist in the provided WITH clause
+    if (firstParamIndex !== -1) {
+      if (firstCommentIndex !== -1) {
+        // it might be in a // comment though, for some reason
+        if (firstParamIndex > firstCommentIndex) {
+          // it is, so add it
+          splitOnWithClauses[splitOnWithClauses.length - 1] = `${continueWith}${
+            withRemoved ? `, ${withRemoved}` : ''
+          }`;
+        }
+      }
+    } else {
+      // it does not exist, so add it
+      splitOnWithClauses[splitOnWithClauses.length - 1] = `${continueWith}${
+        withRemoved ? `, ${withRemoved}` : ''
+      }`;
+    }
+  } else {
+    // default
+    splitOnWithClauses.push(continueWith);
+  }
+  return splitOnWithClauses.join('\n');
+};
+
+const buildMutationSubQuery = ({
+  inputFieldTypeName,
+  inputFieldType,
+  statement,
+  name,
+  paramVariable,
+  argName,
+  argValue,
+  typeMap,
+  isRoot
+}) => {
+  let statements = '';
+  const inputFieldTypeFields = inputFieldType.getFields();
+  const nestedArgs = Object.values(inputFieldTypeFields).map(
+    arg => arg.astNode
+  );
+  const nestedDataParams = argValue[name];
+  const mappedDataParams = mapMutationParams({ params: nestedDataParams });
+  const nestedMutationStatements = translateNestedMutations({
+    args: nestedArgs,
+    dataParams: mappedDataParams,
+    paramVariable: inputFieldTypeName,
+    typeMap
+  });
+  if (nestedMutationStatements) {
+    const augmentedStatement = augmentCypherSubQuery({
+      statement,
+      inputFieldTypeName
+    });
+    // persist the parameter variable only if there are further
+    // nested translations
+    statements = `${augmentedStatement}${nestedMutationStatements}`;
+  } else {
+    // otherwise, we are at a leaf endpoint
+    statements = statement;
+  }
+  // generalized solution for possible edge case where the current and
+  // nested input type names are the same
+  if (!isRoot && paramVariable) {
+    paramVariable = `_${paramVariable}`;
+  }
+  let paramPath = `${
+    paramVariable ? `${paramVariable}.` : ''
+  }${argName}.${name}`;
+  if (isRoot) paramPath = `$${paramPath}`;
+  return cypherSubQuery({
+    paramPath,
+    paramVariable: inputFieldTypeName,
+    argName,
+    name,
+    statements
+  });
+};
+
+const cypherSubQuery = ({
+  paramPath = '',
+  paramVariable = '',
+  argName,
+  name,
+  statements = ''
+}) => {
+  return `
+CALL {
+  WITH *
+  UNWIND ${paramPath} AS ${paramVariable}
+  ${statements}
+  RETURN COUNT(*) AS _${argName}_${name}_
+}`;
+};
+
+const mapMutationParams = ({ params = {} }) => {
+  return Object.entries(params).reduce((mapped, [name, param]) => {
+    if (param === null) {
+      mapped[name] = true;
+    } else {
+      mapped[name] = mapMutationParam({ param });
+    }
+    return mapped;
+  }, {});
+};
+
+const mapMutationParam = ({ param }) => {
+  let mapped = {};
+  if (Array.isArray(param)) {
+    const firstElement = param[0];
+    if (typeof firstElement === 'object' && !Array.isArray(firstElement)) {
+      param.forEach(listObject => {
+        const subMapped = mapMutationParams({
+          params: listObject
+        });
+        mapped = {
+          ...mapped,
+          ...subMapped
+        };
+      });
+      // list of object values
+      return mapped;
+    } else {
+      // list argument of non-object values
+      return true;
+    }
+  } else if (typeof param === 'object') {
+    if (param === null) return true;
+    return mapMutationParams({
+      params: param
+    });
+  }
+  return true;
 };
 
 const nodeMergeOrUpdate = ({
@@ -1722,6 +2084,9 @@ const nodeMergeOrUpdate = ({
 }) => {
   const safeVariableName = safeVar(variableName);
   const args = getMutationArguments(resolveInfo);
+  let paramKey = 'params';
+  let dataParams = params[paramKey];
+  let nestedStatements = '';
 
   const selectionArgument = args.find(arg => arg.name.value === 'where');
   const dataArgument = args.find(arg => arg.name.value === 'data');
@@ -1744,7 +2109,7 @@ const nodeMergeOrUpdate = ({
   if (selectionArgument && dataArgument) {
     // config.experimental
     // no need to use .params key in this argument design
-    params = params.params;
+    params = dataParams;
     const [propertyStatements, generatePrimaryKey] = translateNodeInputArgument(
       {
         selectionArgument,
@@ -1774,9 +2139,9 @@ const nodeMergeOrUpdate = ({
         params,
         paramKey: 'where',
         resolveInfo,
-        cypherParams: getCypherParams(context)
+        cypherParams: getCypherParams(context),
+        typeMap
       });
-      // generatePrimaryKey is either empty or contains a call to apoc.create.uuid for @id key
       const onCreateProps = [...propertyStatements, ...generatePrimaryKey];
       let onCreateStatements = ``;
       if (onCreateProps.length > 0) {
@@ -1802,18 +2167,32 @@ ON MATCH
 ${onMatchStatements}\n`;
       params = { ...params, ...serializedFilter };
     }
+    nestedStatements = translateNestedMutations({
+      args,
+      dataParams,
+      typeMap,
+      isRoot: true
+    });
   } else {
+    nestedStatements = translateNestedMutations({
+      args,
+      dataParams,
+      paramVariable: paramKey,
+      typeMap,
+      isRoot: true
+    });
     const [primaryKeyParam, updateParams] = splitSelectionParameters(
       params,
       primaryKeyArgName,
-      'params'
+      paramKey
     );
     paramUpdateStatements = buildCypherParameters({
       args,
       params: updateParams,
-      paramKey: 'params',
+      paramKey: paramKey,
       resolveInfo,
-      cypherParams: getCypherParams(context)
+      cypherParams: getCypherParams(context),
+      typeMap
     });
     query = `${cypherOperation} (${safeVariableName}:${safeLabelName}{${primaryKeyArgName}: $params.${primaryKeyArgName}})
   `;
@@ -1833,7 +2212,13 @@ ${onMatchStatements}\n`;
     cypherParams: getCypherParams(context)
   });
   params = { ...params, ...subParams };
-  query += `RETURN ${safeVariableName} {${subQuery}} AS ${safeVariableName}`;
+  query = `${query}${
+    nestedStatements
+      ? `
+  WITH *
+  ${nestedStatements}`
+      : ''
+  }RETURN ${safeVariableName} {${subQuery}} AS ${safeVariableName}`;
   return [query, params];
 };
 
@@ -1843,6 +2228,7 @@ const nodeDelete = ({
   variableName,
   typeName,
   schemaType,
+  typeMap,
   params
 }) => {
   const safeVariableName = safeVar(variableName);
@@ -1867,6 +2253,12 @@ const nodeDelete = ({
   } else {
     matchStatement = `MATCH (${safeVariableName}:${safeLabelName} {${primaryKeyArgName}: $${primaryKeyArgName}})`;
   }
+  const nestedStatements = translateNestedMutations({
+    args,
+    dataParams: params,
+    typeMap,
+    isRoot: true
+  });
   const [subQuery, subParams] = buildCypherSelection({
     selections,
     variableName,
@@ -1875,12 +2267,23 @@ const nodeDelete = ({
   });
   params = { ...params, ...subParams };
   const deletionVariableName = safeVar(`${variableName}_toDelete`);
-  // Cannot execute a map projection on a deleted node in Neo4j
-  // so the projection is executed and aliased before the delete
-  const query = `${matchStatement}
+  let query = '';
+  if (nestedStatements) {
+    // Cannot execute a map projection on a deleted node in Neo4j
+    // so the projection is executed and aliased before the delete
+    query = `${matchStatement}
+${nestedStatements}
 WITH ${safeVariableName} AS ${deletionVariableName}, ${safeVariableName} {${subQuery}} AS ${safeVariableName}
 DETACH DELETE ${deletionVariableName}
 RETURN ${safeVariableName}`;
+  } else {
+    // Cannot execute a map projection on a deleted node in Neo4j
+    // so the projection is executed and aliased before the delete
+    query = `${matchStatement}
+WITH ${safeVariableName} AS ${deletionVariableName}, ${safeVariableName} {${subQuery}} AS ${safeVariableName}
+DETACH DELETE ${deletionVariableName}
+RETURN ${safeVariableName}`;
+  }
   return [query, params];
 };
 
@@ -1903,7 +2306,8 @@ const translateNodeInputArgument = ({
     params,
     paramKey: 'data',
     resolveInfo,
-    cypherParams: getCypherParams(context)
+    cypherParams: getCypherParams(context),
+    typeMap
   });
   let primaryKeyStatement = [];
   if (isMergeMutation(resolveInfo)) {
@@ -2101,7 +2505,8 @@ const relationshipCreate = ({
     args: dataFields,
     params,
     paramKey: 'data',
-    resolveInfo
+    resolveInfo,
+    typeMap
   });
   params = { ...params, ...subParams };
   let query = `
@@ -2403,7 +2808,8 @@ const relationshipMergeOrUpdate = ({
       args: dataFields,
       params,
       paramKey: 'data',
-      resolveInfo
+      resolveInfo,
+      typeMap
     });
 
     let cypherOperation = '';
