@@ -6,7 +6,7 @@ export const testSchema = `
   block
   description
   """
-  directive @cypher(statement: String) on FIELD_DEFINITION
+  directive @cypher(statement: String) on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
 
   "Object type line description"
   type Movie
