@@ -315,7 +315,10 @@ const directiveDefinitionBuilderMap = {
           }
         }
       ],
-      locations: [DirectiveLocation.FIELD_DEFINITION]
+      locations: [
+        DirectiveLocation.FIELD_DEFINITION,
+        DirectiveLocation.INPUT_FIELD_DEFINITION
+      ]
     };
   },
   [DirectiveDefinition.RELATION]: ({ config }) => {
