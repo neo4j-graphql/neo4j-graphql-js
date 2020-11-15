@@ -8,7 +8,7 @@ import {
   augmentTypeDefs
 } from '../../../src/index';
 import { printSchemaDocument } from '../../../src/augment/augment';
-import { testSchema } from '../../helpers/experimental/testSchema';
+import { testSchema } from './testSchema';
 
 // Optimization to prevent schema augmentation from running for every test
 const cypherTestTypeDefs = printSchemaDocument({
@@ -192,10 +192,6 @@ export function augmentedSchemaCypherTestRunner(
     resolvers,
     resolverValidationOptions: {
       requireResolversForResolveType: false
-    },
-    config: {
-      auth: true,
-      experimental: true
     }
   });
 
