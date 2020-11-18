@@ -156,12 +156,12 @@ references:
   env_neo4j42ce: &env_neo4j42ce
       NEO4J_DIST: 'community'
       NEO4J_VERSION: '4.2.0'
-      APOC_VERSION: '4.1.0.4'
+      APOC_VERSION: '4.2.0.0'
       DATASTORE_VERSION: '4_0'
   env_neo4j42ee: &env_neo4j42ee
       NEO4J_DIST: 'enterprise'
       NEO4J_VERSION: '4.2.0'
-      APOC_VERSION: '4.1.0.4'
+      APOC_VERSION: '4.2.0.0'
       DATASTORE_VERSION: '4_0'
   
 
