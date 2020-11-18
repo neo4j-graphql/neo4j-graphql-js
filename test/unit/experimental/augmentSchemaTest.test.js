@@ -700,7 +700,9 @@ test.cb('Test augmented schema', t => {
       OUT
     }
 
-    directive @cypher(statement: String) on FIELD_DEFINITION
+    directive @cypher(
+      statement: String
+    ) on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
 
     directive @relation(
       name: String

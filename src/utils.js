@@ -1,4 +1,4 @@
-import { parse, Kind } from 'graphql';
+import { parse, Kind, isInputObjectType } from 'graphql';
 import { unwrapNamedType, isListTypeField } from './augment/fields';
 import { Neo4jTypeFormatted } from './augment/types/types';
 import {
@@ -424,7 +424,8 @@ export const buildCypherParameters = ({
   args,
   statements = [],
   params,
-  paramKey
+  paramKey,
+  typeMap
 }) => {
   const dataParams = paramKey ? params[paramKey] : params;
   const paramKeys = dataParams ? Object.keys(dataParams) : [];
@@ -436,6 +437,7 @@ export const buildCypherParameters = ({
       if (fieldAst) {
         const unwrappedType = unwrapNamedType({ type: fieldAst.type });
         const fieldTypeName = unwrappedType.name;
+        const innerSchemaType = typeMap[fieldTypeName];
         if (isNeo4jTypeInput(fieldTypeName)) {
           paramStatements = buildNeo4jTypeCypherParameters({
             paramStatements,
@@ -445,7 +447,7 @@ export const buildCypherParameters = ({
             paramName,
             fieldTypeName
           });
-        } else {
+        } else if (!isInputObjectType(innerSchemaType)) {
           // normal case
           paramStatements.push(
             `${paramName}:$${paramKey ? `${paramKey}.` : ''}${paramName}`
