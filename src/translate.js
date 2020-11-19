@@ -3551,9 +3551,9 @@ const buildOperatorExpression = ({
     case 'not_in':
       return `NOT ${propertyPath} IN`;
     case 'contains':
-      return `${propertyPath} CONTAINS`;
+      return `toLower(${propertyPath}) CONTAINS`;
     case 'not_contains':
-      return `NOT ${propertyPath} CONTAINS`;
+      return `NOT toLower(${propertyPath}) CONTAINS`;
     case 'starts_with':
       return `${propertyPath} STARTS WITH`;
     case 'not_starts_with':
