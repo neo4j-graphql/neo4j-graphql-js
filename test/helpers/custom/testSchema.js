@@ -33,7 +33,7 @@ export const testSchema = gql`
       MERGE (custom: Custom {
         id: $id
       })
-      RETURN custom
+      WITH custom
     `})
   }
 
@@ -64,9 +64,10 @@ export const testSchema = gql`
 
   input CustomSideEffects {
     create: [CustomData] @cypher(${cypher`
-      MERGE (custom)-[:RELATED]->(subCustom: Custom {
+      MERGE (subCustom: Custom {
         id: CustomData.id
       })
+      MERGE (custom)-[:RELATED]->(subCustom)
       WITH subCustom AS custom
     `})
   }
