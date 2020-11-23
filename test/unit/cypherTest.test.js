@@ -12707,3 +12707,57 @@ test('Query node type using search argument with filtering, ordering, and pagina
     )
   ]);
 });
+
+test('Throws error if using search argument without index argument', async t => {
+  const graphQLQuery = `query {
+    Movie(
+      search: {
+        threshold: 0.08
+      }
+    ) {
+      movieId
+      title
+    }
+  }
+  `;
+  const result = await augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {},
+    '',
+    {}
+  );
+  const errors = result.errors;
+  if (errors) {
+    const message = errors[0].message;
+    t.is(message, `At least one argument for a search index must be provided.`);
+  } else t.fail();
+});
+
+test('Throws error if using search argument with more than one index argument', async t => {
+  const graphQLQuery = `query {
+    Movie(
+      search: {
+        MovieSearch: "river"
+        MovieSearchID: "a"
+        threshold: 0.08
+      }
+    ) {
+      movieId
+      title
+    }
+  }
+  `;
+  const result = await augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {},
+    '',
+    {}
+  );
+  const errors = result.errors;
+  if (errors) {
+    const message = errors[0].message;
+    t.is(message, `Only one argument for a search index can be provided.`);
+  } else t.fail();
+});
