@@ -78,10 +78,6 @@ import {
   TypeWrappers
 } from './augment/fields';
 import {
-  isPrimaryKeyField,
-  isUniqueField,
-  isIndexedField,
-  isRelationField,
   getDirective,
   DirectiveDefinition,
   getDirectiveArgument
@@ -95,7 +91,6 @@ import {
   isRelationshipMutationOutputType,
   isReflexiveRelationshipOutputType
 } from './augment/types/relationship/query';
-import { query } from 'express';
 
 const derivedTypesParamName = schemaTypeName =>
   `${schemaTypeName}_derivedTypes`;
