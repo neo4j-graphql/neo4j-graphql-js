@@ -1,7 +1,6 @@
 import test from 'ava';
 import { makeAugmentedSchema } from '../../src/index';
 import { mapSearchDirectives } from '../../src/schemaSearch';
-
 import { gql } from 'apollo-server';
 import { ApolloError } from 'apollo-server-errors';
 
