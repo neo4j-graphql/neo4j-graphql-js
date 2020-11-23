@@ -725,6 +725,8 @@ test.cb('Test augmented schema', t => {
 
     directive @unique on FIELD_DEFINITION
 
+    directive @search(index: String) on FIELD_DEFINITION
+
     directive @index on FIELD_DEFINITION
 
     directive @isAuthenticated on OBJECT | FIELD_DEFINITION
