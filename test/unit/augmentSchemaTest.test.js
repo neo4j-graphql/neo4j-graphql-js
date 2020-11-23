@@ -1200,6 +1200,12 @@ test.cb('Test augmented schema', t => {
       extensionNode_every: _GenreFilter
     }
 
+    input _MovieSearch {
+      MovieSearch: String
+      MovieSearchID: String
+      threshold: Float
+    }
+
     "Object type line description"
     type Movie
       @additionalLabels(
@@ -1208,17 +1214,17 @@ test.cb('Test augmented schema', t => {
       "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this node."
       _id: String
       "Field line description"
-      movieId: ID! @id
+      movieId: ID! @id @search(index: "MovieSearchID")
       """
       Field
       block
       description
       """
-      title: String @isAuthenticated
+      title: String @isAuthenticated @search
       someprefix_title_with_underscores: String
       year: Int
       released: _Neo4jDateTime
-      plot: String
+      plot: String @search
       poster: String
       imdbRating: Float
       "@relation field line description"
@@ -6028,6 +6034,8 @@ test.cb('Test augmented schema', t => {
 
     directive @index on FIELD_DEFINITION
 
+    directive @search(index: String) on FIELD_DEFINITION
+
     directive @isAuthenticated on OBJECT | FIELD_DEFINITION
 
     directive @hasRole(roles: [Role]) on OBJECT | FIELD_DEFINITION
@@ -6047,7 +6055,7 @@ test.cb('Test augmented schema', t => {
         filter: _InterfaceNoScalarsFilter
       ): [InterfaceNoScalars]
         @relation(name: "INTERFACE_NO_SCALARS", direction: OUT)
-      extensionScalar: String
+      extensionScalar: String @search
       extensionNode(
         first: Int
         offset: Int
@@ -6240,6 +6248,7 @@ test.cb('Test augmented schema', t => {
         offset: Int
         orderBy: [_MovieOrdering]
         filter: _MovieFilter
+        search: _MovieSearch
       ): [Movie] @hasScope(scopes: ["Movie: Read", "read:movie"])
       "[Generated query](https://grandstack.io/docs/graphql-schema-generation-augmentation#generated-queries) for Genre type nodes."
       Genre(
