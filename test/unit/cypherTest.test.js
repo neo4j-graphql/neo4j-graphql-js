@@ -12628,3 +12628,82 @@ test('merge reflexive relationship using custom field names for both related nod
     )
   ]);
 });
+
+test('Query node type using search argument and score threshold', t => {
+  const graphQLQuery = `query {
+    Movie(
+      search: {
+        MovieSearch: "river"
+        threshold: 0.08
+      }
+    ) {
+      movieId
+      title
+    }
+  }
+  `,
+    expectedCypherQuery = `CALL db.index.fulltext.queryNodes("MovieSearch", "river") YIELD node AS \`movie\`, score  WHERE score >= 0.08 RETURN \`movie\` { .movieId , .title } AS \`movie\``,
+    expectedParams = {
+      offset: 0,
+      first: -1,
+      search: {
+        MovieSearch: 'river',
+        threshold: 0.08
+      },
+      cypherParams: CYPHER_PARAMS
+    };
+  t.plan(2);
+  return Promise.all([
+    augmentedSchemaCypherTestRunner(
+      t,
+      graphQLQuery,
+      {},
+      expectedCypherQuery,
+      expectedParams
+    )
+  ]);
+});
+
+test('Query node type using search argument with filtering, ordering, and pagination arguments', t => {
+  const graphQLQuery = `query {
+    Movie(
+      search: {
+        MovieSearch: "river"
+        threshold: 0.08
+      }
+      filter: {
+        title_contains: "Runs"
+      }
+      orderBy: [title_desc]
+      first: 2
+      offset: 0
+    ) {
+      movieId
+      title
+    }
+  }
+  `,
+    expectedCypherQuery = `CALL db.index.fulltext.queryNodes("MovieSearch", "river") YIELD node AS \`movie\`, score  WHERE score >= 0.08 AND (\`movie\`.title CONTAINS $filter.title_contains) WITH \`movie\` ORDER BY movie.title DESC RETURN \`movie\` { .movieId , .title } AS \`movie\` LIMIT toInteger($first)`,
+    expectedParams = {
+      offset: 0,
+      first: 2,
+      filter: {
+        title_contains: 'Runs'
+      },
+      search: {
+        MovieSearch: 'river',
+        threshold: 0.08
+      },
+      cypherParams: CYPHER_PARAMS
+    };
+  t.plan(2);
+  return Promise.all([
+    augmentedSchemaCypherTestRunner(
+      t,
+      graphQLQuery,
+      {},
+      expectedCypherQuery,
+      expectedParams
+    )
+  ]);
+});
