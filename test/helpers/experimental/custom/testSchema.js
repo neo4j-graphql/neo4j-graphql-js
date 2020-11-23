@@ -2,7 +2,7 @@ import { gql } from 'apollo-server';
 import { cypher } from '../../../../src/index';
 
 export const testSchema = gql`
-  type User {
+   type User {
     idField: ID! @id
     name: String
     names: [String]
@@ -25,7 +25,7 @@ export const testSchema = gql`
     User: [User!]
     Movie: [Movie!]
   }
-
+  
   type Mutation {
     CreateUser(data: UserCreate!): User
     MergeUser(where: UserWhere!, data: UserCreate!): User
@@ -34,7 +34,69 @@ export const testSchema = gql`
       MERGE (custom: Custom {
         id: $id
       })
+      WITH custom
+    `})
+    MergeCustoms(data: [CustomData], nestedBatch: [CustomBatchMutation], sideEffects: CustomSideEffects, otherData: CustomSideEffects, computed: CustomComputed): [Custom] @cypher(statement: """
+      UnwiNd   $data aS  
+               CustomData
+      MERGE (custom: Custom {
+        id: CustomData.id
+      })
       RETURN custom
+    """)
+    MergeCustomsWithoutReturnOrWithClause(data: [CustomData], nestedBatch: [CustomBatchMutation], sideEffects: CustomSideEffects, otherData: CustomSideEffects, computed: CustomComputed): [Custom] @cypher(statement: """
+      UnwiNd   $data aS  
+               CustomData
+      MERGE (custom: Custom {
+        id: CustomData.id
+      })
+    """)
+    MergeMatrix(xNodes: [XNodeInput!], yNodes: [YNodeInput!]): [XNode!]! @cypher(${cypher`
+      UNWIND $xNodes AS XNodeInput
+      UNWIND $yNodes AS YNodeInput
+      MERGE (xNode: XNode {
+        id: XNodeInput.id
+      })
+      MERGE (yNode: YNode {
+        id: YNodeInput.id
+      })
+      WITH xNode, yNode
+    `})
+  }
+
+  type XNode {
+    id: ID! @id
+    xy: [YNode] @relation(name: "XY", direction: OUT)
+    yx: [YNode] @relation(name: "YX", direction: IN)
+  }
+
+  input XNodeInput {
+    id: ID!
+    yNodes: YNodeMutation
+  }
+
+  input YNodeMutation {
+    merge: [YNodeInput] @cypher(${cypher`
+      MERGE (yNode)<-[:XY]-(xNode)
+      MERGE (yNode)-[:YX]->(xNode)
+    `})
+  }
+
+  type YNode {
+    id: ID! @id
+    xy: [XNode] @relation(name: "XY", direction: IN)
+    yx: [XNode] @relation(name: "YX", direction: OUT)
+  }
+
+  input YNodeInput {
+    id: ID!
+    xNodes: XNodeMutation
+  }
+
+  input XNodeMutation {
+    merge: [XNodeInput] @cypher(${cypher`
+      MERGE (xNode)-[:XY]->(yNode)
+      MERGE (xNode)<-[:YX]-(yNode)
     `})
   }
 
@@ -42,6 +104,7 @@ export const testSchema = gql`
     id: ID! @id
     computed: Int
     nested: [Custom] @relation(name: "RELATED", direction: OUT)
+    nestedBatchProperty: Boolean
   }
 
   input CustomData {
@@ -65,9 +128,34 @@ export const testSchema = gql`
 
   input CustomSideEffects {
     create: [CustomData] @cypher(${cypher`
-      MERGE (custom)-[:RELATED]->(subCustom: Custom {
+      MERGE (subCustom: Custom {
         id: CustomData.id
       })
+      MERGE (custom)-[:RELATED]->(subCustom)
+      WITH subCustom AS custom
+    `})
+    merge: [CustomData] @cypher(${cypher`
+      MERGE (subCustom: Custom {
+        id: CustomData.id
+      })
+      MERGE (custom)-[:RELATED]->(subCustom)
+      WITH subCustom AS custom
+    `})
+  }
+
+  input CustomBatchMutation {
+    merge: [CustomData] @cypher(${cypher`
+      MERGE (subCustom: Custom {
+        id: CustomData.id
+      })
+      MERGE (subCustom)-[:RELATED]->(custom)
+      WITH subCustom AS custom
+    `})
+    update: [CustomData] @cypher(${cypher`
+      MATCH (custom)<-[:RELATED]-(subCustom: Custom {
+        id: CustomData.id
+      })
+      SET subCustom.nestedBatchProperty = TRUE
       WITH subCustom AS custom
     `})
   }
