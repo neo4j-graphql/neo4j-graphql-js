@@ -624,7 +624,7 @@ CALL {
   ]);
 });
 
-test('Custom @cypher mutation with multiple nested @cypher (experimental api)', t => {
+test('Custom @cypher mutation with multiple nested @cypher', t => {
   const graphQLQuery = `mutation {
     Custom(
       id: "a"
@@ -653,22 +653,21 @@ test('Custom @cypher mutation with multiple nested @cypher (experimental api)', 
     }
   }  
   `,
-    expectedCypherQuery = `CALL apoc.cypher.doIt("MERGE (custom: Custom {
-  id: $id
-})
-RETURN custom", {id:$id, sideEffects:$sideEffects, computed:$computed, first:$first, offset:$offset, cypherParams: $cypherParams}) YIELD value
-    WITH apoc.map.values(value, [keys(value)[0]])[0] AS \`custom\`
+    expectedCypherQuery = `CALL apoc.cypher.doIt("MERGE (custom: Custom {   id: $id }) 
+WITH custom
+
 CALL {
   WITH *
   UNWIND $sideEffects.create AS CustomData
-  MERGE (custom)-[:RELATED]->(subCustom: Custom {   id: CustomData.id }) 
+  MERGE (subCustom: Custom {   id: CustomData.id }) MERGE (custom)-[:RELATED]->(subCustom) 
 WITH CustomData AS _CustomData,  subCustom AS custom
 CALL {
   WITH *
   UNWIND _CustomData.nested.create AS CustomData
-  MERGE (custom)-[:RELATED]->(subCustom: Custom {
+  MERGE (subCustom: Custom {
   id: CustomData.id
 })
+MERGE (custom)-[:RELATED]->(subCustom)
 WITH subCustom AS custom
   RETURN COUNT(*) AS _nested_create_
 }
@@ -681,6 +680,8 @@ CALL {
   SET custom.computed = CustomComputedInput.value * 10
   RETURN COUNT(*) AS _computed_multiply_
 }
+RETURN custom", {id:$id, sideEffects:$sideEffects, computed:$computed, first:$first, offset:$offset, cypherParams: $cypherParams}) YIELD value
+    WITH apoc.map.values(value, [keys(value)[0]])[0] AS \`custom\`
     RETURN \`custom\` { .id , .computed ,nested: [(\`custom\`)-[:\`RELATED\`]->(\`custom_nested\`:\`Custom\`) | \`custom_nested\` { .id ,nested: [(\`custom_nested\`)-[:\`RELATED\`]->(\`custom_nested_nested\`:\`Custom\`) | \`custom_nested_nested\` { .id }] }] } AS \`custom\``,
     expectedParams = {
       id: 'a',
