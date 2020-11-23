@@ -948,8 +948,8 @@ test('Sequence of custom nested @cypher (experimental api)', t => {
               title: "title-1"
               likedBy: {
                 create: [
-                  { name: "Alan", uniqueString: "x" }
-                  { name: "Ada", uniqueString: "y" }
+                  { name: "Alan", uniqueString: "p" }
+                  { name: "Ada", uniqueString: "q" }
                 ]
               }
             }
@@ -958,8 +958,8 @@ test('Sequence of custom nested @cypher (experimental api)', t => {
               title: "title-2"
               likedBy: {
                 create: [
-                  { name: "Alan", uniqueString: "a" }
-                  { name: "Ada", uniqueString: "b" }
+                  { name: "Alan", uniqueString: "r" }
+                  { name: "Ada", uniqueString: "s" }
                 ]
               }
             }
@@ -1054,11 +1054,11 @@ MERGE (movie)<-[:RATING]-(user)
                 create: [
                   {
                     name: 'Alan',
-                    uniqueString: 'x'
+                    uniqueString: 'p'
                   },
                   {
                     name: 'Ada',
-                    uniqueString: 'y'
+                    uniqueString: 'q'
                   }
                 ]
               }
@@ -1070,11 +1070,11 @@ MERGE (movie)<-[:RATING]-(user)
                 create: [
                   {
                     name: 'Alan',
-                    uniqueString: 'a'
+                    uniqueString: 'r'
                   },
                   {
                     name: 'Ada',
-                    uniqueString: 'b'
+                    uniqueString: 's'
                   }
                 ]
               }
@@ -1539,22 +1539,21 @@ test('Custom @cypher mutation with multiple nested @cypher (experimental api)', 
     }
   }  
   `,
-    expectedCypherQuery = `CALL apoc.cypher.doIt("MERGE (custom: Custom {
-  id: $id
-})
-RETURN custom", {id:$id, sideEffects:$sideEffects, computed:$computed, first:$first, offset:$offset, cypherParams: $cypherParams}) YIELD value
-    WITH apoc.map.values(value, [keys(value)[0]])[0] AS \`custom\`
+    expectedCypherQuery = `CALL apoc.cypher.doIt("MERGE (custom: Custom {   id: $id }) 
+WITH custom
+
 CALL {
   WITH *
   UNWIND $sideEffects.create AS CustomData
-  MERGE (custom)-[:RELATED]->(subCustom: Custom {   id: CustomData.id }) 
+  MERGE (subCustom: Custom {   id: CustomData.id }) MERGE (custom)-[:RELATED]->(subCustom) 
 WITH CustomData AS _CustomData,  subCustom AS custom
 CALL {
   WITH *
   UNWIND _CustomData.nested.create AS CustomData
-  MERGE (custom)-[:RELATED]->(subCustom: Custom {
+  MERGE (subCustom: Custom {
   id: CustomData.id
 })
+MERGE (custom)-[:RELATED]->(subCustom)
 WITH subCustom AS custom
   RETURN COUNT(*) AS _nested_create_
 }
@@ -1567,6 +1566,8 @@ CALL {
   SET custom.computed = CustomComputedInput.value * 10
   RETURN COUNT(*) AS _computed_multiply_
 }
+RETURN custom", {id:$id, sideEffects:$sideEffects, computed:$computed, first:$first, offset:$offset, cypherParams: $cypherParams}) YIELD value
+    WITH apoc.map.values(value, [keys(value)[0]])[0] AS \`custom\`
     RETURN \`custom\` { .id , .computed ,nested: [(\`custom\`)-[:\`RELATED\`]->(\`custom_nested\`:\`Custom\`) | \`custom_nested\` { .id ,nested: [(\`custom_nested\`)-[:\`RELATED\`]->(\`custom_nested_nested\`:\`Custom\`) | \`custom_nested_nested\` { .id }] }] } AS \`custom\``,
     expectedParams = {
       id: 'a',
@@ -1610,6 +1611,781 @@ CALL {
           }
         }
       },
+      first: -1,
+      offset: 0,
+      cypherParams: CYPHER_PARAMS
+    };
+  t.plan(4);
+  return Promise.all([
+    cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery, expectedParams),
+    augmentedSchemaCypherTestRunner(
+      t,
+      graphQLQuery,
+      {},
+      expectedCypherQuery,
+      expectedParams
+    )
+  ]);
+});
+
+test('Custom batch @cypher mutation using single UNWIND clause on list argument with nested @cypher input (experimental api)', t => {
+  const graphQLQuery = `mutation {
+    MergeCustoms(
+      data: [
+        {
+          id: "a"
+          nested: {
+            merge: [
+              { id: "b" }
+              { id: "c" }
+            ]
+          }
+        }
+        {
+          id: "d"
+          nested: {
+            merge: [
+              { id: "e" }
+              { id: "f" }
+            ]
+          }
+        }
+      ]
+      sideEffects: {
+        create: [
+          { id: "g", nested: { create: [{ id: "h" }, { id: "i" }] } }
+          { id: "j", nested: { create: [{ id: "k" }, { id: "l" }] } }
+        ]
+      }
+      otherData: {
+        merge: [
+          {
+            id: "x"
+          }
+        ]
+      }
+      computed: {
+        computed: {
+          multiply: {
+            value: 5
+          }
+        }
+      }
+      nestedBatch: [
+        {
+          merge: [
+            {
+              id: "y"
+            }
+            {
+              id: "z"
+              nested: {
+                merge: [
+                  {
+                    id: "m"
+                  }
+                ]
+              }
+            }
+          ]
+          update: [
+            {
+              id: "y"
+            }
+            {
+              id: "z"
+            }
+          ]
+        }
+      ]
+    ) {
+      id
+      computed
+      nested {
+        id
+      }
+    }
+  }`,
+    expectedCypherQuery = `CALL apoc.cypher.doIt("UnwiNd   $data aS            CustomData MERGE (custom: Custom {   id: CustomData.id }) 
+WITH custom, CustomData AS _CustomData
+
+CALL {
+  WITH *
+  UNWIND _CustomData.nested.merge AS CustomData
+  MERGE (subCustom: Custom {
+  id: CustomData.id
+})
+MERGE (custom)-[:RELATED]->(subCustom)
+WITH subCustom AS custom
+  RETURN COUNT(*) AS _nested_merge_
+}
+
+CALL {
+  WITH *
+  UNWIND $nestedBatch AS _nestedBatch
+  UNWIND _nestedBatch.merge as CustomData
+  MERGE (subCustom: Custom {   id: CustomData.id }) MERGE (subCustom)-[:RELATED]->(custom) 
+WITH CustomData AS _CustomData,  subCustom AS custom
+CALL {
+  WITH *
+  UNWIND _CustomData.nested.merge AS CustomData
+  MERGE (subCustom: Custom {
+  id: CustomData.id
+})
+MERGE (custom)-[:RELATED]->(subCustom)
+WITH subCustom AS custom
+  RETURN COUNT(*) AS _nested_merge_
+}
+  RETURN COUNT(*) AS _nestedBatch_merge_
+}
+
+CALL {
+  WITH *
+  UNWIND $nestedBatch AS _nestedBatch
+  UNWIND _nestedBatch.update as CustomData
+  MATCH (custom)<-[:RELATED]-(subCustom: Custom {
+  id: CustomData.id
+})
+SET subCustom.nestedBatchProperty = TRUE
+WITH subCustom AS custom
+  RETURN COUNT(*) AS _nestedBatch_update_
+}
+
+CALL {
+  WITH *
+  UNWIND $sideEffects.create AS CustomData
+  MERGE (subCustom: Custom {   id: CustomData.id }) MERGE (custom)-[:RELATED]->(subCustom) 
+WITH CustomData AS _CustomData,  subCustom AS custom
+CALL {
+  WITH *
+  UNWIND _CustomData.nested.create AS CustomData
+  MERGE (subCustom: Custom {
+  id: CustomData.id
+})
+MERGE (custom)-[:RELATED]->(subCustom)
+WITH subCustom AS custom
+  RETURN COUNT(*) AS _nested_create_
+}
+  RETURN COUNT(*) AS _sideEffects_create_
+}
+
+CALL {
+  WITH *
+  UNWIND $otherData.merge AS CustomData
+  MERGE (subCustom: Custom {
+  id: CustomData.id
+})
+MERGE (custom)-[:RELATED]->(subCustom)
+WITH subCustom AS custom
+  RETURN COUNT(*) AS _otherData_merge_
+}
+
+CALL {
+  WITH *
+  UNWIND $computed.computed.multiply AS CustomComputedInput
+  SET custom.computed = CustomComputedInput.value * 10
+  RETURN COUNT(*) AS _computed_multiply_
+}
+RETURN custom", {data:$data, nestedBatch:$nestedBatch, sideEffects:$sideEffects, otherData:$otherData, computed:$computed, first:$first, offset:$offset, cypherParams: $cypherParams}) YIELD value
+    WITH apoc.map.values(value, [keys(value)[0]])[0] AS \`custom\`
+    RETURN \`custom\` { .id , .computed ,nested: [(\`custom\`)-[:\`RELATED\`]->(\`custom_nested\`:\`Custom\`) | \`custom_nested\` { .id }] } AS \`custom\``,
+    expectedParams = {
+      data: [
+        {
+          id: 'a',
+          nested: {
+            merge: [
+              {
+                id: 'b'
+              },
+              {
+                id: 'c'
+              }
+            ]
+          }
+        },
+        {
+          id: 'd',
+          nested: {
+            merge: [
+              {
+                id: 'e'
+              },
+              {
+                id: 'f'
+              }
+            ]
+          }
+        }
+      ],
+      nestedBatch: [
+        {
+          merge: [
+            {
+              id: 'y'
+            },
+            {
+              id: 'z',
+              nested: {
+                merge: [
+                  {
+                    id: 'm'
+                  }
+                ]
+              }
+            }
+          ],
+          update: [
+            {
+              id: 'y'
+            },
+            {
+              id: 'z'
+            }
+          ]
+        }
+      ],
+      sideEffects: {
+        create: [
+          {
+            id: 'g',
+            nested: {
+              create: [
+                {
+                  id: 'h'
+                },
+                {
+                  id: 'i'
+                }
+              ]
+            }
+          },
+          {
+            id: 'j',
+            nested: {
+              create: [
+                {
+                  id: 'k'
+                },
+                {
+                  id: 'l'
+                }
+              ]
+            }
+          }
+        ]
+      },
+      otherData: {
+        merge: [
+          {
+            id: 'x'
+          }
+        ]
+      },
+      computed: {
+        computed: {
+          multiply: {
+            value: {
+              low: 5,
+              high: 0
+            }
+          }
+        }
+      },
+      first: -1,
+      offset: 0,
+      cypherParams: CYPHER_PARAMS
+    };
+  t.plan(4);
+  return Promise.all([
+    cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery, expectedParams),
+    augmentedSchemaCypherTestRunner(
+      t,
+      graphQLQuery,
+      {},
+      expectedCypherQuery,
+      expectedParams
+    )
+  ]);
+});
+
+test('Custom batch @cypher mutation without RETURN or WITH clause, using nested @cypher input (experimental api)', t => {
+  const graphQLQuery = `mutation {
+    MergeCustomsWithoutReturnOrWithClause(
+      data: [
+        {
+          id: "a"
+          nested: {
+            merge: [
+              { id: "b" }
+              { id: "c" }
+            ]
+          }
+        }
+        {
+          id: "d"
+          nested: {
+            merge: [
+              { id: "e" }
+              { id: "f" }
+            ]
+          }
+        }
+      ]
+      sideEffects: {
+        create: [
+          { id: "g", nested: { create: [{ id: "h" }, { id: "i" }] } }
+          { id: "j", nested: { create: [{ id: "k" }, { id: "l" }] } }
+        ]
+      }
+      otherData: {
+        merge: [
+          {
+            id: "x"
+          }
+        ]
+      }
+      computed: {
+        computed: {
+          multiply: {
+            value: 5
+          }
+        }
+      }
+      nestedBatch: [
+        {
+          merge: [
+            {
+              id: "y"
+            }
+            {
+              id: "z"
+              nested: {
+                merge: [
+                  {
+                    id: "m"
+                  }
+                ]
+              }
+            }
+          ]
+          update: [
+            {
+              id: "y"
+            }
+            {
+              id: "z"
+            }
+          ]
+        }
+      ]
+    ) {
+      id
+      computed
+      nested {
+        id
+      }
+    }
+  }`,
+    expectedCypherQuery = `CALL apoc.cypher.doIt("UnwiNd   $data aS            CustomData MERGE (custom: Custom {   id: CustomData.id })  
+WITH custom, CustomData AS _CustomData
+
+CALL {
+  WITH *
+  UNWIND _CustomData.nested.merge AS CustomData
+  MERGE (subCustom: Custom {
+  id: CustomData.id
+})
+MERGE (custom)-[:RELATED]->(subCustom)
+WITH subCustom AS custom
+  RETURN COUNT(*) AS _nested_merge_
+}
+
+CALL {
+  WITH *
+  UNWIND $nestedBatch AS _nestedBatch
+  UNWIND _nestedBatch.merge as CustomData
+  MERGE (subCustom: Custom {   id: CustomData.id }) MERGE (subCustom)-[:RELATED]->(custom) 
+WITH CustomData AS _CustomData,  subCustom AS custom
+CALL {
+  WITH *
+  UNWIND _CustomData.nested.merge AS CustomData
+  MERGE (subCustom: Custom {
+  id: CustomData.id
+})
+MERGE (custom)-[:RELATED]->(subCustom)
+WITH subCustom AS custom
+  RETURN COUNT(*) AS _nested_merge_
+}
+  RETURN COUNT(*) AS _nestedBatch_merge_
+}
+
+CALL {
+  WITH *
+  UNWIND $nestedBatch AS _nestedBatch
+  UNWIND _nestedBatch.update as CustomData
+  MATCH (custom)<-[:RELATED]-(subCustom: Custom {
+  id: CustomData.id
+})
+SET subCustom.nestedBatchProperty = TRUE
+WITH subCustom AS custom
+  RETURN COUNT(*) AS _nestedBatch_update_
+}
+
+CALL {
+  WITH *
+  UNWIND $sideEffects.create AS CustomData
+  MERGE (subCustom: Custom {   id: CustomData.id }) MERGE (custom)-[:RELATED]->(subCustom) 
+WITH CustomData AS _CustomData,  subCustom AS custom
+CALL {
+  WITH *
+  UNWIND _CustomData.nested.create AS CustomData
+  MERGE (subCustom: Custom {
+  id: CustomData.id
+})
+MERGE (custom)-[:RELATED]->(subCustom)
+WITH subCustom AS custom
+  RETURN COUNT(*) AS _nested_create_
+}
+  RETURN COUNT(*) AS _sideEffects_create_
+}
+
+CALL {
+  WITH *
+  UNWIND $otherData.merge AS CustomData
+  MERGE (subCustom: Custom {
+  id: CustomData.id
+})
+MERGE (custom)-[:RELATED]->(subCustom)
+WITH subCustom AS custom
+  RETURN COUNT(*) AS _otherData_merge_
+}
+
+CALL {
+  WITH *
+  UNWIND $computed.computed.multiply AS CustomComputedInput
+  SET custom.computed = CustomComputedInput.value * 10
+  RETURN COUNT(*) AS _computed_multiply_
+}
+RETURN custom", {data:$data, nestedBatch:$nestedBatch, sideEffects:$sideEffects, otherData:$otherData, computed:$computed, first:$first, offset:$offset, cypherParams: $cypherParams}) YIELD value
+    WITH apoc.map.values(value, [keys(value)[0]])[0] AS \`custom\`
+    RETURN \`custom\` { .id , .computed ,nested: [(\`custom\`)-[:\`RELATED\`]->(\`custom_nested\`:\`Custom\`) | \`custom_nested\` { .id }] } AS \`custom\``,
+    expectedParams = {
+      data: [
+        {
+          id: 'a',
+          nested: {
+            merge: [
+              {
+                id: 'b'
+              },
+              {
+                id: 'c'
+              }
+            ]
+          }
+        },
+        {
+          id: 'd',
+          nested: {
+            merge: [
+              {
+                id: 'e'
+              },
+              {
+                id: 'f'
+              }
+            ]
+          }
+        }
+      ],
+      nestedBatch: [
+        {
+          merge: [
+            {
+              id: 'y'
+            },
+            {
+              id: 'z',
+              nested: {
+                merge: [
+                  {
+                    id: 'm'
+                  }
+                ]
+              }
+            }
+          ],
+          update: [
+            {
+              id: 'y'
+            },
+            {
+              id: 'z'
+            }
+          ]
+        }
+      ],
+      sideEffects: {
+        create: [
+          {
+            id: 'g',
+            nested: {
+              create: [
+                {
+                  id: 'h'
+                },
+                {
+                  id: 'i'
+                }
+              ]
+            }
+          },
+          {
+            id: 'j',
+            nested: {
+              create: [
+                {
+                  id: 'k'
+                },
+                {
+                  id: 'l'
+                }
+              ]
+            }
+          }
+        ]
+      },
+      otherData: {
+        merge: [
+          {
+            id: 'x'
+          }
+        ]
+      },
+      computed: {
+        computed: {
+          multiply: {
+            value: {
+              low: 5,
+              high: 0
+            }
+          }
+        }
+      },
+      first: -1,
+      offset: 0,
+      cypherParams: CYPHER_PARAMS
+    };
+  t.plan(4);
+  return Promise.all([
+    cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery, expectedParams),
+    augmentedSchemaCypherTestRunner(
+      t,
+      graphQLQuery,
+      {},
+      expectedCypherQuery,
+      expectedParams
+    )
+  ]);
+});
+
+test('Custom @cypher mutation with RETURN clause and no nested @cypher input (experimental api)', t => {
+  const graphQLQuery = `mutation {
+    MergeCustoms(
+      data: [
+        {
+          id: "a"
+        }
+        {
+          id: "d"
+        }
+      ]
+    ) {
+      id
+    }
+  }`,
+    expectedCypherQuery = `CALL apoc.cypher.doIt("UnwiNd   $data aS  
+         CustomData
+MERGE (custom: Custom {
+  id: CustomData.id
+})
+RETURN custom", {data:$data, first:$first, offset:$offset, cypherParams: $cypherParams}) YIELD value
+    WITH apoc.map.values(value, [keys(value)[0]])[0] AS \`custom\`
+    RETURN \`custom\` { .id } AS \`custom\``,
+    expectedParams = {
+      data: [
+        {
+          id: 'a'
+        },
+        {
+          id: 'd'
+        }
+      ],
+      first: -1,
+      offset: 0,
+      cypherParams: CYPHER_PARAMS
+    };
+  t.plan(4);
+  return Promise.all([
+    cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery, expectedParams),
+    augmentedSchemaCypherTestRunner(
+      t,
+      graphQLQuery,
+      {},
+      expectedCypherQuery,
+      expectedParams
+    )
+  ]);
+});
+
+test('Custom batch @cypher mutation using multiple UNWIND clause on list argument with nested @cypher input (experimental api)', t => {
+  const graphQLQuery = `mutation {
+    MergeMatrix(
+      xNodes: [
+        {
+          id: "a"
+          yNodes: {
+            merge: [
+              {
+                id: "c"
+              }
+              {
+                id: "d"
+              }
+            ]
+          }
+        }
+        {
+          id: "b"
+          yNodes: {
+            merge: [
+              {
+                id: "c"
+              }
+              {
+                id: "d"
+              }
+            ]
+          }
+        }
+      ]
+      yNodes: [
+        {
+          id: "c"
+          xNodes: {
+            merge: [
+              {
+                id: "a"
+              }
+              {
+                id: "b"
+              }
+            ]
+          }
+        }
+        {
+          id: "d"
+          xNodes: {
+            merge: [
+              {
+                id: "a"
+              }
+              {
+                id: "b"
+              }
+            ]
+          }
+        }
+      ]
+    ) {
+      id
+      xy {
+        id
+      }
+      yx {
+        id
+      }
+    }
+  }`,
+    expectedCypherQuery = `CALL apoc.cypher.doIt("UNWIND $xNodes AS XNodeInput UNWIND $yNodes AS YNodeInput MERGE (xNode: XNode {   id: XNodeInput.id }) MERGE (yNode: YNode {   id: YNodeInput.id })   
+WITH YNodeInput AS _YNodeInput, XNodeInput AS _XNodeInput, xNode, yNode
+
+CALL {
+  WITH *
+  UNWIND _XNodeInput.yNodes.merge AS YNodeInput
+  MERGE (yNode)<-[:XY]-(xNode)
+MERGE (yNode)-[:YX]->(xNode)
+  RETURN COUNT(*) AS _yNodes_merge_
+}
+
+CALL {
+  WITH *
+  UNWIND _YNodeInput.xNodes.merge AS XNodeInput
+  MERGE (xNode)-[:XY]->(yNode)
+MERGE (xNode)<-[:YX]-(yNode)
+  RETURN COUNT(*) AS _xNodes_merge_
+}
+RETURN xNode", {xNodes:$xNodes, yNodes:$yNodes, first:$first, offset:$offset, cypherParams: $cypherParams}) YIELD value
+    WITH apoc.map.values(value, [keys(value)[0]])[0] AS \`xNode\`
+    RETURN \`xNode\` { .id ,xy: [(\`xNode\`)-[:\`XY\`]->(\`xNode_xy\`:\`YNode\`) | \`xNode_xy\` { .id }] ,yx: [(\`xNode\`)<-[:\`YX\`]-(\`xNode_yx\`:\`YNode\`) | \`xNode_yx\` { .id }] } AS \`xNode\``,
+    expectedParams = {
+      xNodes: [
+        {
+          id: 'a',
+          yNodes: {
+            merge: [
+              {
+                id: 'c'
+              },
+              {
+                id: 'd'
+              }
+            ]
+          }
+        },
+        {
+          id: 'b',
+          yNodes: {
+            merge: [
+              {
+                id: 'c'
+              },
+              {
+                id: 'd'
+              }
+            ]
+          }
+        }
+      ],
+      yNodes: [
+        {
+          id: 'c',
+          xNodes: {
+            merge: [
+              {
+                id: 'a'
+              },
+              {
+                id: 'b'
+              }
+            ]
+          }
+        },
+        {
+          id: 'd',
+          xNodes: {
+            merge: [
+              {
+                id: 'a'
+              },
+              {
+                id: 'b'
+              }
+            ]
+          }
+        }
+      ],
       first: -1,
       offset: 0,
       cypherParams: CYPHER_PARAMS
