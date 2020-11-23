@@ -36,7 +36,10 @@ export function cypherTestRunner(
       CreateUser: checkCypherMutation,
       DeleteUser: checkCypherMutation,
       MergeUser: checkCypherMutation,
-      Custom: checkCypherMutation
+      Custom: checkCypherMutation,
+      MergeCustoms: checkCypherMutation,
+      MergeMatrix: checkCypherMutation,
+      MergeCustomsWithoutReturnOrWithClause: checkCypherMutation
     }
   };
   let augmentedTypeDefs = augmentTypeDefs(testSchema, {
@@ -90,7 +93,10 @@ export function augmentedSchemaCypherTestRunner(
       CreateUser: checkCypherMutation,
       DeleteUser: checkCypherMutation,
       MergeUser: checkCypherMutation,
-      Custom: checkCypherMutation
+      Custom: checkCypherMutation,
+      MergeCustoms: checkCypherMutation,
+      MergeMatrix: checkCypherMutation,
+      MergeCustomsWithoutReturnOrWithClause: checkCypherMutation
     }
   };
 
