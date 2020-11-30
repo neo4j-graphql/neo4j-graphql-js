@@ -1940,6 +1940,7 @@ const parseFilterArgumentName = fieldName => {
     '_not',
     '_in',
     '_not_in',
+    '_regexp',
     '_contains',
     '_not_contains',
     '_starts_with',
@@ -2086,6 +2087,8 @@ const buildOperatorExpression = ({
       return `${propertyPath} IN`;
     case 'not_in':
       return `NOT ${propertyPath} IN`;
+    case 'regexp':
+      return `${propertyPath} =~`;
     case 'contains':
       return `${propertyPath} CONTAINS`;
     case 'not_contains':
