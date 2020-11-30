@@ -24,7 +24,7 @@ test('Create node mutation with nested @cypher', t => {
           }
           {
             id: "movie-3"
-            title: "title-4"
+            title: "title-3"
           }
           {
             id: "movie-4"
@@ -48,11 +48,12 @@ test('Create node mutation with nested @cypher', t => {
 CALL {
   WITH *
   UNWIND $params.liked.create AS MovieCreate
-  CREATE (user)-[:RATING]->(movie: Movie {
+  WITH MovieCreate, user
+CREATE (user)-[:RATING]->(movie: Movie {
   id: MovieCreate.id,
   title: MovieCreate.title
 })
-WITH movie
+WITH MovieCreate AS _MovieCreate, movie
   RETURN COUNT(*) AS _liked_create_
 }
     RETURN \`user\` { .idField ,liked: [(\`user\`)-[:\`RATING\`]->(\`user_liked\`:\`Movie\`) | \`user_liked\` { .id , .title }] } AS \`user\`
@@ -72,7 +73,7 @@ WITH movie
             },
             {
               id: 'movie-3',
-              title: 'title-4'
+              title: 'title-3'
             },
             {
               id: 'movie-4',
@@ -158,12 +159,13 @@ test('Create node mutation with nested @cypher, skipping 1 non-@mutation input o
 CALL {
   WITH *
   UNWIND $params.liked.nestedCreate AS MovieCreate
-  CREATE (user)-[:RATING]->(movie: Movie {
+  WITH MovieCreate, user
+CREATE (user)-[:RATING]->(movie: Movie {
   id: MovieCreate.customLayer.movie.id,
   title: MovieCreate.customLayer.movie.title,
   custom: MovieCreate.customLayer.custom
 })
-WITH movie
+WITH MovieCreate AS _MovieCreate, movie
   RETURN COUNT(*) AS _liked_nestedCreate_
 }
     RETURN \`user\` { .idField ,liked: [(\`user\`)-[:\`RATING\`]->(\`user_liked\`:\`Movie\`) | \`user_liked\` { .id , .title , .custom }] } AS \`user\`
@@ -231,7 +233,7 @@ WITH movie
 test('Delete node mutation with @cypher deleting related node', t => {
   const graphQLQuery = `mutation {
     DeleteUser(
-      idField: "a"
+      idField: "user-1"
       liked: {
         delete: {
           id: "movie-1"
@@ -250,7 +252,8 @@ test('Delete node mutation with @cypher deleting related node', t => {
 CALL {
   WITH *
   UNWIND $liked.delete AS MovieWhere
-  MATCH (user)-[:RATING]->(movie: Movie { id: MovieWhere.id })
+  WITH MovieWhere, user
+MATCH (user)-[:RATING]->(movie: Movie { id: MovieWhere.id })
 DETACH DELETE movie
   RETURN COUNT(*) AS _liked_delete_
 }
@@ -258,7 +261,7 @@ WITH \`user\` AS \`user_toDelete\`, \`user\` { .idField ,liked: [(\`user\`)-[:\`
 DETACH DELETE \`user_toDelete\`
 RETURN \`user\``,
     expectedParams = {
-      idField: 'a',
+      idField: 'user-1',
       liked: {
         delete: [
           {
@@ -308,7 +311,7 @@ test('Create node mutation with multiple nested @cypher', t => {
             likedBy: {
               create: [
                 { name: "Alan", uniqueString: "a" }
-                { name: "Ada", uniqueString: "b" }
+                { name: "Ada", uniqueString: "c" }
               ]
             }
           }
@@ -341,12 +344,17 @@ test('Create node mutation with multiple nested @cypher', t => {
 CALL {
   WITH *
   UNWIND $params.liked.create AS MovieCreate
-  CREATE (user)-[:RATING]->(movie: Movie {   id: MovieCreate.id,   title: MovieCreate.title }) 
-WITH MovieCreate AS _MovieCreate,  movie
+  WITH MovieCreate, user
+CREATE (user)-[:RATING]->(movie: Movie {
+  id: MovieCreate.id,
+  title: MovieCreate.title
+})
+WITH MovieCreate AS _MovieCreate, movie
 CALL {
   WITH *
   UNWIND _MovieCreate.likedBy.create AS UserCreate
-  CREATE (movie)<-[:RATING]-(user:User {
+  WITH UserCreate, movie
+CREATE (movie)<-[:RATING]-(user:User {
   name: UserCreate.name,
   uniqueString: UserCreate.uniqueString
 })
@@ -358,7 +366,8 @@ CALL {
 CALL {
   WITH *
   UNWIND $params.sideEffects.createdAt AS CreatedAt
-  SET user.createdAt = datetime(CreatedAt.datetime)
+  WITH CreatedAt, user
+SET user.createdAt = datetime(CreatedAt.datetime)
   RETURN COUNT(*) AS _sideEffects_createdAt_
 }
     RETURN \`user\` { .idField , .uniqueString ,liked: [(\`user\`)-[:\`RATING\`]->(\`user_liked\`:\`Movie\`) | \`user_liked\` { .id , .title ,likedBy: [(\`user_liked\`)<-[:\`RATING\`]-(\`user_liked_likedBy\`:\`User\`) | \`user_liked_likedBy\` { .name , .uniqueString }] }] ,createdAt: { formatted: toString(\`user\`.createdAt) }} AS \`user\`
@@ -412,7 +421,7 @@ CALL {
                   },
                   {
                     name: 'Ada',
-                    uniqueString: 'b'
+                    uniqueString: 'c'
                   }
                 ]
               }
@@ -480,7 +489,7 @@ test('Merge node mutation with multiple nested @cypher', t => {
             likedBy: {
               create: [
                 { name: "Alan", uniqueString: "a" }
-                { name: "Ada", uniqueString: "b" }
+                { name: "Ada", uniqueString: "c" }
               ]
             }
           }
@@ -513,12 +522,17 @@ test('Merge node mutation with multiple nested @cypher', t => {
 CALL {
   WITH *
   UNWIND $params.liked.create AS MovieCreate
-  CREATE (user)-[:RATING]->(movie: Movie {   id: MovieCreate.id,   title: MovieCreate.title }) 
-WITH MovieCreate AS _MovieCreate,  movie
+  WITH MovieCreate, user
+CREATE (user)-[:RATING]->(movie: Movie {
+  id: MovieCreate.id,
+  title: MovieCreate.title
+})
+WITH MovieCreate AS _MovieCreate, movie
 CALL {
   WITH *
   UNWIND _MovieCreate.likedBy.create AS UserCreate
-  CREATE (movie)<-[:RATING]-(user:User {
+  WITH UserCreate, movie
+CREATE (movie)<-[:RATING]-(user:User {
   name: UserCreate.name,
   uniqueString: UserCreate.uniqueString
 })
@@ -530,7 +544,8 @@ CALL {
 CALL {
   WITH *
   UNWIND $params.sideEffects.mergedAt AS CreatedAt
-  SET user.modifiedAt = datetime(CreatedAt.datetime)
+  WITH CreatedAt, user
+SET user.modifiedAt = datetime(CreatedAt.datetime)
   RETURN COUNT(*) AS _sideEffects_mergedAt_
 }RETURN \`user\` { .idField , .uniqueString ,liked: [(\`user\`)-[:\`RATING\`]->(\`user_liked\`:\`Movie\`) | \`user_liked\` { .id , .title ,likedBy: [(\`user_liked\`)<-[:\`RATING\`]-(\`user_liked_likedBy\`:\`User\`) | \`user_liked_likedBy\` { .name , .uniqueString }] }] ,createdAt: { formatted: toString(\`user\`.createdAt) }} AS \`user\``,
     expectedParams = {
@@ -582,7 +597,7 @@ CALL {
                   },
                   {
                     name: 'Ada',
-                    uniqueString: 'b'
+                    uniqueString: 'c'
                   }
                 ]
               }
@@ -654,21 +669,26 @@ test('Custom @cypher mutation with multiple nested @cypher', t => {
   }  
   `,
     expectedCypherQuery = `CALL apoc.cypher.doIt("MERGE (custom: Custom {   id: $id }) 
-WITH custom
+WITH *
 
 CALL {
   WITH *
   UNWIND $sideEffects.create AS CustomData
-  MERGE (subCustom: Custom {   id: CustomData.id }) MERGE (custom)-[:RELATED]->(subCustom) 
-WITH CustomData AS _CustomData,  subCustom AS custom
-CALL {
-  WITH *
-  UNWIND _CustomData.nested.create AS CustomData
-  MERGE (subCustom: Custom {
+  WITH CustomData, custom
+MERGE (subCustom: Custom {
   id: CustomData.id
 })
 MERGE (custom)-[:RELATED]->(subCustom)
-WITH subCustom AS custom
+WITH CustomData AS _CustomData, subCustom AS custom
+CALL {
+  WITH *
+  UNWIND _CustomData.nested.create AS CustomData
+  WITH CustomData, custom
+MERGE (subCustom: Custom {
+  id: CustomData.id
+})
+MERGE (custom)-[:RELATED]->(subCustom)
+WITH CustomData AS _CustomData, subCustom AS custom
   RETURN COUNT(*) AS _nested_create_
 }
   RETURN COUNT(*) AS _sideEffects_create_
@@ -677,7 +697,8 @@ WITH subCustom AS custom
 CALL {
   WITH *
   UNWIND $computed.computed.multiply AS CustomComputedInput
-  SET custom.computed = CustomComputedInput.value * 10
+  WITH CustomComputedInput, custom
+SET custom.computed = CustomComputedInput.value * 10
   RETURN COUNT(*) AS _computed_multiply_
 }
 RETURN custom", {id:$id, sideEffects:$sideEffects, computed:$computed, first:$first, offset:$offset, cypherParams: $cypherParams}) YIELD value
