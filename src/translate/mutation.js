@@ -51,6 +51,7 @@ import {
   fragmentType,
   processFilterArgument
 } from './translate';
+import { ApolloError } from 'apollo-server-errors';
 
 // Mutation API root operation branch
 export const translateMutation = ({
@@ -212,7 +213,7 @@ export const translateMutation = ({
     });
   } else {
     // throw error - don't know how to handle this type of mutation
-    throw new Error(
+    throw new ApolloError(
       'Do not know how to handle this type of mutation. Mutation does not follow naming convention.'
     );
   }
@@ -255,7 +256,7 @@ const customMutation = ({
     return x.name.value === 'statement';
   });
   const rootStatement = cypherQueryArg.value.value;
-  const [nestedStatements, mutationStatement] = translateNestedMutations({
+  const nestedStatements = translateNestedMutations({
     args,
     mutationStatement: rootStatement,
     dataParams: params,
@@ -264,9 +265,8 @@ const customMutation = ({
     isCustom: true
   });
   const cypherStatement = augmentCustomMutation({
-    rootStatement: mutationStatement,
-    nestedStatements,
-    returnVariable: variableName
+    rootStatement: rootStatement,
+    nestedStatements
   });
   const [subQuery, subParams] = buildCypherSelection({
     selections,
@@ -332,50 +332,28 @@ const customMutation = ({
 
 const augmentCustomMutation = ({
   rootStatement = '',
-  nestedStatements = '',
-  returnVariable = ''
+  nestedStatements = ''
 }) => {
   let augmented = rootStatement;
   if (nestedStatements) {
-    const singleLine = rootStatement.replace(/\r?\n|\r/g, ' ');
-    const newlinedWithClauses = singleLine.replace(
-      /\r?RETURN|\r/gi,
-      `\nRETURN`
-    );
+    const statement = rootStatement.replace(/\r?\n|\r/g, ' ');
+    const newlinedWithClauses = statement.replace(/\r?RETURN|\r/gi, `\nRETURN`);
     let splitOnClause = newlinedWithClauses.split('\n');
-    const lastClauseIndex = splitOnClause.length - 1;
-    const lastClause = splitOnClause[lastClauseIndex];
-    const endsWithReturnClause = lastClause.startsWith('RETURN');
-    const [augmentedStatement, continueWithDefault] = augmentWithClause({
-      statement: rootStatement,
-      isRoot: true,
-      returnVariable
-    });
-    const returnOutputTypeClause = `RETURN ${returnVariable}`;
+    const returnClauseIndex = splitOnClause.length - 1;
+    const returnClause = splitOnClause[returnClauseIndex];
+    const endsWithReturnClause = returnClause.startsWith('RETURN');
+    // require that the root @cypher statement have a RETURN clause
+    // TODO somehow make sure it's actually at the end ...?
     if (endsWithReturnClause) {
-      // get RETURN clause for returnVariable (case-insensitive)
-      const returnClauseRegExp = new RegExp(
-        `s*\\RETURN\\s*${returnVariable}\\b`,
-        'i'
+      const rootWithClause = `WITH *`;
+      const returnClause = splitOnClause.splice(
+        returnClauseIndex,
+        1,
+        rootWithClause
       );
-      const matched = lastClause.match(returnClauseRegExp);
-      // require that the RETURN clause, if it exists, returns returnVariable exactly (case-sensitive)
-      if (matched) {
-        const match = matched[0];
-        if (match.includes(returnVariable)) {
-          // replace ending RETURN clause with possibly augmented WITH clause
-          splitOnClause.splice(lastClauseIndex, 1, continueWithDefault);
-          // add the existent nested mutations
-          splitOnClause.push(nestedStatements);
-          // default: return the mutation type output type node variable
-          splitOnClause.push(returnOutputTypeClause);
-        }
-      }
-    } else {
-      // use root @cypher statement with possibly added WITH clause
-      splitOnClause = [augmentedStatement];
+      // add the existent nested mutations
       splitOnClause.push(nestedStatements);
-      splitOnClause.push(returnOutputTypeClause);
+      splitOnClause.push(returnClause[0]);
     }
     augmented = splitOnClause.join('\n');
   }
@@ -418,7 +396,7 @@ const nodeCreate = ({
     // remove .params entry
     delete params.params;
     // translate nested mutations discovered in input object arguments
-    [nestedStatements] = translateNestedMutations({
+    nestedStatements = translateNestedMutations({
       args,
       dataParams: params,
       typeMap,
@@ -427,7 +405,7 @@ const nodeCreate = ({
     args = Object.values(inputValues).map(arg => arg.astNode);
   } else {
     // translate nested mutations discovered in input object arguments
-    [nestedStatements] = translateNestedMutations({
+    nestedStatements = translateNestedMutations({
       args,
       dataParams,
       typeMap,
@@ -579,14 +557,14 @@ ON MATCH
 ${onMatchStatements}\n`;
       params = { ...params, ...serializedFilter };
     }
-    [nestedStatements] = translateNestedMutations({
+    nestedStatements = translateNestedMutations({
       args,
       dataParams,
       typeMap,
       isRoot: true
     });
   } else {
-    [nestedStatements] = translateNestedMutations({
+    nestedStatements = translateNestedMutations({
       args,
       dataParams,
       paramVariable: paramKey,
@@ -665,7 +643,7 @@ const nodeDelete = ({
   } else {
     matchStatement = `MATCH (${safeVariableName}:${safeLabelName} {${primaryKeyArgName}: $${primaryKeyArgName}})`;
   }
-  const [nestedStatements] = translateNestedMutations({
+  const nestedStatements = translateNestedMutations({
     args,
     dataParams: params,
     typeMap,
@@ -1246,6 +1224,22 @@ const relationshipMergeOrUpdate = ({
   return [query, params];
 };
 
+const getUnionLabels = ({ typeName = '', typeMap = {} }) => {
+  const unionLabels = [];
+  Object.keys(typeMap).map(key => {
+    const definition = typeMap[key];
+    const astNode = definition.astNode;
+    if (isUnionTypeDefinition({ definition: astNode })) {
+      const types = definition.getTypes();
+      const unionTypeName = definition.name;
+      if (types.find(type => type.name === typeName)) {
+        unionLabels.push(unionTypeName);
+      }
+    }
+  });
+  return unionLabels;
+};
+
 const translateNestedMutations = ({
   args = [],
   dataParams = {},
@@ -1256,92 +1250,73 @@ const translateNestedMutations = ({
   isCustom = false
 }) => {
   const mappedDataParams = mapMutationParams({ params: dataParams });
-  const statements = [];
-  args.forEach(arg => {
-    const argName = arg.name.value;
-    const typeName = unwrapNamedType({ type: arg.type }).name;
-    const inputType = typeMap[typeName];
-    if (isInputObjectType(inputType) && dataParams[argName] !== undefined) {
-      let paramName = argName;
-      if (isRoot) paramName = paramVariable;
-      let rootUsesListVariable = false;
-      let augmentedStatement = '';
-      const argumentIsArray = Array.isArray(dataParams[argName]);
-      const isCustomRootListArgument = isCustom && isRoot && argumentIsArray;
-      if (isCustomRootListArgument) {
-        rootUsesListVariable = includesCypherUnwindClause({
+  return args
+    .reduce((statements, arg) => {
+      const argName = arg.name.value;
+      const typeName = unwrapNamedType({ type: arg.type }).name;
+      const inputType = typeMap[typeName];
+      const argValue = dataParams[argName];
+      const usesInputObjectArgument =
+        isInputObjectType(inputType) && typeof argValue === 'object';
+      if (usesInputObjectArgument) {
+        let paramName = argName;
+        if (isRoot) {
+          paramName = paramVariable;
+        }
+        const argumentIsArray = Array.isArray(dataParams[argName]);
+        const isCustomRootListArgument = isCustom && isRoot && argumentIsArray;
+        const rootUsesListVariable = includesCypherUnwindClause({
           typeName,
           argName,
           statement: mutationStatement
         });
-        [augmentedStatement] = augmentWithClause({
-          statement: mutationStatement,
-          inputFieldTypeName: typeName,
-          isCustom,
-          rootUsesListVariable
-        });
-      }
-      const statement = translateNestedMutation({
-        paramName,
-        dataParams: mappedDataParams,
-        args: [arg],
-        parentTypeName: typeName,
-        paramVariable,
-        typeMap,
-        isRoot,
-        isCustom,
-        argumentIsArray,
-        rootUsesListVariable,
-        isCustomRootListArgument,
-        mutationStatement
-      });
-      if (statement.length) {
-        // inputType has at least one @cypher input field
-        statements.push(...statement);
-        if (isCustomRootListArgument) {
-          mutationStatement = augmentedStatement;
-        }
-      } else {
-        let paramName = argName;
-        // inputType did not have a @cypher input field, so keep looking
-        const nestedParams = mappedDataParams[argName];
-        const nestedArgs = Object.values(inputType.getFields()).map(
-          arg => arg.astNode
-        );
-        if (isCustomRootListArgument) {
-          [augmentedStatement] = augmentWithClause({
-            statement: mutationStatement,
-            inputFieldTypeName: typeName,
-            isCustom,
-            rootUsesListVariable
-          });
-        }
         const statement = translateNestedMutation({
-          isNestedParam: true,
-          isCustom,
           paramName,
-          args: nestedArgs,
-          dataParams: nestedParams,
+          dataParams: mappedDataParams,
+          args: [arg],
           parentTypeName: typeName,
           paramVariable,
           typeMap,
           isRoot,
+          isCustom,
           argumentIsArray,
           rootUsesListVariable,
           isCustomRootListArgument,
           mutationStatement
         });
         if (statement.length) {
+          // inputType has at least one @cypher input field
           statements.push(...statement);
-          if (isCustomRootListArgument) {
-            mutationStatement = augmentedStatement;
+        } else {
+          let paramName = argName;
+          // inputType did not have a @cypher input field, so keep looking
+          const nestedParams = mappedDataParams[argName];
+          const nestedArgs = Object.values(inputType.getFields()).map(
+            arg => arg.astNode
+          );
+          const statement = translateNestedMutation({
+            isNestedParam: true,
+            isCustom,
+            paramName,
+            args: nestedArgs,
+            dataParams: nestedParams,
+            parentTypeName: typeName,
+            paramVariable,
+            typeMap,
+            isRoot,
+            argumentIsArray,
+            rootUsesListVariable,
+            isCustomRootListArgument,
+            mutationStatement
+          });
+          if (statement.length) {
+            statements.push(...statement);
           }
         }
       }
-    }
-  });
-  const nestedStatements = statements.join('\n');
-  return [nestedStatements, mutationStatement];
+      return statements;
+    }, [])
+    .join('\n');
 };
 
 const includesCypherUnwindClause = ({
@@ -1381,38 +1356,37 @@ const translateNestedMutation = ({
   isCustomRootListArgument,
   mutationStatement
 }) => {
-  const translations = [];
-  // For each defined argument
-  args.forEach(arg => {
+  return args.reduce((translations, arg) => {
     const argName = arg.name.value;
     const argumentTypeName = unwrapNamedType({ type: arg.type }).name;
     const argumentType = typeMap[argumentTypeName];
     const argValue = dataParams[argName];
-    if (isInputObjectType(argumentType) && argValue !== undefined) {
+    const usesInputObjectArgument =
+      isInputObjectType(argumentType) && typeof argValue === 'object';
+    if (usesInputObjectArgument) {
       Object.keys(argValue).forEach(name => {
-        translations.push(
-          ...translateNestedMutationInput({
-            name,
-            argName,
-            argValue,
-            argumentType,
-            paramName,
-            parentTypeName,
-            paramVariable,
-            isRoot,
-            isNestedParam,
-            isCustom,
-            argumentIsArray,
-            rootUsesListVariable,
-            typeMap,
-            isCustomRootListArgument,
-            mutationStatement
-          })
-        );
+        const translation = translateNestedMutationInput({
+          name,
+          argName,
+          argValue,
+          argumentType,
+          paramName,
+          parentTypeName,
+          paramVariable,
+          isRoot,
+          isNestedParam,
+          isCustom,
+          argumentIsArray,
+          rootUsesListVariable,
+          typeMap,
+          isCustomRootListArgument,
+          mutationStatement
+        });
+        if (translation.length) translations.push(...translation);
       });
     }
-  });
-  return translations;
+    return translations;
+  }, []);
 };
 
 const translateNestedMutationInput = ({
@@ -1458,7 +1432,7 @@ const translateNestedMutationInput = ({
           // recursively builds nested cypher variable path
           nestedParamVariable = `${paramVariable}.${paramName}`;
         }
-        if (rootUsesListVariable) {
+        if (isCustomRootListArgument && rootUsesListVariable) {
           nestedParamVariable = parentTypeName;
         }
         const translated = buildMutationSubQuery({
@@ -1468,17 +1442,20 @@ const translateNestedMutationInput = ({
           name,
           parentTypeName,
           paramVariable: nestedParamVariable,
+          argumentType,
           argName,
           argValue,
           typeMap,
           isRoot,
-          isNestedParam,
           argumentIsArray,
+          isNestedParam,
           rootUsesListVariable,
           isCustomRootListArgument,
           mutationStatement
         });
-        if (translated) translations.push(translated);
+        if (translated) {
+          translations.push(translated);
+        }
       } else if (isNestedParam) {
         // keep looking
         const nestedArgs = Object.values(argumentType.getFields()).map(
@@ -1502,6 +1479,7 @@ const translateNestedMutationInput = ({
           typeMap,
           isCustom,
           mutationStatement,
+          rootUsesListVariable,
           isCustomRootListArgument
         });
         const nestedStatements = statement.join('\n');
@@ -1512,122 +1490,6 @@ const translateNestedMutationInput = ({
   return translations;
 };
 
-const augmentWithClause = ({
-  statement,
-  inputFieldTypeName,
-  isCustom,
-  isRoot,
-  returnVariable,
-  rootUsesListVariable
-}) => {
-  const singleLine = statement.replace(/\r?\n|\r/g, ' ');
-  // find every WITH and add a newline character after each WITH
-  const newlinedWithClauses = singleLine.replace(/\r?WITH|\r/gi, `\nWITH`);
-  // reutnr the split of the single statement based on newlines specific to clause
-  const splitOnWithClauses = newlinedWithClauses.split('\n');
-  // get the last line, check if it is a WITH clause
-  const lastWithClause = splitOnWithClauses[splitOnWithClauses.length - 1];
-  const endsWithWithClause = lastWithClause.startsWith('WITH');
-  let continueWith = `WITH ${inputFieldTypeName} AS _${inputFieldTypeName}`;
-  if (isRoot) {
-    if (endsWithWithClause) {
-      const trimmed = lastWithClause.trim();
-      const withRemoved = trimmed.substr(4);
-      const withVariables = withRemoved.split(',');
-      const trimmedVariables = withVariables.map(variable => variable.trim());
-      if (!trimmedVariables.includes(returnVariable)) {
-        trimmedVariables.unshift(returnVariable);
-      }
-      const joined = trimmedVariables.join(', ');
-      continueWith = `WITH ${joined}`;
-      splitOnWithClauses[splitOnWithClauses.length - 1] = continueWith;
-    } else {
-      // default
-      continueWith = `WITH ${returnVariable}`;
-      splitOnWithClauses[splitOnWithClauses.length - 1] = continueWith;
-    }
-  } else if (endsWithWithClause) {
-    const trimmed = lastWithClause.trim();
-    const withRemoved = trimmed.substr(4);
-    const firstCommentIndex = withRemoved.indexOf('//');
-    const firstParamIndex = withRemoved.indexOf(inputFieldTypeName);
-    // inputFieldTypeName exist in the provided WITH clause
-    if (firstParamIndex !== -1) {
-      if (firstCommentIndex !== -1) {
-        // it might be in a // comment though, for some reason
-        if (firstParamIndex > firstCommentIndex) {
-          // it is, so add it
-          splitOnWithClauses[splitOnWithClauses.length - 1] = `${continueWith}${
-            withRemoved ? `, ${withRemoved}` : ''
-          }`;
-        }
-      } else if (isCustom) {
-        //! REFACTOR THREE
-        if (rootUsesListVariable) {
-          // progressively augment the root WITH statement
-          const withVariables = withRemoved.split(',');
-          const trimmedVariables = withVariables.map(variable =>
-            variable.trim()
-          );
-          const inputTypeVariableIndex = trimmedVariables.indexOf(
-            inputFieldTypeName
-          );
-          if (inputTypeVariableIndex !== -1) {
-            trimmedVariables.splice(
-              inputTypeVariableIndex,
-              1,
-              `${inputFieldTypeName} AS _${inputFieldTypeName}`
-            );
-            const joined = trimmedVariables.join(', ');
-            continueWith = `WITH ${joined}`;
-            splitOnWithClauses[
-              splitOnWithClauses.length - 1
-            ] = `${continueWith}`;
-          } else {
-            splitOnWithClauses[
-              splitOnWithClauses.length - 1
-            ] = `${continueWith}${withRemoved ? `, ${withRemoved}` : ''}`;
-          }
-        }
-      }
-    } else if (isCustom) {
-      if (rootUsesListVariable) {
-        //! REFACTOR THREE
-        // progressively augment the root WITH statement
-        const withVariables = withRemoved.split(',');
-        const trimmedVariables = withVariables.map(variable => variable.trim());
-        const inputTypeVariableIndex = trimmedVariables.indexOf(
-          inputFieldTypeName
-        );
-        if (inputTypeVariableIndex !== -1) {
-          trimmedVariables.splice(
-            inputTypeVariableIndex,
-            1,
-            `${inputFieldTypeName} AS _${inputFieldTypeName}`
-          );
-          const joined = trimmedVariables.join(', ');
-          continueWith = `WITH ${joined}`;
-          splitOnWithClauses[splitOnWithClauses.length - 1] = `${continueWith}`;
-        } else {
-          splitOnWithClauses[splitOnWithClauses.length - 1] = `${continueWith}${
-            withRemoved ? `, ${withRemoved}` : ''
-          }`;
-        }
-      }
-    } else {
-      // it does not exist, so add it
-      splitOnWithClauses[splitOnWithClauses.length - 1] = `${continueWith}${
-        withRemoved ? `, ${withRemoved}` : ''
-      }`;
-    }
-  } else {
-    // default
-    splitOnWithClauses.push(continueWith);
-  }
-  const augmented = splitOnWithClauses.join('\n');
-  return [augmented, continueWith, rootUsesListVariable];
-};
-
 const buildMutationSubQuery = ({
   inputFieldTypeName,
   inputFieldType,
@@ -1635,6 +1497,7 @@ const buildMutationSubQuery = ({
   name,
   parentTypeName,
   paramVariable,
+  argumentType,
   argName,
   argValue,
   typeMap,
@@ -1645,37 +1508,27 @@ const buildMutationSubQuery = ({
   isCustomRootListArgument,
   mutationStatement
 }) => {
-  let statements = '';
   const inputFieldTypeFields = inputFieldType.getFields();
   const nestedArgs = Object.values(inputFieldTypeFields).map(
     arg => arg.astNode
   );
   const nestedDataParams = argValue[name];
   const mappedDataParams = mapMutationParams({ params: nestedDataParams });
-  const [nestedMutationStatements] = translateNestedMutations({
+  const nestedMutationStatements = translateNestedMutations({
     args: nestedArgs,
     dataParams: mappedDataParams,
     paramVariable: inputFieldTypeName,
     typeMap,
     mutationStatement
   });
-  if (nestedMutationStatements) {
-    const [
-      augmentedStatement,
-      continueWith,
-      unwindsListArgument
-    ] = augmentWithClause({
-      statement,
-      inputFieldTypeName
-    });
-    // persist the parameter variable only if there are further
-    // nested translations
-    statements = `${augmentedStatement}${nestedMutationStatements}`;
-  } else {
-    // otherwise, we are at a leaf endpoint
-    statements = statement;
-  }
-  //! REFACTOR ONE
+  const augmentedStatement = augmentMutationWithClauses({
+    name,
+    argumentType,
+    inputFieldTypeName,
+    statement,
+    nestedMutationStatements
+  });
+  const statements = `${augmentedStatement}${nestedMutationStatements}`;
   // generalized solution for possible edge case where the current and
   // nested input type names are the same
   if (!isRoot && paramVariable) {
@@ -1704,6 +1557,163 @@ const buildMutationSubQuery = ({
   });
 };
 
+const augmentMutationWithClauses = ({
+  name,
+  argumentType,
+  inputFieldTypeName = '',
+  nestedMutationStatements = [],
+  statement = ''
+}) => {
+  let openingWithClause = '';
+  let endingWithClause = '';
+  if (statement) {
+    const lowercasedStatement = statement.toLowerCase();
+
+    const isCommentedRegExp = new RegExp(`with(?!\/*.*)`, 'i');
+
+    let firstWithIndex = lowercasedStatement.indexOf('with');
+    isCommentedRegExp.lastIndex = firstWithIndex;
+    const firstWithNotCommented = lowercasedStatement.match(isCommentedRegExp);
+    // if(!firstWithNotCommented) firstWithIndex = -1;
+
+    let lastWithIndex = lowercasedStatement.lastIndexOf('with');
+    // this makes the regex match "sticky", which begins the match from the given index
+    isCommentedRegExp.lastIndex = lastWithIndex;
+    const lastWithNotCommented = lowercasedStatement.match(isCommentedRegExp);
+    // if(!lastWithNotCommented) lastWithIndex = -1;
+
+    if (firstWithIndex !== -1) {
+      const firstWithMatch = statement.substr(firstWithIndex);
+      // so, to determine which is at the top, see that the index is actually 0, test this
+      if (firstWithMatch) {
+        // there is only one WITH clause
+        if (firstWithIndex === lastWithIndex) {
+          const onlyMatch = statement.substr(firstWithIndex);
+          if (firstWithIndex === 0) {
+            // the only WITH clause also begins at index 0, so it's an opening WITH clause
+            openingWithClause = onlyMatch;
+          } else {
+            // assume the last WITH clause is at the end of the statement
+            endingWithClause = onlyMatch;
+          }
+        } else if (lastWithIndex !== -1) {
+          // there are two or more WITH clauses
+          const firstMatch = statement.substr(firstWithIndex);
+          const lastMatch = statement.substr(lastWithIndex);
+          if (firstWithIndex === 0) openingWithClause = firstMatch;
+          endingWithClause = lastMatch;
+        }
+        if (openingWithClause && endingWithClause) {
+          openingWithClause = openingWithClause.substr(0, lastWithIndex);
+        }
+        if (openingWithClause) {
+          // add a Cypher variable for inputFieldTypeName - the name of the parent
+          // UNWIND variable - to keep it available within the proceeding Cypher
+          statement = augmentMutationWithClause({
+            withClause: openingWithClause,
+            inputFieldTypeName,
+            isImportClause: true
+          });
+        }
+        if (endingWithClause) {
+          // add an alias for the Cypher variable from the parent UNWIND statement,
+          // to allow the same input type to be used again by a nested UNWIND,
+          // preventing variable name conflicts
+          const augmentedWithClause = augmentMutationWithClause({
+            withClause: endingWithClause,
+            inputFieldTypeName,
+            isExportClause: true
+          });
+          if (openingWithClause) {
+            // if there is also a WITH clause importing variables,
+            // then it has already been augmented (above) and equal to statement,
+            // so the now augmented exporting WITH clause is appended
+            statement = `${statement}${augmentedWithClause}`;
+          } else {
+            // otherwise, statement is still unmodified, so get everything before
+            // the exporting WITH clause, appending after it the augmented clause
+            const beforeEndingWith = statement.substr(0, lastWithIndex);
+            statement = `${beforeEndingWith}\n${augmentedWithClause}`;
+          }
+        }
+      }
+    }
+  }
+  if (!endingWithClause && nestedMutationStatements.length) {
+    const paramVariable = `${inputFieldTypeName} AS _${inputFieldTypeName}`;
+    // as a default, continue with all variables, along with the aliased input type name
+    // to allow for reusing its input type in nested cases
+    endingWithClause = `WITH *, ${paramVariable}`;
+    statement = `${statement}\n${endingWithClause}`;
+  }
+  return statement;
+};
+
+const augmentMutationWithClause = ({
+  withClause = '',
+  inputFieldTypeName = '',
+  isImportClause = false,
+  isExportClause = false
+}) => {
+  // find the index of the first comma, for checking if this is a variable list
+  const firstCommaIndex = withClause.indexOf(',');
+  // regex to check if this clause begins with the pattern WITH *
+  const withEverythingRegex = new RegExp(`WITH\\s*\\\*+`, 'i');
+  const continuesWithEverything = withClause.match(withEverythingRegex);
+  // assume the clause is not a variable list, e.g., WITH *, ... or WITH x, ...
+  let isVariableList = false;
+  // assume the clause does not begin with WITH *
+  let isWithAsterisk = false;
+  let augmentedWithClause = withClause;
+  // remove the WITH from the beginning of the clause
+  let withClauseRemainder = withClause.substr(4);
+  if (continuesWithEverything) {
+    isWithAsterisk = true;
+    const match = continuesWithEverything[0];
+    const matchLen = match.length;
+    // get everything proceeding WITH *
+    const nextCypher = withClause.substr(matchLen);
+    if (nextCypher) {
+      // trim everything proceeding, so we can check the next character
+      // using String.startsWith
+      const trimmed = nextCypher.trim();
+      if (trimmed.startsWith(',') && firstCommaIndex !== -1) {
+        // if the clause begins with WITH * and is immediately proceeded
+        // by a comma, the clause begins as: "WITH *, ..."
+        isVariableList = true;
+      }
+    }
+  }
+  let paramVariable = '';
+  if (isImportClause) {
+    // if an importating WITH clause is provided, then we need to persist
+    // the parent UNWIND clause's variable along with it to keep it available
+    paramVariable = inputFieldTypeName;
+  } else if (isExportClause) {
+    // alias this input type name for it to be unwound by the nested UNWIND,
+    // to allow for reusing the same input type in nested cases
+    paramVariable = `${inputFieldTypeName} AS _${inputFieldTypeName}`;
+  }
+  if (isWithAsterisk) {
+    if (isVariableList) {
+      // set withClauseRemainder forward to start at the first comma
+      withClauseRemainder = withClause.substr(firstCommaIndex);
+    } else {
+      // set withClauseRemainder to immediately after WITH *
+      withClauseRemainder = withClause.substr(6);
+    }
+    // inject paramVariable into the clause
+    augmentedWithClause = `WITH *, ${paramVariable}${withClauseRemainder}`;
+  } else {
+    // otherwise, the clause is not WITH * and not a list, as neither "WITH *", nor "WITH x, ..."
+    // so it is added with a preceeding comma, assuming the clause provides at least 1 variable
+    augmentedWithClause = `WITH ${paramVariable}${
+      withClauseRemainder ? `,${withClauseRemainder}` : ''
+    }`;
+  }
+  return augmentedWithClause;
+};
+
 const cypherSubQuery = ({
   argName = '',
   name = '',
@@ -1720,9 +1730,9 @@ const cypherSubQuery = ({
   if (isCustomRootListArgument) {
     if (rootUsesListVariable) {
       if (isNestedParam) {
-        unwindStatement = `UNWIND _${parentTypeName}.${argName}.${name} AS ${inputFieldTypeName}`;
+        unwindStatement = `UNWIND ${parentTypeName}.${argName}.${name} AS ${inputFieldTypeName}`;
       } else {
-        unwindStatement = `UNWIND _${paramVariable}.${name} AS ${inputFieldTypeName}`;
+        unwindStatement = `UNWIND ${paramVariable}.${name} AS ${inputFieldTypeName}`;
       }
     } else {
       unwindStatement = `UNWIND $${argName} AS _${argName}
@@ -1750,21 +1760,16 @@ const mapMutationParams = ({ params = {} }) => {
 };
 
 const mapMutationParam = ({ param }) => {
-  let mapped = {};
   if (Array.isArray(param)) {
     const firstElement = param[0];
     if (typeof firstElement === 'object' && !Array.isArray(firstElement)) {
-      param.forEach(listObject => {
+      // list of object values
+      return param.reduce((subMap, listObject) => {
         const subMapped = mapMutationParams({
           params: listObject
         });
-        mapped = {
-          ...mapped,
-          ...subMapped
-        };
-      });
-      // list of object values
-      return mapped;
+        return _.merge(subMap, subMapped);
+      }, {});
     } else {
       // list argument of non-object values
       return true;
@@ -1776,20 +1781,4 @@ const mapMutationParam = ({ param }) => {
     });
   }
   return true;
-};
-
-const getUnionLabels = ({ typeName = '', typeMap = {} }) => {
-  const unionLabels = [];
-  Object.keys(typeMap).map(key => {
-    const definition = typeMap[key];
-    const astNode = definition.astNode;
-    if (isUnionTypeDefinition({ definition: astNode })) {
-      const types = definition.getTypes();
-      const unionTypeName = definition.name;
-      if (types.find(type => type.name === typeName)) {
-        unionLabels.push(unionTypeName);
-      }
-    }
-  });
-  return unionLabels;
 };
