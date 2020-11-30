@@ -12761,3 +12761,93 @@ test('Throws error if using search argument with more than one index argument', 
     t.is(message, `Only one argument for a search index can be provided.`);
   } else t.fail();
 });
+
+test('Filter node type using regexp filter on String type fields', t => {
+  const graphQLQuery = `query {
+    Movie(
+      filter: {
+        title_regexp: "(?i)word"
+        titles_regexp: "(?i)word"
+      }
+    ) {
+      _id
+      title
+      titles
+    }
+  }  
+  `,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) WHERE (\`movie\`.title =~ $filter.title_regexp) AND ([value IN $filter.titles_regexp WHERE [prop IN \`movie\`.titles WHERE prop =~ value]]) RETURN \`movie\` {_id: ID(\`movie\`), .title , .titles } AS \`movie\``,
+    expectedParams = {
+      offset: 0,
+      first: -1,
+      filter: {
+        title_regexp: '(?i)word',
+        titles_regexp: '(?i)word'
+      },
+      cypherParams: CYPHER_PARAMS
+    };
+
+  t.plan(2);
+  return Promise.all([
+    augmentedSchemaCypherTestRunner(
+      t,
+      graphQLQuery,
+      {},
+      expectedCypherQuery,
+      expectedParams
+    )
+  ]);
+});
+
+test('Filter relationship using regexp filter on String type field', t => {
+  const graphQLQuery = `query {
+    Movie(
+      filter: {
+        title_regexp: "(?i)word"
+        titles_regexp: "(?i)word"
+        actors: {
+          name_regexp: ""
+        }
+      }
+    ) {
+      _id
+      title
+      titles
+      actors(
+        filter: {
+          name_regexp: ""
+        }
+      ) {
+        name
+      }
+    }
+  }
+  `,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) WHERE (\`movie\`.title =~ $filter.title_regexp) AND (EXISTS((\`movie\`)<-[:ACTED_IN]-(:Actor)) AND ALL(\`actor\` IN [(\`movie\`)<-[:ACTED_IN]-(\`_actor\`:Actor) | \`_actor\`] WHERE (\`actor\`.name =~ $filter.actors.name_regexp))) AND ([value IN $filter.titles_regexp WHERE [prop IN \`movie\`.titles WHERE prop =~ value]]) RETURN \`movie\` {_id: ID(\`movie\`), .title , .titles ,actors: [(\`movie\`)<-[:\`ACTED_IN\`]-(\`movie_actors\`:\`Actor\`) WHERE (\`movie_actors\`.name =~ $1_filter.name_regexp) | \`movie_actors\` { .name }] } AS \`movie\``,
+    expectedParams = {
+      offset: 0,
+      first: -1,
+      filter: {
+        title_regexp: '(?i)word',
+        actors: {
+          name_regexp: ''
+        },
+        titles_regexp: '(?i)word'
+      },
+      '1_filter': {
+        name_regexp: ''
+      },
+      cypherParams: CYPHER_PARAMS
+    };
+
+  t.plan(2);
+  return Promise.all([
+    augmentedSchemaCypherTestRunner(
+      t,
+      graphQLQuery,
+      {},
+      expectedCypherQuery,
+      expectedParams
+    )
+  ]);
+});
