@@ -38,7 +38,8 @@ export function cypherTestRunner(
       MergeUser: checkCypherMutation,
       Custom: checkCypherMutation,
       MergeCustoms: checkCypherMutation,
-      MergeMatrix: checkCypherMutation,
+      MergeLayeredNetwork: checkCypherMutation,
+      MergeLayeredNetwork2: checkCypherMutation,
       MergeCustomsWithoutReturnOrWithClause: checkCypherMutation
     }
   };
@@ -95,7 +96,8 @@ export function augmentedSchemaCypherTestRunner(
       MergeUser: checkCypherMutation,
       Custom: checkCypherMutation,
       MergeCustoms: checkCypherMutation,
-      MergeMatrix: checkCypherMutation,
+      MergeLayeredNetwork: checkCypherMutation,
+      MergeLayeredNetwork2: checkCypherMutation,
       MergeCustomsWithoutReturnOrWithClause: checkCypherMutation
     }
   };
