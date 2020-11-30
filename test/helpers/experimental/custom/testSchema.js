@@ -2,7 +2,7 @@ import { gql } from 'apollo-server';
 import { cypher } from '../../../../src/index';
 
 export const testSchema = gql`
-   type User {
+  type User {
     idField: ID! @id
     name: String
     names: [String]
@@ -12,6 +12,8 @@ export const testSchema = gql`
     createdAt: DateTime
     modifiedAt: DateTime
     int: Int
+    myStaticNumber: Int
+    myExportedNumber: Int
   }
 
   type Movie {
@@ -19,6 +21,7 @@ export const testSchema = gql`
     title: String! @unique
     likedBy: [User!] @relation(name: "RATING", direction: IN)
     custom: String
+    myStaticNumber: Int
   }
 
   type Query {
@@ -34,7 +37,7 @@ export const testSchema = gql`
       MERGE (custom: Custom {
         id: $id
       })
-      WITH custom
+      RETURN custom
     `})
     MergeCustoms(data: [CustomData], nestedBatch: [CustomBatchMutation], sideEffects: CustomSideEffects, otherData: CustomSideEffects, computed: CustomComputed): [Custom] @cypher(statement: """
       UnwiNd   $data aS  
@@ -50,8 +53,16 @@ export const testSchema = gql`
       MERGE (custom: Custom {
         id: CustomData.id
       })
+      RETURN custom
     """)
-    MergeMatrix(xNodes: [XNodeInput!], yNodes: [YNodeInput!]): [XNode!]! @cypher(${cypher`
+    MergeLayeredNetwork(xNodes: [XNodeInput!]!): [XNode!]! @cypher(${cypher`
+      UNWIND $xNodes AS XNodeInput
+      MERGE (xNode: XNode {
+        id: XNodeInput.id
+      })
+      RETURN xNode
+    `})
+    MergeLayeredNetwork2(xNodes: [XNodeInput!]!, yNodes: [YNodeInput!]!): [XNode!]! @cypher(${cypher`
       UNWIND $xNodes AS XNodeInput
       UNWIND $yNodes AS YNodeInput
       MERGE (xNode: XNode {
@@ -60,43 +71,57 @@ export const testSchema = gql`
       MERGE (yNode: YNode {
         id: YNodeInput.id
       })
-      WITH xNode, yNode
+      MERGE (xNode)-[:XY]->(yNode)
+      RETURN xNode
     `})
   }
 
   type XNode {
     id: ID! @id
     xy: [YNode] @relation(name: "XY", direction: OUT)
-    yx: [YNode] @relation(name: "YX", direction: IN)
-  }
-
-  input XNodeInput {
-    id: ID!
-    yNodes: YNodeMutation
-  }
-
-  input YNodeMutation {
-    merge: [YNodeInput] @cypher(${cypher`
-      MERGE (yNode)<-[:XY]-(xNode)
-      MERGE (yNode)-[:YX]->(xNode)
-    `})
   }
 
   type YNode {
     id: ID! @id
     xy: [XNode] @relation(name: "XY", direction: IN)
-    yx: [XNode] @relation(name: "YX", direction: OUT)
+    yz: [ZNode] @relation(name: "YZ", direction: OUT)
+  }
+
+  type ZNode {
+    id: ID! @id
+    zy: [YNode] @relation(name: "YZ", direction: IN)
+  }
+
+  input XNodeInput {
+    id: ID!
+    xy: YNodeMutation
   }
 
   input YNodeInput {
     id: ID!
-    xNodes: XNodeMutation
+    yz: ZNodeMutation
   }
 
-  input XNodeMutation {
-    merge: [XNodeInput] @cypher(${cypher`
+  input ZNodeInput {
+    id: ID!
+  }
+
+  input YNodeMutation {
+    merge: [YNodeInput] @cypher(${cypher`
+      MERGE (yNode: YNode {
+        id: YNodeInput.id
+      })
       MERGE (xNode)-[:XY]->(yNode)
-      MERGE (xNode)<-[:YX]-(yNode)
+      WITH yNode
+    `})
+  }
+
+  input ZNodeMutation {
+    merge: [ZNodeInput] @cypher(${cypher`
+      MERGE (zNode: ZNode {
+        id: ZNodeInput.id
+      })
+      MERGE (yNode)-[:YZ]->(zNode)
     `})
   }
 
@@ -108,6 +133,11 @@ export const testSchema = gql`
   }
 
   input CustomData {
+    id: ID!
+    nested: CustomSideEffects
+  }
+
+  input CustomCreate {
     id: ID!
     nested: CustomSideEffects
   }
@@ -127,16 +157,16 @@ export const testSchema = gql`
   }
 
   input CustomSideEffects {
-    create: [CustomData] @cypher(${cypher`
+    create: [CustomCreate] @cypher(${cypher`
       MERGE (subCustom: Custom {
-        id: CustomData.id
+        id: CustomCreate.id
       })
       MERGE (custom)-[:RELATED]->(subCustom)
       WITH subCustom AS custom
     `})
-    merge: [CustomData] @cypher(${cypher`
+    merge: [CustomCreate] @cypher(${cypher`
       MERGE (subCustom: Custom {
-        id: CustomData.id
+        id: CustomCreate.id
       })
       MERGE (custom)-[:RELATED]->(subCustom)
       WITH subCustom AS custom
@@ -144,16 +174,16 @@ export const testSchema = gql`
   }
 
   input CustomBatchMutation {
-    merge: [CustomData] @cypher(${cypher`
+    merge: [CustomCreate] @cypher(${cypher`
       MERGE (subCustom: Custom {
-        id: CustomData.id
+        id: CustomCreate.id
       })
       MERGE (subCustom)-[:RELATED]->(custom)
       WITH subCustom AS custom
     `})
-    update: [CustomData] @cypher(${cypher`
+    update: [CustomCreate] @cypher(${cypher`
       MATCH (custom)<-[:RELATED]-(subCustom: Custom {
-        id: CustomData.id
+        id: CustomCreate.id
       })
       SET subCustom.nestedBatchProperty = TRUE
       WITH subCustom AS custom
@@ -179,8 +209,10 @@ export const testSchema = gql`
     nested: OnUserCreate
     int: Int
     createdAt: CreatedAt @cypher(${cypher`
+      WITH user, 10 AS myStaticNumber
       SET user.int = $data.onUserCreate.int
       SET user.createdAt = datetime(CreatedAt.datetime)
+      SET user.myStaticNumber = myStaticNumber
     `})
   }
 
@@ -201,11 +233,87 @@ export const testSchema = gql`
 
   input UserLiked { 
     create: [MovieCreate!] @cypher(${cypher`
-      CREATE (user)-[:RATING]->(movie: Movie {
+      CREATE (movie: Movie {
         id: MovieCreate.id,
         title: MovieCreate.title
       })
+      CREATE (user)-[:RATING]->(movie)
       WITH movie
+    `})
+    createWithImporting: [MovieCreate!] @cypher(${cypher`
+      WITH user
+      CREATE (movie: Movie {
+        id: MovieCreate.id,
+        title: MovieCreate.title
+      })
+      CREATE (user)-[:RATING]->(movie)
+      WITH movie
+    `})
+    createWithImportingAll: [MovieCreate!] @cypher(${cypher`
+      WITH *
+      CREATE (movie: Movie {
+        id: MovieCreate.id,
+        title: MovieCreate.title
+      })
+      CREATE (user)-[:RATING]->(movie)
+      WITH movie
+    `})
+    createWithImportingAllList: [MovieCreate!] @cypher(${cypher`
+      WITH *, 10 AS myStaticNumber
+      CREATE (movie: Movie {
+        id: MovieCreate.id,
+        title: MovieCreate.title,
+        myStaticNumber: myStaticNumber
+      })
+      CREATE (user)-[:RATING]->(movie)
+      WITH movie
+    `})
+    createWithImportingList: [MovieCreate!] @cypher(${cypher`
+      WITH user, 10 AS myStaticNumber
+      CREATE (movie: Movie {
+        id: MovieCreate.id,
+        title: MovieCreate.title,
+        myStaticNumber: myStaticNumber
+      })
+      CREATE (user)-[:RATING]->(movie)
+      WITH movie
+    `})
+    createWithDefaultExport: [MovieCreate!] @cypher(${cypher`
+      CREATE (movie: Movie {
+        id: MovieCreate.id,
+        title: MovieCreate.title
+      })
+      CREATE (user)-[:RATING]->(movie)
+    `})
+    createWithExportingAll: [MovieCreate!] @cypher(${cypher`
+      WITH *, 10 AS myStaticNumber
+      CREATE (movie: Movie {
+        id: MovieCreate.id,
+        title: MovieCreate.title,
+        myStaticNumber: myStaticNumber
+      })
+      CREATE (user)-[:RATING]->(movie)
+      WITH *
+    `})
+    createWithExportingAllList: [MovieCreate!] @cypher(${cypher`
+      WITH *, 10 AS myStaticNumber
+      CREATE (movie: Movie {
+        id: MovieCreate.id,
+        title: MovieCreate.title,
+        myStaticNumber: myStaticNumber
+      })
+      CREATE (user)-[:RATING]->(movie)
+      WITH *, 5 AS myExportedNumber
+    `})
+    createWithExportingList: [MovieCreate!] @cypher(${cypher`
+      WITH *, 10 AS myStaticNumber
+      CREATE (movie: Movie {
+        id: MovieCreate.id,
+        title: MovieCreate.title,
+        myStaticNumber: myStaticNumber
+      })
+      CREATE (user)-[:RATING]->(movie)
+      WITH movie, 5 AS myExportedNumber
     `})
     nestedCreate: [MovieCreate!] @cypher(${cypher`
       CREATE (user)-[:RATING]->(movie: Movie {
@@ -257,7 +365,34 @@ export const testSchema = gql`
         name: UserCreate.name,
         uniqueString: UserCreate.uniqueString
       })
+      WITH user
     `})
+    createWithNameConflictPrevention: [UserCreate!] @cypher(${cypher`
+      CREATE (movie)<-[:RATING]-(subUser:User {
+        name: UserCreate.name,
+        uniqueString: UserCreate.uniqueString
+      })
+      WITH subUser AS user
+    `})
+    createWithParentStaticExport: [UserCreate!] @cypher(${cypher`
+      WITH movie, myExportedNumber
+      CREATE (movie)<-[:RATING]-(user:User {
+        name: UserCreate.name,
+        uniqueString: UserCreate.uniqueString,
+        myExportedNumber: myExportedNumber
+      })
+      WITH user
+    `})
+    # This results in a Cypher runtime error: 
+    # If the parent @cypher exports everything using WITH *,
+    # then the "user" variable is already defined
+    createDuplicateVariableError: [UserCreate!] @cypher(${cypher`
+      CREATE (movie)<-[:RATING]-(user:User {
+        name: UserCreate.name,
+        uniqueString: UserCreate.uniqueString
+      })
+      WITH user
+    `})    
     merge: [UserMerge!] @cypher(${cypher`
       MERGE (user: User {
         idField: UserMerge.where.idField
