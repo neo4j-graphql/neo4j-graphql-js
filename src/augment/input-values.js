@@ -485,6 +485,7 @@ export const buildPropertyFilters = ({
       if (!isListFilter) filterTypes = [...filterTypes, 'in', 'not_in'];
       filterTypes = [
         ...filterTypes,
+        'regexp',
         'contains',
         'not_contains',
         'starts_with',
@@ -525,7 +526,7 @@ export const buildFilters = ({
         Neo4jPointDistanceFilter
       ).some(distanceFilter => distanceFilter === name);
       let wrappers = {};
-      if (name === 'in' || name === 'not_in') {
+      if ((name === 'in' || name === 'not_in') && name !== 'regexp') {
         wrappers = {
           [TypeWrappers.NON_NULL_NAMED_TYPE]: true,
           [TypeWrappers.LIST_TYPE]: true
@@ -534,10 +535,12 @@ export const buildFilters = ({
         fieldConfig.type.name = `${Neo4jTypeName}${SpatialType.POINT}DistanceFilter`;
       }
       if (isListFilter) {
-        wrappers = {
-          [TypeWrappers.NON_NULL_NAMED_TYPE]: true,
-          [TypeWrappers.LIST_TYPE]: true
-        };
+        if (name !== 'regexp') {
+          wrappers = {
+            [TypeWrappers.NON_NULL_NAMED_TYPE]: true,
+            [TypeWrappers.LIST_TYPE]: true
+          };
+        }
       }
       inputValues.push(
         buildInputValue({
