@@ -343,7 +343,6 @@ const augmentCustomMutation = ({
     const returnClause = splitOnClause[returnClauseIndex];
     const endsWithReturnClause = returnClause.startsWith('RETURN');
     // require that the root @cypher statement have a RETURN clause
-    // TODO somehow make sure it's actually at the end ...?
     if (endsWithReturnClause) {
       const rootWithClause = `WITH *`;
       const returnClause = splitOnClause.splice(
@@ -1442,7 +1441,6 @@ const translateNestedMutationInput = ({
           name,
           parentTypeName,
           paramVariable: nestedParamVariable,
-          argumentType,
           argName,
           argValue,
           typeMap,
@@ -1497,7 +1495,6 @@ const buildMutationSubQuery = ({
   name,
   parentTypeName,
   paramVariable,
-  argumentType,
   argName,
   argValue,
   typeMap,
@@ -1522,8 +1519,6 @@ const buildMutationSubQuery = ({
     mutationStatement
   });
   const augmentedStatement = augmentMutationWithClauses({
-    name,
-    argumentType,
     inputFieldTypeName,
     statement,
     nestedMutationStatements
@@ -1550,6 +1545,8 @@ const buildMutationSubQuery = ({
     parentTypeName,
     paramVariable,
     statements,
+    isRoot,
+    argumentIsArray,
     isNestedParam,
     rootUsesListVariable,
     mutationStatement,
@@ -1558,8 +1555,6 @@ const buildMutationSubQuery = ({
 };
 
 const augmentMutationWithClauses = ({
-  name,
-  argumentType,
   inputFieldTypeName = '',
   nestedMutationStatements = [],
   statement = ''
@@ -1568,20 +1563,12 @@ const augmentMutationWithClauses = ({
   let endingWithClause = '';
   if (statement) {
     const lowercasedStatement = statement.toLowerCase();
-
     const isCommentedRegExp = new RegExp(`with(?!\/*.*)`, 'i');
-
     let firstWithIndex = lowercasedStatement.indexOf('with');
     isCommentedRegExp.lastIndex = firstWithIndex;
-    const firstWithNotCommented = lowercasedStatement.match(isCommentedRegExp);
-    // if(!firstWithNotCommented) firstWithIndex = -1;
-
     let lastWithIndex = lowercasedStatement.lastIndexOf('with');
     // this makes the regex match "sticky", which begins the match from the given index
     isCommentedRegExp.lastIndex = lastWithIndex;
-    const lastWithNotCommented = lowercasedStatement.match(isCommentedRegExp);
-    // if(!lastWithNotCommented) lastWithIndex = -1;
-
     if (firstWithIndex !== -1) {
       const firstWithMatch = statement.substr(firstWithIndex);
       // so, to determine which is at the top, see that the index is actually 0, test this
@@ -1722,6 +1709,8 @@ const cypherSubQuery = ({
   parentTypeName = '',
   paramVariable = '',
   statements = '',
+  isRoot,
+  argumentIsArray,
   isNestedParam = false,
   rootUsesListVariable = false,
   isCustomRootListArgument = false
@@ -1738,6 +1727,9 @@ const cypherSubQuery = ({
       unwindStatement = `UNWIND $${argName} AS _${argName}
   UNWIND _${argName}.${name} as ${inputFieldTypeName}`;
     }
+  } else if (isRoot && argumentIsArray) {
+    unwindStatement = `UNWIND $${paramVariable}.${argName} AS _${argName}
+  UNWIND _${argName}.${name} as ${inputFieldTypeName}`;
   }
   return `
 CALL {

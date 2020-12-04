@@ -26,7 +26,7 @@ export const testSchema = gql`
   }
 
   type Mutation {
-    CreateUser(idField: ID, name: String, names: [String], birthday: DateTime, uniqueString: String, liked: UserLiked, sideEffects: OnUserCreate): User
+    CreateUser(idField: ID, name: String, names: [String], birthday: DateTime, uniqueString: String, liked: UserLiked, sideEffects: OnUserCreate, sideEffectList: [OnUserCreate!]): User
     MergeUser(idField: ID!, name: String, names: [String], birthday: DateTime, uniqueString: String, liked: UserLiked, sideEffects: OnUserMerge): User
     DeleteUser(idField: ID!, liked: UserLiked): User
     Custom(id: ID!, sideEffects: CustomSideEffects, computed: CustomComputed): Custom @cypher(${cypher`

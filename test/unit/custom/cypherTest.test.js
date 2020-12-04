@@ -463,6 +463,189 @@ SET user.createdAt = datetime(CreatedAt.datetime)
   ]);
 });
 
+test('Create node mutation with root list argument and multiple nested @cypher', t => {
+  const graphQLQuery = `mutation {
+    CreateUser(
+      idField: "a"
+      name: "Ada"
+      uniqueString: "b"
+      birthday: { year: 2020, month: 11, day: 10 }
+      names: ["A", "B"]
+      liked: {
+        create: [
+          {
+            id: "movie-1"
+            title: "title-1"
+            likedBy: {
+              create: [
+                { name: "Alan", uniqueString: "x" }
+                { name: "Ada", uniqueString: "y" }
+              ]
+            }
+          }
+          {
+            id: "movie-2"
+            title: "title-2"
+            likedBy: {
+              create: [
+                { name: "Alan", uniqueString: "a" }
+                { name: "Ada", uniqueString: "c" }
+              ]
+            }
+          }
+        ]
+      }
+      sideEffectList: [
+        {
+          createdAt: { datetime: { year: 2020, month: 11, day: 13 } }
+        }
+      ]
+    ) {
+      idField
+      uniqueString
+      liked {
+        id
+        title
+        likedBy {
+          name
+          uniqueString
+        }
+      }
+      createdAt {
+        formatted
+      }
+    }
+  }
+  `,
+    expectedCypherQuery = `
+    CREATE (\`user\`:\`User\` {idField:$params.idField,name:$params.name,names:$params.names,birthday: datetime($params.birthday),uniqueString:$params.uniqueString})
+  WITH *
+  
+CALL {
+  WITH *
+  UNWIND $params.liked.create AS MovieCreate
+  WITH MovieCreate, user
+CREATE (user)-[:RATING]->(movie: Movie {
+  id: MovieCreate.id,
+  title: MovieCreate.title
+})
+WITH MovieCreate AS _MovieCreate, movie
+CALL {
+  WITH *
+  UNWIND _MovieCreate.likedBy.create AS UserCreate
+  WITH UserCreate, movie
+CREATE (movie)<-[:RATING]-(user:User {
+  name: UserCreate.name,
+  uniqueString: UserCreate.uniqueString
+})
+  RETURN COUNT(*) AS _likedBy_create_
+}
+  RETURN COUNT(*) AS _liked_create_
+}
+
+CALL {
+  WITH *
+  UNWIND $params.sideEffectList AS _sideEffectList
+  UNWIND _sideEffectList.createdAt as CreatedAt
+  WITH CreatedAt, user
+SET user.createdAt = datetime(CreatedAt.datetime)
+  RETURN COUNT(*) AS _sideEffectList_createdAt_
+}
+    RETURN \`user\` { .idField , .uniqueString ,liked: [(\`user\`)-[:\`RATING\`]->(\`user_liked\`:\`Movie\`) | \`user_liked\` { .id , .title ,likedBy: [(\`user_liked\`)<-[:\`RATING\`]-(\`user_liked_likedBy\`:\`User\`) | \`user_liked_likedBy\` { .name , .uniqueString }] }] ,createdAt: { formatted: toString(\`user\`.createdAt) }} AS \`user\`
+  `,
+    expectedParams = {
+      params: {
+        idField: 'a',
+        name: 'Ada',
+        names: ['A', 'B'],
+        birthday: {
+          year: {
+            low: 2020,
+            high: 0
+          },
+          month: {
+            low: 11,
+            high: 0
+          },
+          day: {
+            low: 10,
+            high: 0
+          }
+        },
+        uniqueString: 'b',
+        liked: {
+          create: [
+            {
+              id: 'movie-1',
+              title: 'title-1',
+              likedBy: {
+                create: [
+                  {
+                    name: 'Alan',
+                    uniqueString: 'x'
+                  },
+                  {
+                    name: 'Ada',
+                    uniqueString: 'y'
+                  }
+                ]
+              }
+            },
+            {
+              id: 'movie-2',
+              title: 'title-2',
+              likedBy: {
+                create: [
+                  {
+                    name: 'Alan',
+                    uniqueString: 'a'
+                  },
+                  {
+                    name: 'Ada',
+                    uniqueString: 'c'
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        sideEffectList: [
+          {
+            createdAt: {
+              datetime: {
+                year: {
+                  low: 2020,
+                  high: 0
+                },
+                month: {
+                  low: 11,
+                  high: 0
+                },
+                day: {
+                  low: 13,
+                  high: 0
+                }
+              }
+            }
+          }
+        ]
+      },
+      first: -1,
+      offset: 0
+    };
+  t.plan(4);
+  return Promise.all([
+    cypherTestRunner(t, graphQLQuery, {}, expectedCypherQuery, expectedParams),
+    augmentedSchemaCypherTestRunner(
+      t,
+      graphQLQuery,
+      {},
+      expectedCypherQuery,
+      expectedParams
+    )
+  ]);
+});
+
 test('Merge node mutation with multiple nested @cypher', t => {
   const graphQLQuery = `mutation {
     MergeUser(
