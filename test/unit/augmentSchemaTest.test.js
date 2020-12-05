@@ -1124,6 +1124,14 @@ test.cb('Test augmented schema', t => {
       ratings_none: _MovieRatedFilter
       ratings_single: _MovieRatedFilter
       ratings_every: _MovieRatedFilter
+      ratingsNoProps: _MovieRatedNoPropsFilter
+      ratingsNoProps_not: _MovieRatedNoPropsFilter
+      ratingsNoProps_in: [_MovieRatedNoPropsFilter!]
+      ratingsNoProps_not_in: [_MovieRatedNoPropsFilter!]
+      ratingsNoProps_some: _MovieRatedNoPropsFilter
+      ratingsNoProps_none: _MovieRatedNoPropsFilter
+      ratingsNoProps_single: _MovieRatedNoPropsFilter
+      ratingsNoProps_every: _MovieRatedNoPropsFilter
       ratingsCustomFrom: _MovieRatedCustomFromFilter
       ratingsCustomFrom_not: _MovieRatedCustomFromFilter
       ratingsCustomFrom_in: [_MovieRatedCustomFromFilter!]
@@ -1292,6 +1300,11 @@ test.cb('Test augmented schema', t => {
         orderBy: [_RatedOrdering]
         filter: _MovieRatedFilter
       ): [_MovieRatings]
+      ratingsNoProps(
+        first: Int
+        offset: Int
+        filter: _MovieRatedNoPropsFilter
+      ): [_MovieRatingsNoProps]
       ratingsCustomFrom(
         rating: Int
         time: _Neo4jTimeInput
@@ -6150,6 +6163,58 @@ test.cb('Test augmented schema', t => {
       ): [UniqueNode] @relation(name: "TEST_RELATION", direction: IN)
     }
 
+    type RatedNoProps @relation {
+      from: User
+      to: Movie
+    }
+
+    type _MovieRatingsNoProps
+      @relation(name: "RATED_NO_PROPS", from: "User", to: "Movie") {
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
+      _id: String
+      "Field for the User node this RATED_NO_PROPS [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
+      User: User
+    }
+
+    enum _RatedNoPropsOrdering {
+      _id_asc
+      _id_desc
+    }
+
+    input _MovieRatedNoPropsFilter {
+      AND: [_MovieRatedNoPropsFilter!]
+      OR: [_MovieRatedNoPropsFilter!]
+      User: _UserFilter
+    }
+
+    type _AddMovieRatingsNoPropsPayload
+      @relation(name: "RATED_NO_PROPS", from: "User", to: "Movie") {
+      "Field for the User node this RATED_NO_PROPS [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
+      from: User
+      "Field for the Movie node this RATED_NO_PROPS [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
+      to: Movie
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
+      _id: String
+    }
+
+    type _RemoveMovieRatingsNoPropsPayload
+      @relation(name: "RATED_NO_PROPS", from: "User", to: "Movie") {
+      "Field for the User node this RATED_NO_PROPS [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
+      from: User
+      "Field for the Movie node this RATED_NO_PROPS [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
+      to: Movie
+    }
+
+    type _MergeMovieRatingsNoPropsPayload
+      @relation(name: "RATED_NO_PROPS", from: "User", to: "Movie") {
+      "Field for the User node this RATED_NO_PROPS [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
+      from: User
+      "Field for the Movie node this RATED_NO_PROPS [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
+      to: Movie
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
+      _id: String
+    }
+
     "Query type line description"
     type QueryA {
       """
@@ -6657,6 +6722,43 @@ test.cb('Test augmented schema', t => {
         data: _RatedInput!
       ): _MergeMovieRatingsPayload
         @MutationMeta(relationship: "RATED", from: "User", to: "Movie")
+        @hasScope(
+          scopes: ["User: Merge", "merge:user", "Movie: Merge", "merge:movie"]
+        )
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the RATED_NO_PROPS relationship."
+      AddMovieRatingsNoProps(
+        from: _UserInput!
+        to: _MovieInput!
+      ): _AddMovieRatingsNoPropsPayload
+        @MutationMeta(relationship: "RATED_NO_PROPS", from: "User", to: "Movie")
+        @hasScope(
+          scopes: [
+            "User: Create"
+            "create:user"
+            "Movie: Create"
+            "create:movie"
+          ]
+        )
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the RATED_NO_PROPS relationship."
+      RemoveMovieRatingsNoProps(
+        from: _UserInput!
+        to: _MovieInput!
+      ): _RemoveMovieRatingsNoPropsPayload
+        @MutationMeta(relationship: "RATED_NO_PROPS", from: "User", to: "Movie")
+        @hasScope(
+          scopes: [
+            "User: Delete"
+            "delete:user"
+            "Movie: Delete"
+            "delete:movie"
+          ]
+        )
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the RATED_NO_PROPS relationship."
+      MergeMovieRatingsNoProps(
+        from: _UserInput!
+        to: _MovieInput!
+      ): _MergeMovieRatingsNoPropsPayload
+        @MutationMeta(relationship: "RATED_NO_PROPS", from: "User", to: "Movie")
         @hasScope(
           scopes: ["User: Merge", "merge:user", "Movie: Merge", "merge:movie"]
         )

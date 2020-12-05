@@ -69,6 +69,7 @@ export const testSchema = `
       ratings: [Int]
       datetimes: [DateTime]
     ): [Rated]
+    ratingsNoProps: [RatedNoProps]
     ratingsCustomFrom(
       rating: Int
       time: Time
@@ -521,6 +522,11 @@ export const testSchema = `
     datetimes: [DateTime]
     location: Point
     _id: String
+    to: Movie
+  }
+
+  type RatedNoProps @relation {
+    from: User
     to: Movie
   }
 
