@@ -1,4 +1,4 @@
-import { Kind, DirectiveLocation, GraphQLString } from 'graphql';
+import { Kind, DirectiveLocation, GraphQLString, GraphQLFloat } from 'graphql';
 import { TypeWrappers, getFieldType } from './fields';
 import {
   buildDirectiveDefinition,
@@ -27,7 +27,8 @@ export const DirectiveDefinition = {
   ADDITIONAL_LABELS: 'additionalLabels',
   ID: 'id',
   UNIQUE: 'unique',
-  INDEX: 'index'
+  INDEX: 'index',
+  SEARCH: 'search'
 };
 
 // The name of Role type used in authorization logic
@@ -417,6 +418,20 @@ const directiveDefinitionBuilderMap = {
   [DirectiveDefinition.INDEX]: ({ config }) => {
     return {
       name: DirectiveDefinition.INDEX,
+      locations: [DirectiveLocation.FIELD_DEFINITION]
+    };
+  },
+  [DirectiveDefinition.SEARCH]: ({ config }) => {
+    return {
+      name: DirectiveDefinition.SEARCH,
+      args: [
+        {
+          name: 'index',
+          type: {
+            name: GraphQLString
+          }
+        }
+      ],
       locations: [DirectiveLocation.FIELD_DEFINITION]
     };
   }

@@ -15,17 +15,17 @@ export const testSchema = `
     ) {
     _id: String
     "Field line description"
-    movieId: ID! @id
+    movieId: ID! @id @search(index: "MovieSearchID")
     """
     Field
     block
     description
     """
-    title: String @isAuthenticated
+    title: String @isAuthenticated @search
     someprefix_title_with_underscores: String
     year: Int
     released: DateTime
-    plot: String
+    plot: String @search
     poster: String
     imdbRating: Float
     "@relation field line description"
@@ -69,6 +69,7 @@ export const testSchema = `
       ratings: [Int]
       datetimes: [DateTime]
     ): [Rated]
+    ratingsNoProps: [RatedNoProps]
     ratingsCustomFrom(
       rating: Int
       time: Time
@@ -114,7 +115,7 @@ export const testSchema = `
     "Ignored field line description"
     customField: String @neo4j_ignore
   }
-  
+
   extend type Movie @hasRole(roles: [admin]) {
     currentUserId(strArg: String): String
       @cypher(
@@ -125,7 +126,7 @@ export const testSchema = `
       orderBy: _InterfaceNoScalarsOrdering
     ): [InterfaceNoScalars]
       @relation(name: "INTERFACE_NO_SCALARS", direction: OUT)
-    extensionScalar: String
+    extensionScalar: String @search
     extensionNode: [Genre] @relation(name: "IN_GENRE", direction: "OUT")
   }
 
@@ -174,7 +175,7 @@ export const testSchema = `
   extend interface Person {
     extensionScalar: String
   }
-  
+
   "Enum type line description"
   enum _PersonOrdering {
     "Enum value line description"
@@ -243,7 +244,7 @@ export const testSchema = `
     extensionScalar_ends_with: String
     extensionScalar_not_ends_with: String
   }
-  
+
   input _PersonInterfacedRelationshipTypeFilter {
     AND: [_PersonInterfacedRelationshipTypeFilter!]
     OR: [_PersonInterfacedRelationshipTypeFilter!]
@@ -261,7 +262,7 @@ export const testSchema = `
     boolean_not: Boolean
     Genre: _GenreFilter
   }
-  
+
   input _GenreFilter {
     AND: [_GenreFilter!]
     OR: [_GenreFilter!]
@@ -302,12 +303,12 @@ export const testSchema = `
     boolean_not: Boolean
     Person: _PersonFilter
   }
-  
+
   input _ReflexiveInterfacedRelationshipTypeDirectionsFilter {
     from: _ReflexiveInterfacedRelationshipTypeFilter
     to: _ReflexiveInterfacedRelationshipTypeFilter
   }
-  
+
   input _ReflexiveInterfacedRelationshipTypeFilter {
     AND: [_ReflexiveInterfacedRelationshipTypeFilter!]
     OR: [_ReflexiveInterfacedRelationshipTypeFilter!]
@@ -524,6 +525,11 @@ export const testSchema = `
     to: Movie
   }
 
+  type RatedNoProps @relation {
+    from: User
+    to: Movie
+  }
+
   type RatedCustomFrom @relation(from: "ratedBy") {
     ratedBy: User
     currentUserId(strArg: String): String
@@ -595,7 +601,7 @@ export const testSchema = `
   type Book {
     genre: BookGenre
   }
-  
+
   type NodeTypeMutationTest {
     NodeTypeMutationTest: BookGenre
   }
@@ -608,7 +614,7 @@ export const testSchema = `
     name_desc
     name_asc
   }
-  
+
   "Query type line description"
   type QueryA {
     """
@@ -675,7 +681,7 @@ export const testSchema = `
     CustomCameras: [Camera] @cypher(statement: "MATCH (c:Camera) RETURN c")
     CustomCamera: Camera @cypher(statement: "MATCH (c:Camera) RETURN c")
   }
-  
+
   extend type QueryA {
     MovieSearch(first: Int): [MovieSearch]
     computedMovieSearch: [MovieSearch]
@@ -779,7 +785,7 @@ export const testSchema = `
   scalar DateTime
   scalar LocalTime
   scalar LocalDateTime
-  
+
   "Input object type line description"
   input strInput {
     "Input field line description"
@@ -971,7 +977,7 @@ export const testSchema = `
     query: QueryA
     subscription: SubscriptionC
   }
-  
+
   extend schema {
     mutation: Mutation
   }

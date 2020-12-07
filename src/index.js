@@ -2,7 +2,8 @@ import { parse, print } from 'graphql';
 import Neo4jSchemaTree from './neo4j-schema/Neo4jSchemaTree';
 import graphQLMapper from './neo4j-schema/graphQLMapper';
 import { checkRequestError } from './auth';
-import { translateMutation, translateQuery } from './translate';
+import { translateQuery } from './translate/translate';
+import { translateMutation } from './translate/mutation';
 import Debug from 'debug';
 import {
   extractQueryResult,
@@ -25,6 +26,7 @@ import { buildDocument } from './augment/ast';
 import { augmentDirectiveDefinitions } from './augment/directives';
 import { isFederatedOperation, executeFederatedOperation } from './federation';
 import { schemaAssert } from './schemaAssert';
+import { schemaSearch } from './schemaSearch';
 
 const neo4jGraphQLVersion = require('../package.json').version;
 
@@ -337,4 +339,52 @@ export const assertSchema = ({
   return executeQuery(driver).catch(error => {
     console.error(error);
   });
+};
+
+export const searchSchema = async ({ driver, schema, debug = false }) => {
+  const session = driver.session();
+  // drop all search indexes, given they cannot be updated via a second CALL to createNodeIndex
+  const dropStatement = `
+  CALL db.indexes() YIELD name, provider WHERE provider = "fulltext-1.0"
+  CALL db.index.fulltext.drop(name)
+  RETURN TRUE
+  `;
+  const createStatement = schemaSearch({ schema });
+  const dropResult = await session.writeTransaction(tx =>
+    tx.run(dropStatement).then(result => {
+      if (debug === true) {
+        console.log(
+          `\n[searchSchema] Search indexes dropped using Cypher:${dropStatement}`
+        );
+      }
+      return true;
+    })
+  );
+
+  if (dropResult) {
+    if (createStatement) {
+      return await session
+        .writeTransaction(tx =>
+          tx.run(createStatement).then(result => {
+            if (debug === true) {
+              console.log(
+                `[searchSchema] Search indexes created using Cypher:\n${createStatement}\n`
+              );
+            }
+            return true;
+          })
+        )
+        .finally(() => session.close());
+    } else {
+      if (debug === true) {
+        console.log(
+          '[searchSchema] There were no @search directive fields discovered in the schema.\n'
+        );
+      }
+      return true;
+    }
+  } else {
+    session.close();
+  }
+  return false;
 };

@@ -1,4 +1,10 @@
-import { Kind, GraphQLInt, isInputObjectType } from 'graphql';
+import {
+  Kind,
+  GraphQLInt,
+  isInputObjectType,
+  GraphQLString,
+  GraphQLFloat
+} from 'graphql';
 import {
   buildName,
   buildNamedType,
@@ -55,6 +61,10 @@ export const OrderingArgument = {
  */
 export const FilteringArgument = {
   FILTER: 'filter'
+};
+
+export const SearchArgument = {
+  SEARCH: 'search'
 };
 
 export const isDataSelectionArgument = name =>
@@ -122,6 +132,7 @@ export const buildQueryFieldArguments = ({
   outputType,
   isUnionType,
   isListType,
+  searchesType,
   typeDefinitionMap
 }) => {
   const isListField = isListTypeField({ field });
@@ -208,6 +219,31 @@ export const buildQueryFieldArguments = ({
               typeName: outputType
             })
           );
+        }
+      }
+    }
+    if (name === SearchArgument.SEARCH && !isUnionType) {
+      if (!isCypherField({ directives: fieldDirectives })) {
+        if (searchesType) {
+          const argumentIndex = fieldArguments.findIndex(
+            arg => arg.name.value === SearchArgument.SEARCH
+          );
+          // Does overwrite
+          if (argumentIndex === -1) {
+            fieldArguments.push(
+              buildQuerySearchArgument({
+                typeName: outputType
+              })
+            );
+          } else {
+            fieldArguments.splice(
+              argumentIndex,
+              1,
+              buildQuerySearchArgument({
+                typeName: outputType
+              })
+            );
+          }
         }
       }
     }
@@ -302,6 +338,14 @@ const buildQueryFilteringArgument = ({ typeName }) =>
     })
   });
 
+const buildQuerySearchArgument = ({ typeName }) =>
+  buildInputValue({
+    name: buildName({ name: SearchArgument.SEARCH }),
+    type: buildNamedType({
+      name: `_${typeName}Search`
+    })
+  });
+
 /**
  * Builds the AST definition for an input object type used
  * as the type of a filtering field argument
@@ -320,6 +364,41 @@ export const buildQueryFilteringInputType = ({
     if (!typeDefinitionMap[inputTypeName]) {
       generatedTypeMap[inputTypeName] = buildInputObjectType(inputType);
     }
+  }
+  return generatedTypeMap;
+};
+
+export const buildQuerySearchInputType = ({
+  typeName,
+  inputTypeMap,
+  generatedTypeMap
+}) => {
+  const indexNames = Object.keys(inputTypeMap);
+  if (indexNames.length) {
+    // build optional, String type arguments for each search index name
+    const inputValues = indexNames.map(name =>
+      buildInputValue({
+        name: buildName({ name }),
+        type: buildNamedType({
+          name: GraphQLString.name
+        })
+      })
+    );
+    // add a Float type threshold argument used as a>= floor to filter over the score
+    // statistics for the nodes matched when one of the above search arguments are used
+    inputValues.push(
+      buildInputValue({
+        name: buildName({ name: 'threshold' }),
+        type: buildNamedType({
+          name: GraphQLFloat.name
+        })
+      })
+    );
+    // generate the _${Node}Search input object (overwritten)
+    generatedTypeMap[typeName] = buildInputObjectType({
+      name: buildName({ name: typeName }),
+      fields: inputValues
+    });
   }
   return generatedTypeMap;
 };
@@ -406,6 +485,7 @@ export const buildPropertyFilters = ({
       if (!isListFilter) filterTypes = [...filterTypes, 'in', 'not_in'];
       filterTypes = [
         ...filterTypes,
+        'regexp',
         'contains',
         'not_contains',
         'starts_with',
@@ -446,7 +526,7 @@ export const buildFilters = ({
         Neo4jPointDistanceFilter
       ).some(distanceFilter => distanceFilter === name);
       let wrappers = {};
-      if (name === 'in' || name === 'not_in') {
+      if ((name === 'in' || name === 'not_in') && name !== 'regexp') {
         wrappers = {
           [TypeWrappers.NON_NULL_NAMED_TYPE]: true,
           [TypeWrappers.LIST_TYPE]: true
@@ -455,10 +535,12 @@ export const buildFilters = ({
         fieldConfig.type.name = `${Neo4jTypeName}${SpatialType.POINT}DistanceFilter`;
       }
       if (isListFilter) {
-        wrappers = {
-          [TypeWrappers.NON_NULL_NAMED_TYPE]: true,
-          [TypeWrappers.LIST_TYPE]: true
-        };
+        if (name !== 'regexp') {
+          wrappers = {
+            [TypeWrappers.NON_NULL_NAMED_TYPE]: true,
+            [TypeWrappers.LIST_TYPE]: true
+          };
+        }
       }
       inputValues.push(
         buildInputValue({

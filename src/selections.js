@@ -26,7 +26,7 @@ import {
   neo4jTypeField,
   derivedTypesParams,
   fragmentType
-} from './translate';
+} from './translate/translate';
 import { Kind } from 'graphql';
 import {
   isObjectTypeDefinition,

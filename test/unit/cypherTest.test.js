@@ -12628,3 +12628,226 @@ test('merge reflexive relationship using custom field names for both related nod
     )
   ]);
 });
+
+test('Query node type using search argument and score threshold', t => {
+  const graphQLQuery = `query {
+    Movie(
+      search: {
+        MovieSearch: "river"
+        threshold: 0.08
+      }
+    ) {
+      movieId
+      title
+    }
+  }
+  `,
+    expectedCypherQuery = `CALL db.index.fulltext.queryNodes("MovieSearch", "river") YIELD node AS \`movie\`, score  WHERE score >= 0.08 RETURN \`movie\` { .movieId , .title } AS \`movie\``,
+    expectedParams = {
+      offset: 0,
+      first: -1,
+      search: {
+        MovieSearch: 'river',
+        threshold: 0.08
+      },
+      cypherParams: CYPHER_PARAMS
+    };
+  t.plan(2);
+  return Promise.all([
+    augmentedSchemaCypherTestRunner(
+      t,
+      graphQLQuery,
+      {},
+      expectedCypherQuery,
+      expectedParams
+    )
+  ]);
+});
+
+test('Query node type using search argument with filtering, ordering, and pagination arguments', t => {
+  const graphQLQuery = `query {
+    Movie(
+      search: {
+        MovieSearch: "river"
+        threshold: 0.08
+      }
+      filter: {
+        title_contains: "Runs"
+      }
+      orderBy: [title_desc]
+      first: 2
+      offset: 0
+    ) {
+      movieId
+      title
+    }
+  }
+  `,
+    expectedCypherQuery = `CALL db.index.fulltext.queryNodes("MovieSearch", "river") YIELD node AS \`movie\`, score  WHERE score >= 0.08 AND (\`movie\`.title CONTAINS $filter.title_contains) WITH \`movie\` ORDER BY movie.title DESC RETURN \`movie\` { .movieId , .title } AS \`movie\` LIMIT toInteger($first)`,
+    expectedParams = {
+      offset: 0,
+      first: 2,
+      filter: {
+        title_contains: 'Runs'
+      },
+      search: {
+        MovieSearch: 'river',
+        threshold: 0.08
+      },
+      cypherParams: CYPHER_PARAMS
+    };
+  t.plan(2);
+  return Promise.all([
+    augmentedSchemaCypherTestRunner(
+      t,
+      graphQLQuery,
+      {},
+      expectedCypherQuery,
+      expectedParams
+    )
+  ]);
+});
+
+test('Throws error if using search argument without index argument', async t => {
+  const graphQLQuery = `query {
+    Movie(
+      search: {
+        threshold: 0.08
+      }
+    ) {
+      movieId
+      title
+    }
+  }
+  `;
+  const result = await augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {},
+    '',
+    {}
+  );
+  const errors = result.errors;
+  if (errors) {
+    const message = errors[0].message;
+    t.is(message, `At least one argument for a search index must be provided.`);
+  } else t.fail();
+});
+
+test('Throws error if using search argument with more than one index argument', async t => {
+  const graphQLQuery = `query {
+    Movie(
+      search: {
+        MovieSearch: "river"
+        MovieSearchID: "a"
+        threshold: 0.08
+      }
+    ) {
+      movieId
+      title
+    }
+  }
+  `;
+  const result = await augmentedSchemaCypherTestRunner(
+    t,
+    graphQLQuery,
+    {},
+    '',
+    {}
+  );
+  const errors = result.errors;
+  if (errors) {
+    const message = errors[0].message;
+    t.is(message, `Only one argument for a search index can be provided.`);
+  } else t.fail();
+});
+
+test('Filter node type using regexp filter on String type fields', t => {
+  const graphQLQuery = `query {
+    Movie(
+      filter: {
+        title_regexp: "(?i)word"
+        titles_regexp: "(?i)word"
+      }
+    ) {
+      _id
+      title
+      titles
+    }
+  }  
+  `,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) WHERE (\`movie\`.title =~ $filter.title_regexp) AND ([value IN $filter.titles_regexp WHERE [prop IN \`movie\`.titles WHERE prop =~ value]]) RETURN \`movie\` {_id: ID(\`movie\`), .title , .titles } AS \`movie\``,
+    expectedParams = {
+      offset: 0,
+      first: -1,
+      filter: {
+        title_regexp: '(?i)word',
+        titles_regexp: '(?i)word'
+      },
+      cypherParams: CYPHER_PARAMS
+    };
+
+  t.plan(2);
+  return Promise.all([
+    augmentedSchemaCypherTestRunner(
+      t,
+      graphQLQuery,
+      {},
+      expectedCypherQuery,
+      expectedParams
+    )
+  ]);
+});
+
+test('Filter relationship using regexp filter on String type field', t => {
+  const graphQLQuery = `query {
+    Movie(
+      filter: {
+        title_regexp: "(?i)word"
+        titles_regexp: "(?i)word"
+        actors: {
+          name_regexp: ""
+        }
+      }
+    ) {
+      _id
+      title
+      titles
+      actors(
+        filter: {
+          name_regexp: ""
+        }
+      ) {
+        name
+      }
+    }
+  }
+  `,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) WHERE (\`movie\`.title =~ $filter.title_regexp) AND (EXISTS((\`movie\`)<-[:ACTED_IN]-(:Actor)) AND ALL(\`actor\` IN [(\`movie\`)<-[:ACTED_IN]-(\`_actor\`:Actor) | \`_actor\`] WHERE (\`actor\`.name =~ $filter.actors.name_regexp))) AND ([value IN $filter.titles_regexp WHERE [prop IN \`movie\`.titles WHERE prop =~ value]]) RETURN \`movie\` {_id: ID(\`movie\`), .title , .titles ,actors: [(\`movie\`)<-[:\`ACTED_IN\`]-(\`movie_actors\`:\`Actor\`) WHERE (\`movie_actors\`.name =~ $1_filter.name_regexp) | \`movie_actors\` { .name }] } AS \`movie\``,
+    expectedParams = {
+      offset: 0,
+      first: -1,
+      filter: {
+        title_regexp: '(?i)word',
+        actors: {
+          name_regexp: ''
+        },
+        titles_regexp: '(?i)word'
+      },
+      '1_filter': {
+        name_regexp: ''
+      },
+      cypherParams: CYPHER_PARAMS
+    };
+
+  t.plan(2);
+  return Promise.all([
+    augmentedSchemaCypherTestRunner(
+      t,
+      graphQLQuery,
+      {},
+      expectedCypherQuery,
+      expectedParams
+    )
+  ]);
+});

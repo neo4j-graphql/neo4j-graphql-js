@@ -25,8 +25,10 @@ import {
   FilteringArgument,
   PagingArgument,
   OrderingArgument,
+  SearchArgument,
   buildQueryFieldArguments,
   buildQueryFilteringInputType,
+  buildQuerySearchInputType,
   buildQueryOrderingEnumType
 } from '../../input-values';
 
@@ -37,7 +39,8 @@ import {
 const NodeQueryArgument = {
   ...PagingArgument,
   ...OrderingArgument,
-  ...FilteringArgument
+  ...FilteringArgument,
+  ...SearchArgument
 };
 
 const GRANDSTACK_DOCS = `https://grandstack.io/docs`;
@@ -51,8 +54,10 @@ const GRANDSTACK_DOCS_GENERATED_QUERIES = `${GRANDSTACK_DOCS}/graphql-schema-gen
 export const augmentNodeQueryAPI = ({
   typeName,
   isUnionType,
+  searchesType,
   propertyInputValues,
   nodeInputTypeMap,
+  searchInputTypeMap,
   typeDefinitionMap,
   typeExtensionDefinitionMap,
   generatedTypeMap,
@@ -66,6 +71,7 @@ export const augmentNodeQueryAPI = ({
       operationTypeMap = buildNodeQueryField({
         typeName,
         isUnionType,
+        searchesType,
         queryType,
         propertyInputValues,
         operationTypeMap,
@@ -85,6 +91,12 @@ export const augmentNodeQueryAPI = ({
         typeDefinitionMap,
         generatedTypeMap,
         inputTypeMap: nodeInputTypeMap
+      });
+      generatedTypeMap = buildQuerySearchInputType({
+        typeName: `_${typeName}Search`,
+        typeDefinitionMap,
+        generatedTypeMap,
+        inputTypeMap: searchInputTypeMap
       });
     }
   }
@@ -155,6 +167,7 @@ export const augmentNodeQueryArgumentTypes = ({
 const buildNodeQueryField = ({
   typeName,
   isUnionType,
+  searchesType,
   queryType,
   propertyInputValues,
   operationTypeMap,
@@ -188,7 +201,8 @@ const buildNodeQueryField = ({
           typeName,
           isUnionType,
           propertyInputValues,
-          typeDefinitionMap
+          typeDefinitionMap,
+          searchesType
         }),
         directives: buildNodeQueryDirectives({
           typeName,
@@ -213,7 +227,8 @@ const buildNodeQueryArguments = ({
   typeName,
   isUnionType,
   propertyInputValues,
-  typeDefinitionMap
+  typeDefinitionMap,
+  searchesType = false
 }) => {
   if (!isUnionType) {
     // Do not persist type wrappers
@@ -254,6 +269,7 @@ const buildNodeQueryArguments = ({
     fieldArguments: propertyInputValues,
     outputType: typeName,
     isListType: true,
+    searchesType,
     isUnionType,
     typeDefinitionMap
   });

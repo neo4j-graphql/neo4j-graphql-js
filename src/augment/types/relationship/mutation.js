@@ -343,6 +343,7 @@ const buildRelationshipMutationField = ({
           fromType,
           toType,
           propertyOutputFields,
+          propertyInputValues,
           outputType,
           config
         }),
@@ -429,6 +430,7 @@ const buildRelationshipMutationArguments = ({
   fromType,
   toType,
   propertyOutputFields,
+  propertyInputValues,
   outputType,
   config
 }) => {
@@ -442,7 +444,8 @@ const buildRelationshipMutationArguments = ({
     (mutationAction === RelationshipMutation.CREATE ||
       mutationAction === RelationshipMutation.UPDATE ||
       mutationAction === RelationshipMutation.MERGE) &&
-    propertyOutputFields.length
+    propertyOutputFields.length &&
+    propertyInputValues.length
   ) {
     fieldArguments.push(
       buildRelationshipPropertyInputArgument({

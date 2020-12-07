@@ -750,6 +750,7 @@ test.cb('Test augmented schema', t => {
       from_not: String
       from_in: [String!]
       from_not_in: [String!]
+      from_regexp: String
       from_contains: String
       from_not_contains: String
       from_starts_with: String
@@ -998,6 +999,7 @@ test.cb('Test augmented schema', t => {
       movieId_not: ID
       movieId_in: [ID!]
       movieId_not_in: [ID!]
+      movieId_regexp: ID
       movieId_contains: ID
       movieId_not_contains: ID
       movieId_starts_with: ID
@@ -1008,6 +1010,7 @@ test.cb('Test augmented schema', t => {
       title_not: String
       title_in: [String!]
       title_not_in: [String!]
+      title_regexp: String
       title_contains: String
       title_not_contains: String
       title_starts_with: String
@@ -1018,6 +1021,7 @@ test.cb('Test augmented schema', t => {
       someprefix_title_with_underscores_not: String
       someprefix_title_with_underscores_in: [String!]
       someprefix_title_with_underscores_not_in: [String!]
+      someprefix_title_with_underscores_regexp: String
       someprefix_title_with_underscores_contains: String
       someprefix_title_with_underscores_not_contains: String
       someprefix_title_with_underscores_starts_with: String
@@ -1044,6 +1048,7 @@ test.cb('Test augmented schema', t => {
       plot_not: String
       plot_in: [String!]
       plot_not_in: [String!]
+      plot_regexp: String
       plot_contains: String
       plot_not_contains: String
       plot_starts_with: String
@@ -1054,6 +1059,7 @@ test.cb('Test augmented schema', t => {
       poster_not: String
       poster_in: [String!]
       poster_not_in: [String!]
+      poster_regexp: String
       poster_contains: String
       poster_not_contains: String
       poster_starts_with: String
@@ -1118,6 +1124,14 @@ test.cb('Test augmented schema', t => {
       ratings_none: _MovieRatedFilter
       ratings_single: _MovieRatedFilter
       ratings_every: _MovieRatedFilter
+      ratingsNoProps: _MovieRatedNoPropsFilter
+      ratingsNoProps_not: _MovieRatedNoPropsFilter
+      ratingsNoProps_in: [_MovieRatedNoPropsFilter!]
+      ratingsNoProps_not_in: [_MovieRatedNoPropsFilter!]
+      ratingsNoProps_some: _MovieRatedNoPropsFilter
+      ratingsNoProps_none: _MovieRatedNoPropsFilter
+      ratingsNoProps_single: _MovieRatedNoPropsFilter
+      ratingsNoProps_every: _MovieRatedNoPropsFilter
       ratingsCustomFrom: _MovieRatedCustomFromFilter
       ratingsCustomFrom_not: _MovieRatedCustomFromFilter
       ratingsCustomFrom_in: [_MovieRatedCustomFromFilter!]
@@ -1150,6 +1164,7 @@ test.cb('Test augmented schema', t => {
       years_gte: [Int!]
       titles: [String!]
       titles_not: [String!]
+      titles_regexp: String
       titles_contains: [String!]
       titles_not_contains: [String!]
       titles_starts_with: [String!]
@@ -1184,6 +1199,7 @@ test.cb('Test augmented schema', t => {
       extensionScalar_not: String
       extensionScalar_in: [String!]
       extensionScalar_not_in: [String!]
+      extensionScalar_regexp: String
       extensionScalar_contains: String
       extensionScalar_not_contains: String
       extensionScalar_starts_with: String
@@ -1200,6 +1216,12 @@ test.cb('Test augmented schema', t => {
       extensionNode_every: _GenreFilter
     }
 
+    input _MovieSearch {
+      MovieSearch: String
+      MovieSearchID: String
+      threshold: Float
+    }
+
     "Object type line description"
     type Movie
       @additionalLabels(
@@ -1208,17 +1230,17 @@ test.cb('Test augmented schema', t => {
       "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this node."
       _id: String
       "Field line description"
-      movieId: ID! @id
+      movieId: ID! @id @search(index: "MovieSearchID")
       """
       Field
       block
       description
       """
-      title: String @isAuthenticated
+      title: String @isAuthenticated @search
       someprefix_title_with_underscores: String
       year: Int
       released: _Neo4jDateTime
-      plot: String
+      plot: String @search
       poster: String
       imdbRating: Float
       "@relation field line description"
@@ -1278,6 +1300,11 @@ test.cb('Test augmented schema', t => {
         orderBy: [_RatedOrdering]
         filter: _MovieRatedFilter
       ): [_MovieRatings]
+      ratingsNoProps(
+        first: Int
+        offset: Int
+        filter: _MovieRatedNoPropsFilter
+      ): [_MovieRatingsNoProps]
       ratingsCustomFrom(
         rating: Int
         time: _Neo4jTimeInput
@@ -1494,6 +1521,7 @@ test.cb('Test augmented schema', t => {
       name_not: String
       name_in: [String!]
       name_not_in: [String!]
+      name_regexp: String
       name_contains: String
       name_not_contains: String
       name_starts_with: String
@@ -1504,6 +1532,7 @@ test.cb('Test augmented schema', t => {
       id_not: ID
       id_in: [ID!]
       id_not_in: [ID!]
+      id_regexp: ID
       id_contains: ID
       id_not_contains: ID
       id_starts_with: ID
@@ -2060,6 +2089,7 @@ test.cb('Test augmented schema', t => {
       userId_not: ID
       userId_in: [ID!]
       userId_not_in: [ID!]
+      userId_regexp: ID
       userId_contains: ID
       userId_not_contains: ID
       userId_starts_with: ID
@@ -2070,6 +2100,7 @@ test.cb('Test augmented schema', t => {
       name_not: String
       name_in: [String!]
       name_not_in: [String!]
+      name_regexp: String
       name_contains: String
       name_not_contains: String
       name_starts_with: String
@@ -2096,6 +2127,7 @@ test.cb('Test augmented schema', t => {
       extensionScalar_not: String
       extensionScalar_in: [String!]
       extensionScalar_not_in: [String!]
+      extensionScalar_regexp: String
       extensionScalar_contains: String
       extensionScalar_not_contains: String
       extensionScalar_starts_with: String
@@ -2110,6 +2142,7 @@ test.cb('Test augmented schema', t => {
       datetimes_gte: [_Neo4jDateTimeInput!]
       strings: [String!]
       strings_not: [String!]
+      strings_regexp: String
       strings_contains: [String!]
       strings_not_contains: [String!]
       strings_starts_with: [String!]
@@ -2822,6 +2855,7 @@ test.cb('Test augmented schema', t => {
       from_not: String
       from_in: [String!]
       from_not_in: [String!]
+      from_regexp: String
       from_contains: String
       from_not_contains: String
       from_starts_with: String
@@ -3087,6 +3121,7 @@ test.cb('Test augmented schema', t => {
       datetime_gte: _Neo4jDateTimeInput
       ratings: [String!]
       ratings_not: [String!]
+      ratings_regexp: String
       ratings_contains: [String!]
       ratings_not_contains: [String!]
       ratings_starts_with: [String!]
@@ -3332,6 +3367,7 @@ test.cb('Test augmented schema', t => {
       datetime_gte: _Neo4jDateTimeInput
       ratings: [String!]
       ratings_not: [String!]
+      ratings_regexp: String
       ratings_contains: [String!]
       ratings_not_contains: [String!]
       ratings_starts_with: [String!]
@@ -3577,6 +3613,7 @@ test.cb('Test augmented schema', t => {
       datetime_gte: _Neo4jDateTimeInput
       ratings: [String!]
       ratings_not: [String!]
+      ratings_regexp: String
       ratings_contains: [String!]
       ratings_not_contains: [String!]
       ratings_starts_with: [String!]
@@ -3798,6 +3835,7 @@ test.cb('Test augmented schema', t => {
       from_not: String
       from_in: [String!]
       from_not_in: [String!]
+      from_regexp: String
       from_contains: String
       from_not_contains: String
       from_starts_with: String
@@ -3838,6 +3876,7 @@ test.cb('Test augmented schema', t => {
       datetime_gte: _Neo4jDateTimeInput
       ratings: [String!]
       ratings_not: [String!]
+      ratings_regexp: String
       ratings_contains: [String!]
       ratings_not_contains: [String!]
       ratings_starts_with: [String!]
@@ -4052,6 +4091,7 @@ test.cb('Test augmented schema', t => {
       userId_not: ID
       userId_in: [ID!]
       userId_not_in: [ID!]
+      userId_regexp: ID
       userId_contains: ID
       userId_not_contains: ID
       userId_starts_with: ID
@@ -4062,6 +4102,7 @@ test.cb('Test augmented schema', t => {
       name_not: String
       name_in: [String!]
       name_not_in: [String!]
+      name_regexp: String
       name_contains: String
       name_not_contains: String
       name_starts_with: String
@@ -4160,6 +4201,7 @@ test.cb('Test augmented schema', t => {
       extensionScalar_not: String
       extensionScalar_in: [String!]
       extensionScalar_not_in: [String!]
+      extensionScalar_regexp: String
       extensionScalar_contains: String
       extensionScalar_not_contains: String
       extensionScalar_starts_with: String
@@ -4472,6 +4514,7 @@ test.cb('Test augmented schema', t => {
       userId_not: String
       userId_in: [String!]
       userId_not_in: [String!]
+      userId_regexp: String
       userId_contains: String
       userId_not_contains: String
       userId_starts_with: String
@@ -4548,6 +4591,7 @@ test.cb('Test augmented schema', t => {
       name_not: String
       name_in: [String!]
       name_not_in: [String!]
+      name_regexp: String
       name_contains: String
       name_not_contains: String
       name_starts_with: String
@@ -4669,6 +4713,7 @@ test.cb('Test augmented schema', t => {
       id_not: ID
       id_in: [ID!]
       id_not_in: [ID!]
+      id_regexp: ID
       id_contains: ID
       id_not_contains: ID
       id_starts_with: ID
@@ -4775,6 +4820,7 @@ test.cb('Test augmented schema', t => {
       name_not: String
       name_in: [String!]
       name_not_in: [String!]
+      name_regexp: String
       name_contains: String
       name_not_contains: String
       name_starts_with: String
@@ -5060,6 +5106,7 @@ test.cb('Test augmented schema', t => {
       type_not: String
       type_in: [String!]
       type_not_in: [String!]
+      type_regexp: String
       type_contains: String
       type_not_contains: String
       type_starts_with: String
@@ -5070,6 +5117,7 @@ test.cb('Test augmented schema', t => {
       id_not: ID
       id_in: [ID!]
       id_not_in: [ID!]
+      id_regexp: ID
       id_contains: ID
       id_not_contains: ID
       id_starts_with: ID
@@ -5080,6 +5128,7 @@ test.cb('Test augmented schema', t => {
       make_not: String
       make_in: [String!]
       make_not_in: [String!]
+      make_regexp: String
       make_contains: String
       make_not_contains: String
       make_starts_with: String
@@ -5098,6 +5147,7 @@ test.cb('Test augmented schema', t => {
       smell_not: String
       smell_in: [String!]
       smell_not_in: [String!]
+      smell_regexp: String
       smell_contains: String
       smell_not_contains: String
       smell_starts_with: String
@@ -5236,6 +5286,7 @@ test.cb('Test augmented schema', t => {
       type_not: String
       type_in: [String!]
       type_not_in: [String!]
+      type_regexp: String
       type_contains: String
       type_not_contains: String
       type_starts_with: String
@@ -5246,6 +5297,7 @@ test.cb('Test augmented schema', t => {
       id_not: ID
       id_in: [ID!]
       id_not_in: [ID!]
+      id_regexp: ID
       id_contains: ID
       id_not_contains: ID
       id_starts_with: ID
@@ -5256,6 +5308,7 @@ test.cb('Test augmented schema', t => {
       make_not: String
       make_in: [String!]
       make_not_in: [String!]
+      make_regexp: String
       make_contains: String
       make_not_contains: String
       make_starts_with: String
@@ -5272,6 +5325,7 @@ test.cb('Test augmented schema', t => {
       weight_gte: Int
       features: [String!]
       features_not: [String!]
+      features_regexp: String
       features_contains: [String!]
       features_not_contains: [String!]
       features_starts_with: [String!]
@@ -5543,6 +5597,7 @@ test.cb('Test augmented schema', t => {
       userId_not: ID
       userId_in: [ID!]
       userId_not_in: [ID!]
+      userId_regexp: ID
       userId_contains: ID
       userId_not_contains: ID
       userId_starts_with: ID
@@ -5553,6 +5608,7 @@ test.cb('Test augmented schema', t => {
       name_not: String
       name_in: [String!]
       name_not_in: [String!]
+      name_regexp: String
       name_contains: String
       name_not_contains: String
       name_starts_with: String
@@ -5579,6 +5635,7 @@ test.cb('Test augmented schema', t => {
       extensionScalar_not: String
       extensionScalar_in: [String!]
       extensionScalar_not_in: [String!]
+      extensionScalar_regexp: String
       extensionScalar_contains: String
       extensionScalar_not_contains: String
       extensionScalar_starts_with: String
@@ -5694,6 +5751,7 @@ test.cb('Test augmented schema', t => {
       string_not: String
       string_in: [String!]
       string_not_in: [String!]
+      string_regexp: String
       string_contains: String
       string_not_contains: String
       string_starts_with: String
@@ -5704,6 +5762,7 @@ test.cb('Test augmented schema', t => {
       id_not: ID
       id_in: [ID!]
       id_not_in: [ID!]
+      id_regexp: ID
       id_contains: ID
       id_not_contains: ID
       id_starts_with: ID
@@ -5714,6 +5773,7 @@ test.cb('Test augmented schema', t => {
       anotherId_not: ID
       anotherId_in: [ID!]
       anotherId_not_in: [ID!]
+      anotherId_regexp: ID
       anotherId_contains: ID
       anotherId_not_contains: ID
       anotherId_starts_with: ID
@@ -5800,6 +5860,7 @@ test.cb('Test augmented schema', t => {
       id_not: ID
       id_in: [ID!]
       id_not_in: [ID!]
+      id_regexp: ID
       id_contains: ID
       id_not_contains: ID
       id_starts_with: ID
@@ -5810,6 +5871,7 @@ test.cb('Test augmented schema', t => {
       uniqueString_not: String
       uniqueString_in: [String!]
       uniqueString_not_in: [String!]
+      uniqueString_regexp: String
       uniqueString_contains: String
       uniqueString_not_contains: String
       uniqueString_starts_with: String
@@ -6028,6 +6090,8 @@ test.cb('Test augmented schema', t => {
 
     directive @index on FIELD_DEFINITION
 
+    directive @search(index: String) on FIELD_DEFINITION
+
     directive @isAuthenticated on OBJECT | FIELD_DEFINITION
 
     directive @hasRole(roles: [Role]) on OBJECT | FIELD_DEFINITION
@@ -6047,7 +6111,7 @@ test.cb('Test augmented schema', t => {
         filter: _InterfaceNoScalarsFilter
       ): [InterfaceNoScalars]
         @relation(name: "INTERFACE_NO_SCALARS", direction: OUT)
-      extensionScalar: String
+      extensionScalar: String @search
       extensionNode(
         first: Int
         offset: Int
@@ -6097,6 +6161,58 @@ test.cb('Test augmented schema', t => {
         orderBy: [_UniqueNodeOrdering]
         filter: _UniqueNodeFilter
       ): [UniqueNode] @relation(name: "TEST_RELATION", direction: IN)
+    }
+
+    type RatedNoProps @relation {
+      from: User
+      to: Movie
+    }
+
+    type _MovieRatingsNoProps
+      @relation(name: "RATED_NO_PROPS", from: "User", to: "Movie") {
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
+      _id: String
+      "Field for the User node this RATED_NO_PROPS [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
+      User: User
+    }
+
+    enum _RatedNoPropsOrdering {
+      _id_asc
+      _id_desc
+    }
+
+    input _MovieRatedNoPropsFilter {
+      AND: [_MovieRatedNoPropsFilter!]
+      OR: [_MovieRatedNoPropsFilter!]
+      User: _UserFilter
+    }
+
+    type _AddMovieRatingsNoPropsPayload
+      @relation(name: "RATED_NO_PROPS", from: "User", to: "Movie") {
+      "Field for the User node this RATED_NO_PROPS [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
+      from: User
+      "Field for the Movie node this RATED_NO_PROPS [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
+      to: Movie
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
+      _id: String
+    }
+
+    type _RemoveMovieRatingsNoPropsPayload
+      @relation(name: "RATED_NO_PROPS", from: "User", to: "Movie") {
+      "Field for the User node this RATED_NO_PROPS [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
+      from: User
+      "Field for the Movie node this RATED_NO_PROPS [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
+      to: Movie
+    }
+
+    type _MergeMovieRatingsNoPropsPayload
+      @relation(name: "RATED_NO_PROPS", from: "User", to: "Movie") {
+      "Field for the User node this RATED_NO_PROPS [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
+      from: User
+      "Field for the Movie node this RATED_NO_PROPS [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
+      to: Movie
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
+      _id: String
     }
 
     "Query type line description"
@@ -6240,6 +6356,7 @@ test.cb('Test augmented schema', t => {
         offset: Int
         orderBy: [_MovieOrdering]
         filter: _MovieFilter
+        search: _MovieSearch
       ): [Movie] @hasScope(scopes: ["Movie: Read", "read:movie"])
       "[Generated query](https://grandstack.io/docs/graphql-schema-generation-augmentation#generated-queries) for Genre type nodes."
       Genre(
@@ -6605,6 +6722,43 @@ test.cb('Test augmented schema', t => {
         data: _RatedInput!
       ): _MergeMovieRatingsPayload
         @MutationMeta(relationship: "RATED", from: "User", to: "Movie")
+        @hasScope(
+          scopes: ["User: Merge", "merge:user", "Movie: Merge", "merge:movie"]
+        )
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the RATED_NO_PROPS relationship."
+      AddMovieRatingsNoProps(
+        from: _UserInput!
+        to: _MovieInput!
+      ): _AddMovieRatingsNoPropsPayload
+        @MutationMeta(relationship: "RATED_NO_PROPS", from: "User", to: "Movie")
+        @hasScope(
+          scopes: [
+            "User: Create"
+            "create:user"
+            "Movie: Create"
+            "create:movie"
+          ]
+        )
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the RATED_NO_PROPS relationship."
+      RemoveMovieRatingsNoProps(
+        from: _UserInput!
+        to: _MovieInput!
+      ): _RemoveMovieRatingsNoPropsPayload
+        @MutationMeta(relationship: "RATED_NO_PROPS", from: "User", to: "Movie")
+        @hasScope(
+          scopes: [
+            "User: Delete"
+            "delete:user"
+            "Movie: Delete"
+            "delete:movie"
+          ]
+        )
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the RATED_NO_PROPS relationship."
+      MergeMovieRatingsNoProps(
+        from: _UserInput!
+        to: _MovieInput!
+      ): _MergeMovieRatingsNoPropsPayload
+        @MutationMeta(relationship: "RATED_NO_PROPS", from: "User", to: "Movie")
         @hasScope(
           scopes: ["User: Merge", "merge:user", "Movie: Merge", "merge:movie"]
         )

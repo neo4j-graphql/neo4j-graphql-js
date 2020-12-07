@@ -26,7 +26,7 @@ export const testSchema = gql`
   }
 
   type Mutation {
-    CreateUser(idField: ID, name: String, names: [String], birthday: DateTime, uniqueString: String, liked: UserLiked, sideEffects: OnUserCreate): User
+    CreateUser(idField: ID, name: String, names: [String], birthday: DateTime, uniqueString: String, liked: UserLiked, sideEffects: OnUserCreate, sideEffectList: [OnUserCreate!]): User
     MergeUser(idField: ID!, name: String, names: [String], birthday: DateTime, uniqueString: String, liked: UserLiked, sideEffects: OnUserMerge): User
     DeleteUser(idField: ID!, liked: UserLiked): User
     Custom(id: ID!, sideEffects: CustomSideEffects, computed: CustomComputed): Custom @cypher(${cypher`
@@ -58,15 +58,18 @@ export const testSchema = gql`
 
   input ComputeComputed {
     multiply: CustomComputedInput @cypher(${cypher`
+      WITH custom
       SET custom.computed = CustomComputedInput.value * 10
     `})
   }
 
   input CustomSideEffects {
     create: [CustomData] @cypher(${cypher`
-      MERGE (custom)-[:RELATED]->(subCustom: Custom {
+      WITH custom
+      MERGE (subCustom: Custom {
         id: CustomData.id
       })
+      MERGE (custom)-[:RELATED]->(subCustom)
       WITH subCustom AS custom
     `})
   }
@@ -86,12 +89,14 @@ export const testSchema = gql`
 
   input OnUserCreate {
     createdAt: CreatedAt @cypher(${cypher`
+      WITH user
       SET user.createdAt = datetime(CreatedAt.datetime)
     `})
   }
 
   input OnUserMerge {
     mergedAt: CreatedAt @cypher(${cypher`
+      WITH user
       SET user.modifiedAt = datetime(CreatedAt.datetime)
     `})
   }
@@ -107,6 +112,7 @@ export const testSchema = gql`
 
   input UserLiked {
     create: [MovieCreate!] @cypher(${cypher`
+      WITH user
       CREATE (user)-[:RATING]->(movie: Movie {
         id: MovieCreate.id,
         title: MovieCreate.title
@@ -114,6 +120,7 @@ export const testSchema = gql`
       WITH movie
     `})
     nestedCreate: [MovieCreate!] @cypher(${cypher`
+      WITH user
       CREATE (user)-[:RATING]->(movie: Movie {
         id: MovieCreate.customLayer.movie.id,
         title: MovieCreate.customLayer.movie.title,
@@ -122,6 +129,7 @@ export const testSchema = gql`
       WITH movie
     `})
     merge: [MovieMerge!] @cypher(${cypher`
+      WITH user
       MERGE (movie: Movie {
         id: MovieMerge.where.id
       })
@@ -131,6 +139,7 @@ export const testSchema = gql`
       WITH movie
     `})
     delete: [MovieWhere!] @cypher(${cypher`
+      WITH user
       MATCH (user)-[:RATING]->(movie: Movie { id: MovieWhere.id })
       DETACH DELETE movie
     `})    
@@ -159,12 +168,14 @@ export const testSchema = gql`
 
   input MovieLikedBy {
     create: [UserCreate!] @cypher(${cypher`
+      WITH movie
       CREATE (movie)<-[:RATING]-(user:User {
         name: UserCreate.name,
         uniqueString: UserCreate.uniqueString
       })
     `})
     merge: [UserMerge!] @cypher(${cypher`
+      WITH movie
       MERGE (user: User {
         idField: UserMerge.where.idField
       })

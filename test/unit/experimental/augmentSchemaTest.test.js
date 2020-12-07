@@ -144,6 +144,7 @@ test.cb('Test augmented schema', t => {
       idField_not: ID
       idField_in: [ID!]
       idField_not_in: [ID!]
+      idField_regexp: ID
       idField_contains: ID
       idField_not_contains: ID
       idField_starts_with: ID
@@ -154,6 +155,7 @@ test.cb('Test augmented schema', t => {
       uniqueString_not: String
       uniqueString_in: [String!]
       uniqueString_not_in: [String!]
+      uniqueString_regexp: String
       uniqueString_contains: String
       uniqueString_not_contains: String
       uniqueString_starts_with: String
@@ -200,6 +202,7 @@ test.cb('Test augmented schema', t => {
       idField_not: ID
       idField_in: [ID!]
       idField_not_in: [ID!]
+      idField_regexp: ID
       idField_contains: ID
       idField_not_contains: ID
       idField_starts_with: ID
@@ -210,6 +213,7 @@ test.cb('Test augmented schema', t => {
       name_not: String
       name_in: [String!]
       name_not_in: [String!]
+      name_regexp: String
       name_contains: String
       name_not_contains: String
       name_starts_with: String
@@ -218,6 +222,7 @@ test.cb('Test augmented schema', t => {
       name_not_ends_with: String
       names: [String!]
       names_not: [String!]
+      names_regexp: String
       names_contains: [String!]
       names_not_contains: [String!]
       names_starts_with: [String!]
@@ -242,6 +247,7 @@ test.cb('Test augmented schema', t => {
       uniqueString_not: String
       uniqueString_in: [String!]
       uniqueString_not_in: [String!]
+      uniqueString_regexp: String
       uniqueString_contains: String
       uniqueString_not_contains: String
       uniqueString_starts_with: String
@@ -276,6 +282,7 @@ test.cb('Test augmented schema', t => {
       extensionString_not: String
       extensionString_in: [String!]
       extensionString_not_in: [String!]
+      extensionString_regexp: String
       extensionString_contains: String
       extensionString_not_contains: String
       extensionString_starts_with: String
@@ -420,6 +427,7 @@ test.cb('Test augmented schema', t => {
       id_not: ID
       id_in: [ID!]
       id_not_in: [ID!]
+      id_regexp: ID
       id_contains: ID
       id_not_contains: ID
       id_starts_with: ID
@@ -430,6 +438,7 @@ test.cb('Test augmented schema', t => {
       title_not: String
       title_in: [String!]
       title_not_in: [String!]
+      title_regexp: String
       title_contains: String
       title_not_contains: String
       title_starts_with: String
@@ -466,6 +475,7 @@ test.cb('Test augmented schema', t => {
       id_not: ID
       id_in: [ID!]
       id_not_in: [ID!]
+      id_regexp: ID
       id_contains: ID
       id_not_contains: ID
       id_starts_with: ID
@@ -476,6 +486,7 @@ test.cb('Test augmented schema', t => {
       title_not: String
       title_in: [String!]
       title_not_in: [String!]
+      title_regexp: String
       title_contains: String
       title_not_contains: String
       title_starts_with: String
@@ -726,6 +737,8 @@ test.cb('Test augmented schema', t => {
     directive @unique on FIELD_DEFINITION
 
     directive @index on FIELD_DEFINITION
+
+    directive @search(index: String) on FIELD_DEFINITION
 
     directive @isAuthenticated on OBJECT | FIELD_DEFINITION
 
