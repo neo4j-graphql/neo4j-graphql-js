@@ -5,7 +5,7 @@ import {
   isTypeDefinitionNode,
   isTypeExtensionNode
 } from 'graphql';
-import { makeExecutableSchema } from 'graphql-tools';
+import { makeExecutableSchema, printSchemaWithDirectives } from 'graphql-tools';
 import { buildDocument } from './ast';
 import {
   initializeOperationTypes,
@@ -32,7 +32,7 @@ export const makeAugmentedExecutableSchema = ({
   directiveResolvers,
   schemaDirectives = {},
   schemaTransforms = [],
-  parseOptions,
+  parseOptions = {},
   inheritResolversFromInterfaces,
   config
 }) => {
@@ -106,6 +106,8 @@ export const makeAugmentedExecutableSchema = ({
     };
   }
   resolverValidationOptions.requireResolversForResolveType = false;
+  // FIXME get this working
+  // parseOptions.commentDescriptions = true;
   return makeExecutableSchema({
     typeDefs: print(documentAST),
     resolvers: augmentedResolvers,
@@ -193,6 +195,10 @@ export const augmentedSchema = (schema, config) => {
     resolverValidationOptions: {
       requireResolversForResolveType: false
     },
+    // FIXME get this working
+    // parseOptions: {
+    // commentDescriptions: true
+    // },
     schemaDirectives
   });
 };
@@ -327,11 +333,10 @@ export const setDefaultConfig = ({ config = {} }) => {
  * regenerated schema type
  */
 export const printSchemaDocument = ({ schema }) => {
-  return print(
-    buildDocument({
-      definitions: extractSchemaDefinitions({ schema })
-    })
-  );
+  return printSchemaWithDirectives(schema, {
+    // FIXME add to testing once using this is supported
+    // commentDescriptions: true
+  });
 };
 
 /**
