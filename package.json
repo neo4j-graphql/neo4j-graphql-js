@@ -1,6 +1,6 @@
 {
   "name": "neo4j-graphql-js",
-  "version": "2.18.0",
+  "version": "2.19.0-alpha.0",
   "description": "A GraphQL to Cypher query execution layer for Neo4j. ",
   "main": "./dist/index.js",
   "scripts": {
@@ -39,7 +39,7 @@
     "url": "git+https://github.com/neo4j-graphql/neo4j-graphql-js"
   },
   "devDependencies": {
-    "@apollo/federation": "^0.14.1",
+    "@apollo/federation": "^0.20.7",
     "@apollo/gateway": "^0.14.1",
     "@babel/cli": "^7.0.0",
     "@babel/core": "^7.0.0",
@@ -52,8 +52,8 @@
     "apollo-cache-inmemory": "^1.6.3",
     "apollo-client": "^2.6.10",
     "apollo-link-http": "^1.5.16",
-    "apollo-server": "~2.16.0",
-    "apollo-server-express": "^2.16.0",
+    "apollo-server": "^2.19.0",
+    "apollo-server-express": "^2.19.0",
     "ava": "^2.2.0",
     "body-parser": "^1.18.3",
     "express": "^4.17.1",
@@ -74,9 +74,7 @@
     "debug": "^4.1.1",
     "graphql-auth-directives": "^2.2.1",
     "lodash": "^4.17.19",
-    "neo4j-driver": "^4.1.0"
-  },
-  "peerDependencies": {
+    "neo4j-driver": "^4.2.1",
     "graphql": "^15.4.0"
   },
   "ava": {
