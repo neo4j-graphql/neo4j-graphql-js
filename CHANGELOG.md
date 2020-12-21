@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.18.0
+
+- [Custom nested mutations using `@cypher` on input fields](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/542)
+- [Support for fulltext search using `@search` directive](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/543)
+- [Add regular expression filter](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/543)
+- [Support for nested `@cypher` mutations](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/543)
+
 ## 2.17.1
 
 - [Fix bug with mutations using `formatted` field for temporal types](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/531)
