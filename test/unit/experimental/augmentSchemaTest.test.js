@@ -2,7 +2,8 @@ import test from 'ava';
 import { gql } from 'apollo-server';
 import { makeAugmentedSchema } from '../../../src/index';
 import { testSchema } from '../../helpers/experimental/testSchema';
-import { compareSchema } from '../../helpers/augmentSchemaTestHelpers';
+import { buildSchema } from 'graphql';
+import { diff } from '@graphql-inspector/core';
 
 test.cb('Test augmented schema', t => {
   const parseTypeDefs = gql`
@@ -16,7 +17,7 @@ test.cb('Test augmented schema', t => {
     }
   });
 
-  const expectedSchema = /* GraphQL */ `
+  const expectedTypeDefs = /* GraphQL */ `
     type _AddUserLikedPayload
       @relation(name: "RATING", from: "User", to: "Movie") {
       "Field for the User node this RATING [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
@@ -992,10 +993,12 @@ test.cb('Test augmented schema', t => {
     }
   `;
 
-  compareSchema({
-    test: t,
-    sourceSchema,
-    expectedSchema
-  });
+  const expectedSchema = buildSchema(expectedTypeDefs);
+  const differences = diff(sourceSchema, expectedSchema);
+  if (differences.length) {
+    t.fail();
+  } else {
+    t.pass();
+  }
   t.end();
 });

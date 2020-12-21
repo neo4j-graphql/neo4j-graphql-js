@@ -13,7 +13,7 @@ test('Call assertSchema for @id, @unique, and @index fields on node types', t =>
       auth: true
     }
   });
-  const expected = `CALL apoc.schema.assert({State:["name"],UniqueNode:["anotherId"]}, {Movie:["movieId"],Person:["userId"],OldCamera:["id"],Camera:["id"],NewCamera:["id"],UniqueNode:["string","id"],UniqueStringNode:["uniqueString"]})`;
+  const expected = `CALL apoc.schema.assert({State:["name"],UniqueNode:["anotherId"]}, {Movie:["movieId"],Person:["userId"],Camera:["id"],OldCamera:["id"],NewCamera:["id"],UniqueNode:["string","id"],UniqueStringNode:["uniqueString"]})`;
   const schemaAssertCypher = schemaAssert({ schema });
   t.is(schemaAssertCypher, expected);
 });
