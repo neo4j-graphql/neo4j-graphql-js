@@ -2,8 +2,7 @@ version: 2
 
 references:
 
-  node8: &node8
-    - image: circleci/node:8-browsers
+  
   node10: &node10
     - image: circleci/node:10-browsers
   node12: &node12
@@ -230,31 +229,6 @@ jobs:
     environment: *env_neo4j42ce
     steps: *install_neo4j_steps    
 
-  # Node 8
-  install_for_node8:
-    docker: *node8
-    steps: *install_node_modules_steps
-
-  neo4j35ce_node8:
-    docker: *node8
-    environment: *env_neo4j35ce
-    steps: *run_tests_steps
-
-  neo4j35ee_node8:
-    docker: *node8
-    environment: *env_neo4j35ee
-    steps: *run_tests_steps
-
-  neo4j40ce_node8:
-    docker: *node8
-    environment: *env_neo4j40ce
-    steps: *run_tests_steps
-
-  neo4j40ee_node8:
-    docker: *node8
-    environment: *env_neo4j40ee
-    steps: *run_tests_steps
-
   # Node 10
   install_for_node10:
     docker: *node10
@@ -394,7 +368,6 @@ workflows:
   version: 2
   integration_test:
     jobs:
-      - install_for_node8
       - install_for_node10
       - install_for_node12
       - install_for_node14
@@ -406,39 +379,6 @@ workflows:
       - install_neo4j41ce
       - install_neo4j42ce
       - install_neo4j42ee
-
-      - neo4j35ce_node8:
-          requires:
-            - install_neo4j35ce
-            - install_for_node8
-      - neo4j35ee_node8:
-          requires:
-            - install_neo4j35ee
-            - install_for_node8
-      - neo4j40ce_node8:
-          requires:
-            - install_neo4j40ce
-            - install_for_node8
-      - neo4j40ee_node8:
-          requires:
-            - install_neo4j40ee
-            - install_for_node8
-      - neo4j41ee_node8:
-          requires:
-            - install_neo4j41ee
-            - install_for_node8
-      - neo4j41ce_node8:
-          requires:
-            - install_neo4j41ce
-            - install_for_node8
-      - neo4j42ee_node8:
-          requires:
-            - install_neo4j42ee
-            - install_for_node8
-      - neo4j42ce_node8:
-          requires:
-            - install_neo4j42ce
-            - install_for_node8
 
       - neo4j35ce_node10:
           requires:
