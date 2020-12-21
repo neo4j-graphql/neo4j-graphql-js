@@ -1272,7 +1272,7 @@ test.serial(
   }
 );
 
-test.serial('query union type using complex fragments', async t => {
+test.skip('query union type using complex fragments', async t => {
   t.plan(1);
 
   await client.mutate({
