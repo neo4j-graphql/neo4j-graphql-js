@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.19.0
+
+- Update graphql.js to use v15
+
 ## 2.18.0
 
 - [Custom nested mutations using `@cypher` on input fields](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/542)
