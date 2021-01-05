@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.19.1
+
+- Move `graphql-tools` to dependencies from devDependencies
+
 ## 2.19.0
 
 - Update graphql.js to use v15
