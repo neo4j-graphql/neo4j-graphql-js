@@ -147,6 +147,9 @@ test.cb(
 
     const queryType = `
 type Query {
+  """
+  [Generated query](https://grandstack.io/docs/graphql-schema-generation-augmentation#generated-queries) for Tweet type nodes.
+  """
   Tweet(id: ID, timestamp: _Neo4jDateTimeInput, text: String, _id: String, first: Int, offset: Int, orderBy: [_TweetOrdering], filter: _TweetFilter): [Tweet]
 }
 `;
@@ -169,6 +172,9 @@ test.cb('Config - augmentSchema - specify types to exclude for query', t => {
 
   const queryType = `
 type Query {
+  """
+  [Generated query](https://grandstack.io/docs/graphql-schema-generation-augmentation#generated-queries) for Tweet type nodes.
+  """
   Tweet(id: ID, timestamp: _Neo4jDateTimeInput, text: String, _id: String, first: Int, offset: Int, orderBy: [_TweetOrdering], filter: _TweetFilter): [Tweet]
 }
 `;

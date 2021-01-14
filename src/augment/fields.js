@@ -6,7 +6,7 @@ import {
   OperationType
 } from './types/types';
 import { OrderingArgument, buildPropertyOrderingValues } from './input-values';
-import { buildField, buildName, buildNamedType } from './ast';
+import { buildField, buildName, buildNamedType, buildDescription } from './ast';
 
 /**
  * The name of the Neo4j system ID field
@@ -70,25 +70,15 @@ export const TypeWrappers = {
 };
 
 /**
- * Predicate function identifying whether a GraphQL NamedType
- * contained in a type was wrapped with a NonNullType wrapper
- */
-export const isNonNullNamedTypeField = ({ wrappers = {} }) =>
-  wrappers[TypeWrappers.NON_NULL_NAMED_TYPE];
-
-/**
  * Predicate function identifying whether a type was wrapped
  * with a GraphQL ListType wrapper
  */
-export const isListTypeField = ({ wrappers = {} }) =>
-  wrappers[TypeWrappers.LIST_TYPE];
-
-/**
- * Predicate function identifying whether a GraphQL ListType
- * contained in a type was wrapped with a NonNullType wrapper
- */
-export const isNonNullListTypeField = ({ wrappers = {} }) =>
-  wrappers[TypeWrappers.NON_NULL_LIST_TYPE];
+export const isListTypeField = ({ field = {} }) => {
+  const type = field.type;
+  const unwrappedType = unwrapNamedType({ type });
+  const typeWrappers = unwrappedType.wrappers;
+  return typeWrappers[TypeWrappers.LIST_TYPE];
+};
 
 /**
  * A helper function that reduces the type wrappers of a given type
@@ -204,7 +194,8 @@ export const buildNeo4jSystemIDField = ({
   typeName,
   propertyOutputFields,
   nodeInputTypeMap,
-  config
+  config,
+  isRelationship = false
 }) => {
   const queryTypeNameLower = OperationType.QUERY.toLowerCase();
   if (shouldAugmentType(config, queryTypeNameLower, typeName)) {
@@ -217,10 +208,16 @@ export const buildNeo4jSystemIDField = ({
     const systemIDIndex = propertyOutputFields.findIndex(
       e => e.name.value === Neo4jSystemIDField
     );
+    let entityDescription = 'node';
+    if (isRelationship) entityDescription = 'relationship';
     const systemIDField = buildField({
       name: buildName({ name: neo4jInternalIDConfig.name }),
       type: buildNamedType({
         name: GraphQLString.name
+      }),
+      description: buildDescription({
+        value: `Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this ${entityDescription}.`,
+        config
       })
     });
     if (systemIDIndex >= 0) {
@@ -251,15 +248,36 @@ export const propertyFieldExists = ({
 }) => {
   const fields = definition.fields || [];
   return fields.find(field => {
-    const fieldName = field.name.value;
     const fieldType = field.type;
     const unwrappedType = unwrapNamedType({ type: fieldType });
     const outputType = unwrappedType.name;
+    const typeWrappers = unwrappedType.wrappers;
     const outputDefinition = typeDefinitionMap[outputType];
     const outputKind = outputDefinition ? outputDefinition.kind : '';
-    return isPropertyTypeField({
-      kind: outputKind,
-      type: outputType
-    });
+    const isListType = typeWrappers[TypeWrappers.LIST_TYPE];
+    return (
+      !isListType &&
+      isPropertyTypeField({
+        kind: outputKind,
+        type: outputType
+      })
+    );
   });
+};
+
+export const getTypeFields = ({
+  typeName = '',
+  definition = {},
+  typeExtensionDefinitionMap = {}
+}) => {
+  const allFields = [];
+  const fields = definition.fields;
+  if (fields && fields.length) {
+    // if there are .fields, return them
+    allFields.push(...fields);
+    const extensions = typeExtensionDefinitionMap[typeName] || [];
+    // also return any .fields of extensions of this type
+    extensions.forEach(extension => allFields.push(...extension.fields));
+  }
+  return allFields;
 };

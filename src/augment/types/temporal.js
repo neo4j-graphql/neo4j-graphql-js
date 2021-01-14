@@ -69,7 +69,7 @@ export const augmentTemporalTypes = ({ typeMap, config = {} }) => {
   return buildNeo4jTypes({
     typeMap,
     neo4jTypes: TemporalType,
-    config: config.temporal
+    config
   });
 };
 

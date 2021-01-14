@@ -182,7 +182,7 @@ test('Handle @cypher directive on QueryType', async t => {
     });
 });
 
-test('Mutation with @cypher directive (not-isolated)', async t => {
+test.serial('Mutation with @cypher directive (not-isolated)', async t => {
   t.plan(1);
 
   let expected = {
@@ -334,7 +334,7 @@ test.serial('Merge node mutation (not-isolated)', async t => {
     });
 });
 
-test('Update node mutation', async t => {
+test.serial('Update node mutation', async t => {
   t.plan(1);
 
   let expected = {
@@ -544,7 +544,7 @@ test.serial('Remove relationship mutation (not-isolated)', async t => {
     });
 });
 
-test('Delete node mutation', async t => {
+test.serial('Delete node mutation', async t => {
   t.plan(1);
 
   await client
@@ -1272,7 +1272,7 @@ test.serial(
   }
 );
 
-test.serial('query union type using complex fragments', async t => {
+test.skip('query union type using complex fragments', async t => {
   t.plan(1);
 
   await client.mutate({
@@ -2225,9 +2225,7 @@ test.serial('Spatial - filtering - field equal to given value', async t => {
     .query({
       query: gql`
         {
-          SpatialNode(
-            filter: { point: { longitude: 10, latitude: 20, height: 30 } }
-          ) {
+          SpatialNode(filter: { point: { longitude: 10 } }) {
             point {
               longitude
               latitude
@@ -2273,9 +2271,7 @@ test.serial(
           {
             Movie(
               title: "Bob Loblaw 5"
-              filter: {
-                location_not: { longitude: 10, latitude: 20, height: 30 }
-              }
+              filter: { location_not: { longitude: 10, height: 30 } }
             ) {
               title
               location {

@@ -57,7 +57,7 @@ const generateGraphQLTypeForTreeEntry = (tree, key) => {
 
         const tag = `@relation(name: "${extractRelationshipType(
           relId
-        )}", direction: "OUT")`;
+        )}", direction: OUT)`;
         const targetTypeName = allTargetLabels[0];
 
         return `   ${targetTypeName.toLowerCase()}s: [${targetTypeName}] ${tag}\n`;

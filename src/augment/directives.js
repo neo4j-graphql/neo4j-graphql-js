@@ -1,5 +1,5 @@
-import { Kind, DirectiveLocation, GraphQLString } from 'graphql';
-import { TypeWrappers } from './fields';
+import { Kind, DirectiveLocation, GraphQLString, GraphQLFloat } from 'graphql';
+import { TypeWrappers, getFieldType } from './fields';
 import {
   buildDirectiveDefinition,
   buildInputValue,
@@ -10,6 +10,7 @@ import {
   buildDirective,
   buildName
 } from './ast';
+import { ApolloError } from 'apollo-server-errors';
 
 /**
  * An enum describing the names of directive definitions and instances
@@ -23,11 +24,15 @@ export const DirectiveDefinition = {
   IS_AUTHENTICATED: 'isAuthenticated',
   HAS_ROLE: 'hasRole',
   HAS_SCOPE: 'hasScope',
-  ADDITIONAL_LABELS: 'additionalLabels'
+  ADDITIONAL_LABELS: 'additionalLabels',
+  ID: 'id',
+  UNIQUE: 'unique',
+  INDEX: 'index',
+  SEARCH: 'search'
 };
 
 // The name of Role type used in authorization logic
-const ROLE_TYPE = 'Role';
+const ROLE_TYPE = process.env.AUTH_ROLE_ENUM_NAME || 'Role';
 
 /**
  * Enum for the names of directed fields on relationship types
@@ -37,23 +42,83 @@ const RelationshipDirectionField = {
   TO: 'to'
 };
 
-/**
- * A predicate function for cypher directive fields
- */
 export const isCypherField = ({ directives = [] }) =>
   getDirective({
     directives,
     name: DirectiveDefinition.CYPHER
   });
 
-/**
- * A predicate function for neo4j_ignore directive fields
- */
 export const isIgnoredField = ({ directives = [] }) =>
   getDirective({
     directives,
     name: DirectiveDefinition.NEO4J_IGNORE
   });
+
+export const isRelationField = ({ directives = [] }) =>
+  getDirective({
+    directives,
+    name: DirectiveDefinition.RELATION
+  });
+
+export const isPrimaryKeyField = ({ directives = [] }) =>
+  getDirective({
+    directives,
+    name: DirectiveDefinition.ID
+  });
+
+export const isUniqueField = ({ directives = [] }) =>
+  getDirective({
+    directives,
+    name: DirectiveDefinition.UNIQUE
+  });
+
+export const isIndexedField = ({ directives = [] }) =>
+  getDirective({
+    directives,
+    name: DirectiveDefinition.INDEX
+  });
+
+export const validateFieldDirectives = ({ fields = [], directives = [] }) => {
+  const primaryKeyFields = fields.filter(field =>
+    isPrimaryKeyField({
+      directives: field.directives
+    })
+  );
+  if (primaryKeyFields.length > 1)
+    throw new ApolloError(
+      `The @id directive can only be used once per node type.`
+    );
+  const isPrimaryKey = isPrimaryKeyField({ directives });
+  const isUnique = isUniqueField({ directives });
+  const isIndex = isIndexedField({ directives });
+  const isComputed = isCypherField({ directives });
+  if (isComputed) {
+    if (isPrimaryKey)
+      throw new ApolloError(
+        `The @id directive cannot be used with the @cypher directive because computed fields are not stored as properties.`
+      );
+    if (isUnique)
+      throw new ApolloError(
+        `The @unique directive cannot be used with the @cypher directive because computed fields are not stored as properties.`
+      );
+    if (isIndex)
+      throw new ApolloError(
+        `The @index directive cannot used with the @cypher directive because computed fields are not stored as properties.`
+      );
+  }
+  if (isPrimaryKey && isUnique)
+    throw new ApolloError(
+      `The @id and @unique directive combined are redunant. The @id directive already sets a unique property constraint and an index.`
+    );
+  if (isPrimaryKey && isIndex)
+    throw new ApolloError(
+      `The @id and @index directive combined are redundant. The @id directive already sets a unique property constraint and an index.`
+    );
+  if (isUnique && isIndex)
+    throw new ApolloError(
+      `The @unique and @index directive combined are redunant. The @unique directive sets both a unique property constraint and an index.`
+    );
+};
 
 /**
  * The main export for augmenting directive definitions
@@ -107,41 +172,6 @@ export const augmentDirectiveDefinitions = ({
 };
 
 /**
- * Builds a relation directive for generated relationship output types
- */
-export const buildRelationDirective = ({
-  relationshipName,
-  fromType,
-  toType
-}) =>
-  buildDirective({
-    name: buildName({ name: DirectiveDefinition.RELATION }),
-    args: [
-      buildDirectiveArgument({
-        name: buildName({ name: 'name' }),
-        value: {
-          kind: Kind.STRING,
-          value: relationshipName
-        }
-      }),
-      buildDirectiveArgument({
-        name: buildName({ name: RelationshipDirectionField.FROM }),
-        value: {
-          kind: Kind.STRING,
-          value: fromType
-        }
-      }),
-      buildDirectiveArgument({
-        name: buildName({ name: RelationshipDirectionField.TO }),
-        value: {
-          kind: Kind.STRING,
-          value: toType
-        }
-      })
-    ]
-  });
-
-/**
  * Builds a MutationMeta directive for translating relationship mutations
  */
 export const buildMutationMetaDirective = ({
@@ -187,10 +217,16 @@ export const buildAuthScopeDirective = ({ scopes = [] }) =>
         name: buildName({ name: 'scopes' }),
         value: {
           kind: Kind.LIST,
-          values: scopes.map(scope => ({
-            kind: Kind.STRING,
-            value: `${scope.typeName}: ${scope.mutation}`
-          }))
+          values: scopes.flatMap(scope => [
+            {
+              kind: Kind.STRING,
+              value: `${scope.typeName}: ${scope.mutation}`
+            },
+            {
+              kind: Kind.STRING,
+              value: `${scope.mutation}:${scope.typeName}`.toLowerCase()
+            }
+          ])
         }
       })
     ]
@@ -280,7 +316,10 @@ const directiveDefinitionBuilderMap = {
           }
         }
       ],
-      locations: [DirectiveLocation.FIELD_DEFINITION]
+      locations: [
+        DirectiveLocation.FIELD_DEFINITION,
+        DirectiveLocation.INPUT_FIELD_DEFINITION
+      ]
     };
   },
   [DirectiveDefinition.RELATION]: ({ config }) => {
@@ -363,6 +402,38 @@ const directiveDefinitionBuilderMap = {
       name: DirectiveDefinition.NEO4J_IGNORE,
       locations: [DirectiveLocation.FIELD_DEFINITION]
     };
+  },
+  [DirectiveDefinition.ID]: ({ config }) => {
+    return {
+      name: DirectiveDefinition.ID,
+      locations: [DirectiveLocation.FIELD_DEFINITION]
+    };
+  },
+  [DirectiveDefinition.UNIQUE]: ({ config }) => {
+    return {
+      name: DirectiveDefinition.UNIQUE,
+      locations: [DirectiveLocation.FIELD_DEFINITION]
+    };
+  },
+  [DirectiveDefinition.INDEX]: ({ config }) => {
+    return {
+      name: DirectiveDefinition.INDEX,
+      locations: [DirectiveLocation.FIELD_DEFINITION]
+    };
+  },
+  [DirectiveDefinition.SEARCH]: ({ config }) => {
+    return {
+      name: DirectiveDefinition.SEARCH,
+      args: [
+        {
+          name: 'index',
+          type: {
+            name: GraphQLString
+          }
+        }
+      ],
+      locations: [DirectiveLocation.FIELD_DEFINITION]
+    };
   }
 };
 
@@ -423,11 +494,35 @@ export const getDirective = ({ directives, name }) => {
  */
 export const getDirectiveArgument = ({ directive, name }) => {
   let value = '';
-  const arg = directive.arguments.find(
-    arg => arg.name && arg.name.value === name
-  );
-  if (arg) {
-    value = arg.value.value;
-  }
+  const args = directive ? directive.arguments : [];
+  const arg = args.find(arg => arg.name && arg.name.value === name);
+  if (arg) value = arg.value.value;
   return value;
+};
+
+export const augmentDirectives = ({ directives = [] }) => {
+  let cypherDirective = getDirective({
+    directives,
+    name: DirectiveDefinition.CYPHER
+  });
+  if (cypherDirective) {
+    cypherDirective = escapeCypherStatement({
+      directive: cypherDirective
+    });
+  }
+  return directives;
+};
+
+const escapeCypherStatement = ({ directive }) => {
+  const arg = directive.arguments.find(arg => arg.name.value === 'statement');
+  if (arg) {
+    const value = arg.value;
+    if (value && value.kind === Kind.STRING && value.block) {
+      // Negative lookbehind assertion regex
+      const unescapedDoubleQuotes = /(?<!\\)"/g;
+      const escaped = value.value.replace(unescapedDoubleQuotes, '\\"');
+      arg.value.value = escaped;
+    }
+  }
+  return directive;
 };

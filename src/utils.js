@@ -1,11 +1,13 @@
-import { parse, GraphQLInt, Kind } from 'graphql';
+import { parse, Kind, isInputObjectType } from 'graphql';
+import { unwrapNamedType, isListTypeField } from './augment/fields';
+import { Neo4jTypeFormatted } from './augment/types/types';
+import {
+  isRelationshipMutationOutputType,
+  isReflexiveRelationshipOutputType
+} from './augment/types/relationship/query';
+import { getFederatedOperationData } from './federation';
 import neo4j from 'neo4j-driver';
 import _ from 'lodash';
-import { Neo4jTypeName } from './augment/types/types';
-import { SpatialType } from './augment/types/spatial';
-import { unwrapNamedType } from './augment/fields';
-import { Neo4jTypeFormatted } from './augment/types/types';
-import { getFederatedOperationData } from './federation';
 
 function parseArg(arg, variableValues) {
   switch (arg.value.kind) {
@@ -207,10 +209,6 @@ export function isArrayType(type) {
   return type ? type.toString().startsWith('[') : false;
 }
 
-export const isRelationTypeDirectedField = fieldName => {
-  return fieldName === 'from' || fieldName === 'to';
-};
-
 export const isNodeType = astNode => {
   return (
     astNode &&
@@ -237,9 +235,6 @@ export const isRelationTypePayload = schemaType => {
       })
     : undefined;
 };
-
-export const isRootSelection = ({ selectionInfo, rootType }) =>
-  selectionInfo && selectionInfo.rootType === rootType;
 
 export function lowFirstLetter(word) {
   return word.charAt(0).toLowerCase() + word.slice(1);
@@ -378,12 +373,23 @@ export const computeOrderBy = (resolveInfo, schemaType) => {
   };
 };
 
-export const possiblySetFirstId = ({ args, statements = [], params }) => {
-  const arg = args.find(e => _getNamedType(e).name.value === 'ID');
-  // arg is the first ID field if it exists, and we set the value
-  // if no value is provided for the field name (arg.name.value) in params
-  if (arg && arg.name.value && params[arg.name.value] === undefined) {
-    statements.push(`${arg.name.value}: apoc.create.uuid()`);
+export const setPrimaryKeyValue = ({
+  args = [],
+  statements = [],
+  params,
+  primaryKey
+}) => {
+  if (primaryKey) {
+    const fieldName = primaryKey.name.value;
+    const primaryKeyArgument = args.find(arg => arg.name.value === fieldName);
+    if (primaryKeyArgument) {
+      const type = primaryKeyArgument.type;
+      const unwrappedType = unwrapNamedType({ type });
+      const isIDTypePrimaryKey = unwrappedType.name === 'ID';
+      if (isIDTypePrimaryKey && params[fieldName] === undefined) {
+        statements.push(`${fieldName}: apoc.create.uuid()`);
+      }
+    }
   }
   return statements;
 };
@@ -419,7 +425,7 @@ export const buildCypherParameters = ({
   statements = [],
   params,
   paramKey,
-  resolveInfo
+  typeMap
 }) => {
   const dataParams = paramKey ? params[paramKey] : params;
   const paramKeys = dataParams ? Object.keys(dataParams) : [];
@@ -429,8 +435,9 @@ export const buildCypherParameters = ({
       // Get the AST definition for the argument matching this param name
       const fieldAst = args.find(arg => arg.name.value === paramName);
       if (fieldAst) {
-        const fieldType = _getNamedType(fieldAst.type);
-        const fieldTypeName = fieldType.name.value;
+        const unwrappedType = unwrapNamedType({ type: fieldAst.type });
+        const fieldTypeName = unwrappedType.name;
+        const innerSchemaType = typeMap[fieldTypeName];
         if (isNeo4jTypeInput(fieldTypeName)) {
           paramStatements = buildNeo4jTypeCypherParameters({
             paramStatements,
@@ -438,10 +445,9 @@ export const buildCypherParameters = ({
             param,
             paramKey,
             paramName,
-            fieldTypeName,
-            resolveInfo
+            fieldTypeName
           });
-        } else {
+        } else if (!isInputObjectType(innerSchemaType)) {
           // normal case
           paramStatements.push(
             `${paramName}:$${paramKey ? `${paramKey}.` : ''}${paramName}`
@@ -451,10 +457,7 @@ export const buildCypherParameters = ({
       return paramStatements;
     }, statements);
   }
-  if (paramKey) {
-    params[paramKey] = dataParams;
-  }
-  return [params, statements];
+  return statements;
 };
 
 const buildNeo4jTypeCypherParameters = ({
@@ -463,14 +466,13 @@ const buildNeo4jTypeCypherParameters = ({
   param,
   paramKey,
   paramName,
-  fieldTypeName,
-  resolveInfo
+  fieldTypeName
 }) => {
   const formatted = param.formatted;
   const neo4jTypeConstructor = decideNeo4jTypeConstructor(fieldTypeName);
   if (neo4jTypeConstructor) {
     // Prefer only using formatted, if provided
-    if (formatted) {
+    if (formatted !== undefined) {
       if (paramKey) params[paramKey][paramName] = formatted;
       else params[paramName] = formatted;
       paramStatements.push(
@@ -487,18 +489,8 @@ const buildNeo4jTypeCypherParameters = ({
           neo4jTypeParam = param[paramIndex];
           if (neo4jTypeParam.formatted) {
             const formatted = neo4jTypeParam.formatted;
-            if (paramKey) params[paramKey][paramName] = formatted;
-            else params[paramName] = formatted;
-          } else {
-            params = serializeNeo4jIntegers({
-              paramKey,
-              fieldTypeName,
-              paramName,
-              paramIndex: paramIndex,
-              neo4jTypeParam,
-              params,
-              resolveInfo
-            });
+            if (paramKey) params[paramKey][paramName][paramIndex] = formatted;
+            else params[paramName][paramIndex] = formatted;
           }
         }
         paramStatements.push(
@@ -513,15 +505,6 @@ const buildNeo4jTypeCypherParameters = ({
         if (neo4jTypeParam.formatted) {
           if (paramKey) params[paramKey][paramName] = formatted;
           else params[paramName] = formatted;
-        } else {
-          params = serializeNeo4jIntegers({
-            paramKey,
-            fieldTypeName,
-            paramName,
-            neo4jTypeParam,
-            params,
-            resolveInfo
-          });
         }
         paramStatements.push(
           `${paramName}: ${neo4jTypeConstructor}($${
@@ -532,41 +515,6 @@ const buildNeo4jTypeCypherParameters = ({
     }
   }
   return paramStatements;
-};
-
-const serializeNeo4jIntegers = ({
-  paramKey,
-  fieldTypeName,
-  paramName,
-  paramIndex,
-  neo4jTypeParam = {},
-  params = {},
-  resolveInfo
-}) => {
-  const schema = resolveInfo.schema;
-  const neo4jTypeDefinition = schema.getType(fieldTypeName);
-  const neo4jTypeAst = neo4jTypeDefinition.astNode;
-  const neo4jTypeFields = neo4jTypeAst.fields;
-  Object.keys(neo4jTypeParam).forEach(paramFieldName => {
-    const fieldAst = neo4jTypeFields.find(
-      field => field.name.value === paramFieldName
-    );
-    const unwrappedFieldType = unwrapNamedType({ type: fieldAst.type });
-    const fieldTypeName = unwrappedFieldType.name;
-    if (
-      fieldTypeName === GraphQLInt.name &&
-      Number.isInteger(neo4jTypeParam[paramFieldName])
-    ) {
-      const serialized = neo4j.int(neo4jTypeParam[paramFieldName]);
-      let param = params[paramName];
-      if (paramIndex >= 0) {
-        if (paramKey) param = params[paramKey][paramName][paramIndex];
-        else param = param[paramIndex];
-      } else if (paramKey) param = params[paramKey][paramName];
-      param[paramFieldName] = serialized;
-    }
-  });
-  return params;
 };
 
 // TODO refactor to handle Query/Mutation type schema directives
@@ -668,74 +616,6 @@ export const getRelationTypeDirective = relationshipType => {
     : undefined;
 };
 
-const firstNonNullAndIdField = fields => {
-  let valueTypeName = '';
-  return fields.find(e => {
-    valueTypeName = _getNamedType(e).name.value;
-    return (
-      e.name.value !== '_id' &&
-      e.type.kind === 'NonNullType' &&
-      valueTypeName === 'ID'
-    );
-  });
-};
-
-const firstIdField = fields => {
-  let valueTypeName = '';
-  return fields.find(e => {
-    valueTypeName = _getNamedType(e).name.value;
-    return e.name.value !== '_id' && valueTypeName === 'ID';
-  });
-};
-
-const firstNonNullField = fields => {
-  let valueTypeName = '';
-  return fields.find(e => {
-    valueTypeName = _getNamedType(e).name.value;
-    return valueTypeName === 'NonNullType';
-  });
-};
-
-const firstField = fields => {
-  return fields.find(e => {
-    return e.name.value !== '_id';
-  });
-};
-
-export const getPrimaryKey = astNode => {
-  let fields = astNode.fields;
-  let pk = undefined;
-  // prevent ignored, relation, and computed fields
-  // from being used as primary keys
-  fields = fields.filter(
-    field =>
-      !getFieldDirective(field, 'neo4j_ignore') &&
-      !getFieldDirective(field, 'relation') &&
-      !getFieldDirective(field, 'cypher')
-  );
-  if (!fields.length) return pk;
-  pk = firstNonNullAndIdField(fields);
-  if (!pk) {
-    pk = firstIdField(fields);
-  }
-  if (!pk) {
-    pk = firstNonNullField(fields);
-  }
-  if (!pk) {
-    pk = firstField(fields);
-  }
-  // Do not allow Point primary key
-  if (pk) {
-    const type = pk.type;
-    const unwrappedType = unwrapNamedType({ type });
-    const typeName = unwrappedType.name;
-    if (isSpatialType(typeName) || typeName === SpatialType.POINT) {
-      pk = undefined;
-    }
-  }
-  return pk;
-};
-
 /**
  * Render safe a variable name according to cypher rules
  * @param {String} i input variable name
@@ -770,30 +650,27 @@ export const safeLabel = l => {
 
 export const decideNestedVariableName = ({
   schemaTypeRelation,
+  schemaType,
   innerSchemaTypeRelation,
   variableName,
   fieldName,
   parentSelectionInfo
 }) => {
-  if (
-    isRootSelection({
-      selectionInfo: parentSelectionInfo,
-      rootType: 'relationship'
-    }) &&
-    isRelationTypeDirectedField(fieldName)
-  ) {
-    return parentSelectionInfo[fieldName];
+  let cypherVariable = variableName + '_' + fieldName;
+  if (isRelationshipMutationOutputType({ schemaType })) {
+    // used for relationship mutation output Payload types
+    cypherVariable = parentSelectionInfo[fieldName];
   } else if (schemaTypeRelation) {
     const fromTypeName = schemaTypeRelation.from;
     const toTypeName = schemaTypeRelation.to;
     if (fromTypeName === toTypeName) {
-      if (fieldName === 'from' || fieldName === 'to') {
-        return variableName + '_' + fieldName;
+      if (isReflexiveRelationshipOutputType({ schemaType })) {
+        cypherVariable = variableName + '_' + fieldName;
       } else {
         // Case of a reflexive relationship type's directed field
         // being renamed to its node type value
         // ex: from: User -> User: User
-        return variableName;
+        cypherVariable = variableName;
       }
     }
   } else {
@@ -802,14 +679,14 @@ export const decideNestedVariableName = ({
     if (innerSchemaTypeRelation) {
       // innerSchemaType is a field payload type using a @relation directive
       if (innerSchemaTypeRelation.from === innerSchemaTypeRelation.to) {
-        return variableName;
+        cypherVariable = variableName;
       }
     } else {
       // related types are different
-      return variableName + '_' + fieldName;
+      cypherVariable = variableName + '_' + fieldName;
     }
   }
-  return variableName + '_' + fieldName;
+  return cypherVariable;
 };
 
 export const initializeMutationParams = ({
@@ -899,10 +776,6 @@ export const splitSelectionParameters = (
 };
 
 export const isNeo4jType = name => isTemporalType(name) || isSpatialType(name);
-
-export const isNeo4jTypeField = (schemaType, fieldName) =>
-  isTemporalField(schemaType, fieldName) ||
-  isSpatialField(schemaType, fieldName);
 
 export const isNeo4jTypeInput = name =>
   isTemporalInputType(name) ||
@@ -1005,42 +878,40 @@ export const neo4jTypePredicateClauses = (
   fieldArguments,
   parentParam
 ) => {
-  return fieldArguments.reduce((acc, t) => {
-    // For every temporal argument
-    const argName = t.name.value;
-    let neo4jTypeParam = filters[argName];
-    if (neo4jTypeParam) {
-      // If a parameter value has been provided for it check whether
-      // the provided param value is in an indexed object for a nested argument
-      const paramIndex = neo4jTypeParam.index;
-      const paramValue = neo4jTypeParam.value;
-      // If it is, set and use its .value
-      if (paramValue) neo4jTypeParam = paramValue;
-      if (neo4jTypeParam[Neo4jTypeFormatted.FORMATTED]) {
-        // Only the dedicated 'formatted' arg is used if it is provided
-        const type = t ? _getNamedType(t.type).name.value : '';
-        acc.push(
-          `${variableName}.${argName} = ${decideNeo4jTypeConstructor(type)}($${
-            // use index if provided, for nested arguments
-            typeof paramIndex === 'undefined'
-              ? `${parentParam ? `${parentParam}.` : ''}${argName}.formatted`
-              : `${
-                  parentParam ? `${parentParam}.` : ''
-                }${paramIndex}_${argName}.formatted`
-          })`
-        );
-      } else {
-        Object.keys(neo4jTypeParam).forEach(e => {
+  return fieldArguments.reduce((acc, fieldArgument) => {
+    if (!isListTypeField({ field: fieldArgument })) {
+      // For every temporal argument
+      const argName = fieldArgument.name.value;
+      let argValue = filters[argName];
+      if (argValue) {
+        const type = fieldArgument.type;
+        const unwrappedType = unwrapNamedType({ type });
+        const typeName = unwrappedType.name;
+        // If a parameter value has been provided for it check whether
+        // the provided param value is in an indexed object for a nested argument
+        const paramIndex = argValue.index;
+        const paramValue = argValue.value;
+        // If it is, set and use its .value
+        if (paramValue) argValue = paramValue;
+        const parentParamPath = parentParam ? `${parentParam}.` : '';
+        const paramPath = `${parentParamPath}${
+          paramIndex >= 1 ? `${paramIndex}_` : ''
+        }${argName}`;
+        const propertyPath = `${variableName}.${argName}`;
+        const cypherTypeConstructor = decideNeo4jTypeConstructor(typeName);
+        const isTemporalFormattedField = argValue[Neo4jTypeFormatted.FORMATTED];
+        if (isTemporalFormattedField) {
+          // Only the dedicated 'formatted' arg is used if it is provided
           acc.push(
-            `${variableName}.${argName}.${e} = $${
-              typeof paramIndex === 'undefined'
-                ? `${parentParam ? `${parentParam}.` : ''}${argName}`
-                : `${
-                    parentParam ? `${parentParam}.` : ''
-                  }${paramIndex}_${argName}`
-            }.${e}`
+            `${propertyPath} = ${cypherTypeConstructor}($${paramPath}.${Neo4jTypeFormatted.FORMATTED})`
           );
-        });
+        } else {
+          Object.keys(argValue).forEach(paramName => {
+            acc.push(
+              `${propertyPath}.${paramName} = $${paramPath}.${paramName}`
+            );
+          });
+        }
       }
     }
     return acc;
@@ -1053,7 +924,7 @@ export const getNeo4jTypeArguments = args => {
         if (!t) {
           return acc;
         }
-        const fieldType = _getNamedType(t.type).name.value;
+        const fieldType = unwrapNamedType({ type: t.type }).name;
         if (isNeo4jTypeInput(fieldType)) acc.push(t);
         return acc;
       }, [])
@@ -1084,20 +955,13 @@ export const removeIgnoredFields = (schemaType, selections) => {
   return selections;
 };
 
-const _getNamedType = type => {
-  if (type.kind !== 'NamedType') {
-    return _getNamedType(type.type);
-  }
-  return type;
-};
-
 export const getInterfaceDerivedTypeNames = (schema, interfaceName) => {
-  const implementingTypeMap = schema._implementations
-    ? schema._implementations[interfaceName]
+  const implementingTypeMap = schema._implementationsMap
+    ? schema._implementationsMap[interfaceName]
     : {};
   let implementingTypes = [];
-  if (implementingTypeMap) {
-    implementingTypes = Object.values(implementingTypeMap).map(
+  if (implementingTypeMap && implementingTypeMap.objects) {
+    implementingTypes = Object.values(implementingTypeMap.objects).map(
       type => type.name
     );
   }

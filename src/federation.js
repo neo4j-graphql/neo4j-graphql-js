@@ -459,7 +459,13 @@ export const generateNonLocalTypeExtensionReferenceResolvers = ({
       typeName !== mutationTypeName &&
       typeName !== subscriptionTypeName
     ) {
-      if (generatedTypeMap[typeName] === undefined) {
+      if (
+        isExternalTypeExtension({
+          typeName,
+          typeMap: generatedTypeMap,
+          typeExtensionDefinitionMap
+        })
+      ) {
         // Initialize type resolver object
         if (resolvers[typeName] === undefined) resolvers[typeName] = {};
         // If not provided
@@ -488,4 +494,17 @@ export const generateNonLocalTypeExtensionReferenceResolvers = ({
     }
   });
   return resolvers;
+};
+
+export const isExternalTypeExtension = ({
+  typeName = '',
+  typeMap = {},
+  typeExtensionDefinitionMap = {}
+}) => {
+  // Base type, if existent, is expected to be an object type in typeMap,
+  const baseTypeExists = !typeMap[typeName];
+  // with at least one type extension
+  const extensions = typeExtensionDefinitionMap[typeName];
+  const hasExtensions = extensions && extensions.length;
+  return baseTypeExists && hasExtensions;
 };

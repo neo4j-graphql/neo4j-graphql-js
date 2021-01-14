@@ -6,7 +6,7 @@ import Debug from 'debug';
 const debug = Debug('neo4j-graphql-js');
 
 const relationDirective = (relType, direction) =>
-  `@relation(name: "${relType}", direction: "${direction}")`;
+  `@relation(name: "${relType}", direction: ${direction})`;
 
 const mapOutboundRels = (tree, node, config) => {
   const labels = node.getLabels();

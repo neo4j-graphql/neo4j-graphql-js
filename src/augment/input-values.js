@@ -1,11 +1,18 @@
-import { Kind, GraphQLInt } from 'graphql';
+import {
+  Kind,
+  GraphQLInt,
+  isInputObjectType,
+  GraphQLString,
+  GraphQLFloat
+} from 'graphql';
 import {
   buildName,
   buildNamedType,
   buildInputValue,
   buildInputObjectType,
   buildEnumType,
-  buildEnumValue
+  buildEnumValue,
+  buildFieldSelection
 } from './ast';
 import {
   isNeo4jTemporalType,
@@ -24,9 +31,13 @@ import {
   isTemporalField,
   getFieldDefinition,
   isSpatialField,
-  propertyFieldExists
+  propertyFieldExists,
+  unwrapNamedType
 } from './fields';
 import { SpatialType, Neo4jPointDistanceFilter } from './types/spatial';
+import { isNeo4jTypeInput } from '../utils';
+import neo4j from 'neo4j-driver';
+
 /**
  * An enum describing the names of the input value definitions
  * used for the field argument AST for data result pagination
@@ -52,6 +63,23 @@ export const FilteringArgument = {
   FILTER: 'filter'
 };
 
+export const SearchArgument = {
+  SEARCH: 'search'
+};
+
+export const isDataSelectionArgument = name =>
+  Object.values({
+    ...PagingArgument,
+    ...OrderingArgument
+  }).some(key => key === name);
+
+export const isNeo4jTypeArgument = ({ fieldArgument = {} }) => {
+  const type = fieldArgument.type;
+  const unwrappedType = unwrapNamedType({ type });
+  const name = unwrappedType.name;
+  return isNeo4jTypeInput(name);
+};
+
 /**
  * Builds the AST definitions for input values that compose the
  * input object types used by Query API field arguments,
@@ -59,32 +87,34 @@ export const FilteringArgument = {
  */
 export const augmentInputTypePropertyFields = ({
   inputTypeMap = {},
+  field,
   fieldName,
   fieldDirectives,
   outputType,
-  outputKind,
-  outputTypeWrappers
+  outputKind
 }) => {
   const filteringType = inputTypeMap[FilteringArgument.FILTER];
+  if (
+    filteringType &&
+    !isCypherField({ directives: fieldDirectives }) &&
+    !isNeo4jIDField({ name: fieldName })
+  ) {
+    filteringType.fields.push(
+      ...buildPropertyFilters({
+        field,
+        fieldName,
+        outputType,
+        outputKind
+      })
+    );
+  }
   const orderingType = inputTypeMap[OrderingArgument.ORDER_BY];
-  if (!isListTypeField({ wrappers: outputTypeWrappers })) {
-    if (
-      !isCypherField({ directives: fieldDirectives }) &&
-      !isNeo4jIDField({ name: fieldName })
-    ) {
-      if (filteringType) {
-        filteringType.fields.push(
-          ...buildPropertyFilters({
-            fieldName,
-            outputType,
-            outputKind
-          })
-        );
-      }
-    }
-    if (orderingType && outputType !== SpatialType.POINT) {
-      orderingType.values.push(...buildPropertyOrderingValues({ fieldName }));
-    }
+  if (
+    orderingType &&
+    !isListTypeField({ field }) &&
+    !isSpatialField({ type: outputType })
+  ) {
+    orderingType.values.push(...buildPropertyOrderingValues({ fieldName }));
   }
   return inputTypeMap;
 };
@@ -94,16 +124,20 @@ export const augmentInputTypePropertyFields = ({
  * builds their AST definitions
  */
 export const buildQueryFieldArguments = ({
+  field = {},
   argumentMap = {},
   fieldArguments,
   fieldDirectives,
+  typeName,
   outputType,
-  outputTypeWrappers,
   isUnionType,
+  isListType,
+  searchesType,
   typeDefinitionMap
 }) => {
+  const isListField = isListTypeField({ field });
   Object.values(argumentMap).forEach(name => {
-    if (isListTypeField({ wrappers: outputTypeWrappers })) {
+    if (isListType || isListField) {
       if (name === PagingArgument.FIRST) {
         // Does not overwrite
         if (
@@ -167,6 +201,9 @@ export const buildQueryFieldArguments = ({
         const argumentIndex = fieldArguments.findIndex(
           arg => arg.name.value === FilteringArgument.FILTER
         );
+        if (typeName) {
+          outputType = `${typeName}${outputType}`;
+        }
         // Does overwrite
         if (argumentIndex === -1) {
           fieldArguments.push(
@@ -182,6 +219,31 @@ export const buildQueryFieldArguments = ({
               typeName: outputType
             })
           );
+        }
+      }
+    }
+    if (name === SearchArgument.SEARCH && !isUnionType) {
+      if (!isCypherField({ directives: fieldDirectives })) {
+        if (searchesType) {
+          const argumentIndex = fieldArguments.findIndex(
+            arg => arg.name.value === SearchArgument.SEARCH
+          );
+          // Does overwrite
+          if (argumentIndex === -1) {
+            fieldArguments.push(
+              buildQuerySearchArgument({
+                typeName: outputType
+              })
+            );
+          } else {
+            fieldArguments.splice(
+              argumentIndex,
+              1,
+              buildQuerySearchArgument({
+                typeName: outputType
+              })
+            );
+          }
         }
       }
     }
@@ -276,6 +338,14 @@ const buildQueryFilteringArgument = ({ typeName }) =>
     })
   });
 
+const buildQuerySearchArgument = ({ typeName }) =>
+  buildInputValue({
+    name: buildName({ name: SearchArgument.SEARCH }),
+    type: buildNamedType({
+      name: `_${typeName}Search`
+    })
+  });
+
 /**
  * Builds the AST definition for an input object type used
  * as the type of a filtering field argument
@@ -298,6 +368,41 @@ export const buildQueryFilteringInputType = ({
   return generatedTypeMap;
 };
 
+export const buildQuerySearchInputType = ({
+  typeName,
+  inputTypeMap,
+  generatedTypeMap
+}) => {
+  const indexNames = Object.keys(inputTypeMap);
+  if (indexNames.length) {
+    // build optional, String type arguments for each search index name
+    const inputValues = indexNames.map(name =>
+      buildInputValue({
+        name: buildName({ name }),
+        type: buildNamedType({
+          name: GraphQLString.name
+        })
+      })
+    );
+    // add a Float type threshold argument used as a>= floor to filter over the score
+    // statistics for the nodes matched when one of the above search arguments are used
+    inputValues.push(
+      buildInputValue({
+        name: buildName({ name: 'threshold' }),
+        type: buildNamedType({
+          name: GraphQLFloat.name
+        })
+      })
+    );
+    // generate the _${Node}Search input object (overwritten)
+    generatedTypeMap[typeName] = buildInputObjectType({
+      name: buildName({ name: typeName }),
+      fields: inputValues
+    });
+  }
+  return generatedTypeMap;
+};
+
 // An enum containing the semantics of logical filtering arguments
 const LogicalFilteringArgument = {
   AND: 'AND',
@@ -307,7 +412,7 @@ const LogicalFilteringArgument = {
 /**
  * Builds the AST definitions for logical filtering arguments
  */
-const buildLogicalFilterInputValues = ({ typeName = '' }) => {
+export const buildLogicalFilterInputValues = ({ typeName = '' }) => {
   return [
     buildInputValue({
       name: buildName({ name: LogicalFilteringArgument.AND }),
@@ -335,111 +440,107 @@ const buildLogicalFilterInputValues = ({ typeName = '' }) => {
 /**
  * Builds the AST definitions for filtering Neo4j property type fields
  */
-const buildPropertyFilters = ({
+export const buildPropertyFilters = ({
+  field,
   fieldName = '',
   outputType = '',
   outputKind = ''
 }) => {
-  let filters = [];
+  let filterTypes = [];
+  let fieldConfig = {
+    name: fieldName,
+    type: {
+      name: outputType
+    }
+  };
+  const isListFilter = isListTypeField({ field });
+  if (isListFilter) {
+    fieldConfig.type.wrappers = {
+      [TypeWrappers.LIST_TYPE]: true,
+      [TypeWrappers.NON_NULL_NAMED_TYPE]: true
+    };
+  }
   if (
     isSpatialField({ type: outputType }) ||
     isNeo4jPointType({ type: outputType })
   ) {
-    filters = buildFilters({
-      fieldName,
-      fieldConfig: {
-        name: fieldName,
-        type: {
-          name: outputType
-        }
-      },
-      filterTypes: ['not', ...Object.values(Neo4jPointDistanceFilter)]
-    });
+    filterTypes = ['not', ...Object.values(Neo4jPointDistanceFilter)];
   } else if (
     isIntegerField({ type: outputType }) ||
     isFloatField({ type: outputType }) ||
     isTemporalField({ type: outputType }) ||
     isNeo4jTemporalType({ type: outputType })
   ) {
-    filters = buildFilters({
-      fieldName,
-      fieldConfig: {
-        name: fieldName,
-        type: {
-          name: outputType
-        }
-      },
-      filterTypes: ['not', 'in', 'not_in', 'lt', 'lte', 'gt', 'gte']
-    });
+    filterTypes = ['not'];
+    if (!isListFilter) filterTypes = [...filterTypes, 'in', 'not_in'];
+    filterTypes = [...filterTypes, 'lt', 'lte', 'gt', 'gte'];
   } else if (isBooleanField({ type: outputType })) {
-    filters = buildFilters({
-      fieldName,
-      fieldConfig: {
-        name: fieldName,
-        type: {
-          name: outputType
-        }
-      },
-      filterTypes: ['not']
-    });
+    filterTypes = ['not'];
   } else if (isStringField({ kind: outputKind, type: outputType })) {
     if (outputKind === Kind.ENUM_TYPE_DEFINITION) {
-      filters = buildFilters({
-        fieldName,
-        fieldConfig: {
-          name: fieldName,
-          type: {
-            name: outputType
-          }
-        },
-        filterTypes: ['not', 'in', 'not_in']
-      });
+      filterTypes = ['not'];
+      if (!isListFilter) filterTypes = [...filterTypes, 'in', 'not_in'];
     } else {
-      filters = buildFilters({
-        fieldName,
-        fieldConfig: {
-          name: fieldName,
-          type: {
-            name: outputType
-          }
-        },
-        filterTypes: [
-          'not',
-          'in',
-          'not_in',
-          'contains',
-          'not_contains',
-          'starts_with',
-          'not_starts_with',
-          'ends_with',
-          'not_ends_with'
-        ]
-      });
+      filterTypes = ['not'];
+      if (!isListFilter) filterTypes = [...filterTypes, 'in', 'not_in'];
+      filterTypes = [
+        ...filterTypes,
+        'regexp',
+        'contains',
+        'not_contains',
+        'starts_with',
+        'not_starts_with',
+        'ends_with',
+        'not_ends_with'
+      ];
     }
   }
-  return filters;
+  return buildFilters({
+    fieldName,
+    fieldConfig,
+    filterTypes,
+    isListFilter
+  });
 };
 
 /**
  * Builds the input value definitions that compose input object types
  * used by filtering arguments
  */
-export const buildFilters = ({ fieldName, fieldConfig, filterTypes = [] }) => {
+export const buildFilters = ({
+  fieldName,
+  fieldConfig,
+  filterTypes = [],
+  isListFilter = false
+}) => {
+  if (isListFilter) {
+    fieldConfig.type.wrappers = {
+      [TypeWrappers.NON_NULL_NAMED_TYPE]: true,
+      [TypeWrappers.LIST_TYPE]: true
+    };
+  }
   return filterTypes.reduce(
     (inputValues, name) => {
       const filterName = `${fieldName}_${name}`;
       const isPointDistanceFilter = Object.values(
         Neo4jPointDistanceFilter
       ).some(distanceFilter => distanceFilter === name);
-      const isListFilter = name === 'in' || name === 'not_in';
       let wrappers = {};
-      if (isListFilter) {
+      if ((name === 'in' || name === 'not_in') && name !== 'regexp') {
         wrappers = {
           [TypeWrappers.NON_NULL_NAMED_TYPE]: true,
           [TypeWrappers.LIST_TYPE]: true
         };
       } else if (isPointDistanceFilter) {
         fieldConfig.type.name = `${Neo4jTypeName}${SpatialType.POINT}DistanceFilter`;
+      }
+      if (isListFilter) {
+        if (name !== 'regexp') {
+          wrappers = {
+            [TypeWrappers.NON_NULL_NAMED_TYPE]: true,
+            [TypeWrappers.LIST_TYPE]: true
+          };
+        }
       }
       inputValues.push(
         buildInputValue({
@@ -459,4 +560,115 @@ export const buildFilters = ({ fieldName, fieldConfig, filterTypes = [] }) => {
       })
     ]
   );
+};
+
+export const selectUnselectedOrderedFields = ({
+  selectionFilters,
+  fieldSelectionSet
+}) => {
+  let orderingArguments = selectionFilters['orderBy'];
+  const orderedFieldSelectionSet = [];
+  // cooerce to array if not provided as list
+  if (orderingArguments) {
+    // if a single ordering enum argument value is provided,
+    // cooerce back into an array
+    if (typeof orderingArguments === 'string') {
+      orderingArguments = [orderingArguments];
+    }
+    orderedFieldSelectionSet.push(...fieldSelectionSet);
+    // add field selection AST for ordered fields if those fields are
+    // not selected, since apoc.coll.sortMulti requires data to sort
+    const orderedFieldNameMap = orderingArguments.reduce(
+      (uniqueFieldMap, orderingArg) => {
+        const fieldName = orderingArg.substring(
+          0,
+          orderingArg.lastIndexOf('_')
+        );
+        // prevent redundant selections
+        // ex: [datetime_asc, datetime_desc], if provided, would result
+        // in adding two selections for the datetime field
+        if (!uniqueFieldMap[fieldName]) uniqueFieldMap[fieldName] = true;
+        return uniqueFieldMap;
+      },
+      {}
+    );
+    const orderingArgumentFieldNames = Object.keys(orderedFieldNameMap);
+    orderingArgumentFieldNames.forEach(orderedFieldName => {
+      const orderedFieldAlreadySelected = fieldSelectionSet.some(
+        field => field.name && field.name.value === orderedFieldName
+      );
+      if (!orderedFieldAlreadySelected) {
+        // add the field so that its data can be used for ordering
+        // since as it is not actually selected, it will be removed
+        // by default GraphQL post-processing field resolvers
+        orderedFieldSelectionSet.push(
+          buildFieldSelection({
+            name: buildName({
+              name: orderedFieldName
+            })
+          })
+        );
+      }
+    });
+  }
+  return orderedFieldSelectionSet;
+};
+
+export const analyzeMutationArguments = ({
+  fieldArguments,
+  values = {},
+  resolveInfo
+}) => {
+  const schema = resolveInfo.schema;
+  const serialized = { ...values };
+  if (!Array.isArray(values) && typeof values === 'object') {
+    fieldArguments.forEach(fieldArgument => {
+      const name = fieldArgument.name.value;
+      if (!isDataSelectionArgument(name)) {
+        const type = fieldArgument.type;
+        const unwrappedType = unwrapNamedType({ type });
+        const typeName = unwrappedType[TypeWrappers.NAME];
+        let argumentValue = serialized[name];
+        if (argumentValue !== undefined) {
+          const schemaType = schema.getType(typeName);
+          if (isInputObjectType(schemaType)) {
+            const fieldMap = schemaType.getFields();
+            const fields = Object.values(fieldMap);
+            const inputFields = fields.map(field => field.astNode);
+            if (Array.isArray(argumentValue)) {
+              argumentValue = argumentValue.map(inputValues => {
+                const serialized = analyzeMutationArguments({
+                  fieldArguments: inputFields,
+                  values: inputValues,
+                  resolveInfo
+                });
+                return serialized;
+              });
+            } else if (typeof argumentValue === 'object') {
+              argumentValue = analyzeMutationArguments({
+                fieldArguments: inputFields,
+                values: argumentValue,
+                resolveInfo
+              });
+            }
+          } else if (typeName === GraphQLInt.name) {
+            argumentValue = serializeIntegerArgument(argumentValue);
+          }
+          serialized[name] = argumentValue;
+        }
+      }
+    });
+  }
+  return serialized;
+};
+
+const serializeIntegerArgument = argumentValue => {
+  const isListValue = Array.isArray(argumentValue);
+  if (!isListValue) argumentValue = [argumentValue];
+  let serialized = argumentValue.map(value => {
+    if (Number.isInteger(value)) value = neo4j.int(value);
+    return value;
+  });
+  if (!isListValue) serialized = serialized[0];
+  return serialized;
 };

@@ -5,13 +5,13 @@ import {
   GraphQLString,
   GraphQLInt,
   GraphQLFloat,
-  GraphQLBoolean,
-  isTypeExtensionNode
+  GraphQLBoolean
 } from 'graphql';
 import {
   isIgnoredField,
   DirectiveDefinition,
-  getDirective
+  getDirective,
+  augmentDirectives
 } from '../directives';
 import {
   buildOperationType,
@@ -21,7 +21,8 @@ import {
   buildObjectType,
   buildInputObjectType,
   buildInputValue,
-  buildField
+  buildField,
+  buildDescription
 } from '../ast';
 import {
   TemporalType,
@@ -35,9 +36,9 @@ import {
   isNeo4jTypeField,
   unwrapNamedType,
   getFieldDefinition,
-  isTemporalField
+  isTemporalField,
+  isSpatialField
 } from '../fields';
-
 import { augmentNodeType, augmentNodeTypeFields } from './node/node';
 import { RelationshipDirectionField } from '../types/relationship/relationship';
 
@@ -88,13 +89,15 @@ export const Neo4jDataType = {
     [TemporalType.LOCALDATETIME]: 'Temporal',
     [SpatialType.POINT]: 'Spatial'
   },
-  // TODO probably revise and remove...
   STRUCTURAL: {
     [Kind.OBJECT_TYPE_DEFINITION]: Neo4jStructuralType,
     [Kind.INTERFACE_TYPE_DEFINITION]: Neo4jStructuralType,
     [Kind.UNION_TYPE_DEFINITION]: Neo4jStructuralType
   }
 };
+
+const CYPHER_MANUAL_CURRENT_FUNCTIONS = `https://neo4j.com/docs/cypher-manual/current/functions`;
+const GRANDSTACK_DOCS = `https://grandstack.io/docs`;
 
 /**
  * A predicate function for identifying a Document AST resulting
@@ -123,6 +126,12 @@ export const isObjectTypeDefinition = ({ definition = {} }) =>
   definition.kind === Kind.OBJECT_TYPE_DEFINITION;
 
 /**
+ * A predicate function for identifying a GraphQL Object Type Extension definition
+ */
+export const isObjectTypeExtensionDefinition = ({ definition = {} }) =>
+  definition.kind === Kind.OBJECT_TYPE_EXTENSION;
+
+/**
  * A predicate function for identifying a GraphQL Input Object Type definition
  */
 export const isInputObjectTypeDefinition = ({ definition = {} }) =>
@@ -133,6 +142,12 @@ export const isInputObjectTypeDefinition = ({ definition = {} }) =>
  */
 export const isInterfaceTypeDefinition = ({ definition = {} }) =>
   definition.kind === Kind.INTERFACE_TYPE_DEFINITION;
+
+/**
+ * A predicate function for identifying a GraphQL Object Type Extension definition
+ */
+export const isInterfaceTypeExtensionDefinition = ({ definition = {} }) =>
+  definition.kind === Kind.INTERFACE_TYPE_EXTENSION;
 
 /**
  * A predicate function for identifying a GraphQL Union definition
@@ -227,14 +242,6 @@ export const interpretType = ({ definition = {} }) => {
         getDirective({
           directives: typeDirectives,
           name: DirectiveDefinition.RELATION
-        }) &&
-        getFieldDefinition({
-          fields,
-          name: RelationshipDirectionField.FROM
-        }) &&
-        getFieldDefinition({
-          fields,
-          name: RelationshipDirectionField.TO
         })
       ) {
         neo4jType = neo4jStructuralTypes.RELATIONSHIP;
@@ -273,12 +280,17 @@ export const augmentTypes = ({
       operationTypeMap
     });
     const isQueryType = isQueryTypeDefinition({ definition, operationTypeMap });
+    const isMutationType = isMutationTypeDefinition({
+      definition,
+      operationTypeMap
+    });
     if (isOperationType) {
       [definition, typeExtensionDefinitionMap] = augmentOperationType({
         typeName,
         definition,
         typeExtensionDefinitionMap,
         isQueryType,
+        isMutationType,
         isObjectType,
         typeDefinitionMap,
         generatedTypeMap,
@@ -342,6 +354,7 @@ export const augmentTypes = ({
               typeName,
               definition,
               typeDefinitionMap,
+              typeExtensionDefinitionMap,
               generatedTypeMap,
               operationTypeMap,
               nodeInputTypeMap,
@@ -393,42 +406,42 @@ export const buildNeo4jTypes = ({
 }) => {
   Object.values(neo4jTypes).forEach(typeName => {
     const typeNameLower = typeName.toLowerCase();
-    if (config[typeNameLower] === true) {
-      const fields = buildNeo4jTypeFields({ typeName });
-      let inputFields = [];
-      let outputFields = [];
-      fields.forEach(([fieldName, fieldType]) => {
-        const fieldNameLower = fieldName.toLowerCase();
-        const fieldConfig = {
-          name: buildName({ name: fieldNameLower }),
-          type: buildNamedType({
-            name: fieldType
-          })
-        };
-        inputFields.push(buildInputValue(fieldConfig));
-        outputFields.push(buildField(fieldConfig));
+    if (
+      config.temporal[typeNameLower] === true ||
+      config.spatial[typeNameLower] === true
+    ) {
+      const [inputFields, outputFields] = buildNeo4jTypeFields({
+        typeName,
+        config
       });
-      const formattedFieldConfig = {
-        name: buildName({
-          name: Neo4jTypeFormatted.FORMATTED
-        }),
-        type: buildNamedType({
-          name: GraphQLString.name
-        })
-      };
-      if (isTemporalField({ type: typeName })) {
-        inputFields.push(buildInputValue(formattedFieldConfig));
-        outputFields.push(buildField(formattedFieldConfig));
+      // decide some categorical labels used in dynamically generated descriptions
+      let cypherCategory = 'Temporal';
+      let usingOutputDocUrl = `${GRANDSTACK_DOCS}/graphql-temporal-types-datetime#using-temporal-fields-in-queries`;
+      let usingInputDocUrl = `${GRANDSTACK_DOCS}/graphql-temporal-types-datetime/#temporal-query-arguments`;
+      if (isSpatialField({ type: typeName })) {
+        cypherCategory = 'Spatial';
+        usingOutputDocUrl = `${GRANDSTACK_DOCS}/graphql-spatial-types#using-point-in-queries`;
+        usingInputDocUrl = `${GRANDSTACK_DOCS}/graphql-spatial-types/#point-query-arguments`;
       }
-      const objectTypeName = `${Neo4jTypeName}${typeName}`;
-      const inputTypeName = `${objectTypeName}Input`;
-      typeMap[objectTypeName] = buildObjectType({
-        name: buildName({ name: objectTypeName }),
-        fields: outputFields
-      });
+      const neo4jTypeName = `${Neo4jTypeName}${typeName}`;
+      // input object type
+      const inputTypeName = `${neo4jTypeName}Input`;
       typeMap[inputTypeName] = buildInputObjectType({
         name: buildName({ name: inputTypeName }),
-        fields: inputFields
+        fields: inputFields,
+        description: buildDescription({
+          value: `Generated ${typeName} input object for Neo4j [${cypherCategory} field arguments](${usingInputDocUrl}).`,
+          config
+        })
+      });
+      // output object type
+      typeMap[neo4jTypeName] = buildObjectType({
+        name: buildName({ name: neo4jTypeName }),
+        fields: outputFields,
+        description: buildDescription({
+          value: `Generated ${typeName} object type for Neo4j [${cypherCategory} fields](${usingOutputDocUrl}).`,
+          config
+        })
       });
     }
   });
@@ -440,32 +453,89 @@ export const buildNeo4jTypes = ({
  * definitions used by a given Neo4j type, built into AST by
  * buildNeo4jTypes, then used in buildNeo4jType
  */
-const buildNeo4jTypeFields = ({ typeName = '' }) => {
-  let fields = [];
+const buildNeo4jTypeFields = ({ typeName = '', config }) => {
+  let fieldConfigs = [];
   if (typeName === TemporalType.DATE) {
-    fields = Object.entries(Neo4jDate);
+    fieldConfigs = Object.entries(Neo4jDate);
   } else if (typeName === TemporalType.TIME) {
-    fields = Object.entries(Neo4jTime);
+    fieldConfigs = Object.entries(Neo4jTime);
   } else if (typeName === TemporalType.LOCALTIME) {
-    fields = Object.entries({
+    fieldConfigs = Object.entries({
       ...Neo4jTime
     }).filter(([name]) => name !== Neo4jTimeField.TIMEZONE);
   } else if (typeName === TemporalType.DATETIME) {
-    fields = Object.entries({
+    fieldConfigs = Object.entries({
       ...Neo4jDate,
       ...Neo4jTime
     });
   } else if (typeName === TemporalType.LOCALDATETIME) {
-    fields = Object.entries({
+    fieldConfigs = Object.entries({
       ...Neo4jDate,
       ...Neo4jTime
     }).filter(([name]) => name !== Neo4jTimeField.TIMEZONE);
   } else if (typeName === SpatialType.POINT) {
-    fields = Object.entries({
+    fieldConfigs = Object.entries({
       ...Neo4jPoint
     });
   }
-  return fields;
+  fieldConfigs = fieldConfigs.map(([fieldName, fieldType]) => {
+    return {
+      name: buildName({ name: fieldName }),
+      type: buildNamedType({
+        name: fieldType
+      })
+    };
+  });
+  let inputFields = fieldConfigs.map(config => buildInputValue(config));
+  let outputFields = fieldConfigs.map(config => buildField(config));
+  [inputFields, outputFields] = augmentNeo4jTypeFields({
+    typeName,
+    inputFields,
+    outputFields,
+    config
+  });
+  return [inputFields, outputFields];
+};
+
+const augmentNeo4jTypeFields = ({
+  typeName = '',
+  inputFields = [],
+  outputFields = [],
+  config
+}) => {
+  let neo4jTypeName = 'Temporal';
+  let usingOutputDocUrl = `${GRANDSTACK_DOCS}/graphql-temporal-types-datetime#using-temporal-fields-in-queries`;
+  let usingInputDocUrl = `${GRANDSTACK_DOCS}/graphql-temporal-types-datetime/#using-temporal-fields-in-mutations`;
+  if (isTemporalField({ type: typeName })) {
+    const typeNameLow = typeName.toLowerCase();
+    const name = buildName({ name: Neo4jTypeFormatted.FORMATTED });
+    const type = buildNamedType({ name: GraphQLString.name });
+    // input value definitions
+    const inputDescription = buildDescription({
+      value: `Creates a Neo4j [${neo4jTypeName}](${usingInputDocUrl}) ${typeName} value using a [String format](${CYPHER_MANUAL_CURRENT_FUNCTIONS}/temporal/${typeNameLow}/#functions-${typeNameLow}-create-string).`,
+      config
+    });
+    inputFields.push(
+      buildInputValue({
+        name,
+        type,
+        description: inputDescription
+      })
+    );
+    // output field definitions
+    const outputDescription = buildDescription({
+      value: `Outputs a Neo4j [${neo4jTypeName}](${usingOutputDocUrl}) ${typeName} value as a String type by using the [toString](${CYPHER_MANUAL_CURRENT_FUNCTIONS}/string/#functions-tostring) Cypher function.`,
+      config
+    });
+    outputFields.push(
+      buildField({
+        name,
+        type,
+        description: outputDescription
+      })
+    );
+  }
+  return [inputFields, outputFields];
 };
 
 /**
@@ -646,62 +716,85 @@ const augmentOperationType = ({
   definition,
   typeExtensionDefinitionMap,
   isQueryType,
+  isMutationType,
   isObjectType,
   typeDefinitionMap,
   generatedTypeMap,
   operationTypeMap,
   config
 }) => {
-  if (isQueryType && isObjectType) {
-    let nodeInputTypeMap = {};
-    let propertyOutputFields = [];
-    let propertyInputValues = [];
+  if (isObjectType) {
     const typeExtensions = typeExtensionDefinitionMap[typeName] || [];
-    if (typeExtensions.length) {
-      typeExtensionDefinitionMap[typeName] = typeExtensions.map(extension => {
-        let isIgnoredType = false;
-        [
-          nodeInputTypeMap,
-          propertyOutputFields,
-          propertyInputValues,
-          isIgnoredType
-        ] = augmentNodeTypeFields({
-          typeName,
-          definition: extension,
-          typeDefinitionMap,
-          generatedTypeMap,
-          operationTypeMap,
-          nodeInputTypeMap,
-          propertyOutputFields,
-          propertyInputValues,
-          config
+    if (isQueryType) {
+      // Augment existing Query type fields
+      let nodeInputTypeMap = {};
+      let propertyOutputFields = [];
+      let propertyInputValues = [];
+      if (typeExtensions.length) {
+        typeExtensionDefinitionMap[typeName] = typeExtensions.map(extension => {
+          let isIgnoredType = false;
+          [
+            nodeInputTypeMap,
+            propertyOutputFields,
+            propertyInputValues,
+            isIgnoredType
+          ] = augmentNodeTypeFields({
+            typeName,
+            definition: extension,
+            typeDefinitionMap,
+            typeExtensionDefinitionMap,
+            generatedTypeMap,
+            operationTypeMap,
+            nodeInputTypeMap,
+            propertyOutputFields,
+            propertyInputValues,
+            config
+          });
+          if (!isIgnoredType) {
+            extension.fields = propertyOutputFields;
+          }
+          return extension;
         });
-        // FIXME fieldArguments are modified through reference so
-        // this branch doesn't end up mattereing. A case of isIgnoredType
-        // being true may also be highly improbable, though it is posisble
-        if (!isIgnoredType) {
-          extension.fields = propertyOutputFields;
-        }
-        return extension;
+      }
+      let isIgnoredType = false;
+      [
+        nodeInputTypeMap,
+        propertyOutputFields,
+        propertyInputValues,
+        isIgnoredType
+      ] = augmentNodeTypeFields({
+        typeName,
+        definition,
+        typeDefinitionMap,
+        typeExtensionDefinitionMap,
+        generatedTypeMap,
+        propertyOutputFields,
+        operationTypeMap,
+        config
       });
-    }
-    let isIgnoredType = false;
-    [
-      nodeInputTypeMap,
-      propertyOutputFields,
-      propertyInputValues,
-      isIgnoredType
-    ] = augmentNodeTypeFields({
-      typeName,
-      definition,
-      typeDefinitionMap,
-      generatedTypeMap,
-      propertyOutputFields,
-      operationTypeMap,
-      config
-    });
-    if (!isIgnoredType) {
-      definition.fields = propertyOutputFields;
+      if (!isIgnoredType) {
+        definition.fields = propertyOutputFields;
+      }
+    } else if (isMutationType) {
+      // Augment existing Mutation type fields
+      definition.fields = definition.fields.map(field => {
+        field.directives = augmentDirectives({ directives: field.directives });
+        return field;
+      });
+      if (typeExtensions.length) {
+        typeExtensionDefinitionMap[typeName] = typeExtensions.map(extension => {
+          const fields = extension.fields;
+          if (fields && fields.length) {
+            extension.fields = fields.map(field => {
+              field.directives = augmentDirectives({
+                directives: field.directives
+              });
+              return field;
+            });
+          }
+          return extension;
+        });
+      }
     }
   }
   return [definition, typeExtensionDefinitionMap];

@@ -3,8 +3,6 @@ import {
   cypherDirective,
   cypherDirectiveArgs,
   filtersFromSelections,
-  innerFilterParams,
-  paramsToString,
   getFilterParams,
   innerType,
   isGraphqlScalarType,
@@ -13,7 +11,8 @@ import {
   decideNestedVariableName,
   safeVar,
   isNeo4jType,
-  isNeo4jTypeField,
+  isTemporalField,
+  isSpatialField,
   getNeo4jTypeArguments,
   removeIgnoredFields,
   getInterfaceDerivedTypeNames
@@ -27,7 +26,7 @@ import {
   neo4jTypeField,
   derivedTypesParams,
   fragmentType
-} from './translate';
+} from './translate/translate';
 import { Kind } from 'graphql';
 import {
   isObjectTypeDefinition,
@@ -37,8 +36,9 @@ import {
 import {
   unwrapNamedType,
   TypeWrappers,
-  Neo4jSystemIDField
+  isNeo4jIDField
 } from './augment/fields';
+import { selectUnselectedOrderedFields } from './augment/input-values';
 
 export function buildCypherSelection({
   initial = '',
@@ -106,8 +106,8 @@ export function buildCypherSelection({
   const fieldName =
     headSelection && headSelection.name ? headSelection.name.value : '';
   const safeVariableName = safeVar(variableName);
-
   const usesFragments = isFragmentedSelection({ selections });
+
   const isScalarType = isGraphqlScalarType(schemaType);
   const schemaTypeField =
     !isScalarType && !isUnionType ? schemaType.getFields()[fieldName] : {};
@@ -146,6 +146,7 @@ export function buildCypherSelection({
       schemaType,
       selections,
       isFragmentedObjectType,
+      isFragmentedInterfaceType,
       isUnionType,
       typeMap,
       resolveInfo
@@ -225,12 +226,6 @@ export function buildCypherSelection({
     const fieldType =
       schemaTypeField && schemaTypeField.type ? schemaTypeField.type : {};
     const innerSchemaType = innerType(fieldType); // for target "type" aka label
-
-    // TODO Switch to using schemaTypeField.astNode instead of schemaTypeField
-    // so the field type could be extracted using unwrapNamedType. We could explicitly check
-    // the ast for list type wrappers (changing isArrayType calls in translate.js) and we
-    // could use in the branching logic here, the same astNode.kind based predicate functions
-    // used in the  augmentation code (ex: from isObjectType to isObjectTypeDefinition from ast.js)
     const fieldAstNode = schemaTypeField ? schemaTypeField.astNode : {};
     const fieldTypeWrappers = unwrapNamedType({ type: fieldAstNode });
     const fieldTypeName = fieldTypeWrappers[TypeWrappers.NAME];
@@ -285,18 +280,29 @@ export function buildCypherSelection({
       );
       const nestedVariable = decideNestedVariableName({
         schemaTypeRelation,
+        schemaType,
         innerSchemaTypeRelation,
         variableName,
         fieldName,
         parentSelectionInfo
       });
+
       const fieldSelectionSet =
         headSelection && headSelection.selectionSet
           ? headSelection.selectionSet.selections
           : [];
 
+      const orderedFieldSelectionSet = selectUnselectedOrderedFields({
+        selectionFilters,
+        fieldSelectionSet
+      });
+
+      const fieldsForTranslation = orderedFieldSelectionSet.length
+        ? orderedFieldSelectionSet
+        : fieldSelectionSet;
+
       subSelection = recurse({
-        selections: fieldSelectionSet,
+        selections: fieldsForTranslation,
         variableName: nestedVariable,
         paramIndex,
         schemaType: innerSchemaType,
@@ -310,7 +316,8 @@ export function buildCypherSelection({
           fieldType,
           filterParams,
           selections,
-          paramIndex
+          paramIndex,
+          innerSchemaTypeRelation
         },
         secondParentSelectionInfo: parentSelectionInfo,
         isFederatedOperation,
@@ -322,9 +329,6 @@ export function buildCypherSelection({
           ? schemaTypeField.args.map(e => e.astNode)
           : [];
       const neo4jTypeArgs = getNeo4jTypeArguments(fieldArgs);
-      const queryParams = paramsToString(
-        innerFilterParams(filterParams, neo4jTypeArgs)
-      );
       const skipLimit = computeSkipLimit(
         headSelection,
         resolveInfo.variableValues
@@ -340,10 +344,13 @@ export function buildCypherSelection({
         selections: fieldSelectionSet
       });
       const isFragmentedObjectTypeField = isObjectTypeField && usesFragments;
+      const isFragmentedInterfaceTypeField =
+        isInterfaceTypeField && usesFragments;
       const [schemaTypeFields, derivedTypeMap] = mergeSelectionFragments({
         schemaType: innerSchemaType,
         selections: fieldSelectionSet,
         isFragmentedObjectType: isFragmentedObjectTypeField,
+        isFragmentedInterfaceType: isFragmentedInterfaceTypeField,
         isUnionType: isUnionTypeField,
         typeMap,
         resolveInfo
@@ -406,6 +413,7 @@ export function buildCypherSelection({
           initial,
           fieldName,
           fieldType,
+          fieldSelectionSet,
           variableName,
           relDirection,
           relType,
@@ -422,8 +430,7 @@ export function buildCypherSelection({
           filterParams,
           selectionFilters,
           neo4jTypeArgs,
-          selections,
-          schemaType,
+          fieldsForTranslation,
           subSelection,
           skipLimit,
           commaIfTail,
@@ -436,11 +443,11 @@ export function buildCypherSelection({
         // (from, to, renamed, relation mutation payloads...)
         [translationConfig, subSelection] = nodeTypeFieldOnRelationType({
           initial,
+          schemaType,
           fieldName,
           fieldType,
           variableName,
           nestedVariable,
-          queryParams,
           subSelection,
           skipLimit,
           commaIfTail,
@@ -449,6 +456,8 @@ export function buildCypherSelection({
           neo4jTypeArgs,
           schemaTypeRelation,
           innerSchemaType,
+          fieldSelectionSet,
+          fieldsForTranslation,
           schemaTypeFields,
           derivedTypeMap,
           isObjectTypeField,
@@ -456,11 +465,12 @@ export function buildCypherSelection({
           isUnionTypeField,
           usesFragments,
           paramIndex,
-          parentSelectionInfo,
           resolveInfo,
           selectionFilters,
           fieldArgs,
-          cypherParams
+          cypherParams,
+          parentSelectionInfo,
+          secondParentSelectionInfo
         });
       } else if (isRelationshipTypeField) {
         // Relation type field on node type (field payload types...)
@@ -469,16 +479,17 @@ export function buildCypherSelection({
           innerSchemaTypeRelation,
           initial,
           fieldName,
+          fieldSelectionSet,
           subSelection,
           skipLimit,
           commaIfTail,
           tailParams,
           fieldType,
           variableName,
+          fieldsForTranslation,
           schemaType,
           innerSchemaType,
           nestedVariable,
-          queryParams,
           filterParams,
           neo4jTypeArgs,
           resolveInfo,
@@ -514,10 +525,12 @@ const translateScalarTypeField = ({
   isFederatedOperation,
   context
 }) => {
-  if (fieldName === Neo4jSystemIDField) {
+  if (isNeo4jIDField({ name: fieldName })) {
+    const innerSchemaTypeRelation = parentSelectionInfo.innerSchemaTypeRelation;
+    const isRelationshipTypeField = innerSchemaTypeRelation !== undefined;
     return {
       initial: `${initial}${fieldName}: ID(${safeVar(
-        variableName
+        isRelationshipTypeField ? `${variableName}_relation` : variableName
       )})${commaIfTail}`,
       ...tailParams
     };
@@ -539,7 +552,10 @@ const translateScalarTypeField = ({
         )}}, false)${commaIfTail}`,
         ...tailParams
       };
-    } else if (isNeo4jTypeField(schemaType, fieldName)) {
+    } else if (
+      isTemporalField(schemaType, fieldName) ||
+      isSpatialField(schemaType, fieldName)
+    ) {
       return neo4jTypeField({
         initial,
         fieldName,
@@ -562,16 +578,17 @@ export const mergeSelectionFragments = ({
   schemaType,
   selections,
   isFragmentedObjectType,
+  isFragmentedInterfaceType,
   isUnionType,
   typeMap,
   resolveInfo
 }) => {
-  const schemaTypeName = schemaType.name;
   const fragmentDefinitions = resolveInfo.fragments;
   let [schemaTypeFields, derivedTypeMap] = buildFragmentMaps({
     selections,
-    schemaTypeName,
+    schemaType,
     isFragmentedObjectType,
+    isFragmentedInterfaceType,
     fragmentDefinitions,
     isUnionType,
     typeMap,
@@ -592,18 +609,28 @@ export const mergeSelectionFragments = ({
 
 const buildFragmentMaps = ({
   selections = [],
-  schemaTypeName,
+  schemaType,
   isFragmentedObjectType,
+  isFragmentedInterfaceType,
   fragmentDefinitions,
   isUnionType,
   typeMap = {},
   resolveInfo
 }) => {
+  const schemaTypeName = schemaType.name;
   let schemaTypeFields = [];
   let interfaceFragmentMap = {};
   let objectSelectionMap = {};
   let objectFragmentMap = {};
-  selections.forEach(selection => {
+  const typeSelections = mergeSchemaTypeSelections({
+    schemaTypeName,
+    selections,
+    fragmentDefinitions,
+    isFragmentedObjectType,
+    isFragmentedInterfaceType,
+    resolveInfo
+  });
+  typeSelections.forEach(selection => {
     const fieldKind = selection.kind;
     if (fieldKind === Kind.FIELD) {
       schemaTypeFields.push(selection);
@@ -648,6 +675,52 @@ const buildFragmentMaps = ({
     selections: schemaTypeFields
   });
   return [schemaTypeFields, derivedTypeMap];
+};
+
+const mergeSchemaTypeSelections = ({
+  schemaTypeName,
+  selections,
+  fragmentDefinitions,
+  isFragmentedObjectType,
+  isFragmentedInterfaceType,
+  resolveInfo
+}) => {
+  return selections.reduce((typeSelections, selection) => {
+    const kind = selection.kind;
+    let selected = [selection];
+    if (isFragmentedInterfaceType) {
+      const fragmentTypeName = getFragmentTypeName({
+        selection,
+        kind,
+        fragmentDefinitions
+      });
+      if (fragmentTypeName === schemaTypeName) {
+        selected = getFragmentSelections({
+          selection,
+          kind,
+          fragmentDefinitions
+        });
+      }
+    } else if (isFragmentedObjectType) {
+      if (isSelectionFragment({ kind })) {
+        const fragmentTypeName = getFragmentTypeName({
+          selection,
+          kind,
+          fragmentDefinitions
+        });
+        const fragmentType = resolveInfo.schema.getType(fragmentTypeName);
+        if (isInterfaceTypeDefinition({ definition: fragmentType.astNode })) {
+          selected = getFragmentSelections({
+            selection,
+            kind,
+            fragmentDefinitions
+          });
+        }
+      }
+    }
+    typeSelections.push(...selected);
+    return typeSelections;
+  }, []);
 };
 
 const aggregateFragmentedSelections = ({

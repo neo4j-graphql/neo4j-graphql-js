@@ -1,7 +1,9 @@
 import { makeExecutableSchema } from 'graphql-tools';
 import { parse, print, graphql } from 'graphql';
-import { createReadStream, createWriteStream } from 'fs';
+import { readFileSync, createWriteStream } from 'fs';
 import { augmentTypeDefs, cypherQuery } from '../../../src/index';
+import path from 'path';
+import { EOL } from 'os';
 
 export const generateTestFile = async (tckFile, testFile, extractionLimit) => {
   const tck = await extractTck(tckFile, testFile);
@@ -12,17 +14,18 @@ export const generateTestFile = async (tckFile, testFile, extractionLimit) => {
 const extractTck = fileName => {
   return new Promise((resolve, reject) => {
     try {
-      const rs = createReadStream(fileName, { encoding: 'utf8' });
-      rs.on('data', lines => {
-        // split into array of lines
-        lines = lines.split('\n');
-        // extract array elements for typeDefs
-        const typeDefs = extractBlock('schema', lines);
+      let lines = readFileSync(path.join(__dirname, fileName)).toString(
+        'utf-8'
+      );
+      lines = lines.split(`${EOL}`);
+      // extract array elements for typeDefs
+      const typeDefs = extractBlock('schema', lines);
+      if (typeDefs) {
         resolve({
-          typeDefs: typeDefs.join('\n  '),
+          typeDefs: typeDefs.join(`${EOL}  `),
           tests: extractTestBlocks(lines)
         });
-      });
+      }
     } catch (err) {
       reject(err);
     }
@@ -46,19 +49,26 @@ const extractBlock = (type, lines, index = 0) => {
     }
     // offset by 1 to skip the startingTag
     extracted = lines.slice(typeBlockIndex + 1, endIndex);
+    if (extracted.length === 0) {
+      extracted = lines.slice(typeBlockIndex + 1);
+    }
   }
   return extracted;
 };
 
 const extractTestBlocks = data => {
+  let lastTitle = '';
   return data.reduce((acc, line, index, lines) => {
+    if (line.startsWith('###')) {
+      lastTitle = line.substring(3).trim();
+    }
     // beginning at every ```graphql line
     if (line === '```graphql') {
       // extract the array elements of this graphql block
       const graphqlBlock = extractBlock('graphql', lines, index);
       if (graphqlBlock) {
         acc.push({
-          test: getTestName(lines, index),
+          test: lastTitle,
           graphql: graphqlBlock,
           params: extractBlock('params', lines, index),
           cypher: extractBlock('cypher', lines, index)
@@ -69,23 +79,9 @@ const extractTestBlocks = data => {
   }, []);
 };
 
-const getTestName = (lines, index) => {
-  // expects test name on line immediately before ```graphql block
-  const nameIndex = index - 1;
-  let name = nameIndex >= 0 ? lines[nameIndex] : '';
-  if (name && name.startsWith('###')) {
-    // removes ### prefix, trims whitespace
-    name = name.substring(3).trim();
-  } else {
-    name = `Unnamed test on line ${index + 1}`;
-  }
-  return name;
-};
-
 const buildTestDeclarations = (tck, extractionLimit) => {
   const schema = makeTestDataSchema(tck);
   const testData = buildTestData(schema, tck);
-  //! refactor to involve forEach and a counter that is compared against extractionLimit
   return testData
     .reduce((acc, test) => {
       // escape " so that we can wrap the cypher in "s
@@ -98,10 +94,10 @@ const buildTestDeclarations = (tck, extractionLimit) => {
   filterTestRunner(t, typeDefs, graphQLQuery, ${JSON.stringify(
     test.params
   )}, expectedCypherQuery, ${JSON.stringify(test.expectedCypherParams)});
-});\n`);
+});\r\n`);
       return acc;
     }, [])
-    .join('\n');
+    .join(`${EOL}`);
 };
 
 const makeTestDataSchema = tck => {
@@ -122,14 +118,14 @@ const buildTestData = (schema, tck) => {
   return extractedTckTestData.reduce((acc, testBlocks) => {
     const testName = testBlocks.test;
     // graphql
-    let testGraphql = testBlocks.graphql.join('\n');
+    let testGraphql = testBlocks.graphql.join(`${EOL}`);
     // validation and formatting through parse -> print
     testGraphql = parse(testGraphql);
     testGraphql = print(testGraphql);
     // graphql variables
     let testParams = {};
     if (testBlocks.params) {
-      testParams = testBlocks.params.join('\n');
+      testParams = testBlocks.params.join(`${EOL}`);
       testParams = JSON.parse(testParams);
     }
     const testCypher = testBlocks.cypher.join(' ');

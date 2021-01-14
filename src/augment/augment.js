@@ -5,7 +5,7 @@ import {
   isTypeDefinitionNode,
   isTypeExtensionNode
 } from 'graphql';
-import { makeExecutableSchema } from 'graphql-tools';
+import { makeExecutableSchema, printSchemaWithDirectives } from 'graphql-tools';
 import { buildDocument } from './ast';
 import {
   initializeOperationTypes,
@@ -18,6 +18,8 @@ import {
 import { augmentDirectiveDefinitions } from './directives';
 import { extractResolversFromSchema, augmentResolvers } from './resolvers';
 import { addAuthDirectiveImplementations } from '../auth';
+import _ from 'lodash';
+
 /**
  * The main export for augmenting an SDL document
  */
@@ -29,7 +31,8 @@ export const makeAugmentedExecutableSchema = ({
   resolverValidationOptions,
   directiveResolvers,
   schemaDirectives = {},
-  parseOptions,
+  schemaTransforms = [],
+  parseOptions = {},
   inheritResolversFromInterfaces,
   config
 }) => {
@@ -38,7 +41,7 @@ export const makeAugmentedExecutableSchema = ({
   let definitions = [];
   if (isParsedTypeDefs) {
     // Print if we recieved parsed type definitions in a GraphQL Document
-    definitions = typeDefs.definitions;
+    definitions = _.cloneDeep(typeDefs.definitions);
   } else {
     // Otherwise parse the SDL and get its definitions
     definitions = parse(typeDefs).definitions;
@@ -103,6 +106,8 @@ export const makeAugmentedExecutableSchema = ({
     };
   }
   resolverValidationOptions.requireResolversForResolveType = false;
+  // FIXME get this working
+  // parseOptions.commentDescriptions = true;
   return makeExecutableSchema({
     typeDefs: print(documentAST),
     resolvers: augmentedResolvers,
@@ -111,6 +116,7 @@ export const makeAugmentedExecutableSchema = ({
     resolverValidationOptions,
     directiveResolvers,
     schemaDirectives,
+    schemaTransforms,
     parseOptions,
     inheritResolversFromInterfaces
   });
@@ -189,6 +195,10 @@ export const augmentedSchema = (schema, config) => {
     resolverValidationOptions: {
       requireResolversForResolveType: false
     },
+    // FIXME get this working
+    // parseOptions: {
+    // commentDescriptions: true
+    // },
     schemaDirectives
   });
 };
@@ -243,21 +253,18 @@ export const mergeDefinitionMaps = ({
   directiveDefinitionMap = {},
   schemaTypeDefinition
 }) => {
-  const typeExtensions = Object.values(typeExtensionDefinitionMap);
+  let typeExtensions = Object.values(typeExtensionDefinitionMap);
   if (typeExtensions) {
-    typeExtensionDefinitionMap = typeExtensions.reduce(
-      (typeExtensions, extensions) => {
-        typeExtensions.push(...extensions);
-        return typeExtensions;
-      },
-      []
-    );
+    typeExtensions = typeExtensions.reduce((typeExtensions, extensions) => {
+      typeExtensions.push(...extensions);
+      return typeExtensions;
+    }, []);
   }
   let definitions = Object.values({
     ...generatedTypeMap,
-    ...typeExtensionDefinitionMap,
     ...directiveDefinitionMap
   });
+  definitions.push(...typeExtensions);
   definitions = augmentSchemaType({
     definitions,
     schemaTypeDefinition,
@@ -326,20 +333,20 @@ export const setDefaultConfig = ({ config = {} }) => {
  * regenerated schema type
  */
 export const printSchemaDocument = ({ schema }) => {
-  return print(
-    buildDocument({
-      definitions: extractSchemaDefinitions({ schema })
-    })
-  );
+  return printSchemaWithDirectives(schema, {
+    // FIXME add to testing once using this is supported
+    // commentDescriptions: true
+  });
 };
 
 /**
  * Extracts type definitions from a schema and regenerates the schema type
  */
-const extractSchemaDefinitions = ({ schema = {} }) => {
+export const extractSchemaDefinitions = ({ schema = {} }) => {
+  const typeMap = schema.getTypeMap();
   let definitions = Object.values({
     ...schema.getDirectives(),
-    ...schema.getTypeMap()
+    ...typeMap
   }).reduce((astNodes, definition) => {
     const astNode = definition.astNode;
     if (astNode) {

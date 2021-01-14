@@ -2,7 +2,8 @@ import { parse, print } from 'graphql';
 import Neo4jSchemaTree from './neo4j-schema/Neo4jSchemaTree';
 import graphQLMapper from './neo4j-schema/graphQLMapper';
 import { checkRequestError } from './auth';
-import { translateMutation, translateQuery } from './translate';
+import { translateQuery } from './translate/translate';
+import { translateMutation } from './translate/mutation';
 import Debug from 'debug';
 import {
   extractQueryResult,
@@ -24,6 +25,8 @@ import {
 import { buildDocument } from './augment/ast';
 import { augmentDirectiveDefinitions } from './augment/directives';
 import { isFederatedOperation, executeFederatedOperation } from './federation';
+import { schemaAssert } from './schemaAssert';
+import { schemaSearch } from './schemaSearch';
 
 const neo4jGraphQLVersion = require('../package.json').version;
 
@@ -85,21 +88,40 @@ export async function neo4jgraphql(
 
     let session;
 
-    if (context.neo4jDatabase) {
-      // database is specified in context object
+    const buildSessionParams = ctx => {
+      let paramObj = {};
+
+      if (ctx.neo4jDatabase) {
+        paramObj['database'] = ctx.neo4jDatabase;
+      }
+
+      if (ctx.neo4jBookmarks) {
+        paramObj['bookmarks'] = ctx.neo4jBookmarks;
+      }
+      return paramObj;
+    };
+
+    if (context.neo4jDatabase || context.neo4jBookmarks) {
+      const sessionParams = buildSessionParams(context);
+
       try {
-        // connect to the specified database
+        // connect to the specified database and/or use bookmarks
         // must be using 4.x version of driver
-        session = context.driver.session({
-          database: context.neo4jDatabase
-        });
+        session = context.driver.session(sessionParams);
       } catch (e) {
-        // error - not using a 4.x version of driver!
-        // fall back to default database
-        session = context.driver.session();
+        // throw error if bookmark is specified as failure is better than ignoring user provided bookmark
+        if (context.neo4jBookmarks) {
+          throw new Error(
+            `context.neo4jBookmarks specified, but unable to set bookmark in session object: ${e.message}`
+          );
+        } else {
+          // error - not using a 4.x version of driver!
+          // fall back to default database
+          session = context.driver.session();
+        }
       }
     } else {
-      // no database specified
+      // no database or bookmark specified
       session = context.driver.session();
     }
 
@@ -107,18 +129,20 @@ export async function neo4jgraphql(
 
     try {
       if (isMutation(resolveInfo)) {
-        result = await session.writeTransaction(tx => {
-          return tx.run(query, cypherParams);
+        result = await session.writeTransaction(async tx => {
+          const result = await tx.run(query, cypherParams);
+          return extractQueryResult(result, resolveInfo.returnType);
         });
       } else {
-        result = await session.readTransaction(tx => {
-          return tx.run(query, cypherParams);
+        result = await session.readTransaction(async tx => {
+          const result = await tx.run(query, cypherParams);
+          return extractQueryResult(result, resolveInfo.returnType);
         });
       }
     } finally {
       session.close();
     }
-    return extractQueryResult(result, resolveInfo.returnType);
+    return result;
   }
 }
 
@@ -239,6 +263,7 @@ export const makeAugmentedSchema = ({
   resolverValidationOptions = {},
   directiveResolvers = null,
   schemaDirectives = {},
+  schemaTransforms = [],
   parseOptions = {},
   inheritResolversFromInterfaces = false,
   config
@@ -255,6 +280,7 @@ export const makeAugmentedSchema = ({
     resolverValidationOptions,
     directiveResolvers,
     schemaDirectives,
+    schemaTransforms,
     parseOptions,
     inheritResolversFromInterfaces,
     config
@@ -286,4 +312,79 @@ export const cypher = (statement, ...substitutions) => {
   // Add the last literal
   composed.push(literals[literals.length - 1]);
   return `statement: """${composed.join('')}"""`;
+};
+
+export const assertSchema = ({
+  driver,
+  schema,
+  dropExisting = true,
+  debug = false
+}) => {
+  const statement = schemaAssert({ schema, dropExisting });
+  const executeQuery = driver => {
+    const session = driver.session();
+    return session
+      .writeTransaction(tx =>
+        tx.run(statement).then(result => {
+          if (debug === true) {
+            const recordsJSON = result.records.map(record => record.toObject());
+            recordsJSON.sort((lhs, rhs) => lhs.label < rhs.label);
+            console.table(recordsJSON);
+          }
+          return result;
+        })
+      )
+      .finally(() => session.close());
+  };
+  return executeQuery(driver).catch(error => {
+    console.error(error);
+  });
+};
+
+export const searchSchema = async ({ driver, schema, debug = false }) => {
+  const session = driver.session();
+  // drop all search indexes, given they cannot be updated via a second CALL to createNodeIndex
+  const dropStatement = `
+  CALL db.indexes() YIELD name, provider WHERE provider = "fulltext-1.0"
+  CALL db.index.fulltext.drop(name)
+  RETURN TRUE
+  `;
+  const createStatement = schemaSearch({ schema });
+  const dropResult = await session.writeTransaction(tx =>
+    tx.run(dropStatement).then(result => {
+      if (debug === true) {
+        console.log(
+          `\n[searchSchema] Search indexes dropped using Cypher:${dropStatement}`
+        );
+      }
+      return true;
+    })
+  );
+
+  if (dropResult) {
+    if (createStatement) {
+      return await session
+        .writeTransaction(tx =>
+          tx.run(createStatement).then(result => {
+            if (debug === true) {
+              console.log(
+                `[searchSchema] Search indexes created using Cypher:\n${createStatement}\n`
+              );
+            }
+            return true;
+          })
+        )
+        .finally(() => session.close());
+    } else {
+      if (debug === true) {
+        console.log(
+          '[searchSchema] There were no @search directive fields discovered in the schema.\n'
+        );
+      }
+      return true;
+    }
+  } else {
+    session.close();
+  }
+  return false;
 };

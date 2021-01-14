@@ -192,11 +192,19 @@ export const buildDirectiveDefinition = ({
   };
 };
 
-export const buildDescription = ({ value, block = false }) => ({
-  kind: Kind.STRING,
-  value,
-  block
-});
+export const buildDescription = ({ value, block = false, config = {} }) => {
+  // If boolean and not false, then default is to generate documentation
+  if (
+    typeof config.documentation !== 'boolean' ||
+    config.documentation !== false
+  ) {
+    return {
+      kind: Kind.STRING,
+      value,
+      block
+    };
+  }
+};
 
 export const buildSelectionSet = ({ selections = [] }) => {
   return {
@@ -209,7 +217,10 @@ export const buildFieldSelection = ({
   args = [],
   directives = [],
   name = {},
-  selectionSet = {}
+  selectionSet = {
+    kind: Kind.SELECTION_SET,
+    selections: []
+  }
 }) => {
   return {
     kind: Kind.FIELD,

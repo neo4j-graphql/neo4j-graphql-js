@@ -1,5 +1,78 @@
 # Changelog
 
+## 2.19.1
+
+- Move `graphql-tools` to dependencies from devDependencies
+
+## 2.19.0
+
+- Update graphql.js to use v15
+
+## 2.18.0
+
+- [Custom nested mutations using `@cypher` on input fields](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/542)
+- [Support for fulltext search using `@search` directive](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/543)
+- [Add regular expression filter](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/543)
+- [Support for nested `@cypher` mutations](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/543)
+
+## 2.17.1
+
+- [Fix bug with mutations using `formatted` field for temporal types](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/531)
+- [Fix bug when ordering using `formatted` field for temporal types](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/531)
+- [Add new (optional) experimental mutation API](https://grandstack.io/docs/graphql-schema-generation-augmentation#experimental-api)
+
+## 2.17.0
+
+- [Allow user defined Role enum name](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/519)
+- [`@relation` type directive arguments for custom node type field names](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/521)
+- [Allow functional directives via schemaTransforms](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/530)
+
+## 2.16.4
+
+- [Add documentation descriptions for generated schema](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/515)
+- [Fix for issue with some mutations incorrectly casting integers to floats](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/513)
+- [Escape quotes in Cypher queries used in Cypher schema directive](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/513)
+- [Add query field arguments for list properties](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/513)
+- [Add filters for list properties](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/513)
+- [Consume neo4j-driver results inside transaction functions](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/508)
+
+## 2.16.3
+
+- [Better align with conventions for scopes added to hasScope directive](https://github.com/neo4j-graphql/neo4j-graphql-js/commit/34125ba75e03f9cb06044d4cae31783d501935f1)
+- [Fix issue with cypher directive mutation when used with additionalLabels directive](https://github.com/neo4j-graphql/neo4j-graphql-js/issues/502)
+
+## 2.16.1
+
+- [Upgrade graphql-auth-directives dependency](https://github.com/neo4j-graphql/neo4j-graphql-js/commit/ef59179eadadcfce5138d1813f7c949fe3f1223f)
+
+## 2.16.0
+
+- [Add optional @id, @unique, and @index schema directives](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/499)
+
+## 2.15.1
+
+- [Fix invalid input in generated query when using inline fragments inside fragment](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/492)
+- [Fixed issue with fragment used on an interface implemented by that object](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/492)
+- [Add \_id to relationship types](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/492)
+- [Fix schema augmentation issue when schema contains array of properties on relationship](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/492)
+- [Fixed issue that didn't generate merge mutations when types only had a single field](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/492)
+
+## 2.15.0
+
+- [Fix for relationship mutation issue when only to field is requested](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/485)
+- [Relationship API bug fixes and API updates](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/481)
+
+## 2.14.4
+
+- [Fix for missing results with some queries using nested filtering](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/469)
+- [Use \_RelationDirections enum for relationship directions in inferSchema](https://github.com/neo4j-graphql/neo4j-graphql-js/commit/c9b8b1af65ea751d060be79f8ab9d521577968de)
+
+## 2.14.3
+
+- [Add initial support for bookmarks](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/460)
+- [Improvements to temporal and spatial identity filters](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/466)
+- [Fix for issue with using relationship types with federated entities](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/441)
+
 ## 2.14.2
 
 - [Fix for missing apollo-server dependency with apollo-server-lambda](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/439)
