@@ -318,11 +318,12 @@ export const assertSchema = ({
   driver,
   schema,
   dropExisting = true,
-  debug = false
+  debug = false,
+  sessionParams = {}
 }) => {
   const statement = schemaAssert({ schema, dropExisting });
   const executeQuery = driver => {
-    const session = driver.session();
+    const session = driver.session(sessionParams);
     return session
       .writeTransaction(tx =>
         tx.run(statement).then(result => {
