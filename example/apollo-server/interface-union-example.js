@@ -1,24 +1,28 @@
+import { gql } from 'apollo-server';
 import { makeAugmentedSchema } from '../../src/index';
 const { ApolloServer } = require('apollo-server');
 const neo4j = require('neo4j-driver');
 
-const __unionTypeDefs = `
-union SearchResult = Blog | Movie
+const __unionTypeDefs = gql`
+  union SearchResult = Blog | Movie
 
-type Blog {
-  blogId: ID!
-  created: DateTime
-  content: String
-}
+  type Blog {
+    blogId: ID!
+    created: DateTime
+    content: String
+  }
 
-type Movie {
-  movieId: ID!
-  title: String
-}
+  type Movie {
+    movieId: ID!
+    title: String
+  }
 
-type Query {
-  search(searchString: String!): [SearchResult] @cypher(statement:"CALL db.index.fulltext.queryNodes('searchIndex', $searchString) YIELD node RETURN node")
-}
+  type Query {
+    search(searchString: String!): [SearchResult]
+      @cypher(
+        statement: "CALL db.index.fulltext.queryNodes('searchIndex', $searchString) YIELD node RETURN node"
+      )
+  }
 `;
 
 const __interfaceTypeDefs = `

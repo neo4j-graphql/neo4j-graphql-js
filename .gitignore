@@ -70,3 +70,6 @@ test/tck/*
 !test/tck/.gitkeep
 
 .history
+
+.download_cache
+neo4j

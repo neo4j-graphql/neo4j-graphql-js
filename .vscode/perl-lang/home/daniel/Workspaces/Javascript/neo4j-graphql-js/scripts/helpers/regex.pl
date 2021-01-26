@@ -1,0 +1,1 @@
+{"vars":[{"line":0,"kind":2,"name":"strict","containerName":""},{"line":1,"name":"$regex","containerName":null,"kind":13,"localvar":"my","defintion":"my"},{"line":4,"name":"@ARGV","containerName":null,"kind":13}],"version":3}

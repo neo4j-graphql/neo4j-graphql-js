@@ -1,25 +1,13 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
-BOLT_PORT=7687
+source=${BASH_SOURCE[0]}
+. $(dirname $source)/helpers/get_source_dir.sh
 
-./neo4j/bin/neo4j stop
-rm -r neo4j/data/databases/graph.db
-./neo4j/bin/neo4j start
+stop-and-clear-neo4j() {
+    local this_directory=$(get_source_dir $source)
 
-echo "Waiting up to 2 minutes for neo4j bolt port ($BOLT_PORT)"
-
-for i in {1..120};
-    do
-        nc -z 127.0.0.1 $BOLT_PORT
-        is_up=$?
-        if [ $is_up -eq 0 ]; then
-            echo
-            echo "Successfully started, neo4j bolt available on $BOLT_PORT"
-            break
-        fi
-        sleep 1
-        echo -n "."
-done
-echo
-# Wait a further 5 seconds after the port is available
-sleep 5
+    . $this_directory/helpers/get_local_host.sh
+    localhost=$(get_local_host)
+    dash $this_directory/helpers/execute_stop.sh $this_directory $localhost
+}
+stop-and-clear-neo4j
