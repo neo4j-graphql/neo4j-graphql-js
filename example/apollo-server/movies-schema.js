@@ -1,4 +1,7 @@
 import { neo4jgraphql } from '../../src/index';
+import { PubSub } from 'apollo-server';
+
+export const pubsub = new PubSub();
 
 export const typeDefs = `
 type Movie {
@@ -13,13 +16,13 @@ type Movie {
   poster: String
   imdbRating: Float
   ratings: [Rated]
-  genres: [Genre] @relation(name: "IN_GENRE", direction: "OUT")
+  genres: [Genre] @relation(name: "IN_GENRE", direction: OUT)
   similar(first: Int = 3, offset: Int = 0, limit: Int = 5): [Movie] @cypher(statement: "MATCH (this)--(:Genre)--(o:Movie) RETURN o LIMIT $limit")
   mostSimilar: Movie @cypher(statement: "RETURN this")
   degree: Int @cypher(statement: "RETURN SIZE((this)--())")
-  actors(first: Int = 3, offset: Int = 0): [Actor] @relation(name: "ACTED_IN", direction:"IN")
+  actors(first: Int = 3, offset: Int = 0): [Actor] @relation(name: "ACTED_IN", direction:IN)
   avgStars: Float
-  filmedIn: State @relation(name: "FILMED_IN", direction: "OUT")
+  filmedIn: State @relation(name: "FILMED_IN", direction: OUT)
   location: Point
   locations: [Point]
   scaleRating(scale: Int = 3): Float @cypher(statement: "RETURN $scale * this.imdbRating")
@@ -29,7 +32,7 @@ type Movie {
 
 type Genre {
   name: String
-  movies(first: Int = 3, offset: Int = 0): [Movie] @relation(name: "IN_GENRE", direction: "IN")
+  movies(first: Int = 3, offset: Int = 0): [Movie] @relation(name: "IN_GENRE", direction: IN)
   highestRatedMovie: Movie @cypher(statement: "MATCH (m:Movie)-[:IN_GENRE]->(this) RETURN m ORDER BY m.imdbRating DESC LIMIT 1")
 }
 
@@ -45,8 +48,8 @@ interface Person {
 type Actor {
   id: ID!
   name: String
-  movies: [Movie] @relation(name: "ACTED_IN", direction: "OUT")
-  knows: [Person] @relation(name: "KNOWS", direction: "OUT")
+  movies: [Movie] @relation(name: "ACTED_IN", direction: OUT)
+  knows: [Person] @relation(name: "KNOWS", direction: OUT)
 }
 
 type User implements Person {
@@ -115,10 +118,10 @@ type NewCamera implements Camera {
 type CameraMan implements Person {
   userId: ID!
   name: String
-  favoriteCamera: Camera @relation(name: "favoriteCamera", direction: "OUT")
+  favoriteCamera: Camera @relation(name: "favoriteCamera", direction: OUT)
   heaviestCamera: [Camera] @cypher(statement: "MATCH (c: Camera)--(this) RETURN c ORDER BY c.weight DESC LIMIT 1")
-  cameras: [Camera!]! @relation(name: "cameras", direction: "OUT")
-  cameraBuddy: Person @relation(name: "cameraBuddy", direction: "OUT")
+  cameras: [Camera!]! @relation(name: "cameras", direction: OUT)
+  cameraBuddy: Person @relation(name: "cameraBuddy", direction: OUT)
 }
 
 union MovieSearch = Movie | Genre | Book | User | OldCamera
@@ -135,12 +138,23 @@ type Query {
 }
 
 type Mutation {
+  CustomWithPublish: String @publish(event: "customEventName") @cypher(statement: "RETURN 'hello world'")
   CustomCamera: Camera @cypher(statement: "CREATE (newCamera:Camera:NewCamera {id: apoc.create.uuid(), type: 'macro'}) RETURN newCamera")
   CustomCameras: [Camera] @cypher(statement: "CREATE (newCamera:Camera:NewCamera {id: apoc.create.uuid(), type: 'macro', features: ['selfie', 'zoom']}) CREATE (oldCamera:Camera:OldCamera {id: apoc.create.uuid(), type: 'floating', smell: 'rusty' }) RETURN [newCamera, oldCamera]")
+}
+
+type Subscription {
+  subscribeToCustomWithPublish: String @subscribe(mutations: "customEventName")
 }
 `;
 
 export const resolvers = {
+  Subscription: {
+    // normally generated
+    subscribeToCustomWithPublish: {
+      subscribe: () => pubsub.asyncIterator(['customEventName'])
+    }
+  },
   // root entry point to GraphQL service
   Query: {
     Movie(object, params, ctx, resolveInfo) {
