@@ -310,6 +310,7 @@ export const shouldAugmentRelationshipField = (
 const APIConfiguration = {
   QUERY: 'query',
   MUTATION: 'mutation',
+  SUBSCRIPTION: 'subscription',
   TEMPORAL: 'temporal',
   SPATIAL: 'spatial'
 };
