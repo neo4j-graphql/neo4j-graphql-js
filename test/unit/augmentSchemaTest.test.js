@@ -7037,13 +7037,10 @@ test.cb('Test augmented schema', t => {
       computedMovieSearch(first: Int, offset: Int): [MovieSearch]
         @cypher(statement: "MATCH (ms:MovieSearch) RETURN ms")
     }
-    """
-    Mutation  type line description
-    """
+
+    "Mutation  type line description"
     type Mutation {
-      """
-      Mutation  field line description
-      """
+      "Mutation  field line description"
       currentUserId: String
         @cypher(statement: "RETURN $cypherParams.currentUserId")
       """
@@ -7087,9 +7084,7 @@ test.cb('Test augmented schema', t => {
         @cypher(
           statement: "CREATE (n:Node { integer: $integer, datetime: datetime($datetime), point: point($point), integers: $integers, datetimes: [value IN $datetimes | datetime(value)], points: [value IN $points | point(value)] }) RETURN TRUE"
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the IN_GENRE relationship.
-      """
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the IN_GENRE relationship."
       AddMovieExtensionNode(
         from: _MovieInput!
         to: _GenreInput!
@@ -7103,9 +7098,8 @@ test.cb('Test augmented schema', t => {
             "create:genre"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the IN_GENRE relationship.
-      """
+        @publish(event: "AddMovieExtensionNode")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the IN_GENRE relationship."
       RemoveMovieExtensionNode(
         from: _MovieInput!
         to: _GenreInput!
@@ -7119,9 +7113,8 @@ test.cb('Test augmented schema', t => {
             "delete:genre"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the IN_GENRE relationship.
-      """
+        @publish(event: "RemoveMovieExtensionNode")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the IN_GENRE relationship."
       MergeMovieExtensionNode(
         from: _MovieInput!
         to: _GenreInput!
@@ -7130,9 +7123,8 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["Movie: Merge", "merge:movie", "Genre: Merge", "merge:genre"]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the IN_GENRE relationship.
-      """
+        @publish(event: "MergeMovieExtensionNode")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the IN_GENRE relationship."
       AddMovieGenres(
         from: _MovieInput!
         to: _GenreInput!
@@ -7146,9 +7138,8 @@ test.cb('Test augmented schema', t => {
             "create:genre"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the IN_GENRE relationship.
-      """
+        @publish(event: "AddMovieGenres")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the IN_GENRE relationship."
       RemoveMovieGenres(
         from: _MovieInput!
         to: _GenreInput!
@@ -7162,9 +7153,8 @@ test.cb('Test augmented schema', t => {
             "delete:genre"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the IN_GENRE relationship.
-      """
+        @publish(event: "RemoveMovieGenres")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the IN_GENRE relationship."
       MergeMovieGenres(
         from: _MovieInput!
         to: _GenreInput!
@@ -7173,9 +7163,8 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["Movie: Merge", "merge:movie", "Genre: Merge", "merge:genre"]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the ACTED_IN relationship.
-      """
+        @publish(event: "MergeMovieGenres")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the ACTED_IN relationship."
       AddMovieActors(
         from: _ActorInput!
         to: _MovieInput!
@@ -7189,9 +7178,8 @@ test.cb('Test augmented schema', t => {
             "create:movie"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the ACTED_IN relationship.
-      """
+        @publish(event: "AddMovieActors")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the ACTED_IN relationship."
       RemoveMovieActors(
         from: _ActorInput!
         to: _MovieInput!
@@ -7205,9 +7193,8 @@ test.cb('Test augmented schema', t => {
             "delete:movie"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the ACTED_IN relationship.
-      """
+        @publish(event: "RemoveMovieActors")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the ACTED_IN relationship."
       MergeMovieActors(
         from: _ActorInput!
         to: _MovieInput!
@@ -7216,9 +7203,8 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["Actor: Merge", "merge:actor", "Movie: Merge", "merge:movie"]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the FILMED_IN relationship.
-      """
+        @publish(event: "MergeMovieActors")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the FILMED_IN relationship."
       AddMovieFilmedIn(
         from: _MovieInput!
         to: _StateInput!
@@ -7232,9 +7218,8 @@ test.cb('Test augmented schema', t => {
             "create:state"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the FILMED_IN relationship.
-      """
+        @publish(event: "AddMovieFilmedIn")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the FILMED_IN relationship."
       RemoveMovieFilmedIn(
         from: _MovieInput!
         to: _StateInput!
@@ -7248,9 +7233,8 @@ test.cb('Test augmented schema', t => {
             "delete:state"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the FILMED_IN relationship.
-      """
+        @publish(event: "RemoveMovieFilmedIn")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the FILMED_IN relationship."
       MergeMovieFilmedIn(
         from: _MovieInput!
         to: _StateInput!
@@ -7259,9 +7243,8 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["Movie: Merge", "merge:movie", "State: Merge", "merge:state"]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the RATED relationship.
-      """
+        @publish(event: "MergeMovieFilmedIn")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the RATED relationship."
       AddMovieRatings(
         from: _UserInput!
         to: _MovieInput!
@@ -7276,9 +7259,8 @@ test.cb('Test augmented schema', t => {
             "create:movie"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the RATED relationship.
-      """
+        @publish(event: "AddMovieRatings")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the RATED relationship."
       RemoveMovieRatings(
         from: _UserInput!
         to: _MovieInput!
@@ -7292,9 +7274,8 @@ test.cb('Test augmented schema', t => {
             "delete:movie"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the RATED relationship.
-      """
+        @publish(event: "RemoveMovieRatings")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the RATED relationship."
       UpdateMovieRatings(
         from: _UserInput!
         to: _MovieInput!
@@ -7309,9 +7290,8 @@ test.cb('Test augmented schema', t => {
             "update:movie"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the RATED relationship.
-      """
+        @publish(event: "UpdateMovieRatings")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the RATED relationship."
       MergeMovieRatings(
         from: _UserInput!
         to: _MovieInput!
@@ -7321,9 +7301,8 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["User: Merge", "merge:user", "Movie: Merge", "merge:movie"]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the RATED_NO_PROPS relationship.
-      """
+        @publish(event: "MergeMovieRatings")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the RATED_NO_PROPS relationship."
       AddMovieRatingsNoProps(
         from: _UserInput!
         to: _MovieInput!
@@ -7337,9 +7316,8 @@ test.cb('Test augmented schema', t => {
             "create:movie"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the RATED_NO_PROPS relationship.
-      """
+        @publish(event: "AddMovieRatingsNoProps")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the RATED_NO_PROPS relationship."
       RemoveMovieRatingsNoProps(
         from: _UserInput!
         to: _MovieInput!
@@ -7353,9 +7331,8 @@ test.cb('Test augmented schema', t => {
             "delete:movie"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the RATED_NO_PROPS relationship.
-      """
+        @publish(event: "RemoveMovieRatingsNoProps")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the RATED_NO_PROPS relationship."
       MergeMovieRatingsNoProps(
         from: _UserInput!
         to: _MovieInput!
@@ -7364,9 +7341,8 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["User: Merge", "merge:user", "Movie: Merge", "merge:movie"]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the RATED_CUSTOM_FROM relationship.
-      """
+        @publish(event: "MergeMovieRatingsNoProps")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the RATED_CUSTOM_FROM relationship."
       AddMovieRatingsCustomFrom(
         ratedBy: _UserInput!
         to: _MovieInput!
@@ -7385,9 +7361,8 @@ test.cb('Test augmented schema', t => {
             "create:movie"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the RATED_CUSTOM_FROM relationship.
-      """
+        @publish(event: "AddMovieRatingsCustomFrom")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the RATED_CUSTOM_FROM relationship."
       RemoveMovieRatingsCustomFrom(
         ratedBy: _UserInput!
         to: _MovieInput!
@@ -7405,9 +7380,8 @@ test.cb('Test augmented schema', t => {
             "delete:movie"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the RATED_CUSTOM_FROM relationship.
-      """
+        @publish(event: "RemoveMovieRatingsCustomFrom")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the RATED_CUSTOM_FROM relationship."
       UpdateMovieRatingsCustomFrom(
         ratedBy: _UserInput!
         to: _MovieInput!
@@ -7426,9 +7400,8 @@ test.cb('Test augmented schema', t => {
             "update:movie"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the RATED_CUSTOM_FROM relationship.
-      """
+        @publish(event: "UpdateMovieRatingsCustomFrom")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the RATED_CUSTOM_FROM relationship."
       MergeMovieRatingsCustomFrom(
         ratedBy: _UserInput!
         to: _MovieInput!
@@ -7442,9 +7415,8 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["User: Merge", "merge:user", "Movie: Merge", "merge:movie"]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the RATED_CUSTOM_TO relationship.
-      """
+        @publish(event: "MergeMovieRatingsCustomFrom")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the RATED_CUSTOM_TO relationship."
       AddMovieRatingsCustomTo(
         from: _UserInput!
         movie: _MovieInput!
@@ -7463,9 +7435,8 @@ test.cb('Test augmented schema', t => {
             "create:movie"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the RATED_CUSTOM_TO relationship.
-      """
+        @publish(event: "AddMovieRatingsCustomTo")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the RATED_CUSTOM_TO relationship."
       RemoveMovieRatingsCustomTo(
         from: _UserInput!
         movie: _MovieInput!
@@ -7483,9 +7454,8 @@ test.cb('Test augmented schema', t => {
             "delete:movie"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the RATED_CUSTOM_TO relationship.
-      """
+        @publish(event: "RemoveMovieRatingsCustomTo")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the RATED_CUSTOM_TO relationship."
       UpdateMovieRatingsCustomTo(
         from: _UserInput!
         movie: _MovieInput!
@@ -7504,9 +7474,8 @@ test.cb('Test augmented schema', t => {
             "update:movie"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the RATED_CUSTOM_TO relationship.
-      """
+        @publish(event: "UpdateMovieRatingsCustomTo")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the RATED_CUSTOM_TO relationship."
       MergeMovieRatingsCustomTo(
         from: _UserInput!
         movie: _MovieInput!
@@ -7520,9 +7489,8 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["User: Merge", "merge:user", "Movie: Merge", "merge:movie"]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the RATED_CUSTOM_FROM_TO relationship.
-      """
+        @publish(event: "MergeMovieRatingsCustomTo")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the RATED_CUSTOM_FROM_TO relationship."
       AddMovieRatingsCustomFromTo(
         ratedBy: _UserInput!
         movie: _MovieInput!
@@ -7541,9 +7509,8 @@ test.cb('Test augmented schema', t => {
             "create:movie"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the RATED_CUSTOM_FROM_TO relationship.
-      """
+        @publish(event: "AddMovieRatingsCustomFromTo")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the RATED_CUSTOM_FROM_TO relationship."
       RemoveMovieRatingsCustomFromTo(
         ratedBy: _UserInput!
         movie: _MovieInput!
@@ -7561,9 +7528,8 @@ test.cb('Test augmented schema', t => {
             "delete:movie"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the RATED_CUSTOM_FROM_TO relationship.
-      """
+        @publish(event: "RemoveMovieRatingsCustomFromTo")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the RATED_CUSTOM_FROM_TO relationship."
       UpdateMovieRatingsCustomFromTo(
         ratedBy: _UserInput!
         movie: _MovieInput!
@@ -7582,9 +7548,8 @@ test.cb('Test augmented schema', t => {
             "update:movie"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the RATED_CUSTOM_FROM_TO relationship.
-      """
+        @publish(event: "UpdateMovieRatingsCustomFromTo")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the RATED_CUSTOM_FROM_TO relationship."
       MergeMovieRatingsCustomFromTo(
         ratedBy: _UserInput!
         movie: _MovieInput!
@@ -7598,9 +7563,8 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["User: Merge", "merge:user", "Movie: Merge", "merge:movie"]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#create) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-nodes) a Movie node.
-      """
+        @publish(event: "MergeMovieRatingsCustomFromTo")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#create) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-nodes) a Movie node."
       CreateMovie(
         movieId: ID
         title: String
@@ -7620,10 +7584,10 @@ test.cb('Test augmented schema', t => {
         booleans: [Boolean]
         enums: [BookGenre]
         extensionScalar: String
-      ): Movie @hasScope(scopes: ["Movie: Create", "create:movie"])
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#update) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) a Movie node.
-      """
+      ): Movie
+        @hasScope(scopes: ["Movie: Create", "create:movie"])
+        @publish(event: "CreateMovie")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#update) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) a Movie node."
       UpdateMovie(
         movieId: ID!
         title: String
@@ -7643,15 +7607,14 @@ test.cb('Test augmented schema', t => {
         booleans: [Boolean]
         enums: [BookGenre]
         extensionScalar: String
-      ): Movie @hasScope(scopes: ["Movie: Update", "update:movie"])
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#delete) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-single-node) a Movie node.
-      """
+      ): Movie
+        @hasScope(scopes: ["Movie: Update", "update:movie"])
+        @publish(event: "UpdateMovie")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#delete) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-single-node) a Movie node."
       DeleteMovie(movieId: ID!): Movie
         @hasScope(scopes: ["Movie: Delete", "delete:movie"])
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#merge) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-node-derived) a Movie node.
-      """
+        @publish(event: "DeleteMovie")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#merge) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-node-derived) a Movie node."
       MergeMovie(
         movieId: ID!
         title: String
@@ -7671,10 +7634,10 @@ test.cb('Test augmented schema', t => {
         booleans: [Boolean]
         enums: [BookGenre]
         extensionScalar: String
-      ): Movie @hasScope(scopes: ["Movie: Merge", "merge:movie"])
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the IN_GENRE relationship.
-      """
+      ): Movie
+        @hasScope(scopes: ["Movie: Merge", "merge:movie"])
+        @publish(event: "MergeMovie")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the IN_GENRE relationship."
       AddGenreMovies(
         from: _MovieInput!
         to: _GenreInput!
@@ -7688,9 +7651,8 @@ test.cb('Test augmented schema', t => {
             "create:genre"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the IN_GENRE relationship.
-      """
+        @publish(event: "AddGenreMovies")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the IN_GENRE relationship."
       RemoveGenreMovies(
         from: _MovieInput!
         to: _GenreInput!
@@ -7704,9 +7666,8 @@ test.cb('Test augmented schema', t => {
             "delete:genre"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the IN_GENRE relationship.
-      """
+        @publish(event: "RemoveGenreMovies")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the IN_GENRE relationship."
       MergeGenreMovies(
         from: _MovieInput!
         to: _GenreInput!
@@ -7715,9 +7676,8 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["Movie: Merge", "merge:movie", "Genre: Merge", "merge:genre"]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the INTERFACED_RELATIONSHIP_TYPE relationship.
-      """
+        @publish(event: "MergeGenreMovies")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the INTERFACED_RELATIONSHIP_TYPE relationship."
       AddGenreInterfacedRelationshipType(
         from: _PersonInput!
         to: _GenreInput!
@@ -7736,9 +7696,8 @@ test.cb('Test augmented schema', t => {
             "create:genre"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the INTERFACED_RELATIONSHIP_TYPE relationship.
-      """
+        @publish(event: "AddGenreInterfacedRelationshipType")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the INTERFACED_RELATIONSHIP_TYPE relationship."
       RemoveGenreInterfacedRelationshipType(
         from: _PersonInput!
         to: _GenreInput!
@@ -7756,9 +7715,8 @@ test.cb('Test augmented schema', t => {
             "delete:genre"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the INTERFACED_RELATIONSHIP_TYPE relationship.
-      """
+        @publish(event: "RemoveGenreInterfacedRelationshipType")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the INTERFACED_RELATIONSHIP_TYPE relationship."
       UpdateGenreInterfacedRelationshipType(
         from: _PersonInput!
         to: _GenreInput!
@@ -7777,9 +7735,8 @@ test.cb('Test augmented schema', t => {
             "update:genre"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the INTERFACED_RELATIONSHIP_TYPE relationship.
-      """
+        @publish(event: "UpdateGenreInterfacedRelationshipType")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the INTERFACED_RELATIONSHIP_TYPE relationship."
       MergeGenreInterfacedRelationshipType(
         from: _PersonInput!
         to: _GenreInput!
@@ -7798,44 +7755,36 @@ test.cb('Test augmented schema', t => {
             "merge:genre"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#create) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-nodes) a Genre node.
-      """
+        @publish(event: "MergeGenreInterfacedRelationshipType")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#create) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-nodes) a Genre node."
       CreateGenre(name: String): Genre
         @hasScope(scopes: ["Genre: Create", "create:genre"])
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#delete) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-single-node) a Genre node.
-      """
+        @publish(event: "CreateGenre")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#delete) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-single-node) a Genre node."
       DeleteGenre(name: String!): Genre
         @hasScope(scopes: ["Genre: Delete", "delete:genre"])
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#merge) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-node-derived) a Genre node.
-      """
+        @publish(event: "DeleteGenre")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#merge) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-node-derived) a Genre node."
       MergeGenre(name: String!): Genre
         @hasScope(scopes: ["Genre: Merge", "merge:genre"])
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#create) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-nodes) a State node.
-      """
+        @publish(event: "MergeGenre")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#create) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-nodes) a State node."
       CreateState(name: String!, id: ID): State
         @hasScope(scopes: ["State: Create", "create:state"])
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#update) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) a State node.
-      """
+        @publish(event: "CreateState")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#update) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) a State node."
       UpdateState(name: String!, id: ID): State
         @hasScope(scopes: ["State: Update", "update:state"])
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#delete) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-single-node) a State node.
-      """
+        @publish(event: "UpdateState")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#delete) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-single-node) a State node."
       DeleteState(name: String!): State
         @hasScope(scopes: ["State: Delete", "delete:state"])
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#merge) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-node-derived) a State node.
-      """
+        @publish(event: "DeleteState")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#merge) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-node-derived) a State node."
       MergeState(name: String!, id: ID): State
         @hasScope(scopes: ["State: Merge", "merge:state"])
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the INTERFACED_RELATIONSHIP_TYPE relationship.
-      """
+        @publish(event: "MergeState")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the INTERFACED_RELATIONSHIP_TYPE relationship."
       AddPersonInterfacedRelationshipType(
         from: _PersonInput!
         to: _GenreInput!
@@ -7854,9 +7803,8 @@ test.cb('Test augmented schema', t => {
             "create:genre"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the INTERFACED_RELATIONSHIP_TYPE relationship.
-      """
+        @publish(event: "AddPersonInterfacedRelationshipType")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the INTERFACED_RELATIONSHIP_TYPE relationship."
       RemovePersonInterfacedRelationshipType(
         from: _PersonInput!
         to: _GenreInput!
@@ -7874,9 +7822,8 @@ test.cb('Test augmented schema', t => {
             "delete:genre"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the INTERFACED_RELATIONSHIP_TYPE relationship.
-      """
+        @publish(event: "RemovePersonInterfacedRelationshipType")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the INTERFACED_RELATIONSHIP_TYPE relationship."
       UpdatePersonInterfacedRelationshipType(
         from: _PersonInput!
         to: _GenreInput!
@@ -7895,9 +7842,8 @@ test.cb('Test augmented schema', t => {
             "update:genre"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the INTERFACED_RELATIONSHIP_TYPE relationship.
-      """
+        @publish(event: "UpdatePersonInterfacedRelationshipType")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the INTERFACED_RELATIONSHIP_TYPE relationship."
       MergePersonInterfacedRelationshipType(
         from: _PersonInput!
         to: _GenreInput!
@@ -7916,9 +7862,8 @@ test.cb('Test augmented schema', t => {
             "merge:genre"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE relationship.
-      """
+        @publish(event: "MergePersonInterfacedRelationshipType")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE relationship."
       AddPersonReflexiveInterfacedRelationshipType(
         from: _PersonInput!
         to: _PersonInput!
@@ -7937,9 +7882,8 @@ test.cb('Test augmented schema', t => {
             "create:person"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE relationship.
-      """
+        @publish(event: "AddPersonReflexiveInterfacedRelationshipType")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE relationship."
       RemovePersonReflexiveInterfacedRelationshipType(
         from: _PersonInput!
         to: _PersonInput!
@@ -7957,9 +7901,8 @@ test.cb('Test augmented schema', t => {
             "delete:person"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE relationship.
-      """
+        @publish(event: "RemovePersonReflexiveInterfacedRelationshipType")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE relationship."
       UpdatePersonReflexiveInterfacedRelationshipType(
         from: _PersonInput!
         to: _PersonInput!
@@ -7978,9 +7921,8 @@ test.cb('Test augmented schema', t => {
             "update:person"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE relationship.
-      """
+        @publish(event: "UpdatePersonReflexiveInterfacedRelationshipType")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE relationship."
       MergePersonReflexiveInterfacedRelationshipType(
         from: _PersonInput!
         to: _PersonInput!
@@ -7999,9 +7941,8 @@ test.cb('Test augmented schema', t => {
             "merge:person"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the ACTED_IN relationship.
-      """
+        @publish(event: "MergePersonReflexiveInterfacedRelationshipType")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the ACTED_IN relationship."
       AddActorMovies(
         from: _ActorInput!
         to: _MovieInput!
@@ -8015,9 +7956,8 @@ test.cb('Test augmented schema', t => {
             "create:movie"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the ACTED_IN relationship.
-      """
+        @publish(event: "AddActorMovies")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the ACTED_IN relationship."
       RemoveActorMovies(
         from: _ActorInput!
         to: _MovieInput!
@@ -8031,9 +7971,8 @@ test.cb('Test augmented schema', t => {
             "delete:movie"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the ACTED_IN relationship.
-      """
+        @publish(event: "RemoveActorMovies")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the ACTED_IN relationship."
       MergeActorMovies(
         from: _ActorInput!
         to: _MovieInput!
@@ -8042,9 +7981,8 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["Actor: Merge", "merge:actor", "Movie: Merge", "merge:movie"]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the KNOWS relationship.
-      """
+        @publish(event: "MergeActorMovies")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the KNOWS relationship."
       AddActorKnows(
         from: _ActorInput!
         to: _PersonInput!
@@ -8058,9 +7996,8 @@ test.cb('Test augmented schema', t => {
             "create:person"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the KNOWS relationship.
-      """
+        @publish(event: "AddActorKnows")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the KNOWS relationship."
       RemoveActorKnows(
         from: _ActorInput!
         to: _PersonInput!
@@ -8074,9 +8011,8 @@ test.cb('Test augmented schema', t => {
             "delete:person"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the KNOWS relationship.
-      """
+        @publish(event: "RemoveActorKnows")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the KNOWS relationship."
       MergeActorKnows(
         from: _ActorInput!
         to: _PersonInput!
@@ -8090,9 +8026,8 @@ test.cb('Test augmented schema', t => {
             "merge:person"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the INTERFACED_RELATIONSHIP_TYPE relationship.
-      """
+        @publish(event: "MergeActorKnows")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the INTERFACED_RELATIONSHIP_TYPE relationship."
       AddActorInterfacedRelationshipType(
         from: _PersonInput!
         to: _GenreInput!
@@ -8111,9 +8046,8 @@ test.cb('Test augmented schema', t => {
             "create:genre"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the INTERFACED_RELATIONSHIP_TYPE relationship.
-      """
+        @publish(event: "AddActorInterfacedRelationshipType")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the INTERFACED_RELATIONSHIP_TYPE relationship."
       RemoveActorInterfacedRelationshipType(
         from: _PersonInput!
         to: _GenreInput!
@@ -8131,9 +8065,8 @@ test.cb('Test augmented schema', t => {
             "delete:genre"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the INTERFACED_RELATIONSHIP_TYPE relationship.
-      """
+        @publish(event: "RemoveActorInterfacedRelationshipType")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the INTERFACED_RELATIONSHIP_TYPE relationship."
       UpdateActorInterfacedRelationshipType(
         from: _PersonInput!
         to: _GenreInput!
@@ -8152,9 +8085,8 @@ test.cb('Test augmented schema', t => {
             "update:genre"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the INTERFACED_RELATIONSHIP_TYPE relationship.
-      """
+        @publish(event: "UpdateActorInterfacedRelationshipType")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the INTERFACED_RELATIONSHIP_TYPE relationship."
       MergeActorInterfacedRelationshipType(
         from: _PersonInput!
         to: _GenreInput!
@@ -8173,9 +8105,8 @@ test.cb('Test augmented schema', t => {
             "merge:genre"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE relationship.
-      """
+        @publish(event: "MergeActorInterfacedRelationshipType")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE relationship."
       AddActorReflexiveInterfacedRelationshipType(
         from: _PersonInput!
         to: _PersonInput!
@@ -8194,9 +8125,8 @@ test.cb('Test augmented schema', t => {
             "create:person"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE relationship.
-      """
+        @publish(event: "AddActorReflexiveInterfacedRelationshipType")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE relationship."
       RemoveActorReflexiveInterfacedRelationshipType(
         from: _PersonInput!
         to: _PersonInput!
@@ -8214,9 +8144,8 @@ test.cb('Test augmented schema', t => {
             "delete:person"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE relationship.
-      """
+        @publish(event: "RemoveActorReflexiveInterfacedRelationshipType")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE relationship."
       UpdateActorReflexiveInterfacedRelationshipType(
         from: _PersonInput!
         to: _PersonInput!
@@ -8235,9 +8164,8 @@ test.cb('Test augmented schema', t => {
             "update:person"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE relationship.
-      """
+        @publish(event: "UpdateActorReflexiveInterfacedRelationshipType")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE relationship."
       MergeActorReflexiveInterfacedRelationshipType(
         from: _PersonInput!
         to: _PersonInput!
@@ -8256,44 +8184,42 @@ test.cb('Test augmented schema', t => {
             "merge:person"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#create) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-nodes) a Actor node.
-      """
+        @publish(event: "MergeActorReflexiveInterfacedRelationshipType")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#create) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-nodes) a Actor node."
       CreateActor(
         userId: ID
         name: String
         extensionScalar: String
         datetimes: [_Neo4jDateTimeInput]
         strings: [String]
-      ): Actor @hasScope(scopes: ["Actor: Create", "create:actor"])
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#update) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) a Actor node.
-      """
+      ): Actor
+        @hasScope(scopes: ["Actor: Create", "create:actor"])
+        @publish(event: "CreateActor")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#update) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) a Actor node."
       UpdateActor(
         userId: ID!
         name: String
         extensionScalar: String
         datetimes: [_Neo4jDateTimeInput]
         strings: [String]
-      ): Actor @hasScope(scopes: ["Actor: Update", "update:actor"])
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#delete) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-single-node) a Actor node.
-      """
+      ): Actor
+        @hasScope(scopes: ["Actor: Update", "update:actor"])
+        @publish(event: "UpdateActor")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#delete) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-single-node) a Actor node."
       DeleteActor(userId: ID!): Actor
         @hasScope(scopes: ["Actor: Delete", "delete:actor"])
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#merge) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-node-derived) a Actor node.
-      """
+        @publish(event: "DeleteActor")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#merge) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-node-derived) a Actor node."
       MergeActor(
         userId: ID!
         name: String
         extensionScalar: String
         datetimes: [_Neo4jDateTimeInput]
         strings: [String]
-      ): Actor @hasScope(scopes: ["Actor: Merge", "merge:actor"])
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the INTERFACED_RELATIONSHIP_TYPE relationship.
-      """
+      ): Actor
+        @hasScope(scopes: ["Actor: Merge", "merge:actor"])
+        @publish(event: "MergeActor")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the INTERFACED_RELATIONSHIP_TYPE relationship."
       AddUserInterfacedRelationshipType(
         from: _PersonInput!
         to: _GenreInput!
@@ -8312,9 +8238,8 @@ test.cb('Test augmented schema', t => {
             "create:genre"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the INTERFACED_RELATIONSHIP_TYPE relationship.
-      """
+        @publish(event: "AddUserInterfacedRelationshipType")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the INTERFACED_RELATIONSHIP_TYPE relationship."
       RemoveUserInterfacedRelationshipType(
         from: _PersonInput!
         to: _GenreInput!
@@ -8332,9 +8257,8 @@ test.cb('Test augmented schema', t => {
             "delete:genre"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the INTERFACED_RELATIONSHIP_TYPE relationship.
-      """
+        @publish(event: "RemoveUserInterfacedRelationshipType")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the INTERFACED_RELATIONSHIP_TYPE relationship."
       UpdateUserInterfacedRelationshipType(
         from: _PersonInput!
         to: _GenreInput!
@@ -8353,9 +8277,8 @@ test.cb('Test augmented schema', t => {
             "update:genre"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the INTERFACED_RELATIONSHIP_TYPE relationship.
-      """
+        @publish(event: "UpdateUserInterfacedRelationshipType")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the INTERFACED_RELATIONSHIP_TYPE relationship."
       MergeUserInterfacedRelationshipType(
         from: _PersonInput!
         to: _GenreInput!
@@ -8374,9 +8297,8 @@ test.cb('Test augmented schema', t => {
             "merge:genre"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE relationship.
-      """
+        @publish(event: "MergeUserInterfacedRelationshipType")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE relationship."
       AddUserReflexiveInterfacedRelationshipType(
         from: _PersonInput!
         to: _PersonInput!
@@ -8395,9 +8317,8 @@ test.cb('Test augmented schema', t => {
             "create:person"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE relationship.
-      """
+        @publish(event: "AddUserReflexiveInterfacedRelationshipType")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE relationship."
       RemoveUserReflexiveInterfacedRelationshipType(
         from: _PersonInput!
         to: _PersonInput!
@@ -8415,9 +8336,8 @@ test.cb('Test augmented schema', t => {
             "delete:person"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE relationship.
-      """
+        @publish(event: "RemoveUserReflexiveInterfacedRelationshipType")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE relationship."
       UpdateUserReflexiveInterfacedRelationshipType(
         from: _PersonInput!
         to: _PersonInput!
@@ -8436,9 +8356,8 @@ test.cb('Test augmented schema', t => {
             "update:person"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE relationship.
-      """
+        @publish(event: "UpdateUserReflexiveInterfacedRelationshipType")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE relationship."
       MergeUserReflexiveInterfacedRelationshipType(
         from: _PersonInput!
         to: _PersonInput!
@@ -8457,9 +8376,8 @@ test.cb('Test augmented schema', t => {
             "merge:person"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the RATED relationship.
-      """
+        @publish(event: "MergeUserReflexiveInterfacedRelationshipType")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the RATED relationship."
       AddUserRated(
         from: _UserInput!
         to: _MovieInput!
@@ -8474,9 +8392,8 @@ test.cb('Test augmented schema', t => {
             "create:movie"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the RATED relationship.
-      """
+        @publish(event: "AddUserRated")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the RATED relationship."
       RemoveUserRated(
         from: _UserInput!
         to: _MovieInput!
@@ -8490,9 +8407,8 @@ test.cb('Test augmented schema', t => {
             "delete:movie"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the RATED relationship.
-      """
+        @publish(event: "RemoveUserRated")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the RATED relationship."
       UpdateUserRated(
         from: _UserInput!
         to: _MovieInput!
@@ -8507,9 +8423,8 @@ test.cb('Test augmented schema', t => {
             "update:movie"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the RATED relationship.
-      """
+        @publish(event: "UpdateUserRated")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the RATED relationship."
       MergeUserRated(
         from: _UserInput!
         to: _MovieInput!
@@ -8519,9 +8434,8 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["User: Merge", "merge:user", "Movie: Merge", "merge:movie"]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the RATED_CUSTOM_FROM relationship.
-      """
+        @publish(event: "MergeUserRated")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the RATED_CUSTOM_FROM relationship."
       AddUserRatedCustomFrom(
         ratedBy: _UserInput!
         to: _MovieInput!
@@ -8540,9 +8454,8 @@ test.cb('Test augmented schema', t => {
             "create:movie"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the RATED_CUSTOM_FROM relationship.
-      """
+        @publish(event: "AddUserRatedCustomFrom")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the RATED_CUSTOM_FROM relationship."
       RemoveUserRatedCustomFrom(
         ratedBy: _UserInput!
         to: _MovieInput!
@@ -8560,9 +8473,8 @@ test.cb('Test augmented schema', t => {
             "delete:movie"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the RATED_CUSTOM_FROM relationship.
-      """
+        @publish(event: "RemoveUserRatedCustomFrom")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the RATED_CUSTOM_FROM relationship."
       UpdateUserRatedCustomFrom(
         ratedBy: _UserInput!
         to: _MovieInput!
@@ -8581,9 +8493,8 @@ test.cb('Test augmented schema', t => {
             "update:movie"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the RATED_CUSTOM_FROM relationship.
-      """
+        @publish(event: "UpdateUserRatedCustomFrom")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the RATED_CUSTOM_FROM relationship."
       MergeUserRatedCustomFrom(
         ratedBy: _UserInput!
         to: _MovieInput!
@@ -8597,9 +8508,8 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["User: Merge", "merge:user", "Movie: Merge", "merge:movie"]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the RATED_CUSTOM_TO relationship.
-      """
+        @publish(event: "MergeUserRatedCustomFrom")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the RATED_CUSTOM_TO relationship."
       AddUserRatedCustomTo(
         from: _UserInput!
         movie: _MovieInput!
@@ -8618,9 +8528,8 @@ test.cb('Test augmented schema', t => {
             "create:movie"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the RATED_CUSTOM_TO relationship.
-      """
+        @publish(event: "AddUserRatedCustomTo")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the RATED_CUSTOM_TO relationship."
       RemoveUserRatedCustomTo(
         from: _UserInput!
         movie: _MovieInput!
@@ -8638,9 +8547,8 @@ test.cb('Test augmented schema', t => {
             "delete:movie"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the RATED_CUSTOM_TO relationship.
-      """
+        @publish(event: "RemoveUserRatedCustomTo")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the RATED_CUSTOM_TO relationship."
       UpdateUserRatedCustomTo(
         from: _UserInput!
         movie: _MovieInput!
@@ -8659,9 +8567,8 @@ test.cb('Test augmented schema', t => {
             "update:movie"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the RATED_CUSTOM_TO relationship.
-      """
+        @publish(event: "UpdateUserRatedCustomTo")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the RATED_CUSTOM_TO relationship."
       MergeUserRatedCustomTo(
         from: _UserInput!
         movie: _MovieInput!
@@ -8675,9 +8582,8 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["User: Merge", "merge:user", "Movie: Merge", "merge:movie"]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the RATED_CUSTOM_FROM_TO relationship.
-      """
+        @publish(event: "MergeUserRatedCustomTo")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the RATED_CUSTOM_FROM_TO relationship."
       AddUserRatedCustomFromTo(
         ratedBy: _UserInput!
         movie: _MovieInput!
@@ -8696,9 +8602,8 @@ test.cb('Test augmented schema', t => {
             "create:movie"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the RATED_CUSTOM_FROM_TO relationship.
-      """
+        @publish(event: "AddUserRatedCustomFromTo")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the RATED_CUSTOM_FROM_TO relationship."
       RemoveUserRatedCustomFromTo(
         ratedBy: _UserInput!
         movie: _MovieInput!
@@ -8716,9 +8621,8 @@ test.cb('Test augmented schema', t => {
             "delete:movie"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the RATED_CUSTOM_FROM_TO relationship.
-      """
+        @publish(event: "RemoveUserRatedCustomFromTo")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the RATED_CUSTOM_FROM_TO relationship."
       UpdateUserRatedCustomFromTo(
         ratedBy: _UserInput!
         movie: _MovieInput!
@@ -8737,9 +8641,8 @@ test.cb('Test augmented schema', t => {
             "update:movie"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the RATED_CUSTOM_FROM_TO relationship.
-      """
+        @publish(event: "UpdateUserRatedCustomFromTo")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the RATED_CUSTOM_FROM_TO relationship."
       MergeUserRatedCustomFromTo(
         ratedBy: _UserInput!
         movie: _MovieInput!
@@ -8753,9 +8656,8 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["User: Merge", "merge:user", "Movie: Merge", "merge:movie"]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the FRIEND_OF relationship.
-      """
+        @publish(event: "MergeUserRatedCustomFromTo")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the FRIEND_OF relationship."
       AddUserFriends(
         from: _UserInput!
         to: _UserInput!
@@ -8765,9 +8667,8 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["User: Create", "create:user", "User: Create", "create:user"]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the FRIEND_OF relationship.
-      """
+        @publish(event: "AddUserFriends")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the FRIEND_OF relationship."
       RemoveUserFriends(
         from: _UserInput!
         to: _UserInput!
@@ -8776,9 +8677,8 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["User: Delete", "delete:user", "User: Delete", "delete:user"]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the FRIEND_OF relationship.
-      """
+        @publish(event: "RemoveUserFriends")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the FRIEND_OF relationship."
       UpdateUserFriends(
         from: _UserInput!
         to: _UserInput!
@@ -8788,9 +8688,8 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["User: Update", "update:user", "User: Update", "update:user"]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the FRIEND_OF relationship.
-      """
+        @publish(event: "UpdateUserFriends")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the FRIEND_OF relationship."
       MergeUserFriends(
         from: _UserInput!
         to: _UserInput!
@@ -8800,9 +8699,8 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["User: Merge", "merge:user", "User: Merge", "merge:user"]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the FRIEND_OF_CUSTOM_FROM relationship.
-      """
+        @publish(event: "MergeUserFriends")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the FRIEND_OF_CUSTOM_FROM relationship."
       AddUserFriendsCustomFrom(
         friendedBy: _UserInput!
         to: _UserInput!
@@ -8816,9 +8714,8 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["User: Create", "create:user", "User: Create", "create:user"]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the FRIEND_OF_CUSTOM_FROM relationship.
-      """
+        @publish(event: "AddUserFriendsCustomFrom")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the FRIEND_OF_CUSTOM_FROM relationship."
       RemoveUserFriendsCustomFrom(
         friendedBy: _UserInput!
         to: _UserInput!
@@ -8831,9 +8728,8 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["User: Delete", "delete:user", "User: Delete", "delete:user"]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the FRIEND_OF_CUSTOM_FROM relationship.
-      """
+        @publish(event: "RemoveUserFriendsCustomFrom")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the FRIEND_OF_CUSTOM_FROM relationship."
       UpdateUserFriendsCustomFrom(
         friendedBy: _UserInput!
         to: _UserInput!
@@ -8847,9 +8743,8 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["User: Update", "update:user", "User: Update", "update:user"]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the FRIEND_OF_CUSTOM_FROM relationship.
-      """
+        @publish(event: "UpdateUserFriendsCustomFrom")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the FRIEND_OF_CUSTOM_FROM relationship."
       MergeUserFriendsCustomFrom(
         friendedBy: _UserInput!
         to: _UserInput!
@@ -8863,9 +8758,8 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["User: Merge", "merge:user", "User: Merge", "merge:user"]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the FRIEND_OF_CUSTOM_TO relationship.
-      """
+        @publish(event: "MergeUserFriendsCustomFrom")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the FRIEND_OF_CUSTOM_TO relationship."
       AddUserFriendsCustomTo(
         from: _UserInput!
         friended: _UserInput!
@@ -8879,9 +8773,8 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["User: Create", "create:user", "User: Create", "create:user"]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the FRIEND_OF_CUSTOM_TO relationship.
-      """
+        @publish(event: "AddUserFriendsCustomTo")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the FRIEND_OF_CUSTOM_TO relationship."
       RemoveUserFriendsCustomTo(
         from: _UserInput!
         friended: _UserInput!
@@ -8894,9 +8787,8 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["User: Delete", "delete:user", "User: Delete", "delete:user"]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the FRIEND_OF_CUSTOM_TO relationship.
-      """
+        @publish(event: "RemoveUserFriendsCustomTo")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the FRIEND_OF_CUSTOM_TO relationship."
       UpdateUserFriendsCustomTo(
         from: _UserInput!
         friended: _UserInput!
@@ -8910,9 +8802,8 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["User: Update", "update:user", "User: Update", "update:user"]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the FRIEND_OF_CUSTOM_TO relationship.
-      """
+        @publish(event: "UpdateUserFriendsCustomTo")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the FRIEND_OF_CUSTOM_TO relationship."
       MergeUserFriendsCustomTo(
         from: _UserInput!
         friended: _UserInput!
@@ -8926,9 +8817,8 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["User: Merge", "merge:user", "User: Merge", "merge:user"]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the FRIEND_OF_CUSTOM_FROM_TO relationship.
-      """
+        @publish(event: "MergeUserFriendsCustomTo")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the FRIEND_OF_CUSTOM_FROM_TO relationship."
       AddUserFriendsCustomFromTo(
         friendedBy: _UserInput!
         friended: _UserInput!
@@ -8942,9 +8832,8 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["User: Create", "create:user", "User: Create", "create:user"]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the FRIEND_OF_CUSTOM_FROM_TO relationship.
-      """
+        @publish(event: "AddUserFriendsCustomFromTo")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the FRIEND_OF_CUSTOM_FROM_TO relationship."
       RemoveUserFriendsCustomFromTo(
         friendedBy: _UserInput!
         friended: _UserInput!
@@ -8957,9 +8846,8 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["User: Delete", "delete:user", "User: Delete", "delete:user"]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the FRIEND_OF_CUSTOM_FROM_TO relationship.
-      """
+        @publish(event: "RemoveUserFriendsCustomFromTo")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the FRIEND_OF_CUSTOM_FROM_TO relationship."
       UpdateUserFriendsCustomFromTo(
         friendedBy: _UserInput!
         friended: _UserInput!
@@ -8973,9 +8861,8 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["User: Update", "update:user", "User: Update", "update:user"]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the FRIEND_OF_CUSTOM_FROM_TO relationship.
-      """
+        @publish(event: "UpdateUserFriendsCustomFromTo")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the FRIEND_OF_CUSTOM_FROM_TO relationship."
       MergeUserFriendsCustomFromTo(
         friendedBy: _UserInput!
         friended: _UserInput!
@@ -8989,9 +8876,8 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["User: Merge", "merge:user", "User: Merge", "merge:user"]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the FAVORITED relationship.
-      """
+        @publish(event: "MergeUserFriendsCustomFromTo")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the FAVORITED relationship."
       AddUserFavorites(
         from: _UserInput!
         to: _MovieInput!
@@ -9005,9 +8891,8 @@ test.cb('Test augmented schema', t => {
             "create:movie"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the FAVORITED relationship.
-      """
+        @publish(event: "AddUserFavorites")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the FAVORITED relationship."
       RemoveUserFavorites(
         from: _UserInput!
         to: _MovieInput!
@@ -9021,9 +8906,8 @@ test.cb('Test augmented schema', t => {
             "delete:movie"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the FAVORITED relationship.
-      """
+        @publish(event: "RemoveUserFavorites")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the FAVORITED relationship."
       MergeUserFavorites(
         from: _UserInput!
         to: _MovieInput!
@@ -9032,44 +8916,36 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["User: Merge", "merge:user", "Movie: Merge", "merge:movie"]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#create) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-nodes) a User node.
-      """
+        @publish(event: "MergeUserFavorites")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#create) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-nodes) a User node."
       CreateUser(userId: ID, name: String, extensionScalar: String): User
         @hasScope(scopes: ["User: Create", "create:user"])
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#update) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) a User node.
-      """
+        @publish(event: "CreateUser")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#update) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) a User node."
       UpdateUser(userId: ID!, name: String, extensionScalar: String): User
         @hasScope(scopes: ["User: Update", "update:user"])
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#delete) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-single-node) a User node.
-      """
+        @publish(event: "UpdateUser")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#delete) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-single-node) a User node."
       DeleteUser(userId: ID!): User
         @hasScope(scopes: ["User: Delete", "delete:user"])
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#merge) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-node-derived) a User node.
-      """
+        @publish(event: "DeleteUser")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#merge) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-node-derived) a User node."
       MergeUser(userId: ID!, name: String, extensionScalar: String): User
         @hasScope(scopes: ["User: Merge", "merge:user"])
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#create) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-nodes) a Book node.
-      """
+        @publish(event: "MergeUser")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#create) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-nodes) a Book node."
       CreateBook(genre: BookGenre): Book
         @hasScope(scopes: ["Book: Create", "create:book"])
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#delete) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-single-node) a Book node.
-      """
+        @publish(event: "CreateBook")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#delete) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-single-node) a Book node."
       DeleteBook(genre: BookGenre!): Book
         @hasScope(scopes: ["Book: Delete", "delete:book"])
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#merge) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-node-derived) a Book node.
-      """
+        @publish(event: "DeleteBook")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#merge) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-node-derived) a Book node."
       MergeBook(genre: BookGenre!): Book
         @hasScope(scopes: ["Book: Merge", "merge:book"])
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#create) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-nodes) a NodeTypeMutationTest node.
-      """
+        @publish(event: "MergeBook")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#create) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-nodes) a NodeTypeMutationTest node."
       CreateNodeTypeMutationTest(
         NodeTypeMutationTest: BookGenre
       ): NodeTypeMutationTest
@@ -9079,9 +8955,8 @@ test.cb('Test augmented schema', t => {
             "create:nodetypemutationtest"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#delete) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-single-node) a NodeTypeMutationTest node.
-      """
+        @publish(event: "CreateNodeTypeMutationTest")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#delete) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-single-node) a NodeTypeMutationTest node."
       DeleteNodeTypeMutationTest(
         NodeTypeMutationTest: BookGenre!
       ): NodeTypeMutationTest
@@ -9091,33 +8966,28 @@ test.cb('Test augmented schema', t => {
             "delete:nodetypemutationtest"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#merge) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-node-derived) a NodeTypeMutationTest node.
-      """
+        @publish(event: "DeleteNodeTypeMutationTest")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#merge) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-node-derived) a NodeTypeMutationTest node."
       MergeNodeTypeMutationTest(
         NodeTypeMutationTest: BookGenre!
       ): NodeTypeMutationTest
         @hasScope(
           scopes: ["NodeTypeMutationTest: Merge", "merge:nodetypemutationtest"]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#create) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-nodes) a currentUserId node.
-      """
+        @publish(event: "MergeNodeTypeMutationTest")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#create) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-nodes) a currentUserId node."
       CreatecurrentUserId(userId: String): currentUserId
         @hasScope(scopes: ["currentUserId: Create", "create:currentuserid"])
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#delete) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-single-node) a currentUserId node.
-      """
+        @publish(event: "CreatecurrentUserId")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#delete) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-single-node) a currentUserId node."
       DeletecurrentUserId(userId: String!): currentUserId
         @hasScope(scopes: ["currentUserId: Delete", "delete:currentuserid"])
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#merge) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-node-derived) a currentUserId node.
-      """
+        @publish(event: "DeletecurrentUserId")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#merge) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-node-derived) a currentUserId node."
       MergecurrentUserId(userId: String!): currentUserId
         @hasScope(scopes: ["currentUserId: Merge", "merge:currentuserid"])
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the TEMPORAL relationship.
-      """
+        @publish(event: "MergecurrentUserId")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the TEMPORAL relationship."
       AddTemporalNodeTemporalNodes(
         from: _TemporalNodeInput!
         to: _TemporalNodeInput!
@@ -9135,9 +9005,8 @@ test.cb('Test augmented schema', t => {
             "create:temporalnode"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the TEMPORAL relationship.
-      """
+        @publish(event: "AddTemporalNodeTemporalNodes")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the TEMPORAL relationship."
       RemoveTemporalNodeTemporalNodes(
         from: _TemporalNodeInput!
         to: _TemporalNodeInput!
@@ -9155,9 +9024,8 @@ test.cb('Test augmented schema', t => {
             "delete:temporalnode"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the TEMPORAL relationship.
-      """
+        @publish(event: "RemoveTemporalNodeTemporalNodes")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the TEMPORAL relationship."
       MergeTemporalNodeTemporalNodes(
         from: _TemporalNodeInput!
         to: _TemporalNodeInput!
@@ -9175,9 +9043,8 @@ test.cb('Test augmented schema', t => {
             "merge:temporalnode"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#create) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-nodes) a TemporalNode node.
-      """
+        @publish(event: "MergeTemporalNodeTemporalNodes")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#create) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-nodes) a TemporalNode node."
       CreateTemporalNode(
         datetime: _Neo4jDateTimeInput
         name: String
@@ -9188,9 +9055,8 @@ test.cb('Test augmented schema', t => {
         localdatetimes: [_Neo4jLocalDateTimeInput]
       ): TemporalNode
         @hasScope(scopes: ["TemporalNode: Create", "create:temporalnode"])
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#update) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) a TemporalNode node.
-      """
+        @publish(event: "CreateTemporalNode")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#update) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) a TemporalNode node."
       UpdateTemporalNode(
         datetime: _Neo4jDateTimeInput
         name: String!
@@ -9201,14 +9067,12 @@ test.cb('Test augmented schema', t => {
         localdatetimes: [_Neo4jLocalDateTimeInput]
       ): TemporalNode
         @hasScope(scopes: ["TemporalNode: Update", "update:temporalnode"])
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#delete) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-single-node) a TemporalNode node.
-      """
+        @publish(event: "UpdateTemporalNode")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#delete) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-single-node) a TemporalNode node."
       DeleteTemporalNode(name: String!): TemporalNode
         @hasScope(scopes: ["TemporalNode: Delete", "delete:temporalnode"])
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#merge) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-node-derived) a TemporalNode node.
-      """
+        @publish(event: "DeleteTemporalNode")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#merge) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-node-derived) a TemporalNode node."
       MergeTemporalNode(
         datetime: _Neo4jDateTimeInput
         name: String!
@@ -9219,9 +9083,8 @@ test.cb('Test augmented schema', t => {
         localdatetimes: [_Neo4jLocalDateTimeInput]
       ): TemporalNode
         @hasScope(scopes: ["TemporalNode: Merge", "merge:temporalnode"])
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the SPATIAL relationship.
-      """
+        @publish(event: "MergeTemporalNode")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the SPATIAL relationship."
       AddSpatialNodeSpatialNodes(
         from: _SpatialNodeInput!
         to: _SpatialNodeInput!
@@ -9239,9 +9102,8 @@ test.cb('Test augmented schema', t => {
             "create:spatialnode"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the SPATIAL relationship.
-      """
+        @publish(event: "AddSpatialNodeSpatialNodes")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the SPATIAL relationship."
       RemoveSpatialNodeSpatialNodes(
         from: _SpatialNodeInput!
         to: _SpatialNodeInput!
@@ -9259,9 +9121,8 @@ test.cb('Test augmented schema', t => {
             "delete:spatialnode"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the SPATIAL relationship.
-      """
+        @publish(event: "RemoveSpatialNodeSpatialNodes")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the SPATIAL relationship."
       MergeSpatialNodeSpatialNodes(
         from: _SpatialNodeInput!
         to: _SpatialNodeInput!
@@ -9279,29 +9140,24 @@ test.cb('Test augmented schema', t => {
             "merge:spatialnode"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#create) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-nodes) a SpatialNode node.
-      """
+        @publish(event: "MergeSpatialNodeSpatialNodes")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#create) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-nodes) a SpatialNode node."
       CreateSpatialNode(id: ID, point: _Neo4jPointInput): SpatialNode
         @hasScope(scopes: ["SpatialNode: Create", "create:spatialnode"])
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#update) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) a SpatialNode node.
-      """
+        @publish(event: "CreateSpatialNode")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#update) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) a SpatialNode node."
       UpdateSpatialNode(id: ID!, point: _Neo4jPointInput): SpatialNode
         @hasScope(scopes: ["SpatialNode: Update", "update:spatialnode"])
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#delete) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-single-node) a SpatialNode node.
-      """
+        @publish(event: "UpdateSpatialNode")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#delete) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-single-node) a SpatialNode node."
       DeleteSpatialNode(id: ID!): SpatialNode
         @hasScope(scopes: ["SpatialNode: Delete", "delete:spatialnode"])
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#merge) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-node-derived) a SpatialNode node.
-      """
+        @publish(event: "DeleteSpatialNode")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#merge) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-node-derived) a SpatialNode node."
       MergeSpatialNode(id: ID!, point: _Neo4jPointInput): SpatialNode
         @hasScope(scopes: ["SpatialNode: Merge", "merge:spatialnode"])
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the FILMED_IN relationship.
-      """
+        @publish(event: "MergeSpatialNode")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the FILMED_IN relationship."
       AddCasedTypeState(
         from: _CasedTypeInput!
         to: _StateInput!
@@ -9315,9 +9171,8 @@ test.cb('Test augmented schema', t => {
             "create:state"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the FILMED_IN relationship.
-      """
+        @publish(event: "AddCasedTypeState")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the FILMED_IN relationship."
       RemoveCasedTypeState(
         from: _CasedTypeInput!
         to: _StateInput!
@@ -9331,9 +9186,8 @@ test.cb('Test augmented schema', t => {
             "delete:state"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the FILMED_IN relationship.
-      """
+        @publish(event: "RemoveCasedTypeState")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the FILMED_IN relationship."
       MergeCasedTypeState(
         from: _CasedTypeInput!
         to: _StateInput!
@@ -9347,24 +9201,20 @@ test.cb('Test augmented schema', t => {
             "merge:state"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#create) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-nodes) a CasedType node.
-      """
+        @publish(event: "MergeCasedTypeState")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#create) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-nodes) a CasedType node."
       CreateCasedType(name: String): CasedType
         @hasScope(scopes: ["CasedType: Create", "create:casedtype"])
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#delete) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-single-node) a CasedType node.
-      """
+        @publish(event: "CreateCasedType")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#delete) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-single-node) a CasedType node."
       DeleteCasedType(name: String!): CasedType
         @hasScope(scopes: ["CasedType: Delete", "delete:casedtype"])
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#merge) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-node-derived) a CasedType node.
-      """
+        @publish(event: "DeleteCasedType")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#merge) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-node-derived) a CasedType node."
       MergeCasedType(name: String!): CasedType
         @hasScope(scopes: ["CasedType: Merge", "merge:casedtype"])
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the cameras relationship.
-      """
+        @publish(event: "MergeCasedType")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the cameras relationship."
       AddCameraOperators(
         from: _PersonInput!
         to: _CameraInput!
@@ -9378,9 +9228,8 @@ test.cb('Test augmented schema', t => {
             "create:camera"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the cameras relationship.
-      """
+        @publish(event: "AddCameraOperators")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the cameras relationship."
       RemoveCameraOperators(
         from: _PersonInput!
         to: _CameraInput!
@@ -9394,9 +9243,8 @@ test.cb('Test augmented schema', t => {
             "delete:camera"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the cameras relationship.
-      """
+        @publish(event: "RemoveCameraOperators")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the cameras relationship."
       MergeCameraOperators(
         from: _PersonInput!
         to: _CameraInput!
@@ -9410,9 +9258,8 @@ test.cb('Test augmented schema', t => {
             "merge:camera"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the REFLEXIVE_INTERFACE_RELATIONSHIP relationship.
-      """
+        @publish(event: "MergeCameraOperators")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the REFLEXIVE_INTERFACE_RELATIONSHIP relationship."
       AddCameraReflexiveInterfaceRelationship(
         from: _CameraInput!
         to: _CameraInput!
@@ -9430,9 +9277,8 @@ test.cb('Test augmented schema', t => {
             "create:camera"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the REFLEXIVE_INTERFACE_RELATIONSHIP relationship.
-      """
+        @publish(event: "AddCameraReflexiveInterfaceRelationship")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the REFLEXIVE_INTERFACE_RELATIONSHIP relationship."
       RemoveCameraReflexiveInterfaceRelationship(
         from: _CameraInput!
         to: _CameraInput!
@@ -9450,9 +9296,8 @@ test.cb('Test augmented schema', t => {
             "delete:camera"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the REFLEXIVE_INTERFACE_RELATIONSHIP relationship.
-      """
+        @publish(event: "RemoveCameraReflexiveInterfaceRelationship")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the REFLEXIVE_INTERFACE_RELATIONSHIP relationship."
       MergeCameraReflexiveInterfaceRelationship(
         from: _CameraInput!
         to: _CameraInput!
@@ -9470,9 +9315,8 @@ test.cb('Test augmented schema', t => {
             "merge:camera"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the cameras relationship.
-      """
+        @publish(event: "MergeCameraReflexiveInterfaceRelationship")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the cameras relationship."
       AddOldCameraOperators(
         from: _PersonInput!
         to: _OldCameraInput!
@@ -9486,9 +9330,8 @@ test.cb('Test augmented schema', t => {
             "create:oldcamera"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the cameras relationship.
-      """
+        @publish(event: "AddOldCameraOperators")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the cameras relationship."
       RemoveOldCameraOperators(
         from: _PersonInput!
         to: _OldCameraInput!
@@ -9502,9 +9345,8 @@ test.cb('Test augmented schema', t => {
             "delete:oldcamera"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the cameras relationship.
-      """
+        @publish(event: "RemoveOldCameraOperators")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the cameras relationship."
       MergeOldCameraOperators(
         from: _PersonInput!
         to: _OldCameraInput!
@@ -9518,9 +9360,8 @@ test.cb('Test augmented schema', t => {
             "merge:oldcamera"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the REFLEXIVE_INTERFACE_RELATIONSHIP relationship.
-      """
+        @publish(event: "MergeOldCameraOperators")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the REFLEXIVE_INTERFACE_RELATIONSHIP relationship."
       AddOldCameraReflexiveInterfaceRelationship(
         from: _OldCameraInput!
         to: _CameraInput!
@@ -9538,9 +9379,8 @@ test.cb('Test augmented schema', t => {
             "create:camera"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the REFLEXIVE_INTERFACE_RELATIONSHIP relationship.
-      """
+        @publish(event: "AddOldCameraReflexiveInterfaceRelationship")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the REFLEXIVE_INTERFACE_RELATIONSHIP relationship."
       RemoveOldCameraReflexiveInterfaceRelationship(
         from: _OldCameraInput!
         to: _CameraInput!
@@ -9558,9 +9398,8 @@ test.cb('Test augmented schema', t => {
             "delete:camera"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the REFLEXIVE_INTERFACE_RELATIONSHIP relationship.
-      """
+        @publish(event: "RemoveOldCameraReflexiveInterfaceRelationship")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the REFLEXIVE_INTERFACE_RELATIONSHIP relationship."
       MergeOldCameraReflexiveInterfaceRelationship(
         from: _OldCameraInput!
         to: _CameraInput!
@@ -9578,44 +9417,42 @@ test.cb('Test augmented schema', t => {
             "merge:camera"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#create) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-nodes) a OldCamera node.
-      """
+        @publish(event: "MergeOldCameraReflexiveInterfaceRelationship")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#create) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-nodes) a OldCamera node."
       CreateOldCamera(
         type: String
         id: ID
         make: String
         weight: Int
         smell: String
-      ): OldCamera @hasScope(scopes: ["OldCamera: Create", "create:oldcamera"])
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#update) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) a OldCamera node.
-      """
+      ): OldCamera
+        @hasScope(scopes: ["OldCamera: Create", "create:oldcamera"])
+        @publish(event: "CreateOldCamera")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#update) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) a OldCamera node."
       UpdateOldCamera(
         type: String
         id: ID!
         make: String
         weight: Int
         smell: String
-      ): OldCamera @hasScope(scopes: ["OldCamera: Update", "update:oldcamera"])
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#delete) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-single-node) a OldCamera node.
-      """
+      ): OldCamera
+        @hasScope(scopes: ["OldCamera: Update", "update:oldcamera"])
+        @publish(event: "UpdateOldCamera")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#delete) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-single-node) a OldCamera node."
       DeleteOldCamera(id: ID!): OldCamera
         @hasScope(scopes: ["OldCamera: Delete", "delete:oldcamera"])
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#merge) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-node-derived) a OldCamera node.
-      """
+        @publish(event: "DeleteOldCamera")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#merge) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-node-derived) a OldCamera node."
       MergeOldCamera(
         type: String
         id: ID!
         make: String
         weight: Int
         smell: String
-      ): OldCamera @hasScope(scopes: ["OldCamera: Merge", "merge:oldcamera"])
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the cameras relationship.
-      """
+      ): OldCamera
+        @hasScope(scopes: ["OldCamera: Merge", "merge:oldcamera"])
+        @publish(event: "MergeOldCamera")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the cameras relationship."
       AddNewCameraOperators(
         from: _PersonInput!
         to: _NewCameraInput!
@@ -9629,9 +9466,8 @@ test.cb('Test augmented schema', t => {
             "create:newcamera"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the cameras relationship.
-      """
+        @publish(event: "AddNewCameraOperators")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the cameras relationship."
       RemoveNewCameraOperators(
         from: _PersonInput!
         to: _NewCameraInput!
@@ -9645,9 +9481,8 @@ test.cb('Test augmented schema', t => {
             "delete:newcamera"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the cameras relationship.
-      """
+        @publish(event: "RemoveNewCameraOperators")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the cameras relationship."
       MergeNewCameraOperators(
         from: _PersonInput!
         to: _NewCameraInput!
@@ -9661,9 +9496,8 @@ test.cb('Test augmented schema', t => {
             "merge:newcamera"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the REFLEXIVE_INTERFACE_RELATIONSHIP relationship.
-      """
+        @publish(event: "MergeNewCameraOperators")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the REFLEXIVE_INTERFACE_RELATIONSHIP relationship."
       AddNewCameraReflexiveInterfaceRelationship(
         from: _NewCameraInput!
         to: _CameraInput!
@@ -9681,9 +9515,8 @@ test.cb('Test augmented schema', t => {
             "create:camera"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the REFLEXIVE_INTERFACE_RELATIONSHIP relationship.
-      """
+        @publish(event: "AddNewCameraReflexiveInterfaceRelationship")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the REFLEXIVE_INTERFACE_RELATIONSHIP relationship."
       RemoveNewCameraReflexiveInterfaceRelationship(
         from: _NewCameraInput!
         to: _CameraInput!
@@ -9701,9 +9534,8 @@ test.cb('Test augmented schema', t => {
             "delete:camera"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the REFLEXIVE_INTERFACE_RELATIONSHIP relationship.
-      """
+        @publish(event: "RemoveNewCameraReflexiveInterfaceRelationship")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the REFLEXIVE_INTERFACE_RELATIONSHIP relationship."
       MergeNewCameraReflexiveInterfaceRelationship(
         from: _NewCameraInput!
         to: _CameraInput!
@@ -9721,44 +9553,42 @@ test.cb('Test augmented schema', t => {
             "merge:camera"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#create) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-nodes) a NewCamera node.
-      """
+        @publish(event: "MergeNewCameraReflexiveInterfaceRelationship")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#create) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-nodes) a NewCamera node."
       CreateNewCamera(
         type: String
         id: ID
         make: String
         weight: Int
         features: [String]
-      ): NewCamera @hasScope(scopes: ["NewCamera: Create", "create:newcamera"])
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#update) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) a NewCamera node.
-      """
+      ): NewCamera
+        @hasScope(scopes: ["NewCamera: Create", "create:newcamera"])
+        @publish(event: "CreateNewCamera")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#update) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) a NewCamera node."
       UpdateNewCamera(
         type: String
         id: ID!
         make: String
         weight: Int
         features: [String]
-      ): NewCamera @hasScope(scopes: ["NewCamera: Update", "update:newcamera"])
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#delete) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-single-node) a NewCamera node.
-      """
+      ): NewCamera
+        @hasScope(scopes: ["NewCamera: Update", "update:newcamera"])
+        @publish(event: "UpdateNewCamera")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#delete) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-single-node) a NewCamera node."
       DeleteNewCamera(id: ID!): NewCamera
         @hasScope(scopes: ["NewCamera: Delete", "delete:newcamera"])
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#merge) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-node-derived) a NewCamera node.
-      """
+        @publish(event: "DeleteNewCamera")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#merge) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-node-derived) a NewCamera node."
       MergeNewCamera(
         type: String
         id: ID!
         make: String
         weight: Int
         features: [String]
-      ): NewCamera @hasScope(scopes: ["NewCamera: Merge", "merge:newcamera"])
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the favoriteCamera relationship.
-      """
+      ): NewCamera
+        @hasScope(scopes: ["NewCamera: Merge", "merge:newcamera"])
+        @publish(event: "MergeNewCamera")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the favoriteCamera relationship."
       AddCameraManFavoriteCamera(
         from: _CameraManInput!
         to: _CameraInput!
@@ -9776,9 +9606,8 @@ test.cb('Test augmented schema', t => {
             "create:camera"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the favoriteCamera relationship.
-      """
+        @publish(event: "AddCameraManFavoriteCamera")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the favoriteCamera relationship."
       RemoveCameraManFavoriteCamera(
         from: _CameraManInput!
         to: _CameraInput!
@@ -9796,9 +9625,8 @@ test.cb('Test augmented schema', t => {
             "delete:camera"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the favoriteCamera relationship.
-      """
+        @publish(event: "RemoveCameraManFavoriteCamera")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the favoriteCamera relationship."
       MergeCameraManFavoriteCamera(
         from: _CameraManInput!
         to: _CameraInput!
@@ -9816,9 +9644,8 @@ test.cb('Test augmented schema', t => {
             "merge:camera"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the cameras relationship.
-      """
+        @publish(event: "MergeCameraManFavoriteCamera")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the cameras relationship."
       AddCameraManCameras(
         from: _CameraManInput!
         to: _CameraInput!
@@ -9832,9 +9659,8 @@ test.cb('Test augmented schema', t => {
             "create:camera"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the cameras relationship.
-      """
+        @publish(event: "AddCameraManCameras")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the cameras relationship."
       RemoveCameraManCameras(
         from: _CameraManInput!
         to: _CameraInput!
@@ -9848,9 +9674,8 @@ test.cb('Test augmented schema', t => {
             "delete:camera"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the cameras relationship.
-      """
+        @publish(event: "RemoveCameraManCameras")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the cameras relationship."
       MergeCameraManCameras(
         from: _CameraManInput!
         to: _CameraInput!
@@ -9864,9 +9689,8 @@ test.cb('Test augmented schema', t => {
             "merge:camera"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the cameraBuddy relationship.
-      """
+        @publish(event: "MergeCameraManCameras")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the cameraBuddy relationship."
       AddCameraManCameraBuddy(
         from: _CameraManInput!
         to: _PersonInput!
@@ -9884,9 +9708,8 @@ test.cb('Test augmented schema', t => {
             "create:person"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the cameraBuddy relationship.
-      """
+        @publish(event: "AddCameraManCameraBuddy")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the cameraBuddy relationship."
       RemoveCameraManCameraBuddy(
         from: _CameraManInput!
         to: _PersonInput!
@@ -9904,9 +9727,8 @@ test.cb('Test augmented schema', t => {
             "delete:person"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the cameraBuddy relationship.
-      """
+        @publish(event: "RemoveCameraManCameraBuddy")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the cameraBuddy relationship."
       MergeCameraManCameraBuddy(
         from: _CameraManInput!
         to: _PersonInput!
@@ -9924,9 +9746,8 @@ test.cb('Test augmented schema', t => {
             "merge:person"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the INTERFACED_RELATIONSHIP_TYPE relationship.
-      """
+        @publish(event: "MergeCameraManCameraBuddy")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the INTERFACED_RELATIONSHIP_TYPE relationship."
       AddCameraManInterfacedRelationshipType(
         from: _PersonInput!
         to: _GenreInput!
@@ -9945,9 +9766,8 @@ test.cb('Test augmented schema', t => {
             "create:genre"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the INTERFACED_RELATIONSHIP_TYPE relationship.
-      """
+        @publish(event: "AddCameraManInterfacedRelationshipType")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the INTERFACED_RELATIONSHIP_TYPE relationship."
       RemoveCameraManInterfacedRelationshipType(
         from: _PersonInput!
         to: _GenreInput!
@@ -9965,9 +9785,8 @@ test.cb('Test augmented schema', t => {
             "delete:genre"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the INTERFACED_RELATIONSHIP_TYPE relationship.
-      """
+        @publish(event: "RemoveCameraManInterfacedRelationshipType")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the INTERFACED_RELATIONSHIP_TYPE relationship."
       UpdateCameraManInterfacedRelationshipType(
         from: _PersonInput!
         to: _GenreInput!
@@ -9986,9 +9805,8 @@ test.cb('Test augmented schema', t => {
             "update:genre"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the INTERFACED_RELATIONSHIP_TYPE relationship.
-      """
+        @publish(event: "UpdateCameraManInterfacedRelationshipType")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the INTERFACED_RELATIONSHIP_TYPE relationship."
       MergeCameraManInterfacedRelationshipType(
         from: _PersonInput!
         to: _GenreInput!
@@ -10007,9 +9825,8 @@ test.cb('Test augmented schema', t => {
             "merge:genre"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE relationship.
-      """
+        @publish(event: "MergeCameraManInterfacedRelationshipType")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE relationship."
       AddCameraManReflexiveInterfacedRelationshipType(
         from: _PersonInput!
         to: _PersonInput!
@@ -10028,9 +9845,8 @@ test.cb('Test augmented schema', t => {
             "create:person"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE relationship.
-      """
+        @publish(event: "AddCameraManReflexiveInterfacedRelationshipType")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE relationship."
       RemoveCameraManReflexiveInterfacedRelationshipType(
         from: _PersonInput!
         to: _PersonInput!
@@ -10048,9 +9864,8 @@ test.cb('Test augmented schema', t => {
             "delete:person"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE relationship.
-      """
+        @publish(event: "RemoveCameraManReflexiveInterfacedRelationshipType")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE relationship."
       UpdateCameraManReflexiveInterfacedRelationshipType(
         from: _PersonInput!
         to: _PersonInput!
@@ -10069,9 +9884,8 @@ test.cb('Test augmented schema', t => {
             "update:person"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE relationship.
-      """
+        @publish(event: "UpdateCameraManReflexiveInterfacedRelationshipType")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE relationship."
       MergeCameraManReflexiveInterfacedRelationshipType(
         from: _PersonInput!
         to: _PersonInput!
@@ -10090,38 +9904,36 @@ test.cb('Test augmented schema', t => {
             "merge:person"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#create) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-nodes) a CameraMan node.
-      """
+        @publish(event: "MergeCameraManReflexiveInterfacedRelationshipType")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#create) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-nodes) a CameraMan node."
       CreateCameraMan(
         userId: ID
         name: String
         extensionScalar: String
-      ): CameraMan @hasScope(scopes: ["CameraMan: Create", "create:cameraman"])
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#update) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) a CameraMan node.
-      """
+      ): CameraMan
+        @hasScope(scopes: ["CameraMan: Create", "create:cameraman"])
+        @publish(event: "CreateCameraMan")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#update) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) a CameraMan node."
       UpdateCameraMan(
         userId: ID!
         name: String
         extensionScalar: String
-      ): CameraMan @hasScope(scopes: ["CameraMan: Update", "update:cameraman"])
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#delete) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-single-node) a CameraMan node.
-      """
+      ): CameraMan
+        @hasScope(scopes: ["CameraMan: Update", "update:cameraman"])
+        @publish(event: "UpdateCameraMan")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#delete) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-single-node) a CameraMan node."
       DeleteCameraMan(userId: ID!): CameraMan
         @hasScope(scopes: ["CameraMan: Delete", "delete:cameraman"])
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#merge) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-node-derived) a CameraMan node.
-      """
+        @publish(event: "DeleteCameraMan")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#merge) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-node-derived) a CameraMan node."
       MergeCameraMan(
         userId: ID!
         name: String
         extensionScalar: String
-      ): CameraMan @hasScope(scopes: ["CameraMan: Merge", "merge:cameraman"])
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the TEST_RELATION relationship.
-      """
+      ): CameraMan
+        @hasScope(scopes: ["CameraMan: Merge", "merge:cameraman"])
+        @publish(event: "MergeCameraMan")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the TEST_RELATION relationship."
       AddUniqueNodeTestRelation(
         from: _UniqueNodeInput!
         to: _UniqueStringNodeInput!
@@ -10139,9 +9951,8 @@ test.cb('Test augmented schema', t => {
             "create:uniquestringnode"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the TEST_RELATION relationship.
-      """
+        @publish(event: "AddUniqueNodeTestRelation")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the TEST_RELATION relationship."
       RemoveUniqueNodeTestRelation(
         from: _UniqueNodeInput!
         to: _UniqueStringNodeInput!
@@ -10159,9 +9970,8 @@ test.cb('Test augmented schema', t => {
             "delete:uniquestringnode"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the TEST_RELATION relationship.
-      """
+        @publish(event: "RemoveUniqueNodeTestRelation")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the TEST_RELATION relationship."
       MergeUniqueNodeTestRelation(
         from: _UniqueNodeInput!
         to: _UniqueStringNodeInput!
@@ -10179,29 +9989,24 @@ test.cb('Test augmented schema', t => {
             "merge:uniquestringnode"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#create) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-nodes) a UniqueNode node.
-      """
+        @publish(event: "MergeUniqueNodeTestRelation")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#create) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-nodes) a UniqueNode node."
       CreateUniqueNode(string: String, id: ID, anotherId: ID): UniqueNode
         @hasScope(scopes: ["UniqueNode: Create", "create:uniquenode"])
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#update) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) a UniqueNode node.
-      """
+        @publish(event: "CreateUniqueNode")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#update) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) a UniqueNode node."
       UpdateUniqueNode(string: String, id: ID!, anotherId: ID): UniqueNode
         @hasScope(scopes: ["UniqueNode: Update", "update:uniquenode"])
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#delete) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-single-node) a UniqueNode node.
-      """
+        @publish(event: "UpdateUniqueNode")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#delete) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-single-node) a UniqueNode node."
       DeleteUniqueNode(id: ID!): UniqueNode
         @hasScope(scopes: ["UniqueNode: Delete", "delete:uniquenode"])
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#merge) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-node-derived) a UniqueNode node.
-      """
+        @publish(event: "DeleteUniqueNode")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#merge) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-node-derived) a UniqueNode node."
       MergeUniqueNode(string: String, id: ID!, anotherId: ID): UniqueNode
         @hasScope(scopes: ["UniqueNode: Merge", "merge:uniquenode"])
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the TEST_RELATION relationship.
-      """
+        @publish(event: "MergeUniqueNode")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the TEST_RELATION relationship."
       AddUniqueStringNodeTestRelation(
         from: _UniqueNodeInput!
         to: _UniqueStringNodeInput!
@@ -10219,9 +10024,8 @@ test.cb('Test augmented schema', t => {
             "create:uniquestringnode"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the TEST_RELATION relationship.
-      """
+        @publish(event: "AddUniqueStringNodeTestRelation")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the TEST_RELATION relationship."
       RemoveUniqueStringNodeTestRelation(
         from: _UniqueNodeInput!
         to: _UniqueStringNodeInput!
@@ -10239,9 +10043,8 @@ test.cb('Test augmented schema', t => {
             "delete:uniquestringnode"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the TEST_RELATION relationship.
-      """
+        @publish(event: "RemoveUniqueStringNodeTestRelation")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the TEST_RELATION relationship."
       MergeUniqueStringNodeTestRelation(
         from: _UniqueNodeInput!
         to: _UniqueStringNodeInput!
@@ -10259,32 +10062,29 @@ test.cb('Test augmented schema', t => {
             "merge:uniquestringnode"
           ]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#create) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-nodes) a UniqueStringNode node.
-      """
+        @publish(event: "MergeUniqueStringNodeTestRelation")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#create) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-nodes) a UniqueStringNode node."
       CreateUniqueStringNode(id: ID!, uniqueString: String): UniqueStringNode
         @hasScope(
           scopes: ["UniqueStringNode: Create", "create:uniquestringnode"]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#update) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) a UniqueStringNode node.
-      """
+        @publish(event: "CreateUniqueStringNode")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#update) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) a UniqueStringNode node."
       UpdateUniqueStringNode(id: ID, uniqueString: String!): UniqueStringNode
         @hasScope(
           scopes: ["UniqueStringNode: Update", "update:uniquestringnode"]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#delete) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-single-node) a UniqueStringNode node.
-      """
+        @publish(event: "UpdateUniqueStringNode")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#delete) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-single-node) a UniqueStringNode node."
       DeleteUniqueStringNode(uniqueString: String!): UniqueStringNode
         @hasScope(
           scopes: ["UniqueStringNode: Delete", "delete:uniquestringnode"]
         )
-      """
-      [Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#merge) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-node-derived) a UniqueStringNode node.
-      """
+        @publish(event: "DeleteUniqueStringNode")
+      "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#merge) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-node-derived) a UniqueStringNode node."
       MergeUniqueStringNode(id: ID, uniqueString: String!): UniqueStringNode
         @hasScope(scopes: ["UniqueStringNode: Merge", "merge:uniquestringnode"])
+        @publish(event: "MergeUniqueStringNode")
       CustomCamera: Camera
         @cypher(
           statement: "CREATE (newCamera:Camera:NewCamera {id: apoc.create.uuid(), type: 'macro'}) RETURN newCamera"
@@ -10296,6 +10096,389 @@ test.cb('Test augmented schema', t => {
     }
     type SubscriptionC {
       testSubscribe: Boolean
+      AddMovieExtensionNode: _AddMovieExtensionNodePayload
+        @subscribe(mutations: "AddMovieExtensionNode")
+      RemoveMovieExtensionNode: _RemoveMovieExtensionNodePayload
+        @subscribe(mutations: "RemoveMovieExtensionNode")
+      MergeMovieExtensionNode: _MergeMovieExtensionNodePayload
+        @subscribe(mutations: "MergeMovieExtensionNode")
+      AddMovieGenres: _AddMovieGenresPayload
+        @subscribe(mutations: "AddMovieGenres")
+      RemoveMovieGenres: _RemoveMovieGenresPayload
+        @subscribe(mutations: "RemoveMovieGenres")
+      MergeMovieGenres: _MergeMovieGenresPayload
+        @subscribe(mutations: "MergeMovieGenres")
+      AddMovieActors: _AddMovieActorsPayload
+        @subscribe(mutations: "AddMovieActors")
+      RemoveMovieActors: _RemoveMovieActorsPayload
+        @subscribe(mutations: "RemoveMovieActors")
+      MergeMovieActors: _MergeMovieActorsPayload
+        @subscribe(mutations: "MergeMovieActors")
+      AddMovieFilmedIn: _AddMovieFilmedInPayload
+        @subscribe(mutations: "AddMovieFilmedIn")
+      RemoveMovieFilmedIn: _RemoveMovieFilmedInPayload
+        @subscribe(mutations: "RemoveMovieFilmedIn")
+      MergeMovieFilmedIn: _MergeMovieFilmedInPayload
+        @subscribe(mutations: "MergeMovieFilmedIn")
+      AddMovieRatings: _AddMovieRatingsPayload
+        @subscribe(mutations: "AddMovieRatings")
+      RemoveMovieRatings: _RemoveMovieRatingsPayload
+        @subscribe(mutations: "RemoveMovieRatings")
+      UpdateMovieRatings: _UpdateMovieRatingsPayload
+        @subscribe(mutations: "UpdateMovieRatings")
+      MergeMovieRatings: _MergeMovieRatingsPayload
+        @subscribe(mutations: "MergeMovieRatings")
+      AddMovieRatingsNoProps: _AddMovieRatingsNoPropsPayload
+        @subscribe(mutations: "AddMovieRatingsNoProps")
+      RemoveMovieRatingsNoProps: _RemoveMovieRatingsNoPropsPayload
+        @subscribe(mutations: "RemoveMovieRatingsNoProps")
+      MergeMovieRatingsNoProps: _MergeMovieRatingsNoPropsPayload
+        @subscribe(mutations: "MergeMovieRatingsNoProps")
+      AddMovieRatingsCustomFrom: _AddMovieRatingsCustomFromPayload
+        @subscribe(mutations: "AddMovieRatingsCustomFrom")
+      RemoveMovieRatingsCustomFrom: _RemoveMovieRatingsCustomFromPayload
+        @subscribe(mutations: "RemoveMovieRatingsCustomFrom")
+      UpdateMovieRatingsCustomFrom: _UpdateMovieRatingsCustomFromPayload
+        @subscribe(mutations: "UpdateMovieRatingsCustomFrom")
+      MergeMovieRatingsCustomFrom: _MergeMovieRatingsCustomFromPayload
+        @subscribe(mutations: "MergeMovieRatingsCustomFrom")
+      AddMovieRatingsCustomTo: _AddMovieRatingsCustomToPayload
+        @subscribe(mutations: "AddMovieRatingsCustomTo")
+      RemoveMovieRatingsCustomTo: _RemoveMovieRatingsCustomToPayload
+        @subscribe(mutations: "RemoveMovieRatingsCustomTo")
+      UpdateMovieRatingsCustomTo: _UpdateMovieRatingsCustomToPayload
+        @subscribe(mutations: "UpdateMovieRatingsCustomTo")
+      MergeMovieRatingsCustomTo: _MergeMovieRatingsCustomToPayload
+        @subscribe(mutations: "MergeMovieRatingsCustomTo")
+      AddMovieRatingsCustomFromTo: _AddMovieRatingsCustomFromToPayload
+        @subscribe(mutations: "AddMovieRatingsCustomFromTo")
+      RemoveMovieRatingsCustomFromTo: _RemoveMovieRatingsCustomFromToPayload
+        @subscribe(mutations: "RemoveMovieRatingsCustomFromTo")
+      UpdateMovieRatingsCustomFromTo: _UpdateMovieRatingsCustomFromToPayload
+        @subscribe(mutations: "UpdateMovieRatingsCustomFromTo")
+      MergeMovieRatingsCustomFromTo: _MergeMovieRatingsCustomFromToPayload
+        @subscribe(mutations: "MergeMovieRatingsCustomFromTo")
+      CreateMovie: Movie @subscribe(mutations: "CreateMovie")
+      UpdateMovie: Movie @subscribe(mutations: "UpdateMovie")
+      DeleteMovie: Movie @subscribe(mutations: "DeleteMovie")
+      MergeMovie: Movie @subscribe(mutations: "MergeMovie")
+      AddGenreMovies: _AddGenreMoviesPayload
+        @subscribe(mutations: "AddGenreMovies")
+      RemoveGenreMovies: _RemoveGenreMoviesPayload
+        @subscribe(mutations: "RemoveGenreMovies")
+      MergeGenreMovies: _MergeGenreMoviesPayload
+        @subscribe(mutations: "MergeGenreMovies")
+      AddGenreInterfacedRelationshipType: _AddGenreInterfacedRelationshipTypePayload
+        @subscribe(mutations: "AddGenreInterfacedRelationshipType")
+      RemoveGenreInterfacedRelationshipType: _RemoveGenreInterfacedRelationshipTypePayload
+        @subscribe(mutations: "RemoveGenreInterfacedRelationshipType")
+      UpdateGenreInterfacedRelationshipType: _UpdateGenreInterfacedRelationshipTypePayload
+        @subscribe(mutations: "UpdateGenreInterfacedRelationshipType")
+      MergeGenreInterfacedRelationshipType: _MergeGenreInterfacedRelationshipTypePayload
+        @subscribe(mutations: "MergeGenreInterfacedRelationshipType")
+      CreateGenre: Genre @subscribe(mutations: "CreateGenre")
+      DeleteGenre: Genre @subscribe(mutations: "DeleteGenre")
+      MergeGenre: Genre @subscribe(mutations: "MergeGenre")
+      CreateState: State @subscribe(mutations: "CreateState")
+      UpdateState: State @subscribe(mutations: "UpdateState")
+      DeleteState: State @subscribe(mutations: "DeleteState")
+      MergeState: State @subscribe(mutations: "MergeState")
+      AddPersonInterfacedRelationshipType: _AddPersonInterfacedRelationshipTypePayload
+        @subscribe(mutations: "AddPersonInterfacedRelationshipType")
+      RemovePersonInterfacedRelationshipType: _RemovePersonInterfacedRelationshipTypePayload
+        @subscribe(mutations: "RemovePersonInterfacedRelationshipType")
+      UpdatePersonInterfacedRelationshipType: _UpdatePersonInterfacedRelationshipTypePayload
+        @subscribe(mutations: "UpdatePersonInterfacedRelationshipType")
+      MergePersonInterfacedRelationshipType: _MergePersonInterfacedRelationshipTypePayload
+        @subscribe(mutations: "MergePersonInterfacedRelationshipType")
+      AddPersonReflexiveInterfacedRelationshipType: _AddPersonReflexiveInterfacedRelationshipTypePayload
+        @subscribe(mutations: "AddPersonReflexiveInterfacedRelationshipType")
+      RemovePersonReflexiveInterfacedRelationshipType: _RemovePersonReflexiveInterfacedRelationshipTypePayload
+        @subscribe(mutations: "RemovePersonReflexiveInterfacedRelationshipType")
+      UpdatePersonReflexiveInterfacedRelationshipType: _UpdatePersonReflexiveInterfacedRelationshipTypePayload
+        @subscribe(mutations: "UpdatePersonReflexiveInterfacedRelationshipType")
+      MergePersonReflexiveInterfacedRelationshipType: _MergePersonReflexiveInterfacedRelationshipTypePayload
+        @subscribe(mutations: "MergePersonReflexiveInterfacedRelationshipType")
+      AddActorMovies: _AddActorMoviesPayload
+        @subscribe(mutations: "AddActorMovies")
+      RemoveActorMovies: _RemoveActorMoviesPayload
+        @subscribe(mutations: "RemoveActorMovies")
+      MergeActorMovies: _MergeActorMoviesPayload
+        @subscribe(mutations: "MergeActorMovies")
+      AddActorKnows: _AddActorKnowsPayload
+        @subscribe(mutations: "AddActorKnows")
+      RemoveActorKnows: _RemoveActorKnowsPayload
+        @subscribe(mutations: "RemoveActorKnows")
+      MergeActorKnows: _MergeActorKnowsPayload
+        @subscribe(mutations: "MergeActorKnows")
+      AddActorInterfacedRelationshipType: _AddActorInterfacedRelationshipTypePayload
+        @subscribe(mutations: "AddActorInterfacedRelationshipType")
+      RemoveActorInterfacedRelationshipType: _RemoveActorInterfacedRelationshipTypePayload
+        @subscribe(mutations: "RemoveActorInterfacedRelationshipType")
+      UpdateActorInterfacedRelationshipType: _UpdateActorInterfacedRelationshipTypePayload
+        @subscribe(mutations: "UpdateActorInterfacedRelationshipType")
+      MergeActorInterfacedRelationshipType: _MergeActorInterfacedRelationshipTypePayload
+        @subscribe(mutations: "MergeActorInterfacedRelationshipType")
+      AddActorReflexiveInterfacedRelationshipType: _AddActorReflexiveInterfacedRelationshipTypePayload
+        @subscribe(mutations: "AddActorReflexiveInterfacedRelationshipType")
+      RemoveActorReflexiveInterfacedRelationshipType: _RemoveActorReflexiveInterfacedRelationshipTypePayload
+        @subscribe(mutations: "RemoveActorReflexiveInterfacedRelationshipType")
+      UpdateActorReflexiveInterfacedRelationshipType: _UpdateActorReflexiveInterfacedRelationshipTypePayload
+        @subscribe(mutations: "UpdateActorReflexiveInterfacedRelationshipType")
+      MergeActorReflexiveInterfacedRelationshipType: _MergeActorReflexiveInterfacedRelationshipTypePayload
+        @subscribe(mutations: "MergeActorReflexiveInterfacedRelationshipType")
+      CreateActor: Actor @subscribe(mutations: "CreateActor")
+      UpdateActor: Actor @subscribe(mutations: "UpdateActor")
+      DeleteActor: Actor @subscribe(mutations: "DeleteActor")
+      MergeActor: Actor @subscribe(mutations: "MergeActor")
+      AddUserInterfacedRelationshipType: _AddUserInterfacedRelationshipTypePayload
+        @subscribe(mutations: "AddUserInterfacedRelationshipType")
+      RemoveUserInterfacedRelationshipType: _RemoveUserInterfacedRelationshipTypePayload
+        @subscribe(mutations: "RemoveUserInterfacedRelationshipType")
+      UpdateUserInterfacedRelationshipType: _UpdateUserInterfacedRelationshipTypePayload
+        @subscribe(mutations: "UpdateUserInterfacedRelationshipType")
+      MergeUserInterfacedRelationshipType: _MergeUserInterfacedRelationshipTypePayload
+        @subscribe(mutations: "MergeUserInterfacedRelationshipType")
+      AddUserReflexiveInterfacedRelationshipType: _AddUserReflexiveInterfacedRelationshipTypePayload
+        @subscribe(mutations: "AddUserReflexiveInterfacedRelationshipType")
+      RemoveUserReflexiveInterfacedRelationshipType: _RemoveUserReflexiveInterfacedRelationshipTypePayload
+        @subscribe(mutations: "RemoveUserReflexiveInterfacedRelationshipType")
+      UpdateUserReflexiveInterfacedRelationshipType: _UpdateUserReflexiveInterfacedRelationshipTypePayload
+        @subscribe(mutations: "UpdateUserReflexiveInterfacedRelationshipType")
+      MergeUserReflexiveInterfacedRelationshipType: _MergeUserReflexiveInterfacedRelationshipTypePayload
+        @subscribe(mutations: "MergeUserReflexiveInterfacedRelationshipType")
+      AddUserRated: _AddUserRatedPayload @subscribe(mutations: "AddUserRated")
+      RemoveUserRated: _RemoveUserRatedPayload
+        @subscribe(mutations: "RemoveUserRated")
+      UpdateUserRated: _UpdateUserRatedPayload
+        @subscribe(mutations: "UpdateUserRated")
+      MergeUserRated: _MergeUserRatedPayload
+        @subscribe(mutations: "MergeUserRated")
+      AddUserRatedCustomFrom: _AddUserRatedCustomFromPayload
+        @subscribe(mutations: "AddUserRatedCustomFrom")
+      RemoveUserRatedCustomFrom: _RemoveUserRatedCustomFromPayload
+        @subscribe(mutations: "RemoveUserRatedCustomFrom")
+      UpdateUserRatedCustomFrom: _UpdateUserRatedCustomFromPayload
+        @subscribe(mutations: "UpdateUserRatedCustomFrom")
+      MergeUserRatedCustomFrom: _MergeUserRatedCustomFromPayload
+        @subscribe(mutations: "MergeUserRatedCustomFrom")
+      AddUserRatedCustomTo: _AddUserRatedCustomToPayload
+        @subscribe(mutations: "AddUserRatedCustomTo")
+      RemoveUserRatedCustomTo: _RemoveUserRatedCustomToPayload
+        @subscribe(mutations: "RemoveUserRatedCustomTo")
+      UpdateUserRatedCustomTo: _UpdateUserRatedCustomToPayload
+        @subscribe(mutations: "UpdateUserRatedCustomTo")
+      MergeUserRatedCustomTo: _MergeUserRatedCustomToPayload
+        @subscribe(mutations: "MergeUserRatedCustomTo")
+      AddUserRatedCustomFromTo: _AddUserRatedCustomFromToPayload
+        @subscribe(mutations: "AddUserRatedCustomFromTo")
+      RemoveUserRatedCustomFromTo: _RemoveUserRatedCustomFromToPayload
+        @subscribe(mutations: "RemoveUserRatedCustomFromTo")
+      UpdateUserRatedCustomFromTo: _UpdateUserRatedCustomFromToPayload
+        @subscribe(mutations: "UpdateUserRatedCustomFromTo")
+      MergeUserRatedCustomFromTo: _MergeUserRatedCustomFromToPayload
+        @subscribe(mutations: "MergeUserRatedCustomFromTo")
+      AddUserFriends: _AddUserFriendsPayload
+        @subscribe(mutations: "AddUserFriends")
+      RemoveUserFriends: _RemoveUserFriendsPayload
+        @subscribe(mutations: "RemoveUserFriends")
+      UpdateUserFriends: _UpdateUserFriendsPayload
+        @subscribe(mutations: "UpdateUserFriends")
+      MergeUserFriends: _MergeUserFriendsPayload
+        @subscribe(mutations: "MergeUserFriends")
+      AddUserFriendsCustomFrom: _AddUserFriendsCustomFromPayload
+        @subscribe(mutations: "AddUserFriendsCustomFrom")
+      RemoveUserFriendsCustomFrom: _RemoveUserFriendsCustomFromPayload
+        @subscribe(mutations: "RemoveUserFriendsCustomFrom")
+      UpdateUserFriendsCustomFrom: _UpdateUserFriendsCustomFromPayload
+        @subscribe(mutations: "UpdateUserFriendsCustomFrom")
+      MergeUserFriendsCustomFrom: _MergeUserFriendsCustomFromPayload
+        @subscribe(mutations: "MergeUserFriendsCustomFrom")
+      AddUserFriendsCustomTo: _AddUserFriendsCustomToPayload
+        @subscribe(mutations: "AddUserFriendsCustomTo")
+      RemoveUserFriendsCustomTo: _RemoveUserFriendsCustomToPayload
+        @subscribe(mutations: "RemoveUserFriendsCustomTo")
+      UpdateUserFriendsCustomTo: _UpdateUserFriendsCustomToPayload
+        @subscribe(mutations: "UpdateUserFriendsCustomTo")
+      MergeUserFriendsCustomTo: _MergeUserFriendsCustomToPayload
+        @subscribe(mutations: "MergeUserFriendsCustomTo")
+      AddUserFriendsCustomFromTo: _AddUserFriendsCustomFromToPayload
+        @subscribe(mutations: "AddUserFriendsCustomFromTo")
+      RemoveUserFriendsCustomFromTo: _RemoveUserFriendsCustomFromToPayload
+        @subscribe(mutations: "RemoveUserFriendsCustomFromTo")
+      UpdateUserFriendsCustomFromTo: _UpdateUserFriendsCustomFromToPayload
+        @subscribe(mutations: "UpdateUserFriendsCustomFromTo")
+      MergeUserFriendsCustomFromTo: _MergeUserFriendsCustomFromToPayload
+        @subscribe(mutations: "MergeUserFriendsCustomFromTo")
+      AddUserFavorites: _AddUserFavoritesPayload
+        @subscribe(mutations: "AddUserFavorites")
+      RemoveUserFavorites: _RemoveUserFavoritesPayload
+        @subscribe(mutations: "RemoveUserFavorites")
+      MergeUserFavorites: _MergeUserFavoritesPayload
+        @subscribe(mutations: "MergeUserFavorites")
+      CreateUser: User @subscribe(mutations: "CreateUser")
+      UpdateUser: User @subscribe(mutations: "UpdateUser")
+      DeleteUser: User @subscribe(mutations: "DeleteUser")
+      MergeUser: User @subscribe(mutations: "MergeUser")
+      CreateBook: Book @subscribe(mutations: "CreateBook")
+      DeleteBook: Book @subscribe(mutations: "DeleteBook")
+      MergeBook: Book @subscribe(mutations: "MergeBook")
+      CreateNodeTypeMutationTest: NodeTypeMutationTest
+        @subscribe(mutations: "CreateNodeTypeMutationTest")
+      DeleteNodeTypeMutationTest: NodeTypeMutationTest
+        @subscribe(mutations: "DeleteNodeTypeMutationTest")
+      MergeNodeTypeMutationTest: NodeTypeMutationTest
+        @subscribe(mutations: "MergeNodeTypeMutationTest")
+      CreatecurrentUserId: currentUserId
+        @subscribe(mutations: "CreatecurrentUserId")
+      DeletecurrentUserId: currentUserId
+        @subscribe(mutations: "DeletecurrentUserId")
+      MergecurrentUserId: currentUserId
+        @subscribe(mutations: "MergecurrentUserId")
+      AddTemporalNodeTemporalNodes: _AddTemporalNodeTemporalNodesPayload
+        @subscribe(mutations: "AddTemporalNodeTemporalNodes")
+      RemoveTemporalNodeTemporalNodes: _RemoveTemporalNodeTemporalNodesPayload
+        @subscribe(mutations: "RemoveTemporalNodeTemporalNodes")
+      MergeTemporalNodeTemporalNodes: _MergeTemporalNodeTemporalNodesPayload
+        @subscribe(mutations: "MergeTemporalNodeTemporalNodes")
+      CreateTemporalNode: TemporalNode
+        @subscribe(mutations: "CreateTemporalNode")
+      UpdateTemporalNode: TemporalNode
+        @subscribe(mutations: "UpdateTemporalNode")
+      DeleteTemporalNode: TemporalNode
+        @subscribe(mutations: "DeleteTemporalNode")
+      MergeTemporalNode: TemporalNode @subscribe(mutations: "MergeTemporalNode")
+      AddSpatialNodeSpatialNodes: _AddSpatialNodeSpatialNodesPayload
+        @subscribe(mutations: "AddSpatialNodeSpatialNodes")
+      RemoveSpatialNodeSpatialNodes: _RemoveSpatialNodeSpatialNodesPayload
+        @subscribe(mutations: "RemoveSpatialNodeSpatialNodes")
+      MergeSpatialNodeSpatialNodes: _MergeSpatialNodeSpatialNodesPayload
+        @subscribe(mutations: "MergeSpatialNodeSpatialNodes")
+      CreateSpatialNode: SpatialNode @subscribe(mutations: "CreateSpatialNode")
+      UpdateSpatialNode: SpatialNode @subscribe(mutations: "UpdateSpatialNode")
+      DeleteSpatialNode: SpatialNode @subscribe(mutations: "DeleteSpatialNode")
+      MergeSpatialNode: SpatialNode @subscribe(mutations: "MergeSpatialNode")
+      AddCasedTypeState: _AddCasedTypeStatePayload
+        @subscribe(mutations: "AddCasedTypeState")
+      RemoveCasedTypeState: _RemoveCasedTypeStatePayload
+        @subscribe(mutations: "RemoveCasedTypeState")
+      MergeCasedTypeState: _MergeCasedTypeStatePayload
+        @subscribe(mutations: "MergeCasedTypeState")
+      CreateCasedType: CasedType @subscribe(mutations: "CreateCasedType")
+      DeleteCasedType: CasedType @subscribe(mutations: "DeleteCasedType")
+      MergeCasedType: CasedType @subscribe(mutations: "MergeCasedType")
+      AddCameraOperators: _AddCameraOperatorsPayload
+        @subscribe(mutations: "AddCameraOperators")
+      RemoveCameraOperators: _RemoveCameraOperatorsPayload
+        @subscribe(mutations: "RemoveCameraOperators")
+      MergeCameraOperators: _MergeCameraOperatorsPayload
+        @subscribe(mutations: "MergeCameraOperators")
+      AddCameraReflexiveInterfaceRelationship: _AddCameraReflexiveInterfaceRelationshipPayload
+        @subscribe(mutations: "AddCameraReflexiveInterfaceRelationship")
+      RemoveCameraReflexiveInterfaceRelationship: _RemoveCameraReflexiveInterfaceRelationshipPayload
+        @subscribe(mutations: "RemoveCameraReflexiveInterfaceRelationship")
+      MergeCameraReflexiveInterfaceRelationship: _MergeCameraReflexiveInterfaceRelationshipPayload
+        @subscribe(mutations: "MergeCameraReflexiveInterfaceRelationship")
+      AddOldCameraOperators: _AddOldCameraOperatorsPayload
+        @subscribe(mutations: "AddOldCameraOperators")
+      RemoveOldCameraOperators: _RemoveOldCameraOperatorsPayload
+        @subscribe(mutations: "RemoveOldCameraOperators")
+      MergeOldCameraOperators: _MergeOldCameraOperatorsPayload
+        @subscribe(mutations: "MergeOldCameraOperators")
+      AddOldCameraReflexiveInterfaceRelationship: _AddOldCameraReflexiveInterfaceRelationshipPayload
+        @subscribe(mutations: "AddOldCameraReflexiveInterfaceRelationship")
+      RemoveOldCameraReflexiveInterfaceRelationship: _RemoveOldCameraReflexiveInterfaceRelationshipPayload
+        @subscribe(mutations: "RemoveOldCameraReflexiveInterfaceRelationship")
+      MergeOldCameraReflexiveInterfaceRelationship: _MergeOldCameraReflexiveInterfaceRelationshipPayload
+        @subscribe(mutations: "MergeOldCameraReflexiveInterfaceRelationship")
+      CreateOldCamera: OldCamera @subscribe(mutations: "CreateOldCamera")
+      UpdateOldCamera: OldCamera @subscribe(mutations: "UpdateOldCamera")
+      DeleteOldCamera: OldCamera @subscribe(mutations: "DeleteOldCamera")
+      MergeOldCamera: OldCamera @subscribe(mutations: "MergeOldCamera")
+      AddNewCameraOperators: _AddNewCameraOperatorsPayload
+        @subscribe(mutations: "AddNewCameraOperators")
+      RemoveNewCameraOperators: _RemoveNewCameraOperatorsPayload
+        @subscribe(mutations: "RemoveNewCameraOperators")
+      MergeNewCameraOperators: _MergeNewCameraOperatorsPayload
+        @subscribe(mutations: "MergeNewCameraOperators")
+      AddNewCameraReflexiveInterfaceRelationship: _AddNewCameraReflexiveInterfaceRelationshipPayload
+        @subscribe(mutations: "AddNewCameraReflexiveInterfaceRelationship")
+      RemoveNewCameraReflexiveInterfaceRelationship: _RemoveNewCameraReflexiveInterfaceRelationshipPayload
+        @subscribe(mutations: "RemoveNewCameraReflexiveInterfaceRelationship")
+      MergeNewCameraReflexiveInterfaceRelationship: _MergeNewCameraReflexiveInterfaceRelationshipPayload
+        @subscribe(mutations: "MergeNewCameraReflexiveInterfaceRelationship")
+      CreateNewCamera: NewCamera @subscribe(mutations: "CreateNewCamera")
+      UpdateNewCamera: NewCamera @subscribe(mutations: "UpdateNewCamera")
+      DeleteNewCamera: NewCamera @subscribe(mutations: "DeleteNewCamera")
+      MergeNewCamera: NewCamera @subscribe(mutations: "MergeNewCamera")
+      AddCameraManFavoriteCamera: _AddCameraManFavoriteCameraPayload
+        @subscribe(mutations: "AddCameraManFavoriteCamera")
+      RemoveCameraManFavoriteCamera: _RemoveCameraManFavoriteCameraPayload
+        @subscribe(mutations: "RemoveCameraManFavoriteCamera")
+      MergeCameraManFavoriteCamera: _MergeCameraManFavoriteCameraPayload
+        @subscribe(mutations: "MergeCameraManFavoriteCamera")
+      AddCameraManCameras: _AddCameraManCamerasPayload
+        @subscribe(mutations: "AddCameraManCameras")
+      RemoveCameraManCameras: _RemoveCameraManCamerasPayload
+        @subscribe(mutations: "RemoveCameraManCameras")
+      MergeCameraManCameras: _MergeCameraManCamerasPayload
+        @subscribe(mutations: "MergeCameraManCameras")
+      AddCameraManCameraBuddy: _AddCameraManCameraBuddyPayload
+        @subscribe(mutations: "AddCameraManCameraBuddy")
+      RemoveCameraManCameraBuddy: _RemoveCameraManCameraBuddyPayload
+        @subscribe(mutations: "RemoveCameraManCameraBuddy")
+      MergeCameraManCameraBuddy: _MergeCameraManCameraBuddyPayload
+        @subscribe(mutations: "MergeCameraManCameraBuddy")
+      AddCameraManInterfacedRelationshipType: _AddCameraManInterfacedRelationshipTypePayload
+        @subscribe(mutations: "AddCameraManInterfacedRelationshipType")
+      RemoveCameraManInterfacedRelationshipType: _RemoveCameraManInterfacedRelationshipTypePayload
+        @subscribe(mutations: "RemoveCameraManInterfacedRelationshipType")
+      UpdateCameraManInterfacedRelationshipType: _UpdateCameraManInterfacedRelationshipTypePayload
+        @subscribe(mutations: "UpdateCameraManInterfacedRelationshipType")
+      MergeCameraManInterfacedRelationshipType: _MergeCameraManInterfacedRelationshipTypePayload
+        @subscribe(mutations: "MergeCameraManInterfacedRelationshipType")
+      AddCameraManReflexiveInterfacedRelationshipType: _AddCameraManReflexiveInterfacedRelationshipTypePayload
+        @subscribe(mutations: "AddCameraManReflexiveInterfacedRelationshipType")
+      RemoveCameraManReflexiveInterfacedRelationshipType: _RemoveCameraManReflexiveInterfacedRelationshipTypePayload
+        @subscribe(
+          mutations: "RemoveCameraManReflexiveInterfacedRelationshipType"
+        )
+      UpdateCameraManReflexiveInterfacedRelationshipType: _UpdateCameraManReflexiveInterfacedRelationshipTypePayload
+        @subscribe(
+          mutations: "UpdateCameraManReflexiveInterfacedRelationshipType"
+        )
+      MergeCameraManReflexiveInterfacedRelationshipType: _MergeCameraManReflexiveInterfacedRelationshipTypePayload
+        @subscribe(
+          mutations: "MergeCameraManReflexiveInterfacedRelationshipType"
+        )
+      CreateCameraMan: CameraMan @subscribe(mutations: "CreateCameraMan")
+      UpdateCameraMan: CameraMan @subscribe(mutations: "UpdateCameraMan")
+      DeleteCameraMan: CameraMan @subscribe(mutations: "DeleteCameraMan")
+      MergeCameraMan: CameraMan @subscribe(mutations: "MergeCameraMan")
+      AddUniqueNodeTestRelation: _AddUniqueNodeTestRelationPayload
+        @subscribe(mutations: "AddUniqueNodeTestRelation")
+      RemoveUniqueNodeTestRelation: _RemoveUniqueNodeTestRelationPayload
+        @subscribe(mutations: "RemoveUniqueNodeTestRelation")
+      MergeUniqueNodeTestRelation: _MergeUniqueNodeTestRelationPayload
+        @subscribe(mutations: "MergeUniqueNodeTestRelation")
+      CreateUniqueNode: UniqueNode @subscribe(mutations: "CreateUniqueNode")
+      UpdateUniqueNode: UniqueNode @subscribe(mutations: "UpdateUniqueNode")
+      DeleteUniqueNode: UniqueNode @subscribe(mutations: "DeleteUniqueNode")
+      MergeUniqueNode: UniqueNode @subscribe(mutations: "MergeUniqueNode")
+      AddUniqueStringNodeTestRelation: _AddUniqueStringNodeTestRelationPayload
+        @subscribe(mutations: "AddUniqueStringNodeTestRelation")
+      RemoveUniqueStringNodeTestRelation: _RemoveUniqueStringNodeTestRelationPayload
+        @subscribe(mutations: "RemoveUniqueStringNodeTestRelation")
+      MergeUniqueStringNodeTestRelation: _MergeUniqueStringNodeTestRelationPayload
+        @subscribe(mutations: "MergeUniqueStringNodeTestRelation")
+      CreateUniqueStringNode: UniqueStringNode
+        @subscribe(mutations: "CreateUniqueStringNode")
+      UpdateUniqueStringNode: UniqueStringNode
+        @subscribe(mutations: "UpdateUniqueStringNode")
+      DeleteUniqueStringNode: UniqueStringNode
+        @subscribe(mutations: "DeleteUniqueStringNode")
+      MergeUniqueStringNode: UniqueStringNode
+        @subscribe(mutations: "MergeUniqueStringNode")
     }
     """
     Directive definition
@@ -10322,6 +10505,8 @@ test.cb('Test augmented schema', t => {
     directive @unique on FIELD_DEFINITION
     directive @index on FIELD_DEFINITION
     directive @search(index: String) on FIELD_DEFINITION
+    directive @subscribe(mutations: [String]) on FIELD_DEFINITION
+    directive @publish(event: String) on FIELD_DEFINITION
     directive @isAuthenticated on OBJECT | FIELD_DEFINITION
     directive @hasRole(roles: [Role]) on OBJECT | FIELD_DEFINITION
     directive @hasScope(scopes: [String]) on OBJECT | FIELD_DEFINITION
@@ -10330,7 +10515,6 @@ test.cb('Test augmented schema', t => {
   const expectedSchema = buildSchema(expectedTypeDefs);
   const differences = diff(sourceSchema, expectedSchema);
   if (differences.length) {
-    console.log('differences: ', differences);
     t.fail();
   } else {
     t.pass();
