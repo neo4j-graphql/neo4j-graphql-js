@@ -442,7 +442,7 @@ const directiveDefinitionBuilderMap = {
       name: DirectiveDefinition.SUBSCRIBE,
       args: [
         {
-          name: 'mutations',
+          name: 'to',
           type: {
             name: GraphQLString,
             wrappers: {
@@ -565,7 +565,7 @@ export const augmentDirectives = ({
     });
   } else if (isSubscriptionType) {
     const eventArg = buildDirectiveArgument({
-      name: buildName({ name: 'mutations' }),
+      name: buildName({ name: 'to' }),
       value: {
         kind: Kind.STRING,
         value: mutationName
@@ -574,7 +574,7 @@ export const augmentDirectives = ({
     directives = augmentDirectiveArguments({
       directives,
       directiveName: DirectiveDefinition.SUBSCRIBE,
-      argName: 'mutations',
+      argName: 'to',
       argument: eventArg
     });
   }
@@ -621,7 +621,7 @@ export const buildSubscribeDirective = ({ name = '', config = {} }) => {
     name: buildName({ name: DirectiveDefinition.SUBSCRIBE }),
     args: [
       buildDirectiveArgument({
-        name: buildName({ name: 'mutations' }),
+        name: buildName({ name: 'to' }),
         value: {
           kind: Kind.STRING,
           value: name
