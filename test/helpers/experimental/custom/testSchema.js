@@ -28,7 +28,7 @@ export const testSchema = gql`
     User: [User!]
     Movie: [Movie!]
   }
-  
+
   type Mutation {
     CreateUser(data: UserCreate!): User
     MergeUser(where: UserWhere!, data: UserCreate!): User
@@ -41,7 +41,7 @@ export const testSchema = gql`
     `})
     MergeCustoms(data: [CustomData], nestedBatch: [CustomBatchMutation], sideEffects: CustomSideEffects, otherData: CustomSideEffects, computed: CustomComputed): [Custom] @cypher(statement: """
       UnwiNd   $data aS  
-               CustomData
+              CustomData
       MERGE (custom: Custom {
         id: CustomData.id
       })
@@ -49,7 +49,7 @@ export const testSchema = gql`
     """)
     MergeCustomsWithoutReturnOrWithClause(data: [CustomData], nestedBatch: [CustomBatchMutation], sideEffects: CustomSideEffects, otherData: CustomSideEffects, computed: CustomComputed): [Custom] @cypher(statement: """
       UnwiNd   $data aS  
-               CustomData
+              CustomData
       MERGE (custom: Custom {
         id: CustomData.id
       })
@@ -95,11 +95,24 @@ export const testSchema = gql`
   input XNodeInput {
     id: ID!
     xy: YNodeMutation
+    y: [YNodeInput] @cypher(${cypher`
+      MERGE (yNode: YNode {
+        id: YNodeInput.id
+      })
+      MERGE (xNode)-[:XY]->(yNode)
+      WITH yNode
+    `})
   }
 
   input YNodeInput {
     id: ID!
     yz: ZNodeMutation
+    z: [ZNodeInput] @cypher(${cypher`
+      MERGE (zNode: ZNode {
+        id: ZNodeInput.id
+      })
+      MERGE (yNode)-[:YZ]->(zNode)
+    `})
   }
 
   input ZNodeInput {
@@ -140,10 +153,24 @@ export const testSchema = gql`
   input CustomCreate {
     id: ID!
     nested: CustomSideEffects
+    merge: [CustomCreate] @cypher(${cypher`
+      MERGE (subCustom: Custom {
+        id: CustomCreate.id
+      })
+      MERGE (custom)-[:RELATED]->(subCustom)
+      WITH subCustom AS custom
+    `})
   }
 
   input CustomComputed {
     computed: ComputeComputed
+    merge: [CustomCreate] @cypher(${cypher`
+      MERGE (subCustom: Custom {
+        id: CustomCreate.id
+      })
+      MERGE (custom)-[:RELATED]->(subCustom)
+      WITH subCustom AS custom
+    `})
   }
 
   input CustomComputedInput {
@@ -153,6 +180,9 @@ export const testSchema = gql`
   input ComputeComputed {
     multiply: CustomComputedInput @cypher(${cypher`
       SET custom.computed = CustomComputedInput.value * 10
+    `})
+    add: CustomComputedInput @cypher(${cypher`
+      SET custom.computed = CustomComputedInput.value + 10
     `})
   }
 
