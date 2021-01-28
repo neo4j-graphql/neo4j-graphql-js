@@ -123,7 +123,7 @@ export const augmentResolvers = ({
         });
         if (subscriptionDirective) {
           const eventArg = subscriptionDirective.arguments.find(
-            arg => arg.name.value === 'mutations'
+            arg => arg.name.value === 'to'
           );
           if (eventArg) {
             const valueKind = eventArg.value.kind;
@@ -235,33 +235,36 @@ const publishMutationEvents = (resolveInfo, data, abstractPublisher) => {
     abstractPublisher(eventName, subscription.name.value, data);
   }
 };
-
 const getEventSubscription = resolveInfo => {
   const mutationName = getResponseKeyFromInfo(resolveInfo);
   const schema = resolveInfo.schema;
   const mutationType = schema.getMutationType();
   const mutationField = mutationType.getFields()[mutationName];
-  const directives = mutationField.astNode.directives;
-  const subscriptionType = schema.getSubscriptionType();
   let subscription = undefined;
-  const publishDirective = directives.find(
-    directive => directive.name.value === DirectiveDefinition.PUBLISH
-  );
   let eventName = '';
-  if (publishDirective) {
-    eventName = getDirectiveArgument({
-      directive: publishDirective,
-      name: 'event'
-    });
-    // has a publish directive but no event argument,
-    // so the default event name is the mutation field name
-    if (!eventName) eventName = mutationName;
-    if (subscriptionType) {
-      const fields = Object.values(subscriptionType.getFields()).map(
-        type => type.astNode
-      );
-      // get the subscription field @subscribe'd to this event
-      subscription = getMutationSubscription({ fields, eventName });
+  // FIXME getResponseKeyFromInfo doesn't work for aliased
+  // muttion fields
+  if (mutationField) {
+    const directives = mutationField.astNode.directives;
+    const subscriptionType = schema.getSubscriptionType();
+    const publishDirective = directives.find(
+      directive => directive.name.value === DirectiveDefinition.PUBLISH
+    );
+    if (publishDirective) {
+      eventName = getDirectiveArgument({
+        directive: publishDirective,
+        name: 'event'
+      });
+      // has a publish directive but no event argument,
+      // so the default event name is the mutation field name
+      if (!eventName) eventName = mutationName;
+      if (subscriptionType) {
+        const fields = Object.values(subscriptionType.getFields()).map(
+          type => type.astNode
+        );
+        // get the subscription field @subscribe'd to this event
+        subscription = getMutationSubscription({ fields, eventName });
+      }
     }
   }
   return [eventName, subscription];
@@ -271,9 +274,8 @@ export const getMutationSubscription = ({ fields = [], eventName }) => {
   return Object.values(fields).find(field => {
     return field.directives.some(directive => {
       if (directive.name.value === DirectiveDefinition.SUBSCRIBE) {
-        // let subscribedEvent = getDirectiveArgument({ directive, name: "to" });
         const eventArg = directive.arguments.find(
-          arg => arg.name.value === 'mutations'
+          arg => arg.name.value === 'to'
         );
         const valueKind = eventArg.value.kind;
         const eventNames = [];
