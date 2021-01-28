@@ -3,11 +3,27 @@ import { ApolloServer } from 'apollo-server-express';
 import express from 'express';
 import bodyParser from 'body-parser';
 import neo4j from 'neo4j-driver';
-import { typeDefs, resolvers } from './movies-schema';
+import { typeDefs, resolvers, pubsub } from './movies-schema';
+import http from 'http';
+
+const PORT = 3000;
 
 const schema = makeAugmentedSchema({
   typeDefs,
-  resolvers
+  resolvers,
+  config: {
+    subscription: {
+      publish: (event, key, data) => {
+        pubsub.publish(event, {
+          [key]: data
+        });
+      },
+      subscribe: events => {
+        return pubsub.asyncIterator(events);
+      },
+      exclude: ['User']
+    }
+  }
 });
 
 const driver = neo4j.driver(
@@ -35,10 +51,26 @@ const server = new ApolloServer({
   context: ({ req }) => {
     return {
       driver,
-      req
+      req,
+      cypherParams: {
+        userId: 'user-id'
+      }
     };
   }
 });
 
 server.applyMiddleware({ app, path: '/' });
-app.listen(3000, '0.0.0.0');
+
+// See: https://www.apollographql.com/docs/apollo-server/data/subscriptions/#subscriptions-with-additional-middleware
+const httpServer = http.createServer(app);
+server.installSubscriptionHandlers(httpServer);
+
+// ⚠️ Pay attention to the fact that we are calling `listen` on the http server variable, and not on `app`.
+httpServer.listen(PORT, '0.0.0.0', () => {
+  console.log(
+    `🚀 Server ready at http://localhost:${PORT}${server.graphqlPath}`
+  );
+  console.log(
+    `🚀 Subscriptions ready at ws://localhost:${PORT}${server.subscriptionsPath}`
+  );
+});
