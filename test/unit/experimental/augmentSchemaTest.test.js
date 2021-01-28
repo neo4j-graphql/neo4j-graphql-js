@@ -741,7 +741,7 @@ test.cb('Test augmented schema', t => {
 
     directive @search(index: String) on FIELD_DEFINITION
 
-    directive @subscribe(mutations: [String]) on FIELD_DEFINITION
+    directive @subscribe(to: [String]) on FIELD_DEFINITION
 
     directive @publish(event: String) on FIELD_DEFINITION
 
@@ -1014,40 +1014,33 @@ test.cb('Test augmented schema', t => {
     }
 
     type Subscription {
-      AddUserLiked: _AddUserLikedPayload @subscribe(mutations: "AddUserLiked")
-      RemoveUserLiked: _RemoveUserLikedPayload
-        @subscribe(mutations: "RemoveUserLiked")
-      MergeUserLiked: _MergeUserLikedPayload
-        @subscribe(mutations: "MergeUserLiked")
-      AddUserRated: _AddUserRatedPayload @subscribe(mutations: "AddUserRated")
-      RemoveUserRated: _RemoveUserRatedPayload
-        @subscribe(mutations: "RemoveUserRated")
-      UpdateUserRated: _UpdateUserRatedPayload
-        @subscribe(mutations: "UpdateUserRated")
-      MergeUserRated: _MergeUserRatedPayload
-        @subscribe(mutations: "MergeUserRated")
-      CreateUser: User @subscribe(mutations: "CreateUser")
-      UpdateUser: User @subscribe(mutations: "UpdateUser")
-      DeleteUser: User @subscribe(mutations: "DeleteUser")
-      MergeUser: User @subscribe(mutations: "MergeUser")
-      AddMovieLikedBy: _AddMovieLikedByPayload
-        @subscribe(mutations: "AddMovieLikedBy")
+      AddUserLiked: _AddUserLikedPayload @subscribe(to: "AddUserLiked")
+      RemoveUserLiked: _RemoveUserLikedPayload @subscribe(to: "RemoveUserLiked")
+      MergeUserLiked: _MergeUserLikedPayload @subscribe(to: "MergeUserLiked")
+      AddUserRated: _AddUserRatedPayload @subscribe(to: "AddUserRated")
+      RemoveUserRated: _RemoveUserRatedPayload @subscribe(to: "RemoveUserRated")
+      UpdateUserRated: _UpdateUserRatedPayload @subscribe(to: "UpdateUserRated")
+      MergeUserRated: _MergeUserRatedPayload @subscribe(to: "MergeUserRated")
+      CreateUser: User @subscribe(to: "CreateUser")
+      UpdateUser: User @subscribe(to: "UpdateUser")
+      DeleteUser: User @subscribe(to: "DeleteUser")
+      MergeUser: User @subscribe(to: "MergeUser")
+      AddMovieLikedBy: _AddMovieLikedByPayload @subscribe(to: "AddMovieLikedBy")
       RemoveMovieLikedBy: _RemoveMovieLikedByPayload
-        @subscribe(mutations: "RemoveMovieLikedBy")
+        @subscribe(to: "RemoveMovieLikedBy")
       MergeMovieLikedBy: _MergeMovieLikedByPayload
-        @subscribe(mutations: "MergeMovieLikedBy")
-      AddMovieRatedBy: _AddMovieRatedByPayload
-        @subscribe(mutations: "AddMovieRatedBy")
+        @subscribe(to: "MergeMovieLikedBy")
+      AddMovieRatedBy: _AddMovieRatedByPayload @subscribe(to: "AddMovieRatedBy")
       RemoveMovieRatedBy: _RemoveMovieRatedByPayload
-        @subscribe(mutations: "RemoveMovieRatedBy")
+        @subscribe(to: "RemoveMovieRatedBy")
       UpdateMovieRatedBy: _UpdateMovieRatedByPayload
-        @subscribe(mutations: "UpdateMovieRatedBy")
+        @subscribe(to: "UpdateMovieRatedBy")
       MergeMovieRatedBy: _MergeMovieRatedByPayload
-        @subscribe(mutations: "MergeMovieRatedBy")
-      CreateMovie: Movie @subscribe(mutations: "CreateMovie")
-      UpdateMovie: Movie @subscribe(mutations: "UpdateMovie")
-      DeleteMovie: Movie @subscribe(mutations: "DeleteMovie")
-      MergeMovie: Movie @subscribe(mutations: "MergeMovie")
+        @subscribe(to: "MergeMovieRatedBy")
+      CreateMovie: Movie @subscribe(to: "CreateMovie")
+      UpdateMovie: Movie @subscribe(to: "UpdateMovie")
+      DeleteMovie: Movie @subscribe(to: "DeleteMovie")
+      MergeMovie: Movie @subscribe(to: "MergeMovie")
     }
 
     schema {
