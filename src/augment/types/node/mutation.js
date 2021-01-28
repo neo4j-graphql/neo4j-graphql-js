@@ -9,6 +9,7 @@ import {
 import {
   DirectiveDefinition,
   buildAuthScopeDirective,
+  buildPublishDirective,
   useAuthDirective,
   isCypherField
 } from '../../directives';
@@ -308,6 +309,7 @@ const buildNodeMutationField = ({
         name: typeName
       }),
       directives: buildNodeMutationDirectives({
+        mutationName,
         mutationAction,
         typeName,
         config
@@ -354,7 +356,12 @@ const buildNodeMutationField = ({
  * Builds the AST definitions for directive instances used by
  * generated node Mutation fields of NodeMutation names
  */
-const buildNodeMutationDirectives = ({ mutationAction, typeName, config }) => {
+const buildNodeMutationDirectives = ({
+  mutationName,
+  mutationAction,
+  typeName,
+  config
+}) => {
   const directives = [];
   if (useAuthDirective(config, DirectiveDefinition.HAS_SCOPE)) {
     directives.push(
@@ -365,6 +372,14 @@ const buildNodeMutationDirectives = ({ mutationAction, typeName, config }) => {
             mutation: mutationAction
           }
         ]
+      })
+    );
+  }
+  if (shouldAugmentType(config, 'subscription', typeName)) {
+    directives.push(
+      buildPublishDirective({
+        mutationName,
+        config
       })
     );
   }
