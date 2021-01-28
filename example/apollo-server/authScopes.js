@@ -1,3 +1,4 @@
+import { gql } from 'apollo-server';
 import { makeAugmentedSchema } from '../../src/index';
 import { ApolloServer } from 'apollo-server';
 import neo4j from 'neo4j-driver';
@@ -11,15 +12,15 @@ import neo4j from 'neo4j-driver';
 // JWT_SECRET
 // oqldBPU1yMXcrTwcha1a9PGi9RHlPVzQ
 
-const typeDefs = `
-type User {
+const typeDefs = gql`
+  type User {
     userId: ID!
     name: String
-}
+  }
 
-type Business {
+  type Business {
     name: String
-}
+  }
 `;
 
 const schema = makeAugmentedSchema({

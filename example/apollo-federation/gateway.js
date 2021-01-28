@@ -5,16 +5,16 @@ import { inventorySchema } from './services/inventory';
 import { productsSchema } from './services/products';
 import { reviewsSchema } from './services/reviews';
 import neo4j from 'neo4j-driver';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 // The schema and seed data are based on the Apollo Federation demo
 // See: https://github.com/apollographql/federation-demo
 
 const driver = neo4j.driver(
   process.env.NEO4J_URI || 'bolt://localhost:7687',
-  neo4j.auth.basic(
-    process.env.NEO4J_USER || 'neo4j',
-    process.env.NEO4J_PASSWORD || 'letmein'
-  )
+  neo4j.auth.basic(process.env.NEO4J_USER, process.env.NEO4J_PASSWORD)
 );
 
 // Start Accounts

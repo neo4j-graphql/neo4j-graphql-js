@@ -1,10 +1,10 @@
+import { gql } from 'apollo-server';
 import { makeAugmentedSchema } from '../../src/index';
 import { ApolloServer } from 'apollo-server';
 import neo4j from 'neo4j-driver';
 
-const typeDefs = `
-
-type User {
+const typeDefs = gql`
+  type User {
     name: String!
     wrote: [Review] @relation(name: "WROTE", direction: "OUT")
   }
