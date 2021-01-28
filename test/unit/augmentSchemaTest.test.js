@@ -10097,388 +10097,365 @@ test.cb('Test augmented schema', t => {
     type SubscriptionC {
       testSubscribe: Boolean
       AddMovieExtensionNode: _AddMovieExtensionNodePayload
-        @subscribe(mutations: "AddMovieExtensionNode")
+        @subscribe(to: "AddMovieExtensionNode")
       RemoveMovieExtensionNode: _RemoveMovieExtensionNodePayload
-        @subscribe(mutations: "RemoveMovieExtensionNode")
+        @subscribe(to: "RemoveMovieExtensionNode")
       MergeMovieExtensionNode: _MergeMovieExtensionNodePayload
-        @subscribe(mutations: "MergeMovieExtensionNode")
-      AddMovieGenres: _AddMovieGenresPayload
-        @subscribe(mutations: "AddMovieGenres")
+        @subscribe(to: "MergeMovieExtensionNode")
+      AddMovieGenres: _AddMovieGenresPayload @subscribe(to: "AddMovieGenres")
       RemoveMovieGenres: _RemoveMovieGenresPayload
-        @subscribe(mutations: "RemoveMovieGenres")
+        @subscribe(to: "RemoveMovieGenres")
       MergeMovieGenres: _MergeMovieGenresPayload
-        @subscribe(mutations: "MergeMovieGenres")
-      AddMovieActors: _AddMovieActorsPayload
-        @subscribe(mutations: "AddMovieActors")
+        @subscribe(to: "MergeMovieGenres")
+      AddMovieActors: _AddMovieActorsPayload @subscribe(to: "AddMovieActors")
       RemoveMovieActors: _RemoveMovieActorsPayload
-        @subscribe(mutations: "RemoveMovieActors")
+        @subscribe(to: "RemoveMovieActors")
       MergeMovieActors: _MergeMovieActorsPayload
-        @subscribe(mutations: "MergeMovieActors")
+        @subscribe(to: "MergeMovieActors")
       AddMovieFilmedIn: _AddMovieFilmedInPayload
-        @subscribe(mutations: "AddMovieFilmedIn")
+        @subscribe(to: "AddMovieFilmedIn")
       RemoveMovieFilmedIn: _RemoveMovieFilmedInPayload
-        @subscribe(mutations: "RemoveMovieFilmedIn")
+        @subscribe(to: "RemoveMovieFilmedIn")
       MergeMovieFilmedIn: _MergeMovieFilmedInPayload
-        @subscribe(mutations: "MergeMovieFilmedIn")
-      AddMovieRatings: _AddMovieRatingsPayload
-        @subscribe(mutations: "AddMovieRatings")
+        @subscribe(to: "MergeMovieFilmedIn")
+      AddMovieRatings: _AddMovieRatingsPayload @subscribe(to: "AddMovieRatings")
       RemoveMovieRatings: _RemoveMovieRatingsPayload
-        @subscribe(mutations: "RemoveMovieRatings")
+        @subscribe(to: "RemoveMovieRatings")
       UpdateMovieRatings: _UpdateMovieRatingsPayload
-        @subscribe(mutations: "UpdateMovieRatings")
+        @subscribe(to: "UpdateMovieRatings")
       MergeMovieRatings: _MergeMovieRatingsPayload
-        @subscribe(mutations: "MergeMovieRatings")
+        @subscribe(to: "MergeMovieRatings")
       AddMovieRatingsNoProps: _AddMovieRatingsNoPropsPayload
-        @subscribe(mutations: "AddMovieRatingsNoProps")
+        @subscribe(to: "AddMovieRatingsNoProps")
       RemoveMovieRatingsNoProps: _RemoveMovieRatingsNoPropsPayload
-        @subscribe(mutations: "RemoveMovieRatingsNoProps")
+        @subscribe(to: "RemoveMovieRatingsNoProps")
       MergeMovieRatingsNoProps: _MergeMovieRatingsNoPropsPayload
-        @subscribe(mutations: "MergeMovieRatingsNoProps")
+        @subscribe(to: "MergeMovieRatingsNoProps")
       AddMovieRatingsCustomFrom: _AddMovieRatingsCustomFromPayload
-        @subscribe(mutations: "AddMovieRatingsCustomFrom")
+        @subscribe(to: "AddMovieRatingsCustomFrom")
       RemoveMovieRatingsCustomFrom: _RemoveMovieRatingsCustomFromPayload
-        @subscribe(mutations: "RemoveMovieRatingsCustomFrom")
+        @subscribe(to: "RemoveMovieRatingsCustomFrom")
       UpdateMovieRatingsCustomFrom: _UpdateMovieRatingsCustomFromPayload
-        @subscribe(mutations: "UpdateMovieRatingsCustomFrom")
+        @subscribe(to: "UpdateMovieRatingsCustomFrom")
       MergeMovieRatingsCustomFrom: _MergeMovieRatingsCustomFromPayload
-        @subscribe(mutations: "MergeMovieRatingsCustomFrom")
+        @subscribe(to: "MergeMovieRatingsCustomFrom")
       AddMovieRatingsCustomTo: _AddMovieRatingsCustomToPayload
-        @subscribe(mutations: "AddMovieRatingsCustomTo")
+        @subscribe(to: "AddMovieRatingsCustomTo")
       RemoveMovieRatingsCustomTo: _RemoveMovieRatingsCustomToPayload
-        @subscribe(mutations: "RemoveMovieRatingsCustomTo")
+        @subscribe(to: "RemoveMovieRatingsCustomTo")
       UpdateMovieRatingsCustomTo: _UpdateMovieRatingsCustomToPayload
-        @subscribe(mutations: "UpdateMovieRatingsCustomTo")
+        @subscribe(to: "UpdateMovieRatingsCustomTo")
       MergeMovieRatingsCustomTo: _MergeMovieRatingsCustomToPayload
-        @subscribe(mutations: "MergeMovieRatingsCustomTo")
+        @subscribe(to: "MergeMovieRatingsCustomTo")
       AddMovieRatingsCustomFromTo: _AddMovieRatingsCustomFromToPayload
-        @subscribe(mutations: "AddMovieRatingsCustomFromTo")
+        @subscribe(to: "AddMovieRatingsCustomFromTo")
       RemoveMovieRatingsCustomFromTo: _RemoveMovieRatingsCustomFromToPayload
-        @subscribe(mutations: "RemoveMovieRatingsCustomFromTo")
+        @subscribe(to: "RemoveMovieRatingsCustomFromTo")
       UpdateMovieRatingsCustomFromTo: _UpdateMovieRatingsCustomFromToPayload
-        @subscribe(mutations: "UpdateMovieRatingsCustomFromTo")
+        @subscribe(to: "UpdateMovieRatingsCustomFromTo")
       MergeMovieRatingsCustomFromTo: _MergeMovieRatingsCustomFromToPayload
-        @subscribe(mutations: "MergeMovieRatingsCustomFromTo")
-      CreateMovie: Movie @subscribe(mutations: "CreateMovie")
-      UpdateMovie: Movie @subscribe(mutations: "UpdateMovie")
-      DeleteMovie: Movie @subscribe(mutations: "DeleteMovie")
-      MergeMovie: Movie @subscribe(mutations: "MergeMovie")
-      AddGenreMovies: _AddGenreMoviesPayload
-        @subscribe(mutations: "AddGenreMovies")
+        @subscribe(to: "MergeMovieRatingsCustomFromTo")
+      CreateMovie: Movie @subscribe(to: "CreateMovie")
+      UpdateMovie: Movie @subscribe(to: "UpdateMovie")
+      DeleteMovie: Movie @subscribe(to: "DeleteMovie")
+      MergeMovie: Movie @subscribe(to: "MergeMovie")
+      AddGenreMovies: _AddGenreMoviesPayload @subscribe(to: "AddGenreMovies")
       RemoveGenreMovies: _RemoveGenreMoviesPayload
-        @subscribe(mutations: "RemoveGenreMovies")
+        @subscribe(to: "RemoveGenreMovies")
       MergeGenreMovies: _MergeGenreMoviesPayload
-        @subscribe(mutations: "MergeGenreMovies")
+        @subscribe(to: "MergeGenreMovies")
       AddGenreInterfacedRelationshipType: _AddGenreInterfacedRelationshipTypePayload
-        @subscribe(mutations: "AddGenreInterfacedRelationshipType")
+        @subscribe(to: "AddGenreInterfacedRelationshipType")
       RemoveGenreInterfacedRelationshipType: _RemoveGenreInterfacedRelationshipTypePayload
-        @subscribe(mutations: "RemoveGenreInterfacedRelationshipType")
+        @subscribe(to: "RemoveGenreInterfacedRelationshipType")
       UpdateGenreInterfacedRelationshipType: _UpdateGenreInterfacedRelationshipTypePayload
-        @subscribe(mutations: "UpdateGenreInterfacedRelationshipType")
+        @subscribe(to: "UpdateGenreInterfacedRelationshipType")
       MergeGenreInterfacedRelationshipType: _MergeGenreInterfacedRelationshipTypePayload
-        @subscribe(mutations: "MergeGenreInterfacedRelationshipType")
-      CreateGenre: Genre @subscribe(mutations: "CreateGenre")
-      DeleteGenre: Genre @subscribe(mutations: "DeleteGenre")
-      MergeGenre: Genre @subscribe(mutations: "MergeGenre")
-      CreateState: State @subscribe(mutations: "CreateState")
-      UpdateState: State @subscribe(mutations: "UpdateState")
-      DeleteState: State @subscribe(mutations: "DeleteState")
-      MergeState: State @subscribe(mutations: "MergeState")
+        @subscribe(to: "MergeGenreInterfacedRelationshipType")
+      CreateGenre: Genre @subscribe(to: "CreateGenre")
+      DeleteGenre: Genre @subscribe(to: "DeleteGenre")
+      MergeGenre: Genre @subscribe(to: "MergeGenre")
+      CreateState: State @subscribe(to: "CreateState")
+      UpdateState: State @subscribe(to: "UpdateState")
+      DeleteState: State @subscribe(to: "DeleteState")
+      MergeState: State @subscribe(to: "MergeState")
       AddPersonInterfacedRelationshipType: _AddPersonInterfacedRelationshipTypePayload
-        @subscribe(mutations: "AddPersonInterfacedRelationshipType")
+        @subscribe(to: "AddPersonInterfacedRelationshipType")
       RemovePersonInterfacedRelationshipType: _RemovePersonInterfacedRelationshipTypePayload
-        @subscribe(mutations: "RemovePersonInterfacedRelationshipType")
+        @subscribe(to: "RemovePersonInterfacedRelationshipType")
       UpdatePersonInterfacedRelationshipType: _UpdatePersonInterfacedRelationshipTypePayload
-        @subscribe(mutations: "UpdatePersonInterfacedRelationshipType")
+        @subscribe(to: "UpdatePersonInterfacedRelationshipType")
       MergePersonInterfacedRelationshipType: _MergePersonInterfacedRelationshipTypePayload
-        @subscribe(mutations: "MergePersonInterfacedRelationshipType")
+        @subscribe(to: "MergePersonInterfacedRelationshipType")
       AddPersonReflexiveInterfacedRelationshipType: _AddPersonReflexiveInterfacedRelationshipTypePayload
-        @subscribe(mutations: "AddPersonReflexiveInterfacedRelationshipType")
+        @subscribe(to: "AddPersonReflexiveInterfacedRelationshipType")
       RemovePersonReflexiveInterfacedRelationshipType: _RemovePersonReflexiveInterfacedRelationshipTypePayload
-        @subscribe(mutations: "RemovePersonReflexiveInterfacedRelationshipType")
+        @subscribe(to: "RemovePersonReflexiveInterfacedRelationshipType")
       UpdatePersonReflexiveInterfacedRelationshipType: _UpdatePersonReflexiveInterfacedRelationshipTypePayload
-        @subscribe(mutations: "UpdatePersonReflexiveInterfacedRelationshipType")
+        @subscribe(to: "UpdatePersonReflexiveInterfacedRelationshipType")
       MergePersonReflexiveInterfacedRelationshipType: _MergePersonReflexiveInterfacedRelationshipTypePayload
-        @subscribe(mutations: "MergePersonReflexiveInterfacedRelationshipType")
-      AddActorMovies: _AddActorMoviesPayload
-        @subscribe(mutations: "AddActorMovies")
+        @subscribe(to: "MergePersonReflexiveInterfacedRelationshipType")
+      AddActorMovies: _AddActorMoviesPayload @subscribe(to: "AddActorMovies")
       RemoveActorMovies: _RemoveActorMoviesPayload
-        @subscribe(mutations: "RemoveActorMovies")
+        @subscribe(to: "RemoveActorMovies")
       MergeActorMovies: _MergeActorMoviesPayload
-        @subscribe(mutations: "MergeActorMovies")
-      AddActorKnows: _AddActorKnowsPayload
-        @subscribe(mutations: "AddActorKnows")
+        @subscribe(to: "MergeActorMovies")
+      AddActorKnows: _AddActorKnowsPayload @subscribe(to: "AddActorKnows")
       RemoveActorKnows: _RemoveActorKnowsPayload
-        @subscribe(mutations: "RemoveActorKnows")
-      MergeActorKnows: _MergeActorKnowsPayload
-        @subscribe(mutations: "MergeActorKnows")
+        @subscribe(to: "RemoveActorKnows")
+      MergeActorKnows: _MergeActorKnowsPayload @subscribe(to: "MergeActorKnows")
       AddActorInterfacedRelationshipType: _AddActorInterfacedRelationshipTypePayload
-        @subscribe(mutations: "AddActorInterfacedRelationshipType")
+        @subscribe(to: "AddActorInterfacedRelationshipType")
       RemoveActorInterfacedRelationshipType: _RemoveActorInterfacedRelationshipTypePayload
-        @subscribe(mutations: "RemoveActorInterfacedRelationshipType")
+        @subscribe(to: "RemoveActorInterfacedRelationshipType")
       UpdateActorInterfacedRelationshipType: _UpdateActorInterfacedRelationshipTypePayload
-        @subscribe(mutations: "UpdateActorInterfacedRelationshipType")
+        @subscribe(to: "UpdateActorInterfacedRelationshipType")
       MergeActorInterfacedRelationshipType: _MergeActorInterfacedRelationshipTypePayload
-        @subscribe(mutations: "MergeActorInterfacedRelationshipType")
+        @subscribe(to: "MergeActorInterfacedRelationshipType")
       AddActorReflexiveInterfacedRelationshipType: _AddActorReflexiveInterfacedRelationshipTypePayload
-        @subscribe(mutations: "AddActorReflexiveInterfacedRelationshipType")
+        @subscribe(to: "AddActorReflexiveInterfacedRelationshipType")
       RemoveActorReflexiveInterfacedRelationshipType: _RemoveActorReflexiveInterfacedRelationshipTypePayload
-        @subscribe(mutations: "RemoveActorReflexiveInterfacedRelationshipType")
+        @subscribe(to: "RemoveActorReflexiveInterfacedRelationshipType")
       UpdateActorReflexiveInterfacedRelationshipType: _UpdateActorReflexiveInterfacedRelationshipTypePayload
-        @subscribe(mutations: "UpdateActorReflexiveInterfacedRelationshipType")
+        @subscribe(to: "UpdateActorReflexiveInterfacedRelationshipType")
       MergeActorReflexiveInterfacedRelationshipType: _MergeActorReflexiveInterfacedRelationshipTypePayload
-        @subscribe(mutations: "MergeActorReflexiveInterfacedRelationshipType")
-      CreateActor: Actor @subscribe(mutations: "CreateActor")
-      UpdateActor: Actor @subscribe(mutations: "UpdateActor")
-      DeleteActor: Actor @subscribe(mutations: "DeleteActor")
-      MergeActor: Actor @subscribe(mutations: "MergeActor")
+        @subscribe(to: "MergeActorReflexiveInterfacedRelationshipType")
+      CreateActor: Actor @subscribe(to: "CreateActor")
+      UpdateActor: Actor @subscribe(to: "UpdateActor")
+      DeleteActor: Actor @subscribe(to: "DeleteActor")
+      MergeActor: Actor @subscribe(to: "MergeActor")
       AddUserInterfacedRelationshipType: _AddUserInterfacedRelationshipTypePayload
-        @subscribe(mutations: "AddUserInterfacedRelationshipType")
+        @subscribe(to: "AddUserInterfacedRelationshipType")
       RemoveUserInterfacedRelationshipType: _RemoveUserInterfacedRelationshipTypePayload
-        @subscribe(mutations: "RemoveUserInterfacedRelationshipType")
+        @subscribe(to: "RemoveUserInterfacedRelationshipType")
       UpdateUserInterfacedRelationshipType: _UpdateUserInterfacedRelationshipTypePayload
-        @subscribe(mutations: "UpdateUserInterfacedRelationshipType")
+        @subscribe(to: "UpdateUserInterfacedRelationshipType")
       MergeUserInterfacedRelationshipType: _MergeUserInterfacedRelationshipTypePayload
-        @subscribe(mutations: "MergeUserInterfacedRelationshipType")
+        @subscribe(to: "MergeUserInterfacedRelationshipType")
       AddUserReflexiveInterfacedRelationshipType: _AddUserReflexiveInterfacedRelationshipTypePayload
-        @subscribe(mutations: "AddUserReflexiveInterfacedRelationshipType")
+        @subscribe(to: "AddUserReflexiveInterfacedRelationshipType")
       RemoveUserReflexiveInterfacedRelationshipType: _RemoveUserReflexiveInterfacedRelationshipTypePayload
-        @subscribe(mutations: "RemoveUserReflexiveInterfacedRelationshipType")
+        @subscribe(to: "RemoveUserReflexiveInterfacedRelationshipType")
       UpdateUserReflexiveInterfacedRelationshipType: _UpdateUserReflexiveInterfacedRelationshipTypePayload
-        @subscribe(mutations: "UpdateUserReflexiveInterfacedRelationshipType")
+        @subscribe(to: "UpdateUserReflexiveInterfacedRelationshipType")
       MergeUserReflexiveInterfacedRelationshipType: _MergeUserReflexiveInterfacedRelationshipTypePayload
-        @subscribe(mutations: "MergeUserReflexiveInterfacedRelationshipType")
-      AddUserRated: _AddUserRatedPayload @subscribe(mutations: "AddUserRated")
-      RemoveUserRated: _RemoveUserRatedPayload
-        @subscribe(mutations: "RemoveUserRated")
-      UpdateUserRated: _UpdateUserRatedPayload
-        @subscribe(mutations: "UpdateUserRated")
-      MergeUserRated: _MergeUserRatedPayload
-        @subscribe(mutations: "MergeUserRated")
+        @subscribe(to: "MergeUserReflexiveInterfacedRelationshipType")
+      AddUserRated: _AddUserRatedPayload @subscribe(to: "AddUserRated")
+      RemoveUserRated: _RemoveUserRatedPayload @subscribe(to: "RemoveUserRated")
+      UpdateUserRated: _UpdateUserRatedPayload @subscribe(to: "UpdateUserRated")
+      MergeUserRated: _MergeUserRatedPayload @subscribe(to: "MergeUserRated")
       AddUserRatedCustomFrom: _AddUserRatedCustomFromPayload
-        @subscribe(mutations: "AddUserRatedCustomFrom")
+        @subscribe(to: "AddUserRatedCustomFrom")
       RemoveUserRatedCustomFrom: _RemoveUserRatedCustomFromPayload
-        @subscribe(mutations: "RemoveUserRatedCustomFrom")
+        @subscribe(to: "RemoveUserRatedCustomFrom")
       UpdateUserRatedCustomFrom: _UpdateUserRatedCustomFromPayload
-        @subscribe(mutations: "UpdateUserRatedCustomFrom")
+        @subscribe(to: "UpdateUserRatedCustomFrom")
       MergeUserRatedCustomFrom: _MergeUserRatedCustomFromPayload
-        @subscribe(mutations: "MergeUserRatedCustomFrom")
+        @subscribe(to: "MergeUserRatedCustomFrom")
       AddUserRatedCustomTo: _AddUserRatedCustomToPayload
-        @subscribe(mutations: "AddUserRatedCustomTo")
+        @subscribe(to: "AddUserRatedCustomTo")
       RemoveUserRatedCustomTo: _RemoveUserRatedCustomToPayload
-        @subscribe(mutations: "RemoveUserRatedCustomTo")
+        @subscribe(to: "RemoveUserRatedCustomTo")
       UpdateUserRatedCustomTo: _UpdateUserRatedCustomToPayload
-        @subscribe(mutations: "UpdateUserRatedCustomTo")
+        @subscribe(to: "UpdateUserRatedCustomTo")
       MergeUserRatedCustomTo: _MergeUserRatedCustomToPayload
-        @subscribe(mutations: "MergeUserRatedCustomTo")
+        @subscribe(to: "MergeUserRatedCustomTo")
       AddUserRatedCustomFromTo: _AddUserRatedCustomFromToPayload
-        @subscribe(mutations: "AddUserRatedCustomFromTo")
+        @subscribe(to: "AddUserRatedCustomFromTo")
       RemoveUserRatedCustomFromTo: _RemoveUserRatedCustomFromToPayload
-        @subscribe(mutations: "RemoveUserRatedCustomFromTo")
+        @subscribe(to: "RemoveUserRatedCustomFromTo")
       UpdateUserRatedCustomFromTo: _UpdateUserRatedCustomFromToPayload
-        @subscribe(mutations: "UpdateUserRatedCustomFromTo")
+        @subscribe(to: "UpdateUserRatedCustomFromTo")
       MergeUserRatedCustomFromTo: _MergeUserRatedCustomFromToPayload
-        @subscribe(mutations: "MergeUserRatedCustomFromTo")
-      AddUserFriends: _AddUserFriendsPayload
-        @subscribe(mutations: "AddUserFriends")
+        @subscribe(to: "MergeUserRatedCustomFromTo")
+      AddUserFriends: _AddUserFriendsPayload @subscribe(to: "AddUserFriends")
       RemoveUserFriends: _RemoveUserFriendsPayload
-        @subscribe(mutations: "RemoveUserFriends")
+        @subscribe(to: "RemoveUserFriends")
       UpdateUserFriends: _UpdateUserFriendsPayload
-        @subscribe(mutations: "UpdateUserFriends")
+        @subscribe(to: "UpdateUserFriends")
       MergeUserFriends: _MergeUserFriendsPayload
-        @subscribe(mutations: "MergeUserFriends")
+        @subscribe(to: "MergeUserFriends")
       AddUserFriendsCustomFrom: _AddUserFriendsCustomFromPayload
-        @subscribe(mutations: "AddUserFriendsCustomFrom")
+        @subscribe(to: "AddUserFriendsCustomFrom")
       RemoveUserFriendsCustomFrom: _RemoveUserFriendsCustomFromPayload
-        @subscribe(mutations: "RemoveUserFriendsCustomFrom")
+        @subscribe(to: "RemoveUserFriendsCustomFrom")
       UpdateUserFriendsCustomFrom: _UpdateUserFriendsCustomFromPayload
-        @subscribe(mutations: "UpdateUserFriendsCustomFrom")
+        @subscribe(to: "UpdateUserFriendsCustomFrom")
       MergeUserFriendsCustomFrom: _MergeUserFriendsCustomFromPayload
-        @subscribe(mutations: "MergeUserFriendsCustomFrom")
+        @subscribe(to: "MergeUserFriendsCustomFrom")
       AddUserFriendsCustomTo: _AddUserFriendsCustomToPayload
-        @subscribe(mutations: "AddUserFriendsCustomTo")
+        @subscribe(to: "AddUserFriendsCustomTo")
       RemoveUserFriendsCustomTo: _RemoveUserFriendsCustomToPayload
-        @subscribe(mutations: "RemoveUserFriendsCustomTo")
+        @subscribe(to: "RemoveUserFriendsCustomTo")
       UpdateUserFriendsCustomTo: _UpdateUserFriendsCustomToPayload
-        @subscribe(mutations: "UpdateUserFriendsCustomTo")
+        @subscribe(to: "UpdateUserFriendsCustomTo")
       MergeUserFriendsCustomTo: _MergeUserFriendsCustomToPayload
-        @subscribe(mutations: "MergeUserFriendsCustomTo")
+        @subscribe(to: "MergeUserFriendsCustomTo")
       AddUserFriendsCustomFromTo: _AddUserFriendsCustomFromToPayload
-        @subscribe(mutations: "AddUserFriendsCustomFromTo")
+        @subscribe(to: "AddUserFriendsCustomFromTo")
       RemoveUserFriendsCustomFromTo: _RemoveUserFriendsCustomFromToPayload
-        @subscribe(mutations: "RemoveUserFriendsCustomFromTo")
+        @subscribe(to: "RemoveUserFriendsCustomFromTo")
       UpdateUserFriendsCustomFromTo: _UpdateUserFriendsCustomFromToPayload
-        @subscribe(mutations: "UpdateUserFriendsCustomFromTo")
+        @subscribe(to: "UpdateUserFriendsCustomFromTo")
       MergeUserFriendsCustomFromTo: _MergeUserFriendsCustomFromToPayload
-        @subscribe(mutations: "MergeUserFriendsCustomFromTo")
+        @subscribe(to: "MergeUserFriendsCustomFromTo")
       AddUserFavorites: _AddUserFavoritesPayload
-        @subscribe(mutations: "AddUserFavorites")
+        @subscribe(to: "AddUserFavorites")
       RemoveUserFavorites: _RemoveUserFavoritesPayload
-        @subscribe(mutations: "RemoveUserFavorites")
+        @subscribe(to: "RemoveUserFavorites")
       MergeUserFavorites: _MergeUserFavoritesPayload
-        @subscribe(mutations: "MergeUserFavorites")
-      CreateUser: User @subscribe(mutations: "CreateUser")
-      UpdateUser: User @subscribe(mutations: "UpdateUser")
-      DeleteUser: User @subscribe(mutations: "DeleteUser")
-      MergeUser: User @subscribe(mutations: "MergeUser")
-      CreateBook: Book @subscribe(mutations: "CreateBook")
-      DeleteBook: Book @subscribe(mutations: "DeleteBook")
-      MergeBook: Book @subscribe(mutations: "MergeBook")
+        @subscribe(to: "MergeUserFavorites")
+      CreateUser: User @subscribe(to: "CreateUser")
+      UpdateUser: User @subscribe(to: "UpdateUser")
+      DeleteUser: User @subscribe(to: "DeleteUser")
+      MergeUser: User @subscribe(to: "MergeUser")
+      CreateBook: Book @subscribe(to: "CreateBook")
+      DeleteBook: Book @subscribe(to: "DeleteBook")
+      MergeBook: Book @subscribe(to: "MergeBook")
       CreateNodeTypeMutationTest: NodeTypeMutationTest
-        @subscribe(mutations: "CreateNodeTypeMutationTest")
+        @subscribe(to: "CreateNodeTypeMutationTest")
       DeleteNodeTypeMutationTest: NodeTypeMutationTest
-        @subscribe(mutations: "DeleteNodeTypeMutationTest")
+        @subscribe(to: "DeleteNodeTypeMutationTest")
       MergeNodeTypeMutationTest: NodeTypeMutationTest
-        @subscribe(mutations: "MergeNodeTypeMutationTest")
-      CreatecurrentUserId: currentUserId
-        @subscribe(mutations: "CreatecurrentUserId")
-      DeletecurrentUserId: currentUserId
-        @subscribe(mutations: "DeletecurrentUserId")
-      MergecurrentUserId: currentUserId
-        @subscribe(mutations: "MergecurrentUserId")
+        @subscribe(to: "MergeNodeTypeMutationTest")
+      CreatecurrentUserId: currentUserId @subscribe(to: "CreatecurrentUserId")
+      DeletecurrentUserId: currentUserId @subscribe(to: "DeletecurrentUserId")
+      MergecurrentUserId: currentUserId @subscribe(to: "MergecurrentUserId")
       AddTemporalNodeTemporalNodes: _AddTemporalNodeTemporalNodesPayload
-        @subscribe(mutations: "AddTemporalNodeTemporalNodes")
+        @subscribe(to: "AddTemporalNodeTemporalNodes")
       RemoveTemporalNodeTemporalNodes: _RemoveTemporalNodeTemporalNodesPayload
-        @subscribe(mutations: "RemoveTemporalNodeTemporalNodes")
+        @subscribe(to: "RemoveTemporalNodeTemporalNodes")
       MergeTemporalNodeTemporalNodes: _MergeTemporalNodeTemporalNodesPayload
-        @subscribe(mutations: "MergeTemporalNodeTemporalNodes")
-      CreateTemporalNode: TemporalNode
-        @subscribe(mutations: "CreateTemporalNode")
-      UpdateTemporalNode: TemporalNode
-        @subscribe(mutations: "UpdateTemporalNode")
-      DeleteTemporalNode: TemporalNode
-        @subscribe(mutations: "DeleteTemporalNode")
-      MergeTemporalNode: TemporalNode @subscribe(mutations: "MergeTemporalNode")
+        @subscribe(to: "MergeTemporalNodeTemporalNodes")
+      CreateTemporalNode: TemporalNode @subscribe(to: "CreateTemporalNode")
+      UpdateTemporalNode: TemporalNode @subscribe(to: "UpdateTemporalNode")
+      DeleteTemporalNode: TemporalNode @subscribe(to: "DeleteTemporalNode")
+      MergeTemporalNode: TemporalNode @subscribe(to: "MergeTemporalNode")
       AddSpatialNodeSpatialNodes: _AddSpatialNodeSpatialNodesPayload
-        @subscribe(mutations: "AddSpatialNodeSpatialNodes")
+        @subscribe(to: "AddSpatialNodeSpatialNodes")
       RemoveSpatialNodeSpatialNodes: _RemoveSpatialNodeSpatialNodesPayload
-        @subscribe(mutations: "RemoveSpatialNodeSpatialNodes")
+        @subscribe(to: "RemoveSpatialNodeSpatialNodes")
       MergeSpatialNodeSpatialNodes: _MergeSpatialNodeSpatialNodesPayload
-        @subscribe(mutations: "MergeSpatialNodeSpatialNodes")
-      CreateSpatialNode: SpatialNode @subscribe(mutations: "CreateSpatialNode")
-      UpdateSpatialNode: SpatialNode @subscribe(mutations: "UpdateSpatialNode")
-      DeleteSpatialNode: SpatialNode @subscribe(mutations: "DeleteSpatialNode")
-      MergeSpatialNode: SpatialNode @subscribe(mutations: "MergeSpatialNode")
+        @subscribe(to: "MergeSpatialNodeSpatialNodes")
+      CreateSpatialNode: SpatialNode @subscribe(to: "CreateSpatialNode")
+      UpdateSpatialNode: SpatialNode @subscribe(to: "UpdateSpatialNode")
+      DeleteSpatialNode: SpatialNode @subscribe(to: "DeleteSpatialNode")
+      MergeSpatialNode: SpatialNode @subscribe(to: "MergeSpatialNode")
       AddCasedTypeState: _AddCasedTypeStatePayload
-        @subscribe(mutations: "AddCasedTypeState")
+        @subscribe(to: "AddCasedTypeState")
       RemoveCasedTypeState: _RemoveCasedTypeStatePayload
-        @subscribe(mutations: "RemoveCasedTypeState")
+        @subscribe(to: "RemoveCasedTypeState")
       MergeCasedTypeState: _MergeCasedTypeStatePayload
-        @subscribe(mutations: "MergeCasedTypeState")
-      CreateCasedType: CasedType @subscribe(mutations: "CreateCasedType")
-      DeleteCasedType: CasedType @subscribe(mutations: "DeleteCasedType")
-      MergeCasedType: CasedType @subscribe(mutations: "MergeCasedType")
+        @subscribe(to: "MergeCasedTypeState")
+      CreateCasedType: CasedType @subscribe(to: "CreateCasedType")
+      DeleteCasedType: CasedType @subscribe(to: "DeleteCasedType")
+      MergeCasedType: CasedType @subscribe(to: "MergeCasedType")
       AddCameraOperators: _AddCameraOperatorsPayload
-        @subscribe(mutations: "AddCameraOperators")
+        @subscribe(to: "AddCameraOperators")
       RemoveCameraOperators: _RemoveCameraOperatorsPayload
-        @subscribe(mutations: "RemoveCameraOperators")
+        @subscribe(to: "RemoveCameraOperators")
       MergeCameraOperators: _MergeCameraOperatorsPayload
-        @subscribe(mutations: "MergeCameraOperators")
+        @subscribe(to: "MergeCameraOperators")
       AddCameraReflexiveInterfaceRelationship: _AddCameraReflexiveInterfaceRelationshipPayload
-        @subscribe(mutations: "AddCameraReflexiveInterfaceRelationship")
+        @subscribe(to: "AddCameraReflexiveInterfaceRelationship")
       RemoveCameraReflexiveInterfaceRelationship: _RemoveCameraReflexiveInterfaceRelationshipPayload
-        @subscribe(mutations: "RemoveCameraReflexiveInterfaceRelationship")
+        @subscribe(to: "RemoveCameraReflexiveInterfaceRelationship")
       MergeCameraReflexiveInterfaceRelationship: _MergeCameraReflexiveInterfaceRelationshipPayload
-        @subscribe(mutations: "MergeCameraReflexiveInterfaceRelationship")
+        @subscribe(to: "MergeCameraReflexiveInterfaceRelationship")
       AddOldCameraOperators: _AddOldCameraOperatorsPayload
-        @subscribe(mutations: "AddOldCameraOperators")
+        @subscribe(to: "AddOldCameraOperators")
       RemoveOldCameraOperators: _RemoveOldCameraOperatorsPayload
-        @subscribe(mutations: "RemoveOldCameraOperators")
+        @subscribe(to: "RemoveOldCameraOperators")
       MergeOldCameraOperators: _MergeOldCameraOperatorsPayload
-        @subscribe(mutations: "MergeOldCameraOperators")
+        @subscribe(to: "MergeOldCameraOperators")
       AddOldCameraReflexiveInterfaceRelationship: _AddOldCameraReflexiveInterfaceRelationshipPayload
-        @subscribe(mutations: "AddOldCameraReflexiveInterfaceRelationship")
+        @subscribe(to: "AddOldCameraReflexiveInterfaceRelationship")
       RemoveOldCameraReflexiveInterfaceRelationship: _RemoveOldCameraReflexiveInterfaceRelationshipPayload
-        @subscribe(mutations: "RemoveOldCameraReflexiveInterfaceRelationship")
+        @subscribe(to: "RemoveOldCameraReflexiveInterfaceRelationship")
       MergeOldCameraReflexiveInterfaceRelationship: _MergeOldCameraReflexiveInterfaceRelationshipPayload
-        @subscribe(mutations: "MergeOldCameraReflexiveInterfaceRelationship")
-      CreateOldCamera: OldCamera @subscribe(mutations: "CreateOldCamera")
-      UpdateOldCamera: OldCamera @subscribe(mutations: "UpdateOldCamera")
-      DeleteOldCamera: OldCamera @subscribe(mutations: "DeleteOldCamera")
-      MergeOldCamera: OldCamera @subscribe(mutations: "MergeOldCamera")
+        @subscribe(to: "MergeOldCameraReflexiveInterfaceRelationship")
+      CreateOldCamera: OldCamera @subscribe(to: "CreateOldCamera")
+      UpdateOldCamera: OldCamera @subscribe(to: "UpdateOldCamera")
+      DeleteOldCamera: OldCamera @subscribe(to: "DeleteOldCamera")
+      MergeOldCamera: OldCamera @subscribe(to: "MergeOldCamera")
       AddNewCameraOperators: _AddNewCameraOperatorsPayload
-        @subscribe(mutations: "AddNewCameraOperators")
+        @subscribe(to: "AddNewCameraOperators")
       RemoveNewCameraOperators: _RemoveNewCameraOperatorsPayload
-        @subscribe(mutations: "RemoveNewCameraOperators")
+        @subscribe(to: "RemoveNewCameraOperators")
       MergeNewCameraOperators: _MergeNewCameraOperatorsPayload
-        @subscribe(mutations: "MergeNewCameraOperators")
+        @subscribe(to: "MergeNewCameraOperators")
       AddNewCameraReflexiveInterfaceRelationship: _AddNewCameraReflexiveInterfaceRelationshipPayload
-        @subscribe(mutations: "AddNewCameraReflexiveInterfaceRelationship")
+        @subscribe(to: "AddNewCameraReflexiveInterfaceRelationship")
       RemoveNewCameraReflexiveInterfaceRelationship: _RemoveNewCameraReflexiveInterfaceRelationshipPayload
-        @subscribe(mutations: "RemoveNewCameraReflexiveInterfaceRelationship")
+        @subscribe(to: "RemoveNewCameraReflexiveInterfaceRelationship")
       MergeNewCameraReflexiveInterfaceRelationship: _MergeNewCameraReflexiveInterfaceRelationshipPayload
-        @subscribe(mutations: "MergeNewCameraReflexiveInterfaceRelationship")
-      CreateNewCamera: NewCamera @subscribe(mutations: "CreateNewCamera")
-      UpdateNewCamera: NewCamera @subscribe(mutations: "UpdateNewCamera")
-      DeleteNewCamera: NewCamera @subscribe(mutations: "DeleteNewCamera")
-      MergeNewCamera: NewCamera @subscribe(mutations: "MergeNewCamera")
+        @subscribe(to: "MergeNewCameraReflexiveInterfaceRelationship")
+      CreateNewCamera: NewCamera @subscribe(to: "CreateNewCamera")
+      UpdateNewCamera: NewCamera @subscribe(to: "UpdateNewCamera")
+      DeleteNewCamera: NewCamera @subscribe(to: "DeleteNewCamera")
+      MergeNewCamera: NewCamera @subscribe(to: "MergeNewCamera")
       AddCameraManFavoriteCamera: _AddCameraManFavoriteCameraPayload
-        @subscribe(mutations: "AddCameraManFavoriteCamera")
+        @subscribe(to: "AddCameraManFavoriteCamera")
       RemoveCameraManFavoriteCamera: _RemoveCameraManFavoriteCameraPayload
-        @subscribe(mutations: "RemoveCameraManFavoriteCamera")
+        @subscribe(to: "RemoveCameraManFavoriteCamera")
       MergeCameraManFavoriteCamera: _MergeCameraManFavoriteCameraPayload
-        @subscribe(mutations: "MergeCameraManFavoriteCamera")
+        @subscribe(to: "MergeCameraManFavoriteCamera")
       AddCameraManCameras: _AddCameraManCamerasPayload
-        @subscribe(mutations: "AddCameraManCameras")
+        @subscribe(to: "AddCameraManCameras")
       RemoveCameraManCameras: _RemoveCameraManCamerasPayload
-        @subscribe(mutations: "RemoveCameraManCameras")
+        @subscribe(to: "RemoveCameraManCameras")
       MergeCameraManCameras: _MergeCameraManCamerasPayload
-        @subscribe(mutations: "MergeCameraManCameras")
+        @subscribe(to: "MergeCameraManCameras")
       AddCameraManCameraBuddy: _AddCameraManCameraBuddyPayload
-        @subscribe(mutations: "AddCameraManCameraBuddy")
+        @subscribe(to: "AddCameraManCameraBuddy")
       RemoveCameraManCameraBuddy: _RemoveCameraManCameraBuddyPayload
-        @subscribe(mutations: "RemoveCameraManCameraBuddy")
+        @subscribe(to: "RemoveCameraManCameraBuddy")
       MergeCameraManCameraBuddy: _MergeCameraManCameraBuddyPayload
-        @subscribe(mutations: "MergeCameraManCameraBuddy")
+        @subscribe(to: "MergeCameraManCameraBuddy")
       AddCameraManInterfacedRelationshipType: _AddCameraManInterfacedRelationshipTypePayload
-        @subscribe(mutations: "AddCameraManInterfacedRelationshipType")
+        @subscribe(to: "AddCameraManInterfacedRelationshipType")
       RemoveCameraManInterfacedRelationshipType: _RemoveCameraManInterfacedRelationshipTypePayload
-        @subscribe(mutations: "RemoveCameraManInterfacedRelationshipType")
+        @subscribe(to: "RemoveCameraManInterfacedRelationshipType")
       UpdateCameraManInterfacedRelationshipType: _UpdateCameraManInterfacedRelationshipTypePayload
-        @subscribe(mutations: "UpdateCameraManInterfacedRelationshipType")
+        @subscribe(to: "UpdateCameraManInterfacedRelationshipType")
       MergeCameraManInterfacedRelationshipType: _MergeCameraManInterfacedRelationshipTypePayload
-        @subscribe(mutations: "MergeCameraManInterfacedRelationshipType")
+        @subscribe(to: "MergeCameraManInterfacedRelationshipType")
       AddCameraManReflexiveInterfacedRelationshipType: _AddCameraManReflexiveInterfacedRelationshipTypePayload
-        @subscribe(mutations: "AddCameraManReflexiveInterfacedRelationshipType")
+        @subscribe(to: "AddCameraManReflexiveInterfacedRelationshipType")
       RemoveCameraManReflexiveInterfacedRelationshipType: _RemoveCameraManReflexiveInterfacedRelationshipTypePayload
-        @subscribe(
-          mutations: "RemoveCameraManReflexiveInterfacedRelationshipType"
-        )
+        @subscribe(to: "RemoveCameraManReflexiveInterfacedRelationshipType")
       UpdateCameraManReflexiveInterfacedRelationshipType: _UpdateCameraManReflexiveInterfacedRelationshipTypePayload
-        @subscribe(
-          mutations: "UpdateCameraManReflexiveInterfacedRelationshipType"
-        )
+        @subscribe(to: "UpdateCameraManReflexiveInterfacedRelationshipType")
       MergeCameraManReflexiveInterfacedRelationshipType: _MergeCameraManReflexiveInterfacedRelationshipTypePayload
-        @subscribe(
-          mutations: "MergeCameraManReflexiveInterfacedRelationshipType"
-        )
-      CreateCameraMan: CameraMan @subscribe(mutations: "CreateCameraMan")
-      UpdateCameraMan: CameraMan @subscribe(mutations: "UpdateCameraMan")
-      DeleteCameraMan: CameraMan @subscribe(mutations: "DeleteCameraMan")
-      MergeCameraMan: CameraMan @subscribe(mutations: "MergeCameraMan")
+        @subscribe(to: "MergeCameraManReflexiveInterfacedRelationshipType")
+      CreateCameraMan: CameraMan @subscribe(to: "CreateCameraMan")
+      UpdateCameraMan: CameraMan @subscribe(to: "UpdateCameraMan")
+      DeleteCameraMan: CameraMan @subscribe(to: "DeleteCameraMan")
+      MergeCameraMan: CameraMan @subscribe(to: "MergeCameraMan")
       AddUniqueNodeTestRelation: _AddUniqueNodeTestRelationPayload
-        @subscribe(mutations: "AddUniqueNodeTestRelation")
+        @subscribe(to: "AddUniqueNodeTestRelation")
       RemoveUniqueNodeTestRelation: _RemoveUniqueNodeTestRelationPayload
-        @subscribe(mutations: "RemoveUniqueNodeTestRelation")
+        @subscribe(to: "RemoveUniqueNodeTestRelation")
       MergeUniqueNodeTestRelation: _MergeUniqueNodeTestRelationPayload
-        @subscribe(mutations: "MergeUniqueNodeTestRelation")
-      CreateUniqueNode: UniqueNode @subscribe(mutations: "CreateUniqueNode")
-      UpdateUniqueNode: UniqueNode @subscribe(mutations: "UpdateUniqueNode")
-      DeleteUniqueNode: UniqueNode @subscribe(mutations: "DeleteUniqueNode")
-      MergeUniqueNode: UniqueNode @subscribe(mutations: "MergeUniqueNode")
+        @subscribe(to: "MergeUniqueNodeTestRelation")
+      CreateUniqueNode: UniqueNode @subscribe(to: "CreateUniqueNode")
+      UpdateUniqueNode: UniqueNode @subscribe(to: "UpdateUniqueNode")
+      DeleteUniqueNode: UniqueNode @subscribe(to: "DeleteUniqueNode")
+      MergeUniqueNode: UniqueNode @subscribe(to: "MergeUniqueNode")
       AddUniqueStringNodeTestRelation: _AddUniqueStringNodeTestRelationPayload
-        @subscribe(mutations: "AddUniqueStringNodeTestRelation")
+        @subscribe(to: "AddUniqueStringNodeTestRelation")
       RemoveUniqueStringNodeTestRelation: _RemoveUniqueStringNodeTestRelationPayload
-        @subscribe(mutations: "RemoveUniqueStringNodeTestRelation")
+        @subscribe(to: "RemoveUniqueStringNodeTestRelation")
       MergeUniqueStringNodeTestRelation: _MergeUniqueStringNodeTestRelationPayload
-        @subscribe(mutations: "MergeUniqueStringNodeTestRelation")
+        @subscribe(to: "MergeUniqueStringNodeTestRelation")
       CreateUniqueStringNode: UniqueStringNode
-        @subscribe(mutations: "CreateUniqueStringNode")
+        @subscribe(to: "CreateUniqueStringNode")
       UpdateUniqueStringNode: UniqueStringNode
-        @subscribe(mutations: "UpdateUniqueStringNode")
+        @subscribe(to: "UpdateUniqueStringNode")
       DeleteUniqueStringNode: UniqueStringNode
-        @subscribe(mutations: "DeleteUniqueStringNode")
+        @subscribe(to: "DeleteUniqueStringNode")
       MergeUniqueStringNode: UniqueStringNode
-        @subscribe(mutations: "MergeUniqueStringNode")
+        @subscribe(to: "MergeUniqueStringNode")
     }
     """
     Directive definition
@@ -10505,7 +10482,7 @@ test.cb('Test augmented schema', t => {
     directive @unique on FIELD_DEFINITION
     directive @index on FIELD_DEFINITION
     directive @search(index: String) on FIELD_DEFINITION
-    directive @subscribe(mutations: [String]) on FIELD_DEFINITION
+    directive @subscribe(to: [String]) on FIELD_DEFINITION
     directive @publish(event: String) on FIELD_DEFINITION
     directive @isAuthenticated on OBJECT | FIELD_DEFINITION
     directive @hasRole(roles: [Role]) on OBJECT | FIELD_DEFINITION
