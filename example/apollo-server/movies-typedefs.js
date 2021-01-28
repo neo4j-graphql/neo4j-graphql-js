@@ -11,17 +11,17 @@ type Movie {
   poster: String
   imdbRating: Float
   ratings: [Rated]
-  genres: [Genre] @relation(name: "IN_GENRE", direction: "OUT")
-  actors: [Actor] @relation(name: "ACTED_IN", direction: "IN")
+  genres: [Genre] @relation(name: "IN_GENRE", direction: OUT)
+  actors: [Actor] @relation(name: "ACTED_IN", direction: IN)
 }
 type Genre {
   name: String
-  movies: [Movie] @relation(name: "IN_GENRE", direction: "IN")
+  movies: [Movie] @relation(name: "IN_GENRE", direction: IN)
 }
 type Actor {
   id: ID!
   name: String
-  movies: [Movie] @relation(name: "ACTED_IN", direction: "OUT")
+  movies: [Movie] @relation(name: "ACTED_IN", direction: OUT)
 }
 type User {
   userId: ID!
