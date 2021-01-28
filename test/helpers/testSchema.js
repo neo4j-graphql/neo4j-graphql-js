@@ -29,7 +29,7 @@ export const testSchema = `
     poster: String
     imdbRating: Float
     "@relation field line description"
-    genres: [Genre] @relation(name: "IN_GENRE", direction: "OUT")
+    genres: [Genre] @relation(name: "IN_GENRE", direction: OUT)
     similar(first: Int = 3, offset: Int = 0): [Movie]
       @cypher(
         statement: "WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o"
@@ -44,9 +44,9 @@ export const testSchema = `
       names: [String]
       strings: [String]
       datetimes: [DateTime]
-    ): [Actor] @relation(name: "ACTED_IN", direction: "IN")
+    ): [Actor] @relation(name: "ACTED_IN", direction: IN)
     avgStars: Float
-    filmedIn: State @relation(name: "FILMED_IN", direction: "OUT")
+    filmedIn: State @relation(name: "FILMED_IN", direction: OUT)
     location: Point
     locations: [Point]
     scaleRating(scale: Int = 3): Float
@@ -127,14 +127,14 @@ export const testSchema = `
     ): [InterfaceNoScalars]
       @relation(name: "INTERFACE_NO_SCALARS", direction: OUT)
     extensionScalar: String @search
-    extensionNode: [Genre] @relation(name: "IN_GENRE", direction: "OUT")
+    extensionNode: [Genre] @relation(name: "IN_GENRE", direction: OUT)
   }
 
   type Genre {
     _id: String!
     name: String
     movies(first: Int = 3, offset: Int = 0): [Movie]
-      @relation(name: "IN_GENRE", direction: "IN")
+      @relation(name: "IN_GENRE", direction: IN)
     highestRatedMovie: Movie
       @cypher(
         statement: "MATCH (m:Movie)-[:IN_GENRE]->(this) RETURN m ORDER BY m.imdbRating DESC LIMIT 1"
@@ -320,8 +320,8 @@ export const testSchema = `
   type Actor {
     userId: ID!
     name: String
-    movies: [Movie] @relation(name: "ACTED_IN", direction: "OUT")
-    knows: [Person] @relation(name: "KNOWS", direction: "OUT")
+    movies: [Movie] @relation(name: "ACTED_IN", direction: OUT)
+    knows: [Person] @relation(name: "KNOWS", direction: OUT)
     extensionScalar: String
     datetimes: [DateTime]
     strings: [String]
@@ -425,7 +425,7 @@ export const testSchema = `
       from: String
       to: Int
     ): [FriendOfCustomFromTo]
-    favorites: [Movie] @relation(name: "FAVORITED", direction: "OUT")
+    favorites: [Movie] @relation(name: "FAVORITED", direction: OUT)
     movieSearch: [MovieSearch]
     computedMovieSearch: [MovieSearch]
       @cypher(statement: "MATCH (ms:MovieSearch) RETURN ms")
@@ -804,7 +804,7 @@ export const testSchema = `
 
   type CasedType {
     name: String
-    state: State @relation(name: "FILMED_IN", direction: "OUT")
+    state: State @relation(name: "FILMED_IN", direction: OUT)
   }
 
   interface InterfaceNoScalars {
@@ -938,13 +938,13 @@ export const testSchema = `
   type CameraMan implements Person {
     userId: ID!
     name: String
-    favoriteCamera: Camera @relation(name: "favoriteCamera", direction: "OUT")
+    favoriteCamera: Camera @relation(name: "favoriteCamera", direction: OUT)
     heaviestCamera: [Camera]
       @cypher(
         statement: "MATCH (c: Camera)--(this) RETURN c ORDER BY c.weight DESC LIMIT 1"
       )
-    cameras: [Camera!]! @relation(name: "cameras", direction: "OUT")
-    cameraBuddy: Person @relation(name: "cameraBuddy", direction: "OUT")
+    cameras: [Camera!]! @relation(name: "cameras", direction: OUT)
+    cameraBuddy: Person @relation(name: "cameraBuddy", direction: OUT)
     extensionScalar: String
     interfacedRelationshipType: [InterfacedRelationshipType]
     reflexiveInterfacedRelationshipType: [ReflexiveInterfacedRelationshipType]
