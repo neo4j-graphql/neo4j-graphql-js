@@ -144,7 +144,7 @@ type Mutation {
 }
 
 type Subscription {
-  subscribeToCustomWithPublish: String @subscribe(mutations: "customEventName")
+  subscribeToCustomWithPublish: String @subscribe(to: "customEventName")
 }
 `;
 
