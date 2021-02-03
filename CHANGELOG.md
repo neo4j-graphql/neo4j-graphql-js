@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.19.2
+
+- Update `graphql-auth-directives` dependency
+
 ## 2.19.1
 
 - Move `graphql-tools` to dependencies from devDependencies
