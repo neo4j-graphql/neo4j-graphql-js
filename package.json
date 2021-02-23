@@ -1,6 +1,6 @@
 {
   "name": "neo4j-graphql-js",
-  "version": "2.19.1",
+  "version": "2.19.2",
   "description": "A GraphQL to Cypher query execution layer for Neo4j. ",
   "main": "./dist/index.js",
   "scripts": {
@@ -71,7 +71,7 @@
     "@babel/runtime-corejs2": "^7.5.5",
     "apollo-server-errors": "^2.4.1",
     "debug": "^4.1.1",
-    "graphql-auth-directives": "^2.2.1",
+    "graphql-auth-directives": "^2.2.2",
     "lodash": "^4.17.19",
     "neo4j-driver": "^4.2.1",
     "graphql": "^15.4.0",

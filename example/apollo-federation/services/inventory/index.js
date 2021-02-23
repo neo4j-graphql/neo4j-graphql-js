@@ -72,6 +72,7 @@ export const inventorySchema = buildFederatedSchema([
     },
     config: {
       isFederated: true
+      // subscription: false, // default is false
       // debug: true
     }
   })
