@@ -208,24 +208,24 @@ const possiblyAddResolvers = ({
   });
   const subscriptionConfig = config.subscription || {};
   const abstractPublisher = subscriptionConfig.publish;
-  if (typeof abstractPublisher === 'function') {
-    Object.keys(fieldMap).forEach(name => {
-      if (resolvers[name] === undefined) {
-        if (isMutationType) {
-          // args[3] is resolveInfo
-          resolvers[name] = async function(...args) {
-            const data = await neo4jgraphql(...args, config.debug);
+  Object.keys(fieldMap).forEach(name => {
+    if (resolvers[name] === undefined) {
+      if (isMutationType) {
+        // args[3] is resolveInfo
+        resolvers[name] = async function(...args) {
+          const data = await neo4jgraphql(...args, config.debug);
+          if (typeof abstractPublisher === 'function') {
             publishMutationEvents(args[3], data, abstractPublisher);
-            return data;
-          };
-        } else {
-          resolvers[name] = async function(...args) {
-            return await neo4jgraphql(...args, config.debug);
-          };
-        }
+          }
+          return data;
+        };
+      } else {
+        resolvers[name] = async function(...args) {
+          return await neo4jgraphql(...args, config.debug);
+        };
       }
-    });
-  }
+    }
+  });
   return resolvers;
 };
 
