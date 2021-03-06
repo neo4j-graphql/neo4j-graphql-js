@@ -306,23 +306,22 @@ export const shouldAugmentRelationshipField = (
   );
 };
 
-// An enum containing the names of the augmentation config keys
-const APIConfiguration = {
-  QUERY: 'query',
-  MUTATION: 'mutation',
-  SUBSCRIPTION: 'subscription',
-  TEMPORAL: 'temporal',
-  SPATIAL: 'spatial'
-};
-
 /**
  * Builds the default values in a given configuration object
  */
 export const setDefaultConfig = ({ config = {} }) => {
   const configKeys = Object.keys(config);
-  Object.values(APIConfiguration).forEach(configKey => {
+  // An enum containing the names of the augmentation config keys
+  const APIConfiguration = {
+    query: true,
+    mutation: true,
+    subscription: false,
+    temporal: true,
+    spatial: true
+  };
+  Object.entries(APIConfiguration).forEach(([configKey, configDefault]) => {
     if (!configKeys.find(providedKey => providedKey === configKey)) {
-      config[configKey] = true;
+      config[configKey] = configDefault;
     }
   });
   return config;
