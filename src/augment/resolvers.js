@@ -4,6 +4,13 @@ import {
   generateBaseTypeReferenceResolvers,
   generateNonLocalTypeExtensionReferenceResolvers
 } from '../federation';
+import {
+  DirectiveDefinition,
+  getDirective,
+  getDirectiveArgument
+} from './directives';
+import { getResponseKeyFromInfo } from 'graphql-tools';
+import { Kind } from 'graphql';
 
 /**
  * The main export for the generation of resolvers for the
@@ -78,6 +85,7 @@ export const augmentResolvers = ({
       operationType: mutationType,
       operationTypeExtensions: mutationTypeExtensions,
       resolvers: mutationResolvers,
+      isMutationType: true,
       config
     });
     if (Object.keys(mutationResolvers).length > 0) {
@@ -85,14 +93,63 @@ export const augmentResolvers = ({
     }
   }
 
-  // Persist Subscription resolvers
   const subscriptionType = operationTypeMap[subscriptionTypeName];
-  if (subscriptionType) {
-    subscriptionTypeName = subscriptionType.name.value;
-    let subscriptionResolvers =
+  if (subscriptionType) subscriptionTypeName = subscriptionType.name.value;
+  const subscriptionTypeExtensions =
+    typeExtensionDefinitionMap[subscriptionTypeName];
+  if (
+    config['subscription'] &&
+    (subscriptionType ||
+      (subscriptionTypeExtensions && subscriptionTypeExtensions.length))
+  ) {
+    const subscriptionResolvers =
       resolvers && resolvers[subscriptionTypeName]
         ? resolvers[subscriptionTypeName]
         : {};
+    const fieldMap = getOperationFieldMap({
+      operationType: subscriptionType,
+      operationTypeExtensions: subscriptionTypeExtensions
+    });
+
+    const subscriptionConfig = config.subscription || {};
+    const abstractSubscriber = subscriptionConfig.subscribe;
+    if (typeof abstractSubscriber === 'function') {
+      Object.values(fieldMap).forEach(field => {
+        let { name, directives } = field;
+        name = name.value;
+        const subscriptionDirective = getDirective({
+          directives,
+          name: DirectiveDefinition.SUBSCRIBE
+        });
+        if (subscriptionDirective) {
+          const eventArg = subscriptionDirective.arguments.find(
+            arg => arg.name.value === 'to'
+          );
+          if (eventArg) {
+            const valueKind = eventArg.value.kind;
+            const eventNames = [];
+            if (valueKind === Kind.LIST) {
+              const events = eventArg.value.values.map(value => value.value);
+              eventNames.push(...events);
+            } else if (valueKind === Kind.STRING) {
+              const eventName = eventArg.value.value;
+              if (eventName) {
+                eventNames.push(eventArg.value.value);
+              }
+            }
+            if (eventNames.length) {
+              if (subscriptionResolvers[name] === undefined) {
+                subscriptionResolvers[name] = {
+                  subscribe: function() {
+                    return abstractSubscriber(eventNames);
+                  }
+                };
+              }
+            }
+          }
+        }
+      });
+    }
     if (Object.keys(subscriptionResolvers).length > 0) {
       resolvers[subscriptionTypeName] = subscriptionResolvers;
     }
@@ -117,15 +174,18 @@ export const augmentResolvers = ({
   return resolvers;
 };
 
-const getOperationFieldMap = ({ operationType, operationTypeExtensions }) => {
+const getOperationFieldMap = ({
+  operationType,
+  operationTypeExtensions = []
+}) => {
   const fieldMap = {};
   const fields = operationType ? operationType.fields : [];
   fields.forEach(field => {
-    fieldMap[field.name.value] = true;
+    fieldMap[field.name.value] = field;
   });
   operationTypeExtensions.forEach(extension => {
     extension.fields.forEach(field => {
-      fieldMap[field.name.value] = true;
+      fieldMap[field.name.value] = field;
     });
   });
   return fieldMap;
@@ -139,21 +199,108 @@ const possiblyAddResolvers = ({
   operationType,
   operationTypeExtensions = [],
   resolvers,
+  isMutationType = false,
   config
 }) => {
   const fieldMap = getOperationFieldMap({
     operationType,
     operationTypeExtensions
   });
+  const subscriptionConfig = config.subscription || {};
+  const abstractPublisher = subscriptionConfig.publish;
   Object.keys(fieldMap).forEach(name => {
-    // If not provided
     if (resolvers[name] === undefined) {
-      resolvers[name] = async function(...args) {
-        return await neo4jgraphql(...args, config.debug);
-      };
+      if (isMutationType) {
+        // args[3] is resolveInfo
+        resolvers[name] = async function(...args) {
+          const data = await neo4jgraphql(...args, config.debug);
+          if (typeof abstractPublisher === 'function') {
+            publishMutationEvents(args[3], data, abstractPublisher);
+          }
+          return data;
+        };
+      } else {
+        resolvers[name] = async function(...args) {
+          return await neo4jgraphql(...args, config.debug);
+        };
+      }
     }
   });
   return resolvers;
+};
+
+const publishMutationEvents = (resolveInfo, data, abstractPublisher) => {
+  const [eventName, subscription] = getEventSubscription(resolveInfo);
+  if (eventName && subscription) {
+    abstractPublisher(eventName, subscription.name.value, data);
+  }
+};
+const getEventSubscription = resolveInfo => {
+  const mutationName = getResponseKeyFromInfo(resolveInfo);
+  const schema = resolveInfo.schema;
+  const mutationType = schema.getMutationType();
+  const mutationField = mutationType.getFields()[mutationName];
+  let subscription = undefined;
+  let eventName = '';
+  // FIXME getResponseKeyFromInfo doesn't work for aliased
+  // muttion fields
+  if (mutationField) {
+    const directives = mutationField.astNode.directives;
+    const subscriptionType = schema.getSubscriptionType();
+    const publishDirective = directives.find(
+      directive => directive.name.value === DirectiveDefinition.PUBLISH
+    );
+    if (publishDirective) {
+      eventName = getDirectiveArgument({
+        directive: publishDirective,
+        name: 'event'
+      });
+      // has a publish directive but no event argument,
+      // so the default event name is the mutation field name
+      if (!eventName) eventName = mutationName;
+      if (subscriptionType) {
+        const fields = Object.values(subscriptionType.getFields()).map(
+          type => type.astNode
+        );
+        // get the subscription field @subscribe'd to this event
+        subscription = getMutationSubscription({ fields, eventName });
+      }
+    }
+  }
+  return [eventName, subscription];
+};
+
+export const getMutationSubscription = ({ fields = [], eventName }) => {
+  return Object.values(fields).find(field => {
+    return field.directives.some(directive => {
+      if (directive.name.value === DirectiveDefinition.SUBSCRIBE) {
+        const eventArg = directive.arguments.find(
+          arg => arg.name.value === 'to'
+        );
+        const valueKind = eventArg.value.kind;
+        const eventNames = [];
+        if (valueKind === Kind.LIST) {
+          const events = eventArg.value.values.map(value => value.value);
+          eventNames.push(...events);
+        } else if (valueKind === Kind.STRING) {
+          eventNames.push(eventArg.value.value);
+        }
+        return eventNames.includes(eventName);
+      }
+      return false;
+    });
+  });
+};
+
+export const getPublishedMutation = ({ fields = [], eventName }) => {
+  return Object.values(fields).find(field => {
+    return field.directives.some(directive => {
+      if (directive.name.value === DirectiveDefinition.PUBLISH) {
+        return getDirectiveArgument({ directive, name: 'event' }) === eventName;
+      }
+      return false;
+    });
+  });
 };
 
 /**

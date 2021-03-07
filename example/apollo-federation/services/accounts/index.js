@@ -30,6 +30,7 @@ export const accountsSchema = buildFederatedSchema([
     `,
       {
         isFederated: true
+        // subscription: false // default is false
       }
     ),
     resolvers: {

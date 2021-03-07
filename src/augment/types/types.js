@@ -11,7 +11,9 @@ import {
   isIgnoredField,
   DirectiveDefinition,
   getDirective,
-  augmentDirectives
+  augmentDirectives,
+  buildSubscribeDirective,
+  getDirectiveArgument
 } from '../directives';
 import {
   buildOperationType,
@@ -35,12 +37,12 @@ import { SpatialType, Neo4jPoint, augmentSpatialTypes } from './spatial';
 import {
   isNeo4jTypeField,
   unwrapNamedType,
-  getFieldDefinition,
   isTemporalField,
   isSpatialField
 } from '../fields';
 import { augmentNodeType, augmentNodeTypeFields } from './node/node';
-import { RelationshipDirectionField } from '../types/relationship/relationship';
+import { getMutationSubscription } from '../resolvers';
+import { shouldAugmentType } from '../augment';
 
 /**
  * An enum describing Neo4j entity types, used in type predicate functions
@@ -235,7 +237,6 @@ export const interpretType = ({ definition = {} }) => {
   if (neo4jStructuralTypes) {
     const name = definition.name.value;
     if (!isNeo4jPropertyType({ type: name })) {
-      const fields = definition.fields;
       const typeDirectives = definition.directives;
       if (
         neo4jStructuralTypes.RELATIONSHIP &&
@@ -284,6 +285,10 @@ export const augmentTypes = ({
       definition,
       operationTypeMap
     });
+    const isSubscriptionType = isSubscriptionTypeDefinition({
+      definition,
+      operationTypeMap
+    });
     if (isOperationType) {
       [definition, typeExtensionDefinitionMap] = augmentOperationType({
         typeName,
@@ -291,6 +296,7 @@ export const augmentTypes = ({
         typeExtensionDefinitionMap,
         isQueryType,
         isMutationType,
+        isSubscriptionType,
         isObjectType,
         typeDefinitionMap,
         generatedTypeMap,
@@ -376,7 +382,69 @@ export const augmentTypes = ({
       }
     }
   );
+  operationTypeMap = generateMutationSubscriptions({
+    operationTypeMap,
+    config
+  });
   return [typeExtensionDefinitionMap, generatedTypeMap, operationTypeMap];
+};
+
+const generateMutationSubscriptions = ({
+  operationTypeMap = {},
+  config = {}
+}) => {
+  if (config['subscription'] !== false) {
+    const subscriptionType = operationTypeMap[OperationType.SUBSCRIPTION] || {};
+    const mutationType = operationTypeMap[OperationType.MUTATION] || {};
+    const mutationFields = mutationType.fields || [];
+    if (mutationFields.length) {
+      const subscriptionFields = subscriptionType.fields || [];
+      mutationFields.forEach(field => {
+        let { name, directives, type } = field;
+        name = name.value;
+        const outputTypeName = unwrapNamedType({ type }).name;
+        if (shouldAugmentType(config, 'subscription', outputTypeName)) {
+          const publishDirective = getDirective({
+            directives,
+            name: DirectiveDefinition.PUBLISH
+          });
+          // default subscription fields only generated for mutations
+          // with a @publish directive
+          if (publishDirective) {
+            let eventName = getDirectiveArgument({
+              directive: publishDirective,
+              name: 'event'
+            });
+            if (!eventName) eventName = name;
+            const subscriptionExists = getMutationSubscription({
+              fields: subscriptionFields,
+              eventName
+            });
+            // prevents generation of default subscription field for an event
+            // already subscribed to by a @subscribe directive on a custom
+            // subscription field
+            if (!subscriptionExists) {
+              const subscribeDirective = buildSubscribeDirective({
+                name: eventName,
+                config
+              });
+              operationTypeMap[OperationType.SUBSCRIPTION].fields.push(
+                buildField({
+                  name: buildName({
+                    name: name
+                  }),
+                  type,
+                  args: [],
+                  directives: [subscribeDirective]
+                })
+              );
+            }
+          }
+        }
+      });
+    }
+  }
+  return operationTypeMap;
 };
 
 /**
@@ -717,6 +785,7 @@ const augmentOperationType = ({
   typeExtensionDefinitionMap,
   isQueryType,
   isMutationType,
+  isSubscriptionType,
   isObjectType,
   typeDefinitionMap,
   generatedTypeMap,
@@ -775,10 +844,15 @@ const augmentOperationType = ({
       if (!isIgnoredType) {
         definition.fields = propertyOutputFields;
       }
-    } else if (isMutationType) {
+    } else if (isMutationType || isSubscriptionType) {
       // Augment existing Mutation type fields
       definition.fields = definition.fields.map(field => {
-        field.directives = augmentDirectives({ directives: field.directives });
+        field.directives = augmentDirectives({
+          directives: field.directives,
+          mutationName: field.name.value,
+          isMutationType,
+          isSubscriptionType
+        });
         return field;
       });
       if (typeExtensions.length) {
@@ -787,7 +861,10 @@ const augmentOperationType = ({
           if (fields && fields.length) {
             extension.fields = fields.map(field => {
               field.directives = augmentDirectives({
-                directives: field.directives
+                directives: field.directives,
+                mutationName: field.name.value,
+                isMutationType,
+                isSubscriptionType
               });
               return field;
             });

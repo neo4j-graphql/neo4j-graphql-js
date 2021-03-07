@@ -6,19 +6,19 @@ const typeDefs = `
 
 type User {
     name: String!
-    wrote: [Review] @relation(name: "WROTE", direction: "OUT")
+    wrote: [Review] @relation(name: "WROTE", direction: OUT)
   }
   type Review {
     date: Date!
     reviewId: String!
     stars: Float!
     text: String
-    reviews: [Business] @relation(name: "REVIEWS", direction: "OUT")
-    users: [User] @relation(name: "WROTE", direction: "IN")
+    reviews: [Business] @relation(name: "REVIEWS", direction: OUT)
+    users: [User] @relation(name: "WROTE", direction: IN)
   }
   type Category {
     name: String!
-    business: [Business] @relation(name: "IN_CATEGORY", direction: "IN")
+    business: [Business] @relation(name: "IN_CATEGORY", direction: IN)
   }
   type Business {
     address: String!
@@ -26,8 +26,8 @@ type User {
     location: Point!
     name: String!
     state: String!
-    in_category: [Category] @relation(name: "IN_CATEGORY", direction: "OUT")
-    reviews: [Review] @relation(name: "REVIEWS", direction: "IN")
+    in_category: [Category] @relation(name: "IN_CATEGORY", direction: OUT)
+    reviews: [Review] @relation(name: "REVIEWS", direction: IN)
   }
 `;
 

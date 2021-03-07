@@ -741,6 +741,10 @@ test.cb('Test augmented schema', t => {
 
     directive @search(index: String) on FIELD_DEFINITION
 
+    directive @subscribe(to: [String]) on FIELD_DEFINITION
+
+    directive @publish(event: String) on FIELD_DEFINITION
+
     directive @isAuthenticated on OBJECT | FIELD_DEFINITION
 
     directive @hasRole(roles: [Role]) on OBJECT | FIELD_DEFINITION
@@ -985,11 +989,6 @@ test.cb('Test augmented schema', t => {
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#merge) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-node-derived) a Movie node."
       MergeMovie(where: _MovieKeys!, data: _MovieCreate!): Movie
         @hasScope(scopes: ["Movie: Merge", "merge:movie"])
-    }
-
-    schema {
-      query: Query
-      mutation: Mutation
     }
   `;
 

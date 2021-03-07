@@ -1,5 +1,5 @@
-import { Kind, DirectiveLocation, GraphQLString, GraphQLFloat } from 'graphql';
-import { TypeWrappers, getFieldType } from './fields';
+import { Kind, DirectiveLocation, GraphQLString } from 'graphql';
+import { TypeWrappers } from './fields';
 import {
   buildDirectiveDefinition,
   buildInputValue,
@@ -28,7 +28,9 @@ export const DirectiveDefinition = {
   ID: 'id',
   UNIQUE: 'unique',
   INDEX: 'index',
-  SEARCH: 'search'
+  SEARCH: 'search',
+  PUBLISH: 'publish',
+  SUBSCRIBE: 'subscribe'
 };
 
 // The name of Role type used in authorization logic
@@ -434,6 +436,37 @@ const directiveDefinitionBuilderMap = {
       ],
       locations: [DirectiveLocation.FIELD_DEFINITION]
     };
+  },
+  [DirectiveDefinition.SUBSCRIBE]: ({ config }) => {
+    return {
+      name: DirectiveDefinition.SUBSCRIBE,
+      args: [
+        {
+          name: 'to',
+          type: {
+            name: GraphQLString,
+            wrappers: {
+              [TypeWrappers.LIST_TYPE]: true
+            }
+          }
+        }
+      ],
+      locations: [DirectiveLocation.FIELD_DEFINITION]
+    };
+  },
+  [DirectiveDefinition.PUBLISH]: ({ config }) => {
+    return {
+      name: DirectiveDefinition.PUBLISH,
+      args: [
+        {
+          name: 'event',
+          type: {
+            name: GraphQLString
+          }
+        }
+      ],
+      locations: [DirectiveLocation.FIELD_DEFINITION]
+    };
   }
 };
 
@@ -500,7 +533,12 @@ export const getDirectiveArgument = ({ directive, name }) => {
   return value;
 };
 
-export const augmentDirectives = ({ directives = [] }) => {
+export const augmentDirectives = ({
+  directives = [],
+  mutationName = '',
+  isMutationType = false,
+  isSubscriptionType = false
+}) => {
   let cypherDirective = getDirective({
     directives,
     name: DirectiveDefinition.CYPHER
@@ -509,6 +547,57 @@ export const augmentDirectives = ({ directives = [] }) => {
     cypherDirective = escapeCypherStatement({
       directive: cypherDirective
     });
+  }
+  //?
+  if (isMutationType) {
+    const eventArg = buildDirectiveArgument({
+      name: buildName({ name: 'event' }),
+      value: {
+        kind: Kind.STRING,
+        value: mutationName
+      }
+    });
+    directives = augmentDirectiveArguments({
+      directives,
+      directiveName: DirectiveDefinition.PUBLISH,
+      argName: 'event',
+      argument: eventArg
+    });
+  } else if (isSubscriptionType) {
+    const eventArg = buildDirectiveArgument({
+      name: buildName({ name: 'to' }),
+      value: {
+        kind: Kind.STRING,
+        value: mutationName
+      }
+    });
+    directives = augmentDirectiveArguments({
+      directives,
+      directiveName: DirectiveDefinition.SUBSCRIBE,
+      argName: 'to',
+      argument: eventArg
+    });
+  }
+  return directives;
+};
+
+const augmentDirectiveArguments = ({
+  directives = [],
+  directiveName = '',
+  argName = '',
+  argument
+}) => {
+  const directiveIndex = directives.findIndex(
+    directive => directive.name.value === directiveName
+  );
+  if (directiveIndex >= 0) {
+    const directiveInstance = directives[directiveIndex];
+    const args = directiveInstance.arguments;
+    const argIndex = args.findIndex(arg => arg.name.value === argName);
+    // add provided directive argument if not provided
+    if (argument && argIndex === -1) args.splice(argIndex, 1, argument);
+    directiveInstance.arguments = args;
+    directives.splice(directiveIndex, 1, directiveInstance);
   }
   return directives;
 };
@@ -525,4 +614,35 @@ const escapeCypherStatement = ({ directive }) => {
     }
   }
   return directive;
+};
+
+export const buildSubscribeDirective = ({ name = '', config = {} }) => {
+  return buildDirective({
+    name: buildName({ name: DirectiveDefinition.SUBSCRIBE }),
+    args: [
+      buildDirectiveArgument({
+        name: buildName({ name: 'to' }),
+        value: {
+          kind: Kind.STRING,
+          value: name
+        }
+      })
+    ]
+  });
+};
+
+export const buildPublishDirective = ({ mutationName = '', config = {} }) => {
+  const defaultEventName = mutationName;
+  return buildDirective({
+    name: buildName({ name: DirectiveDefinition.PUBLISH }),
+    args: [
+      buildDirectiveArgument({
+        name: buildName({ name: 'event' }),
+        value: {
+          kind: Kind.STRING,
+          value: defaultEventName
+        }
+      })
+    ]
+  });
 };

@@ -3,14 +3,14 @@ type Tweet {
     id: ID!
     timestamp: DateTime
     text: String
-    hashtags: [Hashtag] @relation(name: "HAS_TAG", direction: "OUT")
-    user: User @relation(name: "POSTED", direction: "IN")
+    hashtags: [Hashtag] @relation(name: "HAS_TAG", direction: OUT)
+    user: User @relation(name: "POSTED", direction: IN)
 }
 
 type User {
     id: ID!
     screen_name: String
-    tweets: [Tweet] @relation(name: "POSTED", direction: "OUT")
+    tweets: [Tweet] @relation(name: "POSTED", direction: OUT)
 }
 
 type Hashtag {

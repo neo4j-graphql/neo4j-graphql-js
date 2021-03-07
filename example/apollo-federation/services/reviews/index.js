@@ -199,7 +199,8 @@ export const reviewsSchema = buildFederatedSchema([
       }
     },
     config: {
-      isFederated: true
+      isFederated: true,
+      subscription: false
       // debug: true
     }
   })

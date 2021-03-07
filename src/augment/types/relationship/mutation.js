@@ -15,7 +15,8 @@ import {
   useAuthDirective,
   getDirective,
   isCypherField,
-  getDirectiveArgument
+  getDirectiveArgument,
+  buildPublishDirective
 } from '../../directives';
 import {
   buildInputValue,
@@ -329,7 +330,8 @@ const buildRelationshipMutationField = ({
         '[merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships)';
       grandstackDocUrl = '#merge-relationship';
     }
-    operationTypeMap[OperationType.MUTATION].fields.push(
+    const mutationFields = operationTypeMap[OperationType.MUTATION].fields;
+    mutationFields.push(
       buildField({
         name: buildName({
           name: mutationName
@@ -348,6 +350,7 @@ const buildRelationshipMutationField = ({
           config
         }),
         directives: buildRelationshipMutationDirectives({
+          mutationName,
           mutationAction,
           relationshipName,
           fromType,
@@ -462,6 +465,7 @@ const buildRelationshipMutationArguments = ({
  * names
  */
 const buildRelationshipMutationDirectives = ({
+  mutationName,
   mutationAction,
   relationshipName,
   fromType,
@@ -501,6 +505,16 @@ const buildRelationshipMutationDirectives = ({
         })
       );
     }
+  }
+  if (
+    shouldAugmentRelationshipField(config, 'subscription', fromType, toType)
+  ) {
+    directives.push(
+      buildPublishDirective({
+        mutationName,
+        config
+      })
+    );
   }
   return directives;
 };

@@ -3,7 +3,7 @@ import Neo4jSchemaTree from './neo4j-schema/Neo4jSchemaTree';
 import graphQLMapper from './neo4j-schema/graphQLMapper';
 import { checkRequestError } from './auth';
 import { translateQuery } from './translate/translate';
-import { translateMutation } from './translate/mutation';
+import { translateMutation } from './translate/mutation/mutation';
 import Debug from 'debug';
 import {
   extractQueryResult,
@@ -62,9 +62,8 @@ export async function neo4jgraphql(
     let query;
     let cypherParams;
 
-    const cypherFunction = isMutation(resolveInfo)
-      ? cypherMutation
-      : cypherQuery;
+    const isMutationOperation = isMutation(resolveInfo);
+    const cypherFunction = isMutationOperation ? cypherMutation : cypherQuery;
     [query, cypherParams] = cypherFunction(
       params,
       context,
@@ -128,7 +127,7 @@ export async function neo4jgraphql(
     let result;
 
     try {
-      if (isMutation(resolveInfo)) {
+      if (isMutationOperation) {
         result = await session.writeTransaction(async tx => {
           const result = await tx.run(query, cypherParams);
           return extractQueryResult(result, resolveInfo.returnType);
@@ -193,6 +192,7 @@ export function cypherMutation(
 export const augmentTypeDefs = (typeDefs, config = {}) => {
   config.query = false;
   config.mutation = false;
+  config.subscription = false;
   if (config.isFederated === undefined) config.isFederated = false;
   const isParsedTypeDefs = isSchemaDocument({ definition: typeDefs });
   let definitions = [];
