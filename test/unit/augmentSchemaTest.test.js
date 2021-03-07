@@ -21,143 +21,102 @@ test.cb('Test augmented schema', t => {
   });
 
   const expectedTypeDefs = /* GraphQL */ `
-    schema {
-      query: QueryA
-      subscription: SubscriptionC
-      mutation: Mutation
-    }
     type _AddMovieExtensionNodePayload
       @relation(name: "IN_GENRE", from: "Movie", to: "Genre") {
-      """
-      Field for the Movie node this IN_GENRE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Movie node this IN_GENRE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Movie
-      """
-      Field for the Genre node this IN_GENRE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Genre node this IN_GENRE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Genre
     }
+
     type _RemoveMovieExtensionNodePayload
       @relation(name: "IN_GENRE", from: "Movie", to: "Genre") {
-      """
-      Field for the Movie node this IN_GENRE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Movie node this IN_GENRE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Movie
-      """
-      Field for the Genre node this IN_GENRE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Genre node this IN_GENRE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Genre
     }
+
     type _MergeMovieExtensionNodePayload
       @relation(name: "IN_GENRE", from: "Movie", to: "Genre") {
-      """
-      Field for the Movie node this IN_GENRE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Movie node this IN_GENRE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Movie
-      """
-      Field for the Genre node this IN_GENRE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Genre node this IN_GENRE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Genre
     }
+
     type _AddMovieGenresPayload
       @relation(name: "IN_GENRE", from: "Movie", to: "Genre") {
-      """
-      Field for the Movie node this IN_GENRE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Movie node this IN_GENRE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Movie
-      """
-      Field for the Genre node this IN_GENRE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Genre node this IN_GENRE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Genre
     }
+
     type _RemoveMovieGenresPayload
       @relation(name: "IN_GENRE", from: "Movie", to: "Genre") {
-      """
-      Field for the Movie node this IN_GENRE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Movie node this IN_GENRE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Movie
-      """
-      Field for the Genre node this IN_GENRE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Genre node this IN_GENRE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Genre
     }
+
     type _MergeMovieGenresPayload
       @relation(name: "IN_GENRE", from: "Movie", to: "Genre") {
-      """
-      Field for the Movie node this IN_GENRE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Movie node this IN_GENRE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Movie
-      """
-      Field for the Genre node this IN_GENRE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Genre node this IN_GENRE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Genre
     }
+
     type _AddMovieActorsPayload
       @relation(name: "ACTED_IN", from: "Actor", to: "Movie") {
-      """
-      Field for the Actor node this ACTED_IN [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Actor node this ACTED_IN [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Actor
-      """
-      Field for the Movie node this ACTED_IN [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Movie node this ACTED_IN [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Movie
     }
+
     type _RemoveMovieActorsPayload
       @relation(name: "ACTED_IN", from: "Actor", to: "Movie") {
-      """
-      Field for the Actor node this ACTED_IN [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Actor node this ACTED_IN [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Actor
-      """
-      Field for the Movie node this ACTED_IN [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Movie node this ACTED_IN [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Movie
     }
+
     type _MergeMovieActorsPayload
       @relation(name: "ACTED_IN", from: "Actor", to: "Movie") {
-      """
-      Field for the Actor node this ACTED_IN [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Actor node this ACTED_IN [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Actor
-      """
-      Field for the Movie node this ACTED_IN [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Movie node this ACTED_IN [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Movie
     }
+
     type _AddMovieFilmedInPayload
       @relation(name: "FILMED_IN", from: "Movie", to: "State") {
-      """
-      Field for the Movie node this FILMED_IN [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Movie node this FILMED_IN [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Movie
-      """
-      Field for the State node this FILMED_IN [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the State node this FILMED_IN [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: State
     }
+
     type _RemoveMovieFilmedInPayload
       @relation(name: "FILMED_IN", from: "Movie", to: "State") {
-      """
-      Field for the Movie node this FILMED_IN [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Movie node this FILMED_IN [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Movie
-      """
-      Field for the State node this FILMED_IN [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the State node this FILMED_IN [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: State
     }
+
     type _MergeMovieFilmedInPayload
       @relation(name: "FILMED_IN", from: "Movie", to: "State") {
-      """
-      Field for the Movie node this FILMED_IN [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Movie node this FILMED_IN [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Movie
-      """
-      Field for the State node this FILMED_IN [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the State node this FILMED_IN [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: State
     }
+
     type _MovieRatings @relation(name: "RATED", from: "User", to: "Movie") {
       currentUserId(strArg: String): String
         @cypher(
@@ -172,15 +131,12 @@ test.cb('Test augmented schema', t => {
       localdatetime: _Neo4jLocalDateTime
       datetimes: [_Neo4jDateTime]
       location: _Neo4jPoint
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
-      """
-      Field for the User node this RATED [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the User node this RATED [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       User: User
     }
+
     input _MovieRatedFilter {
       AND: [_MovieRatedFilter!]
       OR: [_MovieRatedFilter!]
@@ -253,6 +209,7 @@ test.cb('Test augmented schema', t => {
       location_distance_gte: _Neo4jPointDistanceFilter
       User: _UserFilter
     }
+
     enum _RatedOrdering {
       currentUserId_asc
       currentUserId_desc
@@ -271,6 +228,7 @@ test.cb('Test augmented schema', t => {
       _id_asc
       _id_desc
     }
+
     input _RatedInput {
       rating: Int
       ratings: [Int]
@@ -282,15 +240,12 @@ test.cb('Test augmented schema', t => {
       datetimes: [_Neo4jDateTimeInput]
       location: _Neo4jPointInput
     }
+
     type _AddMovieRatingsPayload
       @relation(name: "RATED", from: "User", to: "Movie") {
-      """
-      Field for the User node this RATED [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the User node this RATED [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: User
-      """
-      Field for the Movie node this RATED [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Movie node this RATED [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Movie
       currentUserId: String
         @cypher(
@@ -305,31 +260,23 @@ test.cb('Test augmented schema', t => {
       localdatetime: _Neo4jLocalDateTime
       datetimes: [_Neo4jDateTime]
       location: _Neo4jPoint
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
     }
+
     type _RemoveMovieRatingsPayload
       @relation(name: "RATED", from: "User", to: "Movie") {
-      """
-      Field for the User node this RATED [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the User node this RATED [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: User
-      """
-      Field for the Movie node this RATED [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Movie node this RATED [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Movie
     }
+
     type _UpdateMovieRatingsPayload
       @relation(name: "RATED", from: "User", to: "Movie") {
-      """
-      Field for the User node this RATED [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the User node this RATED [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: User
-      """
-      Field for the Movie node this RATED [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Movie node this RATED [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Movie
       currentUserId: String
         @cypher(
@@ -344,20 +291,15 @@ test.cb('Test augmented schema', t => {
       localdatetime: _Neo4jLocalDateTime
       datetimes: [_Neo4jDateTime]
       location: _Neo4jPoint
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
     }
+
     type _MergeMovieRatingsPayload
       @relation(name: "RATED", from: "User", to: "Movie") {
-      """
-      Field for the User node this RATED [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the User node this RATED [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: User
-      """
-      Field for the Movie node this RATED [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Movie node this RATED [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Movie
       currentUserId: String
         @cypher(
@@ -372,72 +314,57 @@ test.cb('Test augmented schema', t => {
       localdatetime: _Neo4jLocalDateTime
       datetimes: [_Neo4jDateTime]
       location: _Neo4jPoint
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
     }
+
     type _MovieRatingsNoProps
       @relation(name: "RATED_NO_PROPS", from: "User", to: "Movie") {
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
-      """
-      Field for the User node this RATED_NO_PROPS [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the User node this RATED_NO_PROPS [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       User: User
     }
+
     input _MovieRatedNoPropsFilter {
       AND: [_MovieRatedNoPropsFilter!]
       OR: [_MovieRatedNoPropsFilter!]
       User: _UserFilter
     }
+
     enum _RatedNoPropsOrdering {
       _id_asc
       _id_desc
     }
+
     type _AddMovieRatingsNoPropsPayload
       @relation(name: "RATED_NO_PROPS", from: "User", to: "Movie") {
-      """
-      Field for the User node this RATED_NO_PROPS [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the User node this RATED_NO_PROPS [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: User
-      """
-      Field for the Movie node this RATED_NO_PROPS [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Movie node this RATED_NO_PROPS [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Movie
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
     }
+
     type _RemoveMovieRatingsNoPropsPayload
       @relation(name: "RATED_NO_PROPS", from: "User", to: "Movie") {
-      """
-      Field for the User node this RATED_NO_PROPS [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the User node this RATED_NO_PROPS [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: User
-      """
-      Field for the Movie node this RATED_NO_PROPS [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Movie node this RATED_NO_PROPS [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Movie
     }
+
     type _MergeMovieRatingsNoPropsPayload
       @relation(name: "RATED_NO_PROPS", from: "User", to: "Movie") {
-      """
-      Field for the User node this RATED_NO_PROPS [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the User node this RATED_NO_PROPS [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: User
-      """
-      Field for the Movie node this RATED_NO_PROPS [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Movie node this RATED_NO_PROPS [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Movie
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
     }
+
     type _MovieRatingsCustomFrom
       @relation(name: "RATED_CUSTOM_FROM", from: "User", to: "Movie") {
       currentUserId(strArg: String): String
@@ -453,15 +380,12 @@ test.cb('Test augmented schema', t => {
       localdatetime: _Neo4jLocalDateTime
       datetimes: [_Neo4jDateTime]
       location: _Neo4jPoint
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
-      """
-      Field for the User node this RATED_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the User node this RATED_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       ratedBy: User
     }
+
     input _MovieRatedCustomFromFilter {
       AND: [_MovieRatedCustomFromFilter!]
       OR: [_MovieRatedCustomFromFilter!]
@@ -534,6 +458,7 @@ test.cb('Test augmented schema', t => {
       location_distance_gte: _Neo4jPointDistanceFilter
       ratedBy: _UserFilter
     }
+
     enum _RatedCustomFromOrdering {
       currentUserId_asc
       currentUserId_desc
@@ -552,6 +477,7 @@ test.cb('Test augmented schema', t => {
       _id_asc
       _id_desc
     }
+
     input _RatedCustomFromInput {
       rating: Int
       ratings: [Int]
@@ -563,15 +489,12 @@ test.cb('Test augmented schema', t => {
       datetimes: [_Neo4jDateTimeInput]
       location: _Neo4jPointInput
     }
+
     type _AddMovieRatingsCustomFromPayload
       @relation(name: "RATED_CUSTOM_FROM", from: "User", to: "Movie") {
-      """
-      Field for the User node this RATED_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the User node this RATED_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       ratedBy: User
-      """
-      Field for the Movie node this RATED_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Movie node this RATED_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Movie
       currentUserId: String
         @cypher(
@@ -586,31 +509,23 @@ test.cb('Test augmented schema', t => {
       localdatetime: _Neo4jLocalDateTime
       datetimes: [_Neo4jDateTime]
       location: _Neo4jPoint
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
     }
+
     type _RemoveMovieRatingsCustomFromPayload
       @relation(name: "RATED_CUSTOM_FROM", from: "User", to: "Movie") {
-      """
-      Field for the User node this RATED_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the User node this RATED_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       ratedBy: User
-      """
-      Field for the Movie node this RATED_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Movie node this RATED_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Movie
     }
+
     type _UpdateMovieRatingsCustomFromPayload
       @relation(name: "RATED_CUSTOM_FROM", from: "User", to: "Movie") {
-      """
-      Field for the User node this RATED_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the User node this RATED_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       ratedBy: User
-      """
-      Field for the Movie node this RATED_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Movie node this RATED_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Movie
       currentUserId: String
         @cypher(
@@ -625,20 +540,15 @@ test.cb('Test augmented schema', t => {
       localdatetime: _Neo4jLocalDateTime
       datetimes: [_Neo4jDateTime]
       location: _Neo4jPoint
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
     }
+
     type _MergeMovieRatingsCustomFromPayload
       @relation(name: "RATED_CUSTOM_FROM", from: "User", to: "Movie") {
-      """
-      Field for the User node this RATED_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the User node this RATED_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       ratedBy: User
-      """
-      Field for the Movie node this RATED_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Movie node this RATED_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Movie
       currentUserId: String
         @cypher(
@@ -653,11 +563,10 @@ test.cb('Test augmented schema', t => {
       localdatetime: _Neo4jLocalDateTime
       datetimes: [_Neo4jDateTime]
       location: _Neo4jPoint
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
     }
+
     type _MovieRatingsCustomTo
       @relation(name: "RATED_CUSTOM_TO", from: "User", to: "Movie") {
       currentUserId(strArg: String): String
@@ -673,15 +582,12 @@ test.cb('Test augmented schema', t => {
       localdatetime: _Neo4jLocalDateTime
       datetimes: [_Neo4jDateTime]
       location: _Neo4jPoint
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
-      """
-      Field for the User node this RATED_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the User node this RATED_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       User: User
     }
+
     input _MovieRatedCustomToFilter {
       AND: [_MovieRatedCustomToFilter!]
       OR: [_MovieRatedCustomToFilter!]
@@ -754,6 +660,7 @@ test.cb('Test augmented schema', t => {
       location_distance_gte: _Neo4jPointDistanceFilter
       User: _UserFilter
     }
+
     enum _RatedCustomToOrdering {
       currentUserId_asc
       currentUserId_desc
@@ -772,6 +679,7 @@ test.cb('Test augmented schema', t => {
       _id_asc
       _id_desc
     }
+
     input _RatedCustomToInput {
       rating: Int
       ratings: [Int]
@@ -783,15 +691,12 @@ test.cb('Test augmented schema', t => {
       datetimes: [_Neo4jDateTimeInput]
       location: _Neo4jPointInput
     }
+
     type _AddMovieRatingsCustomToPayload
       @relation(name: "RATED_CUSTOM_TO", from: "User", to: "Movie") {
-      """
-      Field for the User node this RATED_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the User node this RATED_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: User
-      """
-      Field for the Movie node this RATED_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Movie node this RATED_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       movie: Movie
       currentUserId: String
         @cypher(
@@ -806,31 +711,23 @@ test.cb('Test augmented schema', t => {
       localdatetime: _Neo4jLocalDateTime
       datetimes: [_Neo4jDateTime]
       location: _Neo4jPoint
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
     }
+
     type _RemoveMovieRatingsCustomToPayload
       @relation(name: "RATED_CUSTOM_TO", from: "User", to: "Movie") {
-      """
-      Field for the User node this RATED_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the User node this RATED_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: User
-      """
-      Field for the Movie node this RATED_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Movie node this RATED_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       movie: Movie
     }
+
     type _UpdateMovieRatingsCustomToPayload
       @relation(name: "RATED_CUSTOM_TO", from: "User", to: "Movie") {
-      """
-      Field for the User node this RATED_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the User node this RATED_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: User
-      """
-      Field for the Movie node this RATED_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Movie node this RATED_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       movie: Movie
       currentUserId: String
         @cypher(
@@ -845,20 +742,15 @@ test.cb('Test augmented schema', t => {
       localdatetime: _Neo4jLocalDateTime
       datetimes: [_Neo4jDateTime]
       location: _Neo4jPoint
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
     }
+
     type _MergeMovieRatingsCustomToPayload
       @relation(name: "RATED_CUSTOM_TO", from: "User", to: "Movie") {
-      """
-      Field for the User node this RATED_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the User node this RATED_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: User
-      """
-      Field for the Movie node this RATED_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Movie node this RATED_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       movie: Movie
       currentUserId: String
         @cypher(
@@ -873,11 +765,10 @@ test.cb('Test augmented schema', t => {
       localdatetime: _Neo4jLocalDateTime
       datetimes: [_Neo4jDateTime]
       location: _Neo4jPoint
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
     }
+
     type _MovieRatingsCustomFromTo
       @relation(name: "RATED_CUSTOM_FROM_TO", from: "User", to: "Movie") {
       from: String
@@ -894,16 +785,13 @@ test.cb('Test augmented schema', t => {
       localdatetime: _Neo4jLocalDateTime
       datetimes: [_Neo4jDateTime]
       location: _Neo4jPoint
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
       to: Int
-      """
-      Field for the User node this RATED_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the User node this RATED_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       ratedBy: User
     }
+
     input _MovieRatedCustomFromToFilter {
       AND: [_MovieRatedCustomFromToFilter!]
       OR: [_MovieRatedCustomFromToFilter!]
@@ -995,6 +883,7 @@ test.cb('Test augmented schema', t => {
       to_gte: Int
       ratedBy: _UserFilter
     }
+
     enum _RatedCustomFromToOrdering {
       from_asc
       from_desc
@@ -1017,6 +906,7 @@ test.cb('Test augmented schema', t => {
       to_asc
       to_desc
     }
+
     input _RatedCustomFromToInput {
       from: String
       rating: Int
@@ -1030,15 +920,12 @@ test.cb('Test augmented schema', t => {
       location: _Neo4jPointInput
       to: Int
     }
+
     type _AddMovieRatingsCustomFromToPayload
       @relation(name: "RATED_CUSTOM_FROM_TO", from: "User", to: "Movie") {
-      """
-      Field for the User node this RATED_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the User node this RATED_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       ratedBy: User
-      """
-      Field for the Movie node this RATED_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Movie node this RATED_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       movie: Movie
       from: String
       currentUserId: String
@@ -1054,32 +941,24 @@ test.cb('Test augmented schema', t => {
       localdatetime: _Neo4jLocalDateTime
       datetimes: [_Neo4jDateTime]
       location: _Neo4jPoint
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
       to: Int
     }
+
     type _RemoveMovieRatingsCustomFromToPayload
       @relation(name: "RATED_CUSTOM_FROM_TO", from: "User", to: "Movie") {
-      """
-      Field for the User node this RATED_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the User node this RATED_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       ratedBy: User
-      """
-      Field for the Movie node this RATED_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Movie node this RATED_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       movie: Movie
     }
+
     type _UpdateMovieRatingsCustomFromToPayload
       @relation(name: "RATED_CUSTOM_FROM_TO", from: "User", to: "Movie") {
-      """
-      Field for the User node this RATED_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the User node this RATED_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       ratedBy: User
-      """
-      Field for the Movie node this RATED_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Movie node this RATED_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       movie: Movie
       from: String
       currentUserId: String
@@ -1095,21 +974,16 @@ test.cb('Test augmented schema', t => {
       localdatetime: _Neo4jLocalDateTime
       datetimes: [_Neo4jDateTime]
       location: _Neo4jPoint
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
       to: Int
     }
+
     type _MergeMovieRatingsCustomFromToPayload
       @relation(name: "RATED_CUSTOM_FROM_TO", from: "User", to: "Movie") {
-      """
-      Field for the User node this RATED_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the User node this RATED_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       ratedBy: User
-      """
-      Field for the Movie node this RATED_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Movie node this RATED_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       movie: Movie
       from: String
       currentUserId: String
@@ -1125,15 +999,15 @@ test.cb('Test augmented schema', t => {
       localdatetime: _Neo4jLocalDateTime
       datetimes: [_Neo4jDateTime]
       location: _Neo4jPoint
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
       to: Int
     }
+
     input _MovieInput {
       movieId: ID!
     }
+
     enum _MovieOrdering {
       _id_asc
       _id_desc
@@ -1166,6 +1040,7 @@ test.cb('Test augmented schema', t => {
       extensionScalar_asc
       extensionScalar_desc
     }
+
     input _MovieFilter {
       AND: [_MovieFilter!]
       OR: [_MovieFilter!]
@@ -1389,47 +1264,41 @@ test.cb('Test augmented schema', t => {
       extensionNode_single: _GenreFilter
       extensionNode_every: _GenreFilter
     }
+
     input _MovieSearch {
       MovieSearch: String
       MovieSearchID: String
       threshold: Float
     }
-    """
-    Object type line description
-    """
+
+    "Object type line description"
     type Movie
       @additionalLabels(
         labels: ["u_<%= $cypherParams.userId %>", "newMovieLabel"]
       ) {
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this node.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this node."
       _id: String
-      """
-      Field line description
-      """
+      "Field line description"
       movieId: ID! @id @search(index: "MovieSearchID")
       """
       Field
       block
       description
       """
-      title: String @search
+      title: String @isAuthenticated @search
       someprefix_title_with_underscores: String
       year: Int
       released: _Neo4jDateTime
       plot: String @search
       poster: String
       imdbRating: Float
-      """
-      @relation field line description
-      """
+      "@relation field line description"
       genres(
         first: Int
         offset: Int
         orderBy: [_GenreOrdering]
         filter: _GenreFilter
-      ): [Genre] @relation(name: "IN_GENRE", direction: "OUT")
+      ): [Genre] @relation(name: "IN_GENRE", direction: OUT)
       similar(
         first: Int = 3
         offset: Int = 0
@@ -1450,10 +1319,10 @@ test.cb('Test augmented schema', t => {
         datetimes: [_Neo4jDateTimeInput]
         orderBy: [_ActorOrdering]
         filter: _ActorFilter
-      ): [Actor] @relation(name: "ACTED_IN", direction: "IN")
+      ): [Actor] @relation(name: "ACTED_IN", direction: IN)
       avgStars: Float
       filmedIn(filter: _StateFilter): State
-        @relation(name: "FILMED_IN", direction: "OUT")
+        @relation(name: "FILMED_IN", direction: OUT)
       location: _Neo4jPoint
       locations: [_Neo4jPoint]
       scaleRating(scale: Int = 3): Float
@@ -1464,9 +1333,7 @@ test.cb('Test augmented schema', t => {
         @cypher(
           statement: "MATCH (this)-[:ACTED_IN*2]-(other:Movie) RETURN other"
         )
-      """
-      @relation type field line description
-      """
+      "@relation type field line description"
       ratings(
         rating: Int
         time: _Neo4jTimeInput
@@ -1537,71 +1404,38 @@ test.cb('Test augmented schema', t => {
       years: [Int]
       titles: [String]
       imdbRatings: [Float]
-      """
-      Temporal type field line description
-      """
+      "Temporal type field line description"
       releases: [_Neo4jDateTime]
       booleans: [Boolean]
       enums: [BookGenre]
-      """
-      Ignored field line description
-      """
+      "Ignored field line description"
       customField: String @neo4j_ignore
-      currentUserId(strArg: String): String
-        @cypher(
-          statement: "RETURN $cypherParams.currentUserId AS cypherParamsUserId"
-        )
-      """
-      Object type extension field line description
-      """
-      interfaceNoScalars(
-        orderBy: _InterfaceNoScalarsOrdering
-        first: Int
-        offset: Int
-        filter: _InterfaceNoScalarsFilter
-      ): [InterfaceNoScalars]
-        @relation(name: "INTERFACE_NO_SCALARS", direction: OUT)
-      extensionScalar: String @search
-      extensionNode(
-        first: Int
-        offset: Int
-        orderBy: [_GenreOrdering]
-        filter: _GenreFilter
-      ): [Genre] @relation(name: "IN_GENRE", direction: "OUT")
     }
+
     type _AddGenreMoviesPayload
       @relation(name: "IN_GENRE", from: "Movie", to: "Genre") {
-      """
-      Field for the Movie node this IN_GENRE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Movie node this IN_GENRE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Movie
-      """
-      Field for the Genre node this IN_GENRE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Genre node this IN_GENRE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Genre
     }
+
     type _RemoveGenreMoviesPayload
       @relation(name: "IN_GENRE", from: "Movie", to: "Genre") {
-      """
-      Field for the Movie node this IN_GENRE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Movie node this IN_GENRE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Movie
-      """
-      Field for the Genre node this IN_GENRE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Genre node this IN_GENRE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Genre
     }
+
     type _MergeGenreMoviesPayload
       @relation(name: "IN_GENRE", from: "Movie", to: "Genre") {
-      """
-      Field for the Movie node this IN_GENRE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Movie node this IN_GENRE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Movie
-      """
-      Field for the Genre node this IN_GENRE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Genre node this IN_GENRE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Genre
     }
+
     type _GenreInterfacedRelationshipType
       @relation(
         name: "INTERFACED_RELATIONSHIP_TYPE"
@@ -1610,15 +1444,12 @@ test.cb('Test augmented schema', t => {
       ) {
       string: String!
       boolean: Boolean
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
-      """
-      Field for the Person node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Person node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       Person: Person
     }
+
     enum _InterfacedRelationshipTypeOrdering {
       string_asc
       string_desc
@@ -1627,95 +1458,78 @@ test.cb('Test augmented schema', t => {
       _id_asc
       _id_desc
     }
+
     input _InterfacedRelationshipTypeInput {
       string: String!
       boolean: Boolean
     }
+
     type _AddGenreInterfacedRelationshipTypePayload
       @relation(
         name: "INTERFACED_RELATIONSHIP_TYPE"
         from: "Person"
         to: "Genre"
       ) {
-      """
-      Field for the Person node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Person node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Person
-      """
-      Field for the Genre node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Genre node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Genre
       string: String!
       boolean: Boolean
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
     }
+
     type _RemoveGenreInterfacedRelationshipTypePayload
       @relation(
         name: "INTERFACED_RELATIONSHIP_TYPE"
         from: "Person"
         to: "Genre"
       ) {
-      """
-      Field for the Person node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Person node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Person
-      """
-      Field for the Genre node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Genre node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Genre
     }
+
     type _UpdateGenreInterfacedRelationshipTypePayload
       @relation(
         name: "INTERFACED_RELATIONSHIP_TYPE"
         from: "Person"
         to: "Genre"
       ) {
-      """
-      Field for the Person node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Person node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Person
-      """
-      Field for the Genre node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Genre node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Genre
       string: String!
       boolean: Boolean
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
     }
+
     type _MergeGenreInterfacedRelationshipTypePayload
       @relation(
         name: "INTERFACED_RELATIONSHIP_TYPE"
         from: "Person"
         to: "Genre"
       ) {
-      """
-      Field for the Person node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Person node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Person
-      """
-      Field for the Genre node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Genre node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Genre
       string: String!
       boolean: Boolean
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
     }
+
     input _GenreInput {
       name: String!
     }
+
     type Genre {
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this node.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this node."
       _id: String
       name: String
       movies(
@@ -1723,7 +1537,7 @@ test.cb('Test augmented schema', t => {
         offset: Int = 0
         orderBy: [_MovieOrdering]
         filter: _MovieFilter
-      ): [Movie] @relation(name: "IN_GENRE", direction: "IN")
+      ): [Movie] @relation(name: "IN_GENRE", direction: IN)
       highestRatedMovie: Movie
         @cypher(
           statement: "MATCH (m:Movie)-[:IN_GENRE]->(this) RETURN m ORDER BY m.imdbRating DESC LIMIT 1"
@@ -1735,9 +1549,11 @@ test.cb('Test augmented schema', t => {
         filter: _GenreInterfacedRelationshipTypeFilter
       ): [_GenreInterfacedRelationshipType]
     }
+
     input _StateInput {
       name: String!
     }
+
     enum _StateOrdering {
       name_asc
       name_desc
@@ -1746,6 +1562,7 @@ test.cb('Test augmented schema', t => {
       _id_asc
       _id_desc
     }
+
     input _StateFilter {
       AND: [_StateFilter!]
       OR: [_StateFilter!]
@@ -1772,15 +1589,15 @@ test.cb('Test augmented schema', t => {
       id_ends_with: ID
       id_not_ends_with: ID
     }
+
     type State {
       customField: String @neo4j_ignore
       name: String! @index
       id: ID
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this node.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this node."
       _id: String
     }
+
     type _PersonInterfacedRelationshipType
       @relation(
         name: "INTERFACED_RELATIONSHIP_TYPE"
@@ -1789,111 +1606,86 @@ test.cb('Test augmented schema', t => {
       ) {
       string: String!
       boolean: Boolean
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
-      """
-      Field for the Genre node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Genre node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       Genre: Genre
     }
+
     type _AddPersonInterfacedRelationshipTypePayload
       @relation(
         name: "INTERFACED_RELATIONSHIP_TYPE"
         from: "Person"
         to: "Genre"
       ) {
-      """
-      Field for the Person node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Person node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Person
-      """
-      Field for the Genre node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Genre node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Genre
       string: String!
       boolean: Boolean
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
     }
+
     type _RemovePersonInterfacedRelationshipTypePayload
       @relation(
         name: "INTERFACED_RELATIONSHIP_TYPE"
         from: "Person"
         to: "Genre"
       ) {
-      """
-      Field for the Person node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Person node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Person
-      """
-      Field for the Genre node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Genre node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Genre
     }
+
     type _UpdatePersonInterfacedRelationshipTypePayload
       @relation(
         name: "INTERFACED_RELATIONSHIP_TYPE"
         from: "Person"
         to: "Genre"
       ) {
-      """
-      Field for the Person node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Person node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Person
-      """
-      Field for the Genre node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Genre node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Genre
       string: String!
       boolean: Boolean
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
     }
+
     type _MergePersonInterfacedRelationshipTypePayload
       @relation(
         name: "INTERFACED_RELATIONSHIP_TYPE"
         from: "Person"
         to: "Genre"
       ) {
-      """
-      Field for the Person node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Person node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Person
-      """
-      Field for the Genre node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Genre node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Genre
       string: String!
       boolean: Boolean
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
     }
+
     type _PersonReflexiveInterfacedRelationshipTypeDirections
       @relation(
         name: "REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE"
         from: "Person"
         to: "Person"
       ) {
-      """
-      Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from(
         first: Int
         offset: Int
         orderBy: [_ReflexiveInterfacedRelationshipTypeOrdering]
         filter: _ReflexiveInterfacedRelationshipTypeFilter
       ): [_PersonReflexiveInterfacedRelationshipType]
-      """
-      Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to(
         first: Int
         offset: Int
@@ -1901,6 +1693,7 @@ test.cb('Test augmented schema', t => {
         filter: _ReflexiveInterfacedRelationshipTypeFilter
       ): [_PersonReflexiveInterfacedRelationshipType]
     }
+
     type _PersonReflexiveInterfacedRelationshipType
       @relation(
         name: "REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE"
@@ -1908,106 +1701,89 @@ test.cb('Test augmented schema', t => {
         to: "Person"
       ) {
       boolean: Boolean
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
-      """
-      Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       Person: Person
     }
+
     input _ReflexiveInterfacedRelationshipTypeDirectionsFilter {
       from: _ReflexiveInterfacedRelationshipTypeFilter
       to: _ReflexiveInterfacedRelationshipTypeFilter
     }
+
     enum _ReflexiveInterfacedRelationshipTypeOrdering {
       boolean_asc
       boolean_desc
       _id_asc
       _id_desc
     }
+
     input _ReflexiveInterfacedRelationshipTypeInput {
       boolean: Boolean
     }
+
     type _AddPersonReflexiveInterfacedRelationshipTypePayload
       @relation(
         name: "REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE"
         from: "Person"
         to: "Person"
       ) {
-      """
-      Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Person
-      """
-      Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Person
       boolean: Boolean
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
     }
+
     type _RemovePersonReflexiveInterfacedRelationshipTypePayload
       @relation(
         name: "REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE"
         from: "Person"
         to: "Person"
       ) {
-      """
-      Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Person
-      """
-      Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Person
     }
+
     type _UpdatePersonReflexiveInterfacedRelationshipTypePayload
       @relation(
         name: "REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE"
         from: "Person"
         to: "Person"
       ) {
-      """
-      Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Person
-      """
-      Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Person
       boolean: Boolean
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
     }
+
     type _MergePersonReflexiveInterfacedRelationshipTypePayload
       @relation(
         name: "REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE"
         from: "Person"
         to: "Person"
       ) {
-      """
-      Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Person
-      """
-      Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Person
       boolean: Boolean
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
     }
+
     input _PersonInput {
       userId: ID!
     }
+
     """
     Interface type
     block description
@@ -2022,14 +1798,15 @@ test.cb('Test augmented schema', t => {
       ): [_PersonInterfacedRelationshipType]
       userId: ID! @id
       reflexiveInterfacedRelationshipType: _PersonReflexiveInterfacedRelationshipTypeDirections
-      extensionScalar: String
     }
+
     type ReflexiveInterfacedRelationshipType
       @relation(name: "REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE") {
       from: Person!
       boolean: Boolean
       to: Person!
     }
+
     type InterfacedRelationshipType
       @relation(name: "INTERFACED_RELATIONSHIP_TYPE") {
       from: Person!
@@ -2037,13 +1814,10 @@ test.cb('Test augmented schema', t => {
       boolean: Boolean
       to: Genre!
     }
-    """
-    Enum type line description
-    """
+
+    "Enum type line description"
     enum _PersonOrdering {
-      """
-      Enum value line description
-      """
+      "Enum value line description"
       userId_asc
       """
       Enum value
@@ -2054,6 +1828,7 @@ test.cb('Test augmented schema', t => {
       name_asc
       name_desc
     }
+
     """
     Custom filtering input type
     block description
@@ -2108,6 +1883,7 @@ test.cb('Test augmented schema', t => {
       extensionScalar_ends_with: String
       extensionScalar_not_ends_with: String
     }
+
     input _PersonInterfacedRelationshipTypeFilter {
       AND: [_PersonInterfacedRelationshipTypeFilter!]
       OR: [_PersonInterfacedRelationshipTypeFilter!]
@@ -2125,6 +1901,7 @@ test.cb('Test augmented schema', t => {
       boolean_not: Boolean
       Genre: _GenreFilter
     }
+
     input _GenreFilter {
       AND: [_GenreFilter!]
       OR: [_GenreFilter!]
@@ -2147,6 +1924,7 @@ test.cb('Test augmented schema', t => {
       interfacedRelationshipType_single: _GenreInterfacedRelationshipTypeFilter
       interfacedRelationshipType_every: _GenreInterfacedRelationshipTypeFilter
     }
+
     input _GenreInterfacedRelationshipTypeFilter {
       AND: [_GenreInterfacedRelationshipTypeFilter!]
       OR: [_GenreInterfacedRelationshipTypeFilter!]
@@ -2164,6 +1942,7 @@ test.cb('Test augmented schema', t => {
       boolean_not: Boolean
       Person: _PersonFilter
     }
+
     input _ReflexiveInterfacedRelationshipTypeFilter {
       AND: [_ReflexiveInterfacedRelationshipTypeFilter!]
       OR: [_ReflexiveInterfacedRelationshipTypeFilter!]
@@ -2171,228 +1950,176 @@ test.cb('Test augmented schema', t => {
       boolean_not: Boolean
       Person: _PersonFilter
     }
+
     type _AddActorMoviesPayload
       @relation(name: "ACTED_IN", from: "Actor", to: "Movie") {
-      """
-      Field for the Actor node this ACTED_IN [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Actor node this ACTED_IN [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Actor
-      """
-      Field for the Movie node this ACTED_IN [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Movie node this ACTED_IN [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Movie
     }
+
     type _RemoveActorMoviesPayload
       @relation(name: "ACTED_IN", from: "Actor", to: "Movie") {
-      """
-      Field for the Actor node this ACTED_IN [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Actor node this ACTED_IN [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Actor
-      """
-      Field for the Movie node this ACTED_IN [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Movie node this ACTED_IN [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Movie
     }
+
     type _MergeActorMoviesPayload
       @relation(name: "ACTED_IN", from: "Actor", to: "Movie") {
-      """
-      Field for the Actor node this ACTED_IN [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Actor node this ACTED_IN [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Actor
-      """
-      Field for the Movie node this ACTED_IN [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Movie node this ACTED_IN [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Movie
     }
+
     type _AddActorKnowsPayload
       @relation(name: "KNOWS", from: "Actor", to: "Person") {
-      """
-      Field for the Actor node this KNOWS [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Actor node this KNOWS [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Actor
-      """
-      Field for the Person node this KNOWS [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Person node this KNOWS [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Person
     }
+
     type _RemoveActorKnowsPayload
       @relation(name: "KNOWS", from: "Actor", to: "Person") {
-      """
-      Field for the Actor node this KNOWS [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Actor node this KNOWS [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Actor
-      """
-      Field for the Person node this KNOWS [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Person node this KNOWS [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Person
     }
+
     type _MergeActorKnowsPayload
       @relation(name: "KNOWS", from: "Actor", to: "Person") {
-      """
-      Field for the Actor node this KNOWS [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Actor node this KNOWS [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Actor
-      """
-      Field for the Person node this KNOWS [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Person node this KNOWS [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Person
     }
+
     type _AddActorInterfacedRelationshipTypePayload
       @relation(
         name: "INTERFACED_RELATIONSHIP_TYPE"
         from: "Person"
         to: "Genre"
       ) {
-      """
-      Field for the Person node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Person node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Person
-      """
-      Field for the Genre node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Genre node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Genre
       string: String!
       boolean: Boolean
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
     }
+
     type _RemoveActorInterfacedRelationshipTypePayload
       @relation(
         name: "INTERFACED_RELATIONSHIP_TYPE"
         from: "Person"
         to: "Genre"
       ) {
-      """
-      Field for the Person node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Person node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Person
-      """
-      Field for the Genre node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Genre node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Genre
     }
+
     type _UpdateActorInterfacedRelationshipTypePayload
       @relation(
         name: "INTERFACED_RELATIONSHIP_TYPE"
         from: "Person"
         to: "Genre"
       ) {
-      """
-      Field for the Person node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Person node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Person
-      """
-      Field for the Genre node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Genre node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Genre
       string: String!
       boolean: Boolean
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
     }
+
     type _MergeActorInterfacedRelationshipTypePayload
       @relation(
         name: "INTERFACED_RELATIONSHIP_TYPE"
         from: "Person"
         to: "Genre"
       ) {
-      """
-      Field for the Person node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Person node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Person
-      """
-      Field for the Genre node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Genre node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Genre
       string: String!
       boolean: Boolean
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
     }
+
     type _AddActorReflexiveInterfacedRelationshipTypePayload
       @relation(
         name: "REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE"
         from: "Person"
         to: "Person"
       ) {
-      """
-      Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Person
-      """
-      Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Person
       boolean: Boolean
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
     }
+
     type _RemoveActorReflexiveInterfacedRelationshipTypePayload
       @relation(
         name: "REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE"
         from: "Person"
         to: "Person"
       ) {
-      """
-      Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Person
-      """
-      Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Person
     }
+
     type _UpdateActorReflexiveInterfacedRelationshipTypePayload
       @relation(
         name: "REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE"
         from: "Person"
         to: "Person"
       ) {
-      """
-      Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Person
-      """
-      Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Person
       boolean: Boolean
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
     }
+
     type _MergeActorReflexiveInterfacedRelationshipTypePayload
       @relation(
         name: "REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE"
         from: "Person"
         to: "Person"
       ) {
-      """
-      Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Person
-      """
-      Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Person
       boolean: Boolean
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
     }
+
     input _ActorInput {
       userId: ID!
     }
+
     enum _ActorOrdering {
       userId_asc
       userId_desc
@@ -2403,6 +2130,7 @@ test.cb('Test augmented schema', t => {
       _id_asc
       _id_desc
     }
+
     input _ActorFilter {
       AND: [_ActorFilter!]
       OR: [_ActorFilter!]
@@ -2487,7 +2215,8 @@ test.cb('Test augmented schema', t => {
       reflexiveInterfacedRelationshipType_single: _ReflexiveInterfacedRelationshipTypeDirectionsFilter
       reflexiveInterfacedRelationshipType_every: _ReflexiveInterfacedRelationshipTypeDirectionsFilter
     }
-    type Actor implements Person {
+
+    type Actor {
       userId: ID!
       name: String
       movies(
@@ -2495,13 +2224,13 @@ test.cb('Test augmented schema', t => {
         offset: Int
         orderBy: [_MovieOrdering]
         filter: _MovieFilter
-      ): [Movie] @relation(name: "ACTED_IN", direction: "OUT")
+      ): [Movie] @relation(name: "ACTED_IN", direction: OUT)
       knows(
         first: Int
         offset: Int
         orderBy: [_PersonOrdering]
         filter: _PersonFilter
-      ): [Person] @relation(name: "KNOWS", direction: "OUT")
+      ): [Person] @relation(name: "KNOWS", direction: OUT)
       extensionScalar: String
       datetimes: [_Neo4jDateTime]
       strings: [String]
@@ -2512,164 +2241,127 @@ test.cb('Test augmented schema', t => {
         filter: _PersonInterfacedRelationshipTypeFilter
       ): [_PersonInterfacedRelationshipType]
       reflexiveInterfacedRelationshipType: _PersonReflexiveInterfacedRelationshipTypeDirections
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this node.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this node."
       _id: String
     }
+
     type _AddUserInterfacedRelationshipTypePayload
       @relation(
         name: "INTERFACED_RELATIONSHIP_TYPE"
         from: "Person"
         to: "Genre"
       ) {
-      """
-      Field for the Person node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Person node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Person
-      """
-      Field for the Genre node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Genre node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Genre
       string: String!
       boolean: Boolean
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
     }
+
     type _RemoveUserInterfacedRelationshipTypePayload
       @relation(
         name: "INTERFACED_RELATIONSHIP_TYPE"
         from: "Person"
         to: "Genre"
       ) {
-      """
-      Field for the Person node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Person node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Person
-      """
-      Field for the Genre node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Genre node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Genre
     }
+
     type _UpdateUserInterfacedRelationshipTypePayload
       @relation(
         name: "INTERFACED_RELATIONSHIP_TYPE"
         from: "Person"
         to: "Genre"
       ) {
-      """
-      Field for the Person node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Person node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Person
-      """
-      Field for the Genre node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Genre node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Genre
       string: String!
       boolean: Boolean
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
     }
+
     type _MergeUserInterfacedRelationshipTypePayload
       @relation(
         name: "INTERFACED_RELATIONSHIP_TYPE"
         from: "Person"
         to: "Genre"
       ) {
-      """
-      Field for the Person node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Person node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Person
-      """
-      Field for the Genre node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Genre node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Genre
       string: String!
       boolean: Boolean
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
     }
+
     type _AddUserReflexiveInterfacedRelationshipTypePayload
       @relation(
         name: "REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE"
         from: "Person"
         to: "Person"
       ) {
-      """
-      Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Person
-      """
-      Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Person
       boolean: Boolean
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
     }
+
     type _RemoveUserReflexiveInterfacedRelationshipTypePayload
       @relation(
         name: "REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE"
         from: "Person"
         to: "Person"
       ) {
-      """
-      Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Person
-      """
-      Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Person
     }
+
     type _UpdateUserReflexiveInterfacedRelationshipTypePayload
       @relation(
         name: "REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE"
         from: "Person"
         to: "Person"
       ) {
-      """
-      Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Person
-      """
-      Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Person
       boolean: Boolean
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
     }
+
     type _MergeUserReflexiveInterfacedRelationshipTypePayload
       @relation(
         name: "REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE"
         from: "Person"
         to: "Person"
       ) {
-      """
-      Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Person
-      """
-      Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Person
       boolean: Boolean
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
     }
+
     type _UserRated @relation(name: "RATED", from: "User", to: "Movie") {
       currentUserId(strArg: String): String
         @cypher(
@@ -2684,15 +2376,12 @@ test.cb('Test augmented schema', t => {
       localdatetime: _Neo4jLocalDateTime
       datetimes: [_Neo4jDateTime]
       location: _Neo4jPoint
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
-      """
-      Field for the Movie node this RATED [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Movie node this RATED [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       Movie: Movie
     }
+
     input _UserRatedFilter {
       AND: [_UserRatedFilter!]
       OR: [_UserRatedFilter!]
@@ -2765,15 +2454,12 @@ test.cb('Test augmented schema', t => {
       location_distance_gte: _Neo4jPointDistanceFilter
       Movie: _MovieFilter
     }
+
     type _AddUserRatedPayload
       @relation(name: "RATED", from: "User", to: "Movie") {
-      """
-      Field for the User node this RATED [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the User node this RATED [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: User
-      """
-      Field for the Movie node this RATED [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Movie node this RATED [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Movie
       currentUserId: String
         @cypher(
@@ -2788,31 +2474,23 @@ test.cb('Test augmented schema', t => {
       localdatetime: _Neo4jLocalDateTime
       datetimes: [_Neo4jDateTime]
       location: _Neo4jPoint
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
     }
+
     type _RemoveUserRatedPayload
       @relation(name: "RATED", from: "User", to: "Movie") {
-      """
-      Field for the User node this RATED [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the User node this RATED [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: User
-      """
-      Field for the Movie node this RATED [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Movie node this RATED [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Movie
     }
+
     type _UpdateUserRatedPayload
       @relation(name: "RATED", from: "User", to: "Movie") {
-      """
-      Field for the User node this RATED [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the User node this RATED [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: User
-      """
-      Field for the Movie node this RATED [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Movie node this RATED [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Movie
       currentUserId: String
         @cypher(
@@ -2827,20 +2505,15 @@ test.cb('Test augmented schema', t => {
       localdatetime: _Neo4jLocalDateTime
       datetimes: [_Neo4jDateTime]
       location: _Neo4jPoint
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
     }
+
     type _MergeUserRatedPayload
       @relation(name: "RATED", from: "User", to: "Movie") {
-      """
-      Field for the User node this RATED [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the User node this RATED [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: User
-      """
-      Field for the Movie node this RATED [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Movie node this RATED [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Movie
       currentUserId: String
         @cypher(
@@ -2855,11 +2528,10 @@ test.cb('Test augmented schema', t => {
       localdatetime: _Neo4jLocalDateTime
       datetimes: [_Neo4jDateTime]
       location: _Neo4jPoint
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
     }
+
     type _UserRatedCustomFrom
       @relation(name: "RATED_CUSTOM_FROM", from: "User", to: "Movie") {
       currentUserId(strArg: String): String
@@ -2875,15 +2547,12 @@ test.cb('Test augmented schema', t => {
       localdatetime: _Neo4jLocalDateTime
       datetimes: [_Neo4jDateTime]
       location: _Neo4jPoint
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
-      """
-      Field for the Movie node this RATED_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Movie node this RATED_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       Movie: Movie
     }
+
     input _UserRatedCustomFromFilter {
       AND: [_UserRatedCustomFromFilter!]
       OR: [_UserRatedCustomFromFilter!]
@@ -2956,15 +2625,12 @@ test.cb('Test augmented schema', t => {
       location_distance_gte: _Neo4jPointDistanceFilter
       Movie: _MovieFilter
     }
+
     type _AddUserRatedCustomFromPayload
       @relation(name: "RATED_CUSTOM_FROM", from: "User", to: "Movie") {
-      """
-      Field for the User node this RATED_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the User node this RATED_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       ratedBy: User
-      """
-      Field for the Movie node this RATED_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Movie node this RATED_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Movie
       currentUserId: String
         @cypher(
@@ -2979,31 +2645,23 @@ test.cb('Test augmented schema', t => {
       localdatetime: _Neo4jLocalDateTime
       datetimes: [_Neo4jDateTime]
       location: _Neo4jPoint
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
     }
+
     type _RemoveUserRatedCustomFromPayload
       @relation(name: "RATED_CUSTOM_FROM", from: "User", to: "Movie") {
-      """
-      Field for the User node this RATED_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the User node this RATED_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       ratedBy: User
-      """
-      Field for the Movie node this RATED_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Movie node this RATED_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Movie
     }
+
     type _UpdateUserRatedCustomFromPayload
       @relation(name: "RATED_CUSTOM_FROM", from: "User", to: "Movie") {
-      """
-      Field for the User node this RATED_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the User node this RATED_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       ratedBy: User
-      """
-      Field for the Movie node this RATED_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Movie node this RATED_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Movie
       currentUserId: String
         @cypher(
@@ -3018,20 +2676,15 @@ test.cb('Test augmented schema', t => {
       localdatetime: _Neo4jLocalDateTime
       datetimes: [_Neo4jDateTime]
       location: _Neo4jPoint
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
     }
+
     type _MergeUserRatedCustomFromPayload
       @relation(name: "RATED_CUSTOM_FROM", from: "User", to: "Movie") {
-      """
-      Field for the User node this RATED_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the User node this RATED_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       ratedBy: User
-      """
-      Field for the Movie node this RATED_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Movie node this RATED_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Movie
       currentUserId: String
         @cypher(
@@ -3046,11 +2699,10 @@ test.cb('Test augmented schema', t => {
       localdatetime: _Neo4jLocalDateTime
       datetimes: [_Neo4jDateTime]
       location: _Neo4jPoint
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
     }
+
     type _UserRatedCustomTo
       @relation(name: "RATED_CUSTOM_TO", from: "User", to: "Movie") {
       currentUserId(strArg: String): String
@@ -3066,15 +2718,12 @@ test.cb('Test augmented schema', t => {
       localdatetime: _Neo4jLocalDateTime
       datetimes: [_Neo4jDateTime]
       location: _Neo4jPoint
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
-      """
-      Field for the Movie node this RATED_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Movie node this RATED_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       movie: Movie
     }
+
     input _UserRatedCustomToFilter {
       AND: [_UserRatedCustomToFilter!]
       OR: [_UserRatedCustomToFilter!]
@@ -3147,15 +2796,12 @@ test.cb('Test augmented schema', t => {
       location_distance_gte: _Neo4jPointDistanceFilter
       movie: _MovieFilter
     }
+
     type _AddUserRatedCustomToPayload
       @relation(name: "RATED_CUSTOM_TO", from: "User", to: "Movie") {
-      """
-      Field for the User node this RATED_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the User node this RATED_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: User
-      """
-      Field for the Movie node this RATED_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Movie node this RATED_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       movie: Movie
       currentUserId: String
         @cypher(
@@ -3170,31 +2816,23 @@ test.cb('Test augmented schema', t => {
       localdatetime: _Neo4jLocalDateTime
       datetimes: [_Neo4jDateTime]
       location: _Neo4jPoint
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
     }
+
     type _RemoveUserRatedCustomToPayload
       @relation(name: "RATED_CUSTOM_TO", from: "User", to: "Movie") {
-      """
-      Field for the User node this RATED_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the User node this RATED_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: User
-      """
-      Field for the Movie node this RATED_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Movie node this RATED_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       movie: Movie
     }
+
     type _UpdateUserRatedCustomToPayload
       @relation(name: "RATED_CUSTOM_TO", from: "User", to: "Movie") {
-      """
-      Field for the User node this RATED_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the User node this RATED_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: User
-      """
-      Field for the Movie node this RATED_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Movie node this RATED_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       movie: Movie
       currentUserId: String
         @cypher(
@@ -3209,20 +2847,15 @@ test.cb('Test augmented schema', t => {
       localdatetime: _Neo4jLocalDateTime
       datetimes: [_Neo4jDateTime]
       location: _Neo4jPoint
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
     }
+
     type _MergeUserRatedCustomToPayload
       @relation(name: "RATED_CUSTOM_TO", from: "User", to: "Movie") {
-      """
-      Field for the User node this RATED_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the User node this RATED_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: User
-      """
-      Field for the Movie node this RATED_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Movie node this RATED_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       movie: Movie
       currentUserId: String
         @cypher(
@@ -3237,11 +2870,10 @@ test.cb('Test augmented schema', t => {
       localdatetime: _Neo4jLocalDateTime
       datetimes: [_Neo4jDateTime]
       location: _Neo4jPoint
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
     }
+
     type _UserRatedCustomFromTo
       @relation(name: "RATED_CUSTOM_FROM_TO", from: "User", to: "Movie") {
       from: String
@@ -3258,16 +2890,13 @@ test.cb('Test augmented schema', t => {
       localdatetime: _Neo4jLocalDateTime
       datetimes: [_Neo4jDateTime]
       location: _Neo4jPoint
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
       to: Int
-      """
-      Field for the Movie node this RATED_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Movie node this RATED_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       movie: Movie
     }
+
     input _UserRatedCustomFromToFilter {
       AND: [_UserRatedCustomFromToFilter!]
       OR: [_UserRatedCustomFromToFilter!]
@@ -3359,15 +2988,12 @@ test.cb('Test augmented schema', t => {
       to_gte: Int
       movie: _MovieFilter
     }
+
     type _AddUserRatedCustomFromToPayload
       @relation(name: "RATED_CUSTOM_FROM_TO", from: "User", to: "Movie") {
-      """
-      Field for the User node this RATED_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the User node this RATED_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       ratedBy: User
-      """
-      Field for the Movie node this RATED_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Movie node this RATED_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       movie: Movie
       from: String
       currentUserId: String
@@ -3383,32 +3009,24 @@ test.cb('Test augmented schema', t => {
       localdatetime: _Neo4jLocalDateTime
       datetimes: [_Neo4jDateTime]
       location: _Neo4jPoint
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
       to: Int
     }
+
     type _RemoveUserRatedCustomFromToPayload
       @relation(name: "RATED_CUSTOM_FROM_TO", from: "User", to: "Movie") {
-      """
-      Field for the User node this RATED_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the User node this RATED_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       ratedBy: User
-      """
-      Field for the Movie node this RATED_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Movie node this RATED_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       movie: Movie
     }
+
     type _UpdateUserRatedCustomFromToPayload
       @relation(name: "RATED_CUSTOM_FROM_TO", from: "User", to: "Movie") {
-      """
-      Field for the User node this RATED_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the User node this RATED_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       ratedBy: User
-      """
-      Field for the Movie node this RATED_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Movie node this RATED_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       movie: Movie
       from: String
       currentUserId: String
@@ -3424,21 +3042,16 @@ test.cb('Test augmented schema', t => {
       localdatetime: _Neo4jLocalDateTime
       datetimes: [_Neo4jDateTime]
       location: _Neo4jPoint
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
       to: Int
     }
+
     type _MergeUserRatedCustomFromToPayload
       @relation(name: "RATED_CUSTOM_FROM_TO", from: "User", to: "Movie") {
-      """
-      Field for the User node this RATED_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the User node this RATED_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       ratedBy: User
-      """
-      Field for the Movie node this RATED_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Movie node this RATED_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       movie: Movie
       from: String
       currentUserId: String
@@ -3454,17 +3067,14 @@ test.cb('Test augmented schema', t => {
       localdatetime: _Neo4jLocalDateTime
       datetimes: [_Neo4jDateTime]
       location: _Neo4jPoint
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
       to: Int
     }
+
     type _UserFriendsDirections
       @relation(name: "FRIEND_OF", from: "User", to: "User") {
-      """
-      Field for the User node this FRIEND_OF [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the User node this FRIEND_OF [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from(
         since: Int
         time: _Neo4jTimeInput
@@ -3480,9 +3090,7 @@ test.cb('Test augmented schema', t => {
         orderBy: [_FriendOfOrdering]
         filter: _FriendOfFilter
       ): [_UserFriends]
-      """
-      Field for the User node this FRIEND_OF [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the User node this FRIEND_OF [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to(
         since: Int
         time: _Neo4jTimeInput
@@ -3499,6 +3107,7 @@ test.cb('Test augmented schema', t => {
         filter: _FriendOfFilter
       ): [_UserFriends]
     }
+
     type _UserFriends @relation(name: "FRIEND_OF", from: "User", to: "User") {
       currentUserId: String
         @cypher(
@@ -3513,19 +3122,17 @@ test.cb('Test augmented schema', t => {
       localtime: _Neo4jLocalTime
       localdatetime: _Neo4jLocalDateTime
       location: _Neo4jPoint
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
-      """
-      Field for the User node this FRIEND_OF [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the User node this FRIEND_OF [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       User: User
     }
+
     input _FriendOfDirectionsFilter {
       from: _FriendOfFilter
       to: _FriendOfFilter
     }
+
     input _FriendOfFilter {
       AND: [_FriendOfFilter!]
       OR: [_FriendOfFilter!]
@@ -3601,6 +3208,7 @@ test.cb('Test augmented schema', t => {
       location_distance_gte: _Neo4jPointDistanceFilter
       User: _UserFilter
     }
+
     enum _FriendOfOrdering {
       currentUserId_asc
       currentUserId_desc
@@ -3619,6 +3227,7 @@ test.cb('Test augmented schema', t => {
       _id_asc
       _id_desc
     }
+
     input _FriendOfInput {
       since: Int
       time: _Neo4jTimeInput
@@ -3630,15 +3239,12 @@ test.cb('Test augmented schema', t => {
       localdatetime: _Neo4jLocalDateTimeInput
       location: _Neo4jPointInput
     }
+
     type _AddUserFriendsPayload
       @relation(name: "FRIEND_OF", from: "User", to: "User") {
-      """
-      Field for the User node this FRIEND_OF [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the User node this FRIEND_OF [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: User
-      """
-      Field for the User node this FRIEND_OF [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the User node this FRIEND_OF [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: User
       currentUserId: String
         @cypher(
@@ -3653,31 +3259,23 @@ test.cb('Test augmented schema', t => {
       localtime: _Neo4jLocalTime
       localdatetime: _Neo4jLocalDateTime
       location: _Neo4jPoint
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
     }
+
     type _RemoveUserFriendsPayload
       @relation(name: "FRIEND_OF", from: "User", to: "User") {
-      """
-      Field for the User node this FRIEND_OF [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the User node this FRIEND_OF [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: User
-      """
-      Field for the User node this FRIEND_OF [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the User node this FRIEND_OF [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: User
     }
+
     type _UpdateUserFriendsPayload
       @relation(name: "FRIEND_OF", from: "User", to: "User") {
-      """
-      Field for the User node this FRIEND_OF [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the User node this FRIEND_OF [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: User
-      """
-      Field for the User node this FRIEND_OF [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the User node this FRIEND_OF [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: User
       currentUserId: String
         @cypher(
@@ -3692,20 +3290,15 @@ test.cb('Test augmented schema', t => {
       localtime: _Neo4jLocalTime
       localdatetime: _Neo4jLocalDateTime
       location: _Neo4jPoint
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
     }
+
     type _MergeUserFriendsPayload
       @relation(name: "FRIEND_OF", from: "User", to: "User") {
-      """
-      Field for the User node this FRIEND_OF [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the User node this FRIEND_OF [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: User
-      """
-      Field for the User node this FRIEND_OF [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the User node this FRIEND_OF [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: User
       currentUserId: String
         @cypher(
@@ -3720,16 +3313,13 @@ test.cb('Test augmented schema', t => {
       localtime: _Neo4jLocalTime
       localdatetime: _Neo4jLocalDateTime
       location: _Neo4jPoint
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
     }
+
     type _UserFriendsCustomFromDirections
       @relation(name: "FRIEND_OF_CUSTOM_FROM", from: "User", to: "User") {
-      """
-      Field for the User node this FRIEND_OF_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the User node this FRIEND_OF_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       friendedBy(
         since: Int
         time: _Neo4jTimeInput
@@ -3745,9 +3335,7 @@ test.cb('Test augmented schema', t => {
         orderBy: [_FriendOfCustomFromOrdering]
         filter: _FriendOfCustomFromFilter
       ): [_UserFriendsCustomFrom]
-      """
-      Field for the User node this FRIEND_OF_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the User node this FRIEND_OF_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to(
         since: Int
         time: _Neo4jTimeInput
@@ -3764,6 +3352,7 @@ test.cb('Test augmented schema', t => {
         filter: _FriendOfCustomFromFilter
       ): [_UserFriendsCustomFrom]
     }
+
     type _UserFriendsCustomFrom
       @relation(name: "FRIEND_OF_CUSTOM_FROM", from: "User", to: "User") {
       currentUserId: String
@@ -3779,19 +3368,17 @@ test.cb('Test augmented schema', t => {
       localtime: _Neo4jLocalTime
       localdatetime: _Neo4jLocalDateTime
       location: _Neo4jPoint
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
-      """
-      Field for the User node this FRIEND_OF_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the User node this FRIEND_OF_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       User: User
     }
+
     input _FriendOfCustomFromDirectionsFilter {
       friendedBy: _FriendOfCustomFromFilter
       to: _FriendOfCustomFromFilter
     }
+
     input _FriendOfCustomFromFilter {
       AND: [_FriendOfCustomFromFilter!]
       OR: [_FriendOfCustomFromFilter!]
@@ -3867,6 +3454,7 @@ test.cb('Test augmented schema', t => {
       location_distance_gte: _Neo4jPointDistanceFilter
       User: _UserFilter
     }
+
     enum _FriendOfCustomFromOrdering {
       currentUserId_asc
       currentUserId_desc
@@ -3885,6 +3473,7 @@ test.cb('Test augmented schema', t => {
       _id_asc
       _id_desc
     }
+
     input _FriendOfCustomFromInput {
       since: Int
       time: _Neo4jTimeInput
@@ -3896,15 +3485,12 @@ test.cb('Test augmented schema', t => {
       localdatetime: _Neo4jLocalDateTimeInput
       location: _Neo4jPointInput
     }
+
     type _AddUserFriendsCustomFromPayload
       @relation(name: "FRIEND_OF_CUSTOM_FROM", from: "User", to: "User") {
-      """
-      Field for the User node this FRIEND_OF_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the User node this FRIEND_OF_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       friendedBy: User
-      """
-      Field for the User node this FRIEND_OF_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the User node this FRIEND_OF_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: User
       currentUserId: String
         @cypher(
@@ -3919,31 +3505,23 @@ test.cb('Test augmented schema', t => {
       localtime: _Neo4jLocalTime
       localdatetime: _Neo4jLocalDateTime
       location: _Neo4jPoint
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
     }
+
     type _RemoveUserFriendsCustomFromPayload
       @relation(name: "FRIEND_OF_CUSTOM_FROM", from: "User", to: "User") {
-      """
-      Field for the User node this FRIEND_OF_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the User node this FRIEND_OF_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       friendedBy: User
-      """
-      Field for the User node this FRIEND_OF_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the User node this FRIEND_OF_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: User
     }
+
     type _UpdateUserFriendsCustomFromPayload
       @relation(name: "FRIEND_OF_CUSTOM_FROM", from: "User", to: "User") {
-      """
-      Field for the User node this FRIEND_OF_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the User node this FRIEND_OF_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       friendedBy: User
-      """
-      Field for the User node this FRIEND_OF_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the User node this FRIEND_OF_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: User
       currentUserId: String
         @cypher(
@@ -3958,20 +3536,15 @@ test.cb('Test augmented schema', t => {
       localtime: _Neo4jLocalTime
       localdatetime: _Neo4jLocalDateTime
       location: _Neo4jPoint
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
     }
+
     type _MergeUserFriendsCustomFromPayload
       @relation(name: "FRIEND_OF_CUSTOM_FROM", from: "User", to: "User") {
-      """
-      Field for the User node this FRIEND_OF_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the User node this FRIEND_OF_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       friendedBy: User
-      """
-      Field for the User node this FRIEND_OF_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the User node this FRIEND_OF_CUSTOM_FROM [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: User
       currentUserId: String
         @cypher(
@@ -3986,16 +3559,13 @@ test.cb('Test augmented schema', t => {
       localtime: _Neo4jLocalTime
       localdatetime: _Neo4jLocalDateTime
       location: _Neo4jPoint
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
     }
+
     type _UserFriendsCustomToDirections
       @relation(name: "FRIEND_OF_CUSTOM_TO", from: "User", to: "User") {
-      """
-      Field for the User node this FRIEND_OF_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the User node this FRIEND_OF_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from(
         since: Int
         time: _Neo4jTimeInput
@@ -4011,9 +3581,7 @@ test.cb('Test augmented schema', t => {
         orderBy: [_FriendOfCustomToOrdering]
         filter: _FriendOfCustomToFilter
       ): [_UserFriendsCustomTo]
-      """
-      Field for the User node this FRIEND_OF_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the User node this FRIEND_OF_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       friended(
         since: Int
         time: _Neo4jTimeInput
@@ -4030,6 +3598,7 @@ test.cb('Test augmented schema', t => {
         filter: _FriendOfCustomToFilter
       ): [_UserFriendsCustomTo]
     }
+
     type _UserFriendsCustomTo
       @relation(name: "FRIEND_OF_CUSTOM_TO", from: "User", to: "User") {
       currentUserId: String
@@ -4045,19 +3614,17 @@ test.cb('Test augmented schema', t => {
       localtime: _Neo4jLocalTime
       localdatetime: _Neo4jLocalDateTime
       location: _Neo4jPoint
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
-      """
-      Field for the User node this FRIEND_OF_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the User node this FRIEND_OF_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       User: User
     }
+
     input _FriendOfCustomToDirectionsFilter {
       from: _FriendOfCustomToFilter
       friended: _FriendOfCustomToFilter
     }
+
     input _FriendOfCustomToFilter {
       AND: [_FriendOfCustomToFilter!]
       OR: [_FriendOfCustomToFilter!]
@@ -4133,6 +3700,7 @@ test.cb('Test augmented schema', t => {
       location_distance_gte: _Neo4jPointDistanceFilter
       User: _UserFilter
     }
+
     enum _FriendOfCustomToOrdering {
       currentUserId_asc
       currentUserId_desc
@@ -4151,6 +3719,7 @@ test.cb('Test augmented schema', t => {
       _id_asc
       _id_desc
     }
+
     input _FriendOfCustomToInput {
       since: Int
       time: _Neo4jTimeInput
@@ -4162,15 +3731,12 @@ test.cb('Test augmented schema', t => {
       localdatetime: _Neo4jLocalDateTimeInput
       location: _Neo4jPointInput
     }
+
     type _AddUserFriendsCustomToPayload
       @relation(name: "FRIEND_OF_CUSTOM_TO", from: "User", to: "User") {
-      """
-      Field for the User node this FRIEND_OF_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the User node this FRIEND_OF_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: User
-      """
-      Field for the User node this FRIEND_OF_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the User node this FRIEND_OF_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       friended: User
       currentUserId: String
         @cypher(
@@ -4185,31 +3751,23 @@ test.cb('Test augmented schema', t => {
       localtime: _Neo4jLocalTime
       localdatetime: _Neo4jLocalDateTime
       location: _Neo4jPoint
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
     }
+
     type _RemoveUserFriendsCustomToPayload
       @relation(name: "FRIEND_OF_CUSTOM_TO", from: "User", to: "User") {
-      """
-      Field for the User node this FRIEND_OF_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the User node this FRIEND_OF_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: User
-      """
-      Field for the User node this FRIEND_OF_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the User node this FRIEND_OF_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       friended: User
     }
+
     type _UpdateUserFriendsCustomToPayload
       @relation(name: "FRIEND_OF_CUSTOM_TO", from: "User", to: "User") {
-      """
-      Field for the User node this FRIEND_OF_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the User node this FRIEND_OF_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: User
-      """
-      Field for the User node this FRIEND_OF_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the User node this FRIEND_OF_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       friended: User
       currentUserId: String
         @cypher(
@@ -4224,20 +3782,15 @@ test.cb('Test augmented schema', t => {
       localtime: _Neo4jLocalTime
       localdatetime: _Neo4jLocalDateTime
       location: _Neo4jPoint
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
     }
+
     type _MergeUserFriendsCustomToPayload
       @relation(name: "FRIEND_OF_CUSTOM_TO", from: "User", to: "User") {
-      """
-      Field for the User node this FRIEND_OF_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the User node this FRIEND_OF_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: User
-      """
-      Field for the User node this FRIEND_OF_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the User node this FRIEND_OF_CUSTOM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       friended: User
       currentUserId: String
         @cypher(
@@ -4252,16 +3805,13 @@ test.cb('Test augmented schema', t => {
       localtime: _Neo4jLocalTime
       localdatetime: _Neo4jLocalDateTime
       location: _Neo4jPoint
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
     }
+
     type _UserFriendsCustomFromToDirections
       @relation(name: "FRIEND_OF_CUSTOM_FROM_TO", from: "User", to: "User") {
-      """
-      Field for the User node this FRIEND_OF_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the User node this FRIEND_OF_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       friendedBy(
         since: Int
         time: _Neo4jTimeInput
@@ -4279,9 +3829,7 @@ test.cb('Test augmented schema', t => {
         orderBy: [_FriendOfCustomFromToOrdering]
         filter: _FriendOfCustomFromToFilter
       ): [_UserFriendsCustomFromTo]
-      """
-      Field for the User node this FRIEND_OF_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the User node this FRIEND_OF_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       friended(
         since: Int
         time: _Neo4jTimeInput
@@ -4300,6 +3848,7 @@ test.cb('Test augmented schema', t => {
         filter: _FriendOfCustomFromToFilter
       ): [_UserFriendsCustomFromTo]
     }
+
     type _UserFriendsCustomFromTo
       @relation(name: "FRIEND_OF_CUSTOM_FROM_TO", from: "User", to: "User") {
       from: String
@@ -4317,19 +3866,17 @@ test.cb('Test augmented schema', t => {
       localdatetime: _Neo4jLocalDateTime
       location: _Neo4jPoint
       to: Int
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
-      """
-      Field for the User node this FRIEND_OF_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the User node this FRIEND_OF_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       User: User
     }
+
     input _FriendOfCustomFromToDirectionsFilter {
       friendedBy: _FriendOfCustomFromToFilter
       friended: _FriendOfCustomFromToFilter
     }
+
     input _FriendOfCustomFromToFilter {
       AND: [_FriendOfCustomFromToFilter!]
       OR: [_FriendOfCustomFromToFilter!]
@@ -4424,6 +3971,7 @@ test.cb('Test augmented schema', t => {
       to_gte: Int
       User: _UserFilter
     }
+
     enum _FriendOfCustomFromToOrdering {
       from_asc
       from_desc
@@ -4446,6 +3994,7 @@ test.cb('Test augmented schema', t => {
       _id_asc
       _id_desc
     }
+
     input _FriendOfCustomFromToInput {
       from: String
       since: Int
@@ -4459,15 +4008,12 @@ test.cb('Test augmented schema', t => {
       location: _Neo4jPointInput
       to: Int
     }
+
     type _AddUserFriendsCustomFromToPayload
       @relation(name: "FRIEND_OF_CUSTOM_FROM_TO", from: "User", to: "User") {
-      """
-      Field for the User node this FRIEND_OF_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the User node this FRIEND_OF_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       friendedBy: User
-      """
-      Field for the User node this FRIEND_OF_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the User node this FRIEND_OF_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       friended: User
       from: String
       currentUserId: String
@@ -4484,31 +4030,23 @@ test.cb('Test augmented schema', t => {
       localdatetime: _Neo4jLocalDateTime
       location: _Neo4jPoint
       to: Int
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
     }
+
     type _RemoveUserFriendsCustomFromToPayload
       @relation(name: "FRIEND_OF_CUSTOM_FROM_TO", from: "User", to: "User") {
-      """
-      Field for the User node this FRIEND_OF_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the User node this FRIEND_OF_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       friendedBy: User
-      """
-      Field for the User node this FRIEND_OF_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the User node this FRIEND_OF_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       friended: User
     }
+
     type _UpdateUserFriendsCustomFromToPayload
       @relation(name: "FRIEND_OF_CUSTOM_FROM_TO", from: "User", to: "User") {
-      """
-      Field for the User node this FRIEND_OF_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the User node this FRIEND_OF_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       friendedBy: User
-      """
-      Field for the User node this FRIEND_OF_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the User node this FRIEND_OF_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       friended: User
       from: String
       currentUserId: String
@@ -4525,20 +4063,15 @@ test.cb('Test augmented schema', t => {
       localdatetime: _Neo4jLocalDateTime
       location: _Neo4jPoint
       to: Int
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
     }
+
     type _MergeUserFriendsCustomFromToPayload
       @relation(name: "FRIEND_OF_CUSTOM_FROM_TO", from: "User", to: "User") {
-      """
-      Field for the User node this FRIEND_OF_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the User node this FRIEND_OF_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       friendedBy: User
-      """
-      Field for the User node this FRIEND_OF_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the User node this FRIEND_OF_CUSTOM_FROM_TO [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       friended: User
       from: String
       currentUserId: String
@@ -4555,47 +4088,38 @@ test.cb('Test augmented schema', t => {
       localdatetime: _Neo4jLocalDateTime
       location: _Neo4jPoint
       to: Int
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
     }
+
     type _AddUserFavoritesPayload
       @relation(name: "FAVORITED", from: "User", to: "Movie") {
-      """
-      Field for the User node this FAVORITED [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the User node this FAVORITED [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: User
-      """
-      Field for the Movie node this FAVORITED [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Movie node this FAVORITED [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Movie
     }
+
     type _RemoveUserFavoritesPayload
       @relation(name: "FAVORITED", from: "User", to: "Movie") {
-      """
-      Field for the User node this FAVORITED [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the User node this FAVORITED [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: User
-      """
-      Field for the Movie node this FAVORITED [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Movie node this FAVORITED [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Movie
     }
+
     type _MergeUserFavoritesPayload
       @relation(name: "FAVORITED", from: "User", to: "Movie") {
-      """
-      Field for the User node this FAVORITED [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the User node this FAVORITED [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: User
-      """
-      Field for the Movie node this FAVORITED [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Movie node this FAVORITED [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Movie
     }
+
     input _UserInput {
       userId: ID!
     }
+
     enum _UserOrdering {
       userId_asc
       userId_desc
@@ -4608,6 +4132,7 @@ test.cb('Test augmented schema', t => {
       _id_asc
       _id_desc
     }
+
     input _UserFilter {
       AND: [_UserFilter!]
       OR: [_UserFilter!]
@@ -4733,6 +4258,7 @@ test.cb('Test augmented schema', t => {
       extensionScalar_ends_with: String
       extensionScalar_not_ends_with: String
     }
+
     type User implements Person {
       userId: ID!
       name: String
@@ -4810,16 +4336,15 @@ test.cb('Test augmented schema', t => {
         offset: Int
         orderBy: [_MovieOrdering]
         filter: _MovieFilter
-      ): [Movie] @relation(name: "FAVORITED", direction: "OUT")
+      ): [Movie] @relation(name: "FAVORITED", direction: OUT)
       movieSearch(first: Int, offset: Int): [MovieSearch]
       computedMovieSearch(first: Int, offset: Int): [MovieSearch]
         @cypher(statement: "MATCH (ms:MovieSearch) RETURN ms")
       extensionScalar: String
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this node.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this node."
       _id: String
     }
+
     type FriendOf @relation {
       from: User
       currentUserId: String
@@ -4837,6 +4362,7 @@ test.cb('Test augmented schema', t => {
       location: _Neo4jPoint
       to: User
     }
+
     type FriendOfCustomFrom @relation(from: "friendedBy") {
       friendedBy: User
       currentUserId: String
@@ -4854,6 +4380,7 @@ test.cb('Test augmented schema', t => {
       location: _Neo4jPoint
       to: User
     }
+
     type FriendOfCustomTo @relation(to: "friended") {
       from: User
       currentUserId: String
@@ -4871,6 +4398,7 @@ test.cb('Test augmented schema', t => {
       location: _Neo4jPoint
       friended: User
     }
+
     type FriendOfCustomFromTo @relation(from: "friendedBy", to: "friended") {
       friendedBy: User
       from: String
@@ -4890,6 +4418,7 @@ test.cb('Test augmented schema', t => {
       friended: User
       to: Int
     }
+
     type Rated @relation {
       from: User
       currentUserId(strArg: String): String
@@ -4908,10 +4437,12 @@ test.cb('Test augmented schema', t => {
       _id: String
       to: Movie
     }
+
     type RatedNoProps @relation {
       from: User
       to: Movie
     }
+
     type RatedCustomFrom @relation(from: "ratedBy") {
       ratedBy: User
       currentUserId(strArg: String): String
@@ -4930,6 +4461,7 @@ test.cb('Test augmented schema', t => {
       _id: String
       to: Movie
     }
+
     type RatedCustomTo @relation(to: "movie") {
       from: User
       currentUserId(strArg: String): String
@@ -4948,6 +4480,7 @@ test.cb('Test augmented schema', t => {
       _id: String
       movie: Movie
     }
+
     type RatedCustomFromTo @relation(from: "ratedBy", to: "movie") {
       ratedBy: User
       from: String
@@ -4968,20 +4501,23 @@ test.cb('Test augmented schema', t => {
       to: Int
       movie: Movie
     }
+
     enum BookGenre {
       Mystery
       Science
-      Math
     }
+
     input _BookInput {
       genre: BookGenre!
     }
+
     enum _BookOrdering {
       genre_asc
       genre_desc
       _id_asc
       _id_desc
     }
+
     input _BookFilter {
       AND: [_BookFilter!]
       OR: [_BookFilter!]
@@ -4990,19 +4526,21 @@ test.cb('Test augmented schema', t => {
       genre_in: [BookGenre!]
       genre_not_in: [BookGenre!]
     }
+
     type Book {
       genre: BookGenre
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this node.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this node."
       _id: String
     }
+
     input _NodeTypeMutationTestInput {
       NodeTypeMutationTest: BookGenre!
     }
+
     type NodeTypeMutationTest {
       NodeTypeMutationTest: BookGenre
     }
+
     """
     Custom ordering enum type
     block description
@@ -5011,15 +4549,18 @@ test.cb('Test augmented schema', t => {
       name_desc
       name_asc
     }
+
     input _currentUserIdInput {
       userId: String!
     }
+
     enum _currentUserIdOrdering {
       userId_asc
       userId_desc
       _id_asc
       _id_desc
     }
+
     input _currentUserIdFilter {
       AND: [_currentUserIdFilter!]
       OR: [_currentUserIdFilter!]
@@ -5035,49 +4576,41 @@ test.cb('Test augmented schema', t => {
       userId_ends_with: String
       userId_not_ends_with: String
     }
+
     type currentUserId {
       userId: String
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this node.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this node."
       _id: String
     }
+
     type _AddTemporalNodeTemporalNodesPayload
       @relation(name: "TEMPORAL", from: "TemporalNode", to: "TemporalNode") {
-      """
-      Field for the TemporalNode node this TEMPORAL [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the TemporalNode node this TEMPORAL [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: TemporalNode
-      """
-      Field for the TemporalNode node this TEMPORAL [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the TemporalNode node this TEMPORAL [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: TemporalNode
     }
+
     type _RemoveTemporalNodeTemporalNodesPayload
       @relation(name: "TEMPORAL", from: "TemporalNode", to: "TemporalNode") {
-      """
-      Field for the TemporalNode node this TEMPORAL [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the TemporalNode node this TEMPORAL [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: TemporalNode
-      """
-      Field for the TemporalNode node this TEMPORAL [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the TemporalNode node this TEMPORAL [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: TemporalNode
     }
+
     type _MergeTemporalNodeTemporalNodesPayload
       @relation(name: "TEMPORAL", from: "TemporalNode", to: "TemporalNode") {
-      """
-      Field for the TemporalNode node this TEMPORAL [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the TemporalNode node this TEMPORAL [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: TemporalNode
-      """
-      Field for the TemporalNode node this TEMPORAL [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the TemporalNode node this TEMPORAL [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: TemporalNode
     }
+
     input _TemporalNodeInput {
       name: String!
     }
+
     enum _TemporalNodeOrdering {
       datetime_asc
       datetime_desc
@@ -5096,6 +4629,7 @@ test.cb('Test augmented schema', t => {
       _id_asc
       _id_desc
     }
+
     input _TemporalNodeFilter {
       AND: [_TemporalNodeFilter!]
       OR: [_TemporalNodeFilter!]
@@ -5165,6 +4699,7 @@ test.cb('Test augmented schema', t => {
       temporalNodes_single: _TemporalNodeFilter
       temporalNodes_every: _TemporalNodeFilter
     }
+
     type TemporalNode {
       datetime: _Neo4jDateTime
       name: String
@@ -5186,53 +4721,45 @@ test.cb('Test augmented schema', t => {
         orderBy: [_TemporalNodeOrdering]
         filter: _TemporalNodeFilter
       ): [TemporalNode] @relation(name: "TEMPORAL", direction: OUT)
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this node.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this node."
       _id: String
     }
+
     type _AddSpatialNodeSpatialNodesPayload
       @relation(name: "SPATIAL", from: "SpatialNode", to: "SpatialNode") {
-      """
-      Field for the SpatialNode node this SPATIAL [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the SpatialNode node this SPATIAL [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: SpatialNode
-      """
-      Field for the SpatialNode node this SPATIAL [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the SpatialNode node this SPATIAL [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: SpatialNode
     }
+
     type _RemoveSpatialNodeSpatialNodesPayload
       @relation(name: "SPATIAL", from: "SpatialNode", to: "SpatialNode") {
-      """
-      Field for the SpatialNode node this SPATIAL [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the SpatialNode node this SPATIAL [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: SpatialNode
-      """
-      Field for the SpatialNode node this SPATIAL [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the SpatialNode node this SPATIAL [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: SpatialNode
     }
+
     type _MergeSpatialNodeSpatialNodesPayload
       @relation(name: "SPATIAL", from: "SpatialNode", to: "SpatialNode") {
-      """
-      Field for the SpatialNode node this SPATIAL [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the SpatialNode node this SPATIAL [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: SpatialNode
-      """
-      Field for the SpatialNode node this SPATIAL [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the SpatialNode node this SPATIAL [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: SpatialNode
     }
+
     input _SpatialNodeInput {
       id: ID!
     }
+
     enum _SpatialNodeOrdering {
       id_asc
       id_desc
       _id_asc
       _id_desc
     }
+
     input _SpatialNodeFilter {
       AND: [_SpatialNodeFilter!]
       OR: [_SpatialNodeFilter!]
@@ -5263,6 +4790,7 @@ test.cb('Test augmented schema', t => {
       spatialNodes_single: _SpatialNodeFilter
       spatialNodes_every: _SpatialNodeFilter
     }
+
     type SpatialNode {
       id: ID!
       point: _Neo4jPoint
@@ -5273,79 +4801,72 @@ test.cb('Test augmented schema', t => {
         orderBy: [_SpatialNodeOrdering]
         filter: _SpatialNodeFilter
       ): [SpatialNode] @relation(name: "SPATIAL", direction: OUT)
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this node.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this node."
       _id: String
     }
+
     type ignoredType {
       ignoredField: String @neo4j_ignore
     }
-    """
-    Custom scalar type line description
-    """
+
+    "Custom scalar type line description"
     scalar Time
+
     scalar Date
+
     scalar DateTime
+
     scalar LocalTime
+
     scalar LocalDateTime
-    """
-    Input object type line description
-    """
+
+    "Input object type line description"
     input strInput {
-      """
-      Input field line description
-      """
+      "Input field line description"
       strArg: String
-      extensionArg: String
     }
+
     enum Role {
       reader
       user
       admin
     }
+
     type _AddCasedTypeStatePayload
       @relation(name: "FILMED_IN", from: "CasedType", to: "State") {
-      """
-      Field for the CasedType node this FILMED_IN [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the CasedType node this FILMED_IN [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: CasedType
-      """
-      Field for the State node this FILMED_IN [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the State node this FILMED_IN [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: State
     }
+
     type _RemoveCasedTypeStatePayload
       @relation(name: "FILMED_IN", from: "CasedType", to: "State") {
-      """
-      Field for the CasedType node this FILMED_IN [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the CasedType node this FILMED_IN [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: CasedType
-      """
-      Field for the State node this FILMED_IN [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the State node this FILMED_IN [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: State
     }
+
     type _MergeCasedTypeStatePayload
       @relation(name: "FILMED_IN", from: "CasedType", to: "State") {
-      """
-      Field for the CasedType node this FILMED_IN [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the CasedType node this FILMED_IN [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: CasedType
-      """
-      Field for the State node this FILMED_IN [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the State node this FILMED_IN [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: State
     }
+
     input _CasedTypeInput {
       name: String!
     }
+
     enum _CasedTypeOrdering {
       name_asc
       name_desc
       _id_asc
       _id_desc
     }
+
     input _CasedTypeFilter {
       AND: [_CasedTypeFilter!]
       OR: [_CasedTypeFilter!]
@@ -5365,15 +4886,15 @@ test.cb('Test augmented schema', t => {
       state_in: [_StateFilter!]
       state_not_in: [_StateFilter!]
     }
+
     type CasedType {
       name: String
       state(filter: _StateFilter): State
-        @relation(name: "FILMED_IN", direction: "OUT")
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this node.
-      """
+        @relation(name: "FILMED_IN", direction: OUT)
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this node."
       _id: String
     }
+
     input _InterfaceNoScalarsFilter {
       AND: [_InterfaceNoScalarsFilter!]
       OR: [_InterfaceNoScalarsFilter!]
@@ -5386,6 +4907,7 @@ test.cb('Test augmented schema', t => {
       movies_single: _MovieFilter
       movies_every: _MovieFilter
     }
+
     interface InterfaceNoScalars {
       movies(
         first: Int
@@ -5394,9 +4916,11 @@ test.cb('Test augmented schema', t => {
         filter: _MovieFilter
       ): [Movie] @relation(name: "MOVIES", direction: OUT)
     }
+
     enum _InterfaceNoScalarsOrdering {
       movies_asc
     }
+
     input _CameraFilter {
       AND: [_CameraFilter!]
       OR: [_CameraFilter!]
@@ -5447,87 +4971,71 @@ test.cb('Test augmented schema', t => {
       operators_single: _PersonFilter
       operators_every: _PersonFilter
     }
+
     type _AddCameraOperatorsPayload
       @relation(name: "cameras", from: "Person", to: "Camera") {
-      """
-      Field for the Person node this cameras [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Person node this cameras [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Person
-      """
-      Field for the Camera node this cameras [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Camera node this cameras [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Camera
     }
+
     type _RemoveCameraOperatorsPayload
       @relation(name: "cameras", from: "Person", to: "Camera") {
-      """
-      Field for the Person node this cameras [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Person node this cameras [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Person
-      """
-      Field for the Camera node this cameras [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Camera node this cameras [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Camera
     }
+
     type _MergeCameraOperatorsPayload
       @relation(name: "cameras", from: "Person", to: "Camera") {
-      """
-      Field for the Person node this cameras [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Person node this cameras [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Person
-      """
-      Field for the Camera node this cameras [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Camera node this cameras [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Camera
     }
+
     type _AddCameraReflexiveInterfaceRelationshipPayload
       @relation(
         name: "REFLEXIVE_INTERFACE_RELATIONSHIP"
         from: "Camera"
         to: "Camera"
       ) {
-      """
-      Field for the Camera node this REFLEXIVE_INTERFACE_RELATIONSHIP [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Camera node this REFLEXIVE_INTERFACE_RELATIONSHIP [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Camera
-      """
-      Field for the Camera node this REFLEXIVE_INTERFACE_RELATIONSHIP [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Camera node this REFLEXIVE_INTERFACE_RELATIONSHIP [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Camera
     }
+
     type _RemoveCameraReflexiveInterfaceRelationshipPayload
       @relation(
         name: "REFLEXIVE_INTERFACE_RELATIONSHIP"
         from: "Camera"
         to: "Camera"
       ) {
-      """
-      Field for the Camera node this REFLEXIVE_INTERFACE_RELATIONSHIP [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Camera node this REFLEXIVE_INTERFACE_RELATIONSHIP [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Camera
-      """
-      Field for the Camera node this REFLEXIVE_INTERFACE_RELATIONSHIP [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Camera node this REFLEXIVE_INTERFACE_RELATIONSHIP [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Camera
     }
+
     type _MergeCameraReflexiveInterfaceRelationshipPayload
       @relation(
         name: "REFLEXIVE_INTERFACE_RELATIONSHIP"
         from: "Camera"
         to: "Camera"
       ) {
-      """
-      Field for the Camera node this REFLEXIVE_INTERFACE_RELATIONSHIP [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Camera node this REFLEXIVE_INTERFACE_RELATIONSHIP [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Camera
-      """
-      Field for the Camera node this REFLEXIVE_INTERFACE_RELATIONSHIP [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Camera node this REFLEXIVE_INTERFACE_RELATIONSHIP [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Camera
     }
+
     input _CameraInput {
       id: ID!
     }
+
     interface Camera {
       type: String
       id: ID! @unique
@@ -5554,6 +5062,7 @@ test.cb('Test augmented schema', t => {
       ): [Camera]
         @relation(name: "REFLEXIVE_INTERFACE_RELATIONSHIP", direction: OUT)
     }
+
     enum _CameraOrdering {
       id_asc
       id_desc
@@ -5564,87 +5073,71 @@ test.cb('Test augmented schema', t => {
       weight_asc
       weight_desc
     }
+
     type _AddOldCameraOperatorsPayload
       @relation(name: "cameras", from: "Person", to: "OldCamera") {
-      """
-      Field for the Person node this cameras [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Person node this cameras [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Person
-      """
-      Field for the OldCamera node this cameras [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the OldCamera node this cameras [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: OldCamera
     }
+
     type _RemoveOldCameraOperatorsPayload
       @relation(name: "cameras", from: "Person", to: "OldCamera") {
-      """
-      Field for the Person node this cameras [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Person node this cameras [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Person
-      """
-      Field for the OldCamera node this cameras [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the OldCamera node this cameras [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: OldCamera
     }
+
     type _MergeOldCameraOperatorsPayload
       @relation(name: "cameras", from: "Person", to: "OldCamera") {
-      """
-      Field for the Person node this cameras [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Person node this cameras [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Person
-      """
-      Field for the OldCamera node this cameras [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the OldCamera node this cameras [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: OldCamera
     }
+
     type _AddOldCameraReflexiveInterfaceRelationshipPayload
       @relation(
         name: "REFLEXIVE_INTERFACE_RELATIONSHIP"
         from: "OldCamera"
         to: "Camera"
       ) {
-      """
-      Field for the OldCamera node this REFLEXIVE_INTERFACE_RELATIONSHIP [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the OldCamera node this REFLEXIVE_INTERFACE_RELATIONSHIP [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: OldCamera
-      """
-      Field for the Camera node this REFLEXIVE_INTERFACE_RELATIONSHIP [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Camera node this REFLEXIVE_INTERFACE_RELATIONSHIP [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Camera
     }
+
     type _RemoveOldCameraReflexiveInterfaceRelationshipPayload
       @relation(
         name: "REFLEXIVE_INTERFACE_RELATIONSHIP"
         from: "OldCamera"
         to: "Camera"
       ) {
-      """
-      Field for the OldCamera node this REFLEXIVE_INTERFACE_RELATIONSHIP [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the OldCamera node this REFLEXIVE_INTERFACE_RELATIONSHIP [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: OldCamera
-      """
-      Field for the Camera node this REFLEXIVE_INTERFACE_RELATIONSHIP [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Camera node this REFLEXIVE_INTERFACE_RELATIONSHIP [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Camera
     }
+
     type _MergeOldCameraReflexiveInterfaceRelationshipPayload
       @relation(
         name: "REFLEXIVE_INTERFACE_RELATIONSHIP"
         from: "OldCamera"
         to: "Camera"
       ) {
-      """
-      Field for the OldCamera node this REFLEXIVE_INTERFACE_RELATIONSHIP [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the OldCamera node this REFLEXIVE_INTERFACE_RELATIONSHIP [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: OldCamera
-      """
-      Field for the Camera node this REFLEXIVE_INTERFACE_RELATIONSHIP [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Camera node this REFLEXIVE_INTERFACE_RELATIONSHIP [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Camera
     }
+
     input _OldCameraInput {
       id: ID!
     }
+
     enum _OldCameraOrdering {
       type_asc
       type_desc
@@ -5659,6 +5152,7 @@ test.cb('Test augmented schema', t => {
       _id_asc
       _id_desc
     }
+
     input _OldCameraFilter {
       AND: [_OldCameraFilter!]
       OR: [_OldCameraFilter!]
@@ -5731,6 +5225,7 @@ test.cb('Test augmented schema', t => {
       reflexiveInterfaceRelationship_single: _CameraFilter
       reflexiveInterfaceRelationship_every: _CameraFilter
     }
+
     type OldCamera implements Camera {
       type: String
       id: ID! @unique
@@ -5757,92 +5252,74 @@ test.cb('Test augmented schema', t => {
         filter: _CameraFilter
       ): [Camera]
         @relation(name: "REFLEXIVE_INTERFACE_RELATIONSHIP", direction: OUT)
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this node.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this node."
       _id: String
     }
+
     type _AddNewCameraOperatorsPayload
       @relation(name: "cameras", from: "Person", to: "NewCamera") {
-      """
-      Field for the Person node this cameras [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Person node this cameras [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Person
-      """
-      Field for the NewCamera node this cameras [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the NewCamera node this cameras [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: NewCamera
     }
+
     type _RemoveNewCameraOperatorsPayload
       @relation(name: "cameras", from: "Person", to: "NewCamera") {
-      """
-      Field for the Person node this cameras [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Person node this cameras [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Person
-      """
-      Field for the NewCamera node this cameras [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the NewCamera node this cameras [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: NewCamera
     }
+
     type _MergeNewCameraOperatorsPayload
       @relation(name: "cameras", from: "Person", to: "NewCamera") {
-      """
-      Field for the Person node this cameras [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Person node this cameras [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Person
-      """
-      Field for the NewCamera node this cameras [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the NewCamera node this cameras [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: NewCamera
     }
+
     type _AddNewCameraReflexiveInterfaceRelationshipPayload
       @relation(
         name: "REFLEXIVE_INTERFACE_RELATIONSHIP"
         from: "NewCamera"
         to: "Camera"
       ) {
-      """
-      Field for the NewCamera node this REFLEXIVE_INTERFACE_RELATIONSHIP [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the NewCamera node this REFLEXIVE_INTERFACE_RELATIONSHIP [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: NewCamera
-      """
-      Field for the Camera node this REFLEXIVE_INTERFACE_RELATIONSHIP [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Camera node this REFLEXIVE_INTERFACE_RELATIONSHIP [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Camera
     }
+
     type _RemoveNewCameraReflexiveInterfaceRelationshipPayload
       @relation(
         name: "REFLEXIVE_INTERFACE_RELATIONSHIP"
         from: "NewCamera"
         to: "Camera"
       ) {
-      """
-      Field for the NewCamera node this REFLEXIVE_INTERFACE_RELATIONSHIP [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the NewCamera node this REFLEXIVE_INTERFACE_RELATIONSHIP [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: NewCamera
-      """
-      Field for the Camera node this REFLEXIVE_INTERFACE_RELATIONSHIP [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Camera node this REFLEXIVE_INTERFACE_RELATIONSHIP [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Camera
     }
+
     type _MergeNewCameraReflexiveInterfaceRelationshipPayload
       @relation(
         name: "REFLEXIVE_INTERFACE_RELATIONSHIP"
         from: "NewCamera"
         to: "Camera"
       ) {
-      """
-      Field for the NewCamera node this REFLEXIVE_INTERFACE_RELATIONSHIP [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the NewCamera node this REFLEXIVE_INTERFACE_RELATIONSHIP [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: NewCamera
-      """
-      Field for the Camera node this REFLEXIVE_INTERFACE_RELATIONSHIP [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Camera node this REFLEXIVE_INTERFACE_RELATIONSHIP [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Camera
     }
+
     input _NewCameraInput {
       id: ID!
     }
+
     enum _NewCameraOrdering {
       type_asc
       type_desc
@@ -5855,6 +5332,7 @@ test.cb('Test augmented schema', t => {
       _id_asc
       _id_desc
     }
+
     input _NewCameraFilter {
       AND: [_NewCameraFilter!]
       OR: [_NewCameraFilter!]
@@ -5925,6 +5403,7 @@ test.cb('Test augmented schema', t => {
       reflexiveInterfaceRelationship_single: _CameraFilter
       reflexiveInterfaceRelationship_every: _CameraFilter
     }
+
     type NewCamera implements Camera {
       type: String
       id: ID! @unique
@@ -5951,271 +5430,209 @@ test.cb('Test augmented schema', t => {
         filter: _CameraFilter
       ): [Camera]
         @relation(name: "REFLEXIVE_INTERFACE_RELATIONSHIP", direction: OUT)
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this node.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this node."
       _id: String
     }
+
     """
     Union type
     block description
     """
-    union MovieSearch = Movie | Genre | Book | Actor | OldCamera
+    union MovieSearch = Movie | Genre | Book
+
     type _AddCameraManFavoriteCameraPayload
       @relation(name: "favoriteCamera", from: "CameraMan", to: "Camera") {
-      """
-      Field for the CameraMan node this favoriteCamera [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the CameraMan node this favoriteCamera [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: CameraMan
-      """
-      Field for the Camera node this favoriteCamera [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Camera node this favoriteCamera [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Camera
     }
+
     type _RemoveCameraManFavoriteCameraPayload
       @relation(name: "favoriteCamera", from: "CameraMan", to: "Camera") {
-      """
-      Field for the CameraMan node this favoriteCamera [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the CameraMan node this favoriteCamera [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: CameraMan
-      """
-      Field for the Camera node this favoriteCamera [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Camera node this favoriteCamera [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Camera
     }
+
     type _MergeCameraManFavoriteCameraPayload
       @relation(name: "favoriteCamera", from: "CameraMan", to: "Camera") {
-      """
-      Field for the CameraMan node this favoriteCamera [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the CameraMan node this favoriteCamera [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: CameraMan
-      """
-      Field for the Camera node this favoriteCamera [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Camera node this favoriteCamera [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Camera
     }
+
     type _AddCameraManCamerasPayload
       @relation(name: "cameras", from: "CameraMan", to: "Camera") {
-      """
-      Field for the CameraMan node this cameras [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the CameraMan node this cameras [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: CameraMan
-      """
-      Field for the Camera node this cameras [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Camera node this cameras [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Camera
     }
+
     type _RemoveCameraManCamerasPayload
       @relation(name: "cameras", from: "CameraMan", to: "Camera") {
-      """
-      Field for the CameraMan node this cameras [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the CameraMan node this cameras [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: CameraMan
-      """
-      Field for the Camera node this cameras [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Camera node this cameras [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Camera
     }
+
     type _MergeCameraManCamerasPayload
       @relation(name: "cameras", from: "CameraMan", to: "Camera") {
-      """
-      Field for the CameraMan node this cameras [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the CameraMan node this cameras [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: CameraMan
-      """
-      Field for the Camera node this cameras [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Camera node this cameras [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Camera
     }
+
     type _AddCameraManCameraBuddyPayload
       @relation(name: "cameraBuddy", from: "CameraMan", to: "Person") {
-      """
-      Field for the CameraMan node this cameraBuddy [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the CameraMan node this cameraBuddy [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: CameraMan
-      """
-      Field for the Person node this cameraBuddy [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Person node this cameraBuddy [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Person
     }
+
     type _RemoveCameraManCameraBuddyPayload
       @relation(name: "cameraBuddy", from: "CameraMan", to: "Person") {
-      """
-      Field for the CameraMan node this cameraBuddy [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the CameraMan node this cameraBuddy [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: CameraMan
-      """
-      Field for the Person node this cameraBuddy [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Person node this cameraBuddy [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Person
     }
+
     type _MergeCameraManCameraBuddyPayload
       @relation(name: "cameraBuddy", from: "CameraMan", to: "Person") {
-      """
-      Field for the CameraMan node this cameraBuddy [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the CameraMan node this cameraBuddy [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: CameraMan
-      """
-      Field for the Person node this cameraBuddy [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Person node this cameraBuddy [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Person
     }
+
     type _AddCameraManInterfacedRelationshipTypePayload
       @relation(
         name: "INTERFACED_RELATIONSHIP_TYPE"
         from: "Person"
         to: "Genre"
       ) {
-      """
-      Field for the Person node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Person node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Person
-      """
-      Field for the Genre node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Genre node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Genre
       string: String!
       boolean: Boolean
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
     }
+
     type _RemoveCameraManInterfacedRelationshipTypePayload
       @relation(
         name: "INTERFACED_RELATIONSHIP_TYPE"
         from: "Person"
         to: "Genre"
       ) {
-      """
-      Field for the Person node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Person node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Person
-      """
-      Field for the Genre node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Genre node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Genre
     }
+
     type _UpdateCameraManInterfacedRelationshipTypePayload
       @relation(
         name: "INTERFACED_RELATIONSHIP_TYPE"
         from: "Person"
         to: "Genre"
       ) {
-      """
-      Field for the Person node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Person node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Person
-      """
-      Field for the Genre node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Genre node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Genre
       string: String!
       boolean: Boolean
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
     }
+
     type _MergeCameraManInterfacedRelationshipTypePayload
       @relation(
         name: "INTERFACED_RELATIONSHIP_TYPE"
         from: "Person"
         to: "Genre"
       ) {
-      """
-      Field for the Person node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Person node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Person
-      """
-      Field for the Genre node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Genre node this INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Genre
       string: String!
       boolean: Boolean
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
     }
+
     type _AddCameraManReflexiveInterfacedRelationshipTypePayload
       @relation(
         name: "REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE"
         from: "Person"
         to: "Person"
       ) {
-      """
-      Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Person
-      """
-      Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Person
       boolean: Boolean
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
     }
+
     type _RemoveCameraManReflexiveInterfacedRelationshipTypePayload
       @relation(
         name: "REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE"
         from: "Person"
         to: "Person"
       ) {
-      """
-      Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Person
-      """
-      Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Person
     }
+
     type _UpdateCameraManReflexiveInterfacedRelationshipTypePayload
       @relation(
         name: "REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE"
         from: "Person"
         to: "Person"
       ) {
-      """
-      Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Person
-      """
-      Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Person
       boolean: Boolean
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
     }
+
     type _MergeCameraManReflexiveInterfacedRelationshipTypePayload
       @relation(
         name: "REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE"
         from: "Person"
         to: "Person"
       ) {
-      """
-      Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: Person
-      """
-      Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the Person node this REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: Person
       boolean: Boolean
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this relationship."
       _id: String
     }
+
     input _CameraManInput {
       userId: ID!
     }
+
     enum _CameraManOrdering {
       userId_asc
       userId_desc
@@ -6226,6 +5643,7 @@ test.cb('Test augmented schema', t => {
       _id_asc
       _id_desc
     }
+
     input _CameraManFilter {
       AND: [_CameraManFilter!]
       OR: [_CameraManFilter!]
@@ -6295,11 +5713,12 @@ test.cb('Test augmented schema', t => {
       reflexiveInterfacedRelationshipType_single: _ReflexiveInterfacedRelationshipTypeDirectionsFilter
       reflexiveInterfacedRelationshipType_every: _ReflexiveInterfacedRelationshipTypeDirectionsFilter
     }
+
     type CameraMan implements Person {
       userId: ID!
       name: String
       favoriteCamera(filter: _CameraFilter): Camera
-        @relation(name: "favoriteCamera", direction: "OUT")
+        @relation(name: "favoriteCamera", direction: OUT)
       heaviestCamera(
         first: Int
         offset: Int
@@ -6313,9 +5732,9 @@ test.cb('Test augmented schema', t => {
         offset: Int
         orderBy: [_CameraOrdering]
         filter: _CameraFilter
-      ): [Camera!]! @relation(name: "cameras", direction: "OUT")
+      ): [Camera!]! @relation(name: "cameras", direction: OUT)
       cameraBuddy(filter: _PersonFilter): Person
-        @relation(name: "cameraBuddy", direction: "OUT")
+        @relation(name: "cameraBuddy", direction: OUT)
       extensionScalar: String
       interfacedRelationshipType(
         first: Int
@@ -6324,59 +5743,50 @@ test.cb('Test augmented schema', t => {
         filter: _PersonInterfacedRelationshipTypeFilter
       ): [_PersonInterfacedRelationshipType]
       reflexiveInterfacedRelationshipType: _PersonReflexiveInterfacedRelationshipTypeDirections
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this node.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this node."
       _id: String
     }
+
     type _AddUniqueNodeTestRelationPayload
       @relation(
         name: "TEST_RELATION"
         from: "UniqueNode"
         to: "UniqueStringNode"
       ) {
-      """
-      Field for the UniqueNode node this TEST_RELATION [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the UniqueNode node this TEST_RELATION [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: UniqueNode
-      """
-      Field for the UniqueStringNode node this TEST_RELATION [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the UniqueStringNode node this TEST_RELATION [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: UniqueStringNode
     }
+
     type _RemoveUniqueNodeTestRelationPayload
       @relation(
         name: "TEST_RELATION"
         from: "UniqueNode"
         to: "UniqueStringNode"
       ) {
-      """
-      Field for the UniqueNode node this TEST_RELATION [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the UniqueNode node this TEST_RELATION [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: UniqueNode
-      """
-      Field for the UniqueStringNode node this TEST_RELATION [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the UniqueStringNode node this TEST_RELATION [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: UniqueStringNode
     }
+
     type _MergeUniqueNodeTestRelationPayload
       @relation(
         name: "TEST_RELATION"
         from: "UniqueNode"
         to: "UniqueStringNode"
       ) {
-      """
-      Field for the UniqueNode node this TEST_RELATION [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the UniqueNode node this TEST_RELATION [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: UniqueNode
-      """
-      Field for the UniqueStringNode node this TEST_RELATION [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the UniqueStringNode node this TEST_RELATION [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: UniqueStringNode
     }
+
     input _UniqueNodeInput {
       id: ID!
     }
+
     enum _UniqueNodeOrdering {
       string_asc
       string_desc
@@ -6387,6 +5797,7 @@ test.cb('Test augmented schema', t => {
       _id_asc
       _id_desc
     }
+
     input _UniqueNodeFilter {
       AND: [_UniqueNodeFilter!]
       OR: [_UniqueNodeFilter!]
@@ -6432,6 +5843,7 @@ test.cb('Test augmented schema', t => {
       testRelation_single: _UniqueStringNodeFilter
       testRelation_every: _UniqueStringNodeFilter
     }
+
     type UniqueNode {
       string: String @unique
       id: ID @id
@@ -6442,59 +5854,50 @@ test.cb('Test augmented schema', t => {
         orderBy: [_UniqueStringNodeOrdering]
         filter: _UniqueStringNodeFilter
       ): [UniqueStringNode] @relation(name: "TEST_RELATION", direction: OUT)
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this node.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this node."
       _id: String
     }
+
     type _AddUniqueStringNodeTestRelationPayload
       @relation(
         name: "TEST_RELATION"
         from: "UniqueNode"
         to: "UniqueStringNode"
       ) {
-      """
-      Field for the UniqueNode node this TEST_RELATION [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the UniqueNode node this TEST_RELATION [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: UniqueNode
-      """
-      Field for the UniqueStringNode node this TEST_RELATION [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the UniqueStringNode node this TEST_RELATION [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: UniqueStringNode
     }
+
     type _RemoveUniqueStringNodeTestRelationPayload
       @relation(
         name: "TEST_RELATION"
         from: "UniqueNode"
         to: "UniqueStringNode"
       ) {
-      """
-      Field for the UniqueNode node this TEST_RELATION [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the UniqueNode node this TEST_RELATION [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: UniqueNode
-      """
-      Field for the UniqueStringNode node this TEST_RELATION [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the UniqueStringNode node this TEST_RELATION [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: UniqueStringNode
     }
+
     type _MergeUniqueStringNodeTestRelationPayload
       @relation(
         name: "TEST_RELATION"
         from: "UniqueNode"
         to: "UniqueStringNode"
       ) {
-      """
-      Field for the UniqueNode node this TEST_RELATION [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from.
-      """
+      "Field for the UniqueNode node this TEST_RELATION [relationship](https://grandstack.io/docs/graphql-relationship-types) is coming from."
       from: UniqueNode
-      """
-      Field for the UniqueStringNode node this TEST_RELATION [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to.
-      """
+      "Field for the UniqueStringNode node this TEST_RELATION [relationship](https://grandstack.io/docs/graphql-relationship-types) is going to."
       to: UniqueStringNode
     }
+
     input _UniqueStringNodeInput {
       uniqueString: String!
     }
+
     enum _UniqueStringNodeOrdering {
       id_asc
       id_desc
@@ -6503,6 +5906,7 @@ test.cb('Test augmented schema', t => {
       _id_asc
       _id_desc
     }
+
     input _UniqueStringNodeFilter {
       AND: [_UniqueStringNodeFilter!]
       OR: [_UniqueStringNodeFilter!]
@@ -6537,23 +5941,14 @@ test.cb('Test augmented schema', t => {
       testRelation_single: _UniqueNodeFilter
       testRelation_every: _UniqueNodeFilter
     }
+
     type UniqueStringNode {
       id: ID!
-      """
-      Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this node.
-      """
+      "Generated field for querying the Neo4j [system id](https://neo4j.com/docs/cypher-manual/current/functions/scalar/#functions-id) of this node."
       _id: String
-      uniqueString: String @unique
-      testRelation(
-        first: Int
-        offset: Int
-        orderBy: [_UniqueNodeOrdering]
-        filter: _UniqueNodeFilter
-      ): [UniqueNode] @relation(name: "TEST_RELATION", direction: IN)
     }
-    """
-    Generated Time input object for Neo4j [Temporal field arguments](https://grandstack.io/docs/graphql-temporal-types-datetime/#temporal-query-arguments).
-    """
+
+    "Generated Time input object for Neo4j [Temporal field arguments](https://grandstack.io/docs/graphql-temporal-types-datetime/#temporal-query-arguments)."
     input _Neo4jTimeInput {
       hour: Int
       minute: Int
@@ -6562,14 +5957,11 @@ test.cb('Test augmented schema', t => {
       microsecond: Int
       nanosecond: Int
       timezone: String
-      """
-      Creates a Neo4j [Temporal](https://grandstack.io/docs/graphql-temporal-types-datetime/#using-temporal-fields-in-mutations) Time value using a [String format](https://neo4j.com/docs/cypher-manual/current/functions/temporal/time/#functions-time-create-string).
-      """
+      "Creates a Neo4j [Temporal](https://grandstack.io/docs/graphql-temporal-types-datetime/#using-temporal-fields-in-mutations) Time value using a [String format](https://neo4j.com/docs/cypher-manual/current/functions/temporal/time/#functions-time-create-string)."
       formatted: String
     }
-    """
-    Generated Time object type for Neo4j [Temporal fields](https://grandstack.io/docs/graphql-temporal-types-datetime#using-temporal-fields-in-queries).
-    """
+
+    "Generated Time object type for Neo4j [Temporal fields](https://grandstack.io/docs/graphql-temporal-types-datetime#using-temporal-fields-in-queries)."
     type _Neo4jTime {
       hour: Int
       minute: Int
@@ -6578,38 +5970,29 @@ test.cb('Test augmented schema', t => {
       microsecond: Int
       nanosecond: Int
       timezone: String
-      """
-      Outputs a Neo4j [Temporal](https://grandstack.io/docs/graphql-temporal-types-datetime#using-temporal-fields-in-queries) Time value as a String type by using the [toString](https://neo4j.com/docs/cypher-manual/current/functions/string/#functions-tostring) Cypher function.
-      """
+      "Outputs a Neo4j [Temporal](https://grandstack.io/docs/graphql-temporal-types-datetime#using-temporal-fields-in-queries) Time value as a String type by using the [toString](https://neo4j.com/docs/cypher-manual/current/functions/string/#functions-tostring) Cypher function."
       formatted: String
     }
-    """
-    Generated Date input object for Neo4j [Temporal field arguments](https://grandstack.io/docs/graphql-temporal-types-datetime/#temporal-query-arguments).
-    """
+
+    "Generated Date input object for Neo4j [Temporal field arguments](https://grandstack.io/docs/graphql-temporal-types-datetime/#temporal-query-arguments)."
     input _Neo4jDateInput {
       year: Int
       month: Int
       day: Int
-      """
-      Creates a Neo4j [Temporal](https://grandstack.io/docs/graphql-temporal-types-datetime/#using-temporal-fields-in-mutations) Date value using a [String format](https://neo4j.com/docs/cypher-manual/current/functions/temporal/date/#functions-date-create-string).
-      """
+      "Creates a Neo4j [Temporal](https://grandstack.io/docs/graphql-temporal-types-datetime/#using-temporal-fields-in-mutations) Date value using a [String format](https://neo4j.com/docs/cypher-manual/current/functions/temporal/date/#functions-date-create-string)."
       formatted: String
     }
-    """
-    Generated Date object type for Neo4j [Temporal fields](https://grandstack.io/docs/graphql-temporal-types-datetime#using-temporal-fields-in-queries).
-    """
+
+    "Generated Date object type for Neo4j [Temporal fields](https://grandstack.io/docs/graphql-temporal-types-datetime#using-temporal-fields-in-queries)."
     type _Neo4jDate {
       year: Int
       month: Int
       day: Int
-      """
-      Outputs a Neo4j [Temporal](https://grandstack.io/docs/graphql-temporal-types-datetime#using-temporal-fields-in-queries) Date value as a String type by using the [toString](https://neo4j.com/docs/cypher-manual/current/functions/string/#functions-tostring) Cypher function.
-      """
+      "Outputs a Neo4j [Temporal](https://grandstack.io/docs/graphql-temporal-types-datetime#using-temporal-fields-in-queries) Date value as a String type by using the [toString](https://neo4j.com/docs/cypher-manual/current/functions/string/#functions-tostring) Cypher function."
       formatted: String
     }
-    """
-    Generated DateTime input object for Neo4j [Temporal field arguments](https://grandstack.io/docs/graphql-temporal-types-datetime/#temporal-query-arguments).
-    """
+
+    "Generated DateTime input object for Neo4j [Temporal field arguments](https://grandstack.io/docs/graphql-temporal-types-datetime/#temporal-query-arguments)."
     input _Neo4jDateTimeInput {
       year: Int
       month: Int
@@ -6621,14 +6004,11 @@ test.cb('Test augmented schema', t => {
       microsecond: Int
       nanosecond: Int
       timezone: String
-      """
-      Creates a Neo4j [Temporal](https://grandstack.io/docs/graphql-temporal-types-datetime/#using-temporal-fields-in-mutations) DateTime value using a [String format](https://neo4j.com/docs/cypher-manual/current/functions/temporal/datetime/#functions-datetime-create-string).
-      """
+      "Creates a Neo4j [Temporal](https://grandstack.io/docs/graphql-temporal-types-datetime/#using-temporal-fields-in-mutations) DateTime value using a [String format](https://neo4j.com/docs/cypher-manual/current/functions/temporal/datetime/#functions-datetime-create-string)."
       formatted: String
     }
-    """
-    Generated DateTime object type for Neo4j [Temporal fields](https://grandstack.io/docs/graphql-temporal-types-datetime#using-temporal-fields-in-queries).
-    """
+
+    "Generated DateTime object type for Neo4j [Temporal fields](https://grandstack.io/docs/graphql-temporal-types-datetime#using-temporal-fields-in-queries)."
     type _Neo4jDateTime {
       year: Int
       month: Int
@@ -6640,14 +6020,11 @@ test.cb('Test augmented schema', t => {
       microsecond: Int
       nanosecond: Int
       timezone: String
-      """
-      Outputs a Neo4j [Temporal](https://grandstack.io/docs/graphql-temporal-types-datetime#using-temporal-fields-in-queries) DateTime value as a String type by using the [toString](https://neo4j.com/docs/cypher-manual/current/functions/string/#functions-tostring) Cypher function.
-      """
+      "Outputs a Neo4j [Temporal](https://grandstack.io/docs/graphql-temporal-types-datetime#using-temporal-fields-in-queries) DateTime value as a String type by using the [toString](https://neo4j.com/docs/cypher-manual/current/functions/string/#functions-tostring) Cypher function."
       formatted: String
     }
-    """
-    Generated LocalTime input object for Neo4j [Temporal field arguments](https://grandstack.io/docs/graphql-temporal-types-datetime/#temporal-query-arguments).
-    """
+
+    "Generated LocalTime input object for Neo4j [Temporal field arguments](https://grandstack.io/docs/graphql-temporal-types-datetime/#temporal-query-arguments)."
     input _Neo4jLocalTimeInput {
       hour: Int
       minute: Int
@@ -6655,14 +6032,11 @@ test.cb('Test augmented schema', t => {
       millisecond: Int
       microsecond: Int
       nanosecond: Int
-      """
-      Creates a Neo4j [Temporal](https://grandstack.io/docs/graphql-temporal-types-datetime/#using-temporal-fields-in-mutations) LocalTime value using a [String format](https://neo4j.com/docs/cypher-manual/current/functions/temporal/localtime/#functions-localtime-create-string).
-      """
+      "Creates a Neo4j [Temporal](https://grandstack.io/docs/graphql-temporal-types-datetime/#using-temporal-fields-in-mutations) LocalTime value using a [String format](https://neo4j.com/docs/cypher-manual/current/functions/temporal/localtime/#functions-localtime-create-string)."
       formatted: String
     }
-    """
-    Generated LocalTime object type for Neo4j [Temporal fields](https://grandstack.io/docs/graphql-temporal-types-datetime#using-temporal-fields-in-queries).
-    """
+
+    "Generated LocalTime object type for Neo4j [Temporal fields](https://grandstack.io/docs/graphql-temporal-types-datetime#using-temporal-fields-in-queries)."
     type _Neo4jLocalTime {
       hour: Int
       minute: Int
@@ -6670,14 +6044,11 @@ test.cb('Test augmented schema', t => {
       millisecond: Int
       microsecond: Int
       nanosecond: Int
-      """
-      Outputs a Neo4j [Temporal](https://grandstack.io/docs/graphql-temporal-types-datetime#using-temporal-fields-in-queries) LocalTime value as a String type by using the [toString](https://neo4j.com/docs/cypher-manual/current/functions/string/#functions-tostring) Cypher function.
-      """
+      "Outputs a Neo4j [Temporal](https://grandstack.io/docs/graphql-temporal-types-datetime#using-temporal-fields-in-queries) LocalTime value as a String type by using the [toString](https://neo4j.com/docs/cypher-manual/current/functions/string/#functions-tostring) Cypher function."
       formatted: String
     }
-    """
-    Generated LocalDateTime input object for Neo4j [Temporal field arguments](https://grandstack.io/docs/graphql-temporal-types-datetime/#temporal-query-arguments).
-    """
+
+    "Generated LocalDateTime input object for Neo4j [Temporal field arguments](https://grandstack.io/docs/graphql-temporal-types-datetime/#temporal-query-arguments)."
     input _Neo4jLocalDateTimeInput {
       year: Int
       month: Int
@@ -6688,14 +6059,11 @@ test.cb('Test augmented schema', t => {
       millisecond: Int
       microsecond: Int
       nanosecond: Int
-      """
-      Creates a Neo4j [Temporal](https://grandstack.io/docs/graphql-temporal-types-datetime/#using-temporal-fields-in-mutations) LocalDateTime value using a [String format](https://neo4j.com/docs/cypher-manual/current/functions/temporal/localdatetime/#functions-localdatetime-create-string).
-      """
+      "Creates a Neo4j [Temporal](https://grandstack.io/docs/graphql-temporal-types-datetime/#using-temporal-fields-in-mutations) LocalDateTime value using a [String format](https://neo4j.com/docs/cypher-manual/current/functions/temporal/localdatetime/#functions-localdatetime-create-string)."
       formatted: String
     }
-    """
-    Generated LocalDateTime object type for Neo4j [Temporal fields](https://grandstack.io/docs/graphql-temporal-types-datetime#using-temporal-fields-in-queries).
-    """
+
+    "Generated LocalDateTime object type for Neo4j [Temporal fields](https://grandstack.io/docs/graphql-temporal-types-datetime#using-temporal-fields-in-queries)."
     type _Neo4jLocalDateTime {
       year: Int
       month: Int
@@ -6706,18 +6074,16 @@ test.cb('Test augmented schema', t => {
       millisecond: Int
       microsecond: Int
       nanosecond: Int
-      """
-      Outputs a Neo4j [Temporal](https://grandstack.io/docs/graphql-temporal-types-datetime#using-temporal-fields-in-queries) LocalDateTime value as a String type by using the [toString](https://neo4j.com/docs/cypher-manual/current/functions/string/#functions-tostring) Cypher function.
-      """
+      "Outputs a Neo4j [Temporal](https://grandstack.io/docs/graphql-temporal-types-datetime#using-temporal-fields-in-queries) LocalDateTime value as a String type by using the [toString](https://neo4j.com/docs/cypher-manual/current/functions/string/#functions-tostring) Cypher function."
       formatted: String
     }
+
     input _Neo4jPointDistanceFilter {
       point: _Neo4jPointInput!
       distance: Float!
     }
-    """
-    Generated Point input object for Neo4j [Spatial field arguments](https://grandstack.io/docs/graphql-spatial-types/#point-query-arguments).
-    """
+
+    "Generated Point input object for Neo4j [Spatial field arguments](https://grandstack.io/docs/graphql-spatial-types/#point-query-arguments)."
     input _Neo4jPointInput {
       x: Float
       y: Float
@@ -6728,9 +6094,8 @@ test.cb('Test augmented schema', t => {
       crs: String
       srid: Int
     }
-    """
-    Generated Point object type for Neo4j [Spatial fields](https://grandstack.io/docs/graphql-spatial-types#using-point-in-queries).
-    """
+
+    "Generated Point object type for Neo4j [Spatial fields](https://grandstack.io/docs/graphql-spatial-types#using-point-in-queries)."
     type _Neo4jPoint {
       x: Float
       y: Float
@@ -6741,13 +6106,122 @@ test.cb('Test augmented schema', t => {
       crs: String
       srid: Int
     }
+
     enum _RelationDirections {
       IN
       OUT
     }
+
     """
-    Query type line description
+    Directive definition
+    block
+    description
     """
+    directive @cypher(
+      statement: String
+    ) on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
+
+    directive @relation(
+      name: String
+      direction: _RelationDirections
+      from: String
+      to: String
+    ) on FIELD_DEFINITION | OBJECT
+
+    directive @additionalLabels(labels: [String]) on OBJECT
+
+    directive @MutationMeta(
+      relationship: String
+      from: String
+      to: String
+    ) on FIELD_DEFINITION
+
+    directive @neo4j_ignore on FIELD_DEFINITION
+
+    directive @id on FIELD_DEFINITION
+
+    directive @unique on FIELD_DEFINITION
+
+    directive @index on FIELD_DEFINITION
+
+    directive @search(index: String) on FIELD_DEFINITION
+
+    directive @subscribe(to: [String]) on FIELD_DEFINITION
+
+    directive @publish(event: String) on FIELD_DEFINITION
+
+    directive @isAuthenticated on OBJECT | FIELD_DEFINITION
+
+    directive @hasRole(roles: [Role]) on OBJECT | FIELD_DEFINITION
+
+    directive @hasScope(scopes: [String]) on OBJECT | FIELD_DEFINITION
+
+    extend type Movie @hasRole(roles: [admin]) {
+      currentUserId(strArg: String): String
+        @cypher(
+          statement: "RETURN $cypherParams.currentUserId AS cypherParamsUserId"
+        )
+      "Object type extension field line description"
+      interfaceNoScalars(
+        orderBy: _InterfaceNoScalarsOrdering
+        first: Int
+        offset: Int
+        filter: _InterfaceNoScalarsFilter
+      ): [InterfaceNoScalars]
+        @relation(name: "INTERFACE_NO_SCALARS", direction: OUT)
+      extensionScalar: String @search
+      extensionNode(
+        first: Int
+        offset: Int
+        orderBy: [_GenreOrdering]
+        filter: _GenreFilter
+      ): [Genre] @relation(name: "IN_GENRE", direction: OUT)
+    }
+
+    extend interface Person {
+      extensionScalar: String
+    }
+
+    extend type Actor implements Person
+
+    extend enum BookGenre {
+      Math
+    }
+
+    extend type QueryA {
+      MovieSearch(first: Int, offset: Int): [MovieSearch]
+      computedMovieSearch(first: Int, offset: Int): [MovieSearch]
+        @cypher(statement: "MATCH (ms:MovieSearch) RETURN ms")
+    }
+
+    extend type Mutation {
+      CustomCamera: Camera
+        @cypher(
+          statement: "CREATE (newCamera:Camera:NewCamera {id: apoc.create.uuid(), type: 'macro'}) RETURN newCamera"
+        )
+      CustomCameras: [Camera]
+        @cypher(
+          statement: "CREATE (newCamera:Camera:NewCamera {id: apoc.create.uuid(), type: 'macro', features: ['selfie', 'zoom']}) CREATE (oldCamera:Camera:OldCamera {id: apoc.create.uuid(), type: 'floating', smell: 'rusty' }) RETURN [newCamera, oldCamera]"
+        )
+    }
+
+    extend input strInput {
+      extensionArg: String
+    }
+
+    extend union MovieSearch = Actor | OldCamera
+
+    extend type UniqueStringNode {
+      uniqueString: String @unique
+      testRelation(
+        first: Int
+        offset: Int
+        orderBy: [_UniqueNodeOrdering]
+        filter: _UniqueNodeFilter
+      ): [UniqueNode] @relation(name: "TEST_RELATION", direction: IN)
+    }
+
+    "Query type line description"
     type QueryA {
       """
       Query field
@@ -6780,9 +6254,7 @@ test.cb('Test augmented schema', t => {
         @cypher(
           statement: "MATCH (g:Genre) WHERE toLower(g.name) CONTAINS toLower($substring) RETURN g"
         )
-      """
-      Object type query field line description
-      """
+      "Object type query field line description"
       State(
         first: Int
         offset: Int
@@ -6835,9 +6307,7 @@ test.cb('Test augmented schema', t => {
         orderBy: [_CasedTypeOrdering]
         filter: _CasedTypeFilter
       ): [CasedType]
-      """
-      Interface type query field line description
-      """
+      "Interface type query field line description"
       Camera(
         type: String
         first: Int
@@ -6867,9 +6337,7 @@ test.cb('Test augmented schema', t => {
         orderBy: [_CameraOrdering]
       ): [Camera] @cypher(statement: "MATCH (c:Camera) RETURN c")
       CustomCamera: Camera @cypher(statement: "MATCH (c:Camera) RETURN c")
-      """
-      [Generated query](https://grandstack.io/docs/graphql-schema-generation-augmentation#generated-queries) for Movie type nodes.
-      """
+      "[Generated query](https://grandstack.io/docs/graphql-schema-generation-augmentation#generated-queries) for Movie type nodes."
       Movie(
         _id: String
         movieId: ID
@@ -6896,9 +6364,7 @@ test.cb('Test augmented schema', t => {
         filter: _MovieFilter
         search: _MovieSearch
       ): [Movie] @hasScope(scopes: ["Movie: Read", "read:movie"])
-      """
-      [Generated query](https://grandstack.io/docs/graphql-schema-generation-augmentation#generated-queries) for Genre type nodes.
-      """
+      "[Generated query](https://grandstack.io/docs/graphql-schema-generation-augmentation#generated-queries) for Genre type nodes."
       Genre(
         _id: String
         name: String
@@ -6907,9 +6373,7 @@ test.cb('Test augmented schema', t => {
         orderBy: [_GenreOrdering]
         filter: _GenreFilter
       ): [Genre] @hasScope(scopes: ["Genre: Read", "read:genre"])
-      """
-      [Generated query](https://grandstack.io/docs/graphql-schema-generation-augmentation#generated-queries) for Actor type nodes.
-      """
+      "[Generated query](https://grandstack.io/docs/graphql-schema-generation-augmentation#generated-queries) for Actor type nodes."
       Actor(
         userId: ID
         name: String
@@ -6922,9 +6386,7 @@ test.cb('Test augmented schema', t => {
         orderBy: [_ActorOrdering]
         filter: _ActorFilter
       ): [Actor] @hasScope(scopes: ["Actor: Read", "read:actor"])
-      """
-      [Generated query](https://grandstack.io/docs/graphql-schema-generation-augmentation#generated-queries) for Book type nodes.
-      """
+      "[Generated query](https://grandstack.io/docs/graphql-schema-generation-augmentation#generated-queries) for Book type nodes."
       Book(
         genre: BookGenre
         _id: String
@@ -6933,9 +6395,7 @@ test.cb('Test augmented schema', t => {
         orderBy: [_BookOrdering]
         filter: _BookFilter
       ): [Book] @hasScope(scopes: ["Book: Read", "read:book"])
-      """
-      [Generated query](https://grandstack.io/docs/graphql-schema-generation-augmentation#generated-queries) for TemporalNode type nodes.
-      """
+      "[Generated query](https://grandstack.io/docs/graphql-schema-generation-augmentation#generated-queries) for TemporalNode type nodes."
       TemporalNode(
         datetime: _Neo4jDateTimeInput
         name: String
@@ -6951,9 +6411,7 @@ test.cb('Test augmented schema', t => {
         filter: _TemporalNodeFilter
       ): [TemporalNode]
         @hasScope(scopes: ["TemporalNode: Read", "read:temporalnode"])
-      """
-      [Generated query](https://grandstack.io/docs/graphql-schema-generation-augmentation#generated-queries) for SpatialNode type nodes.
-      """
+      "[Generated query](https://grandstack.io/docs/graphql-schema-generation-augmentation#generated-queries) for SpatialNode type nodes."
       SpatialNode(
         id: ID
         point: _Neo4jPointInput
@@ -6964,9 +6422,7 @@ test.cb('Test augmented schema', t => {
         filter: _SpatialNodeFilter
       ): [SpatialNode]
         @hasScope(scopes: ["SpatialNode: Read", "read:spatialnode"])
-      """
-      [Generated query](https://grandstack.io/docs/graphql-schema-generation-augmentation#generated-queries) for OldCamera type nodes.
-      """
+      "[Generated query](https://grandstack.io/docs/graphql-schema-generation-augmentation#generated-queries) for OldCamera type nodes."
       OldCamera(
         type: String
         id: ID
@@ -6979,9 +6435,7 @@ test.cb('Test augmented schema', t => {
         orderBy: [_OldCameraOrdering]
         filter: _OldCameraFilter
       ): [OldCamera] @hasScope(scopes: ["OldCamera: Read", "read:oldcamera"])
-      """
-      [Generated query](https://grandstack.io/docs/graphql-schema-generation-augmentation#generated-queries) for NewCamera type nodes.
-      """
+      "[Generated query](https://grandstack.io/docs/graphql-schema-generation-augmentation#generated-queries) for NewCamera type nodes."
       NewCamera(
         type: String
         id: ID
@@ -6994,9 +6448,7 @@ test.cb('Test augmented schema', t => {
         orderBy: [_NewCameraOrdering]
         filter: _NewCameraFilter
       ): [NewCamera] @hasScope(scopes: ["NewCamera: Read", "read:newcamera"])
-      """
-      [Generated query](https://grandstack.io/docs/graphql-schema-generation-augmentation#generated-queries) for CameraMan type nodes.
-      """
+      "[Generated query](https://grandstack.io/docs/graphql-schema-generation-augmentation#generated-queries) for CameraMan type nodes."
       CameraMan(
         userId: ID
         name: String
@@ -7007,9 +6459,7 @@ test.cb('Test augmented schema', t => {
         orderBy: [_CameraManOrdering]
         filter: _CameraManFilter
       ): [CameraMan] @hasScope(scopes: ["CameraMan: Read", "read:cameraman"])
-      """
-      [Generated query](https://grandstack.io/docs/graphql-schema-generation-augmentation#generated-queries) for UniqueNode type nodes.
-      """
+      "[Generated query](https://grandstack.io/docs/graphql-schema-generation-augmentation#generated-queries) for UniqueNode type nodes."
       UniqueNode(
         string: String
         id: ID
@@ -7020,9 +6470,7 @@ test.cb('Test augmented schema', t => {
         orderBy: [_UniqueNodeOrdering]
         filter: _UniqueNodeFilter
       ): [UniqueNode] @hasScope(scopes: ["UniqueNode: Read", "read:uniquenode"])
-      """
-      [Generated query](https://grandstack.io/docs/graphql-schema-generation-augmentation#generated-queries) for UniqueStringNode type nodes.
-      """
+      "[Generated query](https://grandstack.io/docs/graphql-schema-generation-augmentation#generated-queries) for UniqueStringNode type nodes."
       UniqueStringNode(
         id: ID
         uniqueString: String
@@ -7033,9 +6481,6 @@ test.cb('Test augmented schema', t => {
         filter: _UniqueStringNodeFilter
       ): [UniqueStringNode]
         @hasScope(scopes: ["UniqueStringNode: Read", "read:uniquestringnode"])
-      MovieSearch(first: Int, offset: Int): [MovieSearch]
-      computedMovieSearch(first: Int, offset: Int): [MovieSearch]
-        @cypher(statement: "MATCH (ms:MovieSearch) RETURN ms")
     }
 
     "Mutation  type line description"
@@ -7098,7 +6543,6 @@ test.cb('Test augmented schema', t => {
             "create:genre"
           ]
         )
-        @publish(event: "AddMovieExtensionNode")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the IN_GENRE relationship."
       RemoveMovieExtensionNode(
         from: _MovieInput!
@@ -7113,7 +6557,6 @@ test.cb('Test augmented schema', t => {
             "delete:genre"
           ]
         )
-        @publish(event: "RemoveMovieExtensionNode")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the IN_GENRE relationship."
       MergeMovieExtensionNode(
         from: _MovieInput!
@@ -7123,7 +6566,6 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["Movie: Merge", "merge:movie", "Genre: Merge", "merge:genre"]
         )
-        @publish(event: "MergeMovieExtensionNode")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the IN_GENRE relationship."
       AddMovieGenres(
         from: _MovieInput!
@@ -7138,7 +6580,6 @@ test.cb('Test augmented schema', t => {
             "create:genre"
           ]
         )
-        @publish(event: "AddMovieGenres")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the IN_GENRE relationship."
       RemoveMovieGenres(
         from: _MovieInput!
@@ -7153,7 +6594,6 @@ test.cb('Test augmented schema', t => {
             "delete:genre"
           ]
         )
-        @publish(event: "RemoveMovieGenres")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the IN_GENRE relationship."
       MergeMovieGenres(
         from: _MovieInput!
@@ -7163,7 +6603,6 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["Movie: Merge", "merge:movie", "Genre: Merge", "merge:genre"]
         )
-        @publish(event: "MergeMovieGenres")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the ACTED_IN relationship."
       AddMovieActors(
         from: _ActorInput!
@@ -7178,7 +6617,6 @@ test.cb('Test augmented schema', t => {
             "create:movie"
           ]
         )
-        @publish(event: "AddMovieActors")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the ACTED_IN relationship."
       RemoveMovieActors(
         from: _ActorInput!
@@ -7193,7 +6631,6 @@ test.cb('Test augmented schema', t => {
             "delete:movie"
           ]
         )
-        @publish(event: "RemoveMovieActors")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the ACTED_IN relationship."
       MergeMovieActors(
         from: _ActorInput!
@@ -7203,7 +6640,6 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["Actor: Merge", "merge:actor", "Movie: Merge", "merge:movie"]
         )
-        @publish(event: "MergeMovieActors")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the FILMED_IN relationship."
       AddMovieFilmedIn(
         from: _MovieInput!
@@ -7218,7 +6654,6 @@ test.cb('Test augmented schema', t => {
             "create:state"
           ]
         )
-        @publish(event: "AddMovieFilmedIn")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the FILMED_IN relationship."
       RemoveMovieFilmedIn(
         from: _MovieInput!
@@ -7233,7 +6668,6 @@ test.cb('Test augmented schema', t => {
             "delete:state"
           ]
         )
-        @publish(event: "RemoveMovieFilmedIn")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the FILMED_IN relationship."
       MergeMovieFilmedIn(
         from: _MovieInput!
@@ -7243,7 +6677,6 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["Movie: Merge", "merge:movie", "State: Merge", "merge:state"]
         )
-        @publish(event: "MergeMovieFilmedIn")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the RATED relationship."
       AddMovieRatings(
         from: _UserInput!
@@ -7259,7 +6692,6 @@ test.cb('Test augmented schema', t => {
             "create:movie"
           ]
         )
-        @publish(event: "AddMovieRatings")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the RATED relationship."
       RemoveMovieRatings(
         from: _UserInput!
@@ -7274,7 +6706,6 @@ test.cb('Test augmented schema', t => {
             "delete:movie"
           ]
         )
-        @publish(event: "RemoveMovieRatings")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the RATED relationship."
       UpdateMovieRatings(
         from: _UserInput!
@@ -7290,7 +6721,6 @@ test.cb('Test augmented schema', t => {
             "update:movie"
           ]
         )
-        @publish(event: "UpdateMovieRatings")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the RATED relationship."
       MergeMovieRatings(
         from: _UserInput!
@@ -7301,7 +6731,6 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["User: Merge", "merge:user", "Movie: Merge", "merge:movie"]
         )
-        @publish(event: "MergeMovieRatings")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the RATED_NO_PROPS relationship."
       AddMovieRatingsNoProps(
         from: _UserInput!
@@ -7316,7 +6745,6 @@ test.cb('Test augmented schema', t => {
             "create:movie"
           ]
         )
-        @publish(event: "AddMovieRatingsNoProps")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the RATED_NO_PROPS relationship."
       RemoveMovieRatingsNoProps(
         from: _UserInput!
@@ -7331,7 +6759,6 @@ test.cb('Test augmented schema', t => {
             "delete:movie"
           ]
         )
-        @publish(event: "RemoveMovieRatingsNoProps")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the RATED_NO_PROPS relationship."
       MergeMovieRatingsNoProps(
         from: _UserInput!
@@ -7341,7 +6768,6 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["User: Merge", "merge:user", "Movie: Merge", "merge:movie"]
         )
-        @publish(event: "MergeMovieRatingsNoProps")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the RATED_CUSTOM_FROM relationship."
       AddMovieRatingsCustomFrom(
         ratedBy: _UserInput!
@@ -7361,7 +6787,6 @@ test.cb('Test augmented schema', t => {
             "create:movie"
           ]
         )
-        @publish(event: "AddMovieRatingsCustomFrom")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the RATED_CUSTOM_FROM relationship."
       RemoveMovieRatingsCustomFrom(
         ratedBy: _UserInput!
@@ -7380,7 +6805,6 @@ test.cb('Test augmented schema', t => {
             "delete:movie"
           ]
         )
-        @publish(event: "RemoveMovieRatingsCustomFrom")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the RATED_CUSTOM_FROM relationship."
       UpdateMovieRatingsCustomFrom(
         ratedBy: _UserInput!
@@ -7400,7 +6824,6 @@ test.cb('Test augmented schema', t => {
             "update:movie"
           ]
         )
-        @publish(event: "UpdateMovieRatingsCustomFrom")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the RATED_CUSTOM_FROM relationship."
       MergeMovieRatingsCustomFrom(
         ratedBy: _UserInput!
@@ -7415,7 +6838,6 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["User: Merge", "merge:user", "Movie: Merge", "merge:movie"]
         )
-        @publish(event: "MergeMovieRatingsCustomFrom")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the RATED_CUSTOM_TO relationship."
       AddMovieRatingsCustomTo(
         from: _UserInput!
@@ -7435,7 +6857,6 @@ test.cb('Test augmented schema', t => {
             "create:movie"
           ]
         )
-        @publish(event: "AddMovieRatingsCustomTo")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the RATED_CUSTOM_TO relationship."
       RemoveMovieRatingsCustomTo(
         from: _UserInput!
@@ -7454,7 +6875,6 @@ test.cb('Test augmented schema', t => {
             "delete:movie"
           ]
         )
-        @publish(event: "RemoveMovieRatingsCustomTo")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the RATED_CUSTOM_TO relationship."
       UpdateMovieRatingsCustomTo(
         from: _UserInput!
@@ -7474,7 +6894,6 @@ test.cb('Test augmented schema', t => {
             "update:movie"
           ]
         )
-        @publish(event: "UpdateMovieRatingsCustomTo")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the RATED_CUSTOM_TO relationship."
       MergeMovieRatingsCustomTo(
         from: _UserInput!
@@ -7489,7 +6908,6 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["User: Merge", "merge:user", "Movie: Merge", "merge:movie"]
         )
-        @publish(event: "MergeMovieRatingsCustomTo")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the RATED_CUSTOM_FROM_TO relationship."
       AddMovieRatingsCustomFromTo(
         ratedBy: _UserInput!
@@ -7509,7 +6927,6 @@ test.cb('Test augmented schema', t => {
             "create:movie"
           ]
         )
-        @publish(event: "AddMovieRatingsCustomFromTo")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the RATED_CUSTOM_FROM_TO relationship."
       RemoveMovieRatingsCustomFromTo(
         ratedBy: _UserInput!
@@ -7528,7 +6945,6 @@ test.cb('Test augmented schema', t => {
             "delete:movie"
           ]
         )
-        @publish(event: "RemoveMovieRatingsCustomFromTo")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the RATED_CUSTOM_FROM_TO relationship."
       UpdateMovieRatingsCustomFromTo(
         ratedBy: _UserInput!
@@ -7548,7 +6964,6 @@ test.cb('Test augmented schema', t => {
             "update:movie"
           ]
         )
-        @publish(event: "UpdateMovieRatingsCustomFromTo")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the RATED_CUSTOM_FROM_TO relationship."
       MergeMovieRatingsCustomFromTo(
         ratedBy: _UserInput!
@@ -7563,7 +6978,6 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["User: Merge", "merge:user", "Movie: Merge", "merge:movie"]
         )
-        @publish(event: "MergeMovieRatingsCustomFromTo")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#create) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-nodes) a Movie node."
       CreateMovie(
         movieId: ID
@@ -7584,9 +6998,7 @@ test.cb('Test augmented schema', t => {
         booleans: [Boolean]
         enums: [BookGenre]
         extensionScalar: String
-      ): Movie
-        @hasScope(scopes: ["Movie: Create", "create:movie"])
-        @publish(event: "CreateMovie")
+      ): Movie @hasScope(scopes: ["Movie: Create", "create:movie"])
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#update) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) a Movie node."
       UpdateMovie(
         movieId: ID!
@@ -7607,13 +7019,10 @@ test.cb('Test augmented schema', t => {
         booleans: [Boolean]
         enums: [BookGenre]
         extensionScalar: String
-      ): Movie
-        @hasScope(scopes: ["Movie: Update", "update:movie"])
-        @publish(event: "UpdateMovie")
+      ): Movie @hasScope(scopes: ["Movie: Update", "update:movie"])
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#delete) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-single-node) a Movie node."
       DeleteMovie(movieId: ID!): Movie
         @hasScope(scopes: ["Movie: Delete", "delete:movie"])
-        @publish(event: "DeleteMovie")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#merge) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-node-derived) a Movie node."
       MergeMovie(
         movieId: ID!
@@ -7634,9 +7043,7 @@ test.cb('Test augmented schema', t => {
         booleans: [Boolean]
         enums: [BookGenre]
         extensionScalar: String
-      ): Movie
-        @hasScope(scopes: ["Movie: Merge", "merge:movie"])
-        @publish(event: "MergeMovie")
+      ): Movie @hasScope(scopes: ["Movie: Merge", "merge:movie"])
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the IN_GENRE relationship."
       AddGenreMovies(
         from: _MovieInput!
@@ -7651,7 +7058,6 @@ test.cb('Test augmented schema', t => {
             "create:genre"
           ]
         )
-        @publish(event: "AddGenreMovies")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the IN_GENRE relationship."
       RemoveGenreMovies(
         from: _MovieInput!
@@ -7666,7 +7072,6 @@ test.cb('Test augmented schema', t => {
             "delete:genre"
           ]
         )
-        @publish(event: "RemoveGenreMovies")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the IN_GENRE relationship."
       MergeGenreMovies(
         from: _MovieInput!
@@ -7676,7 +7081,6 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["Movie: Merge", "merge:movie", "Genre: Merge", "merge:genre"]
         )
-        @publish(event: "MergeGenreMovies")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the INTERFACED_RELATIONSHIP_TYPE relationship."
       AddGenreInterfacedRelationshipType(
         from: _PersonInput!
@@ -7696,7 +7100,6 @@ test.cb('Test augmented schema', t => {
             "create:genre"
           ]
         )
-        @publish(event: "AddGenreInterfacedRelationshipType")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the INTERFACED_RELATIONSHIP_TYPE relationship."
       RemoveGenreInterfacedRelationshipType(
         from: _PersonInput!
@@ -7715,7 +7118,6 @@ test.cb('Test augmented schema', t => {
             "delete:genre"
           ]
         )
-        @publish(event: "RemoveGenreInterfacedRelationshipType")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the INTERFACED_RELATIONSHIP_TYPE relationship."
       UpdateGenreInterfacedRelationshipType(
         from: _PersonInput!
@@ -7735,7 +7137,6 @@ test.cb('Test augmented schema', t => {
             "update:genre"
           ]
         )
-        @publish(event: "UpdateGenreInterfacedRelationshipType")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the INTERFACED_RELATIONSHIP_TYPE relationship."
       MergeGenreInterfacedRelationshipType(
         from: _PersonInput!
@@ -7755,35 +7156,27 @@ test.cb('Test augmented schema', t => {
             "merge:genre"
           ]
         )
-        @publish(event: "MergeGenreInterfacedRelationshipType")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#create) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-nodes) a Genre node."
       CreateGenre(name: String): Genre
         @hasScope(scopes: ["Genre: Create", "create:genre"])
-        @publish(event: "CreateGenre")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#delete) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-single-node) a Genre node."
       DeleteGenre(name: String!): Genre
         @hasScope(scopes: ["Genre: Delete", "delete:genre"])
-        @publish(event: "DeleteGenre")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#merge) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-node-derived) a Genre node."
       MergeGenre(name: String!): Genre
         @hasScope(scopes: ["Genre: Merge", "merge:genre"])
-        @publish(event: "MergeGenre")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#create) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-nodes) a State node."
       CreateState(name: String!, id: ID): State
         @hasScope(scopes: ["State: Create", "create:state"])
-        @publish(event: "CreateState")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#update) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) a State node."
       UpdateState(name: String!, id: ID): State
         @hasScope(scopes: ["State: Update", "update:state"])
-        @publish(event: "UpdateState")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#delete) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-single-node) a State node."
       DeleteState(name: String!): State
         @hasScope(scopes: ["State: Delete", "delete:state"])
-        @publish(event: "DeleteState")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#merge) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-node-derived) a State node."
       MergeState(name: String!, id: ID): State
         @hasScope(scopes: ["State: Merge", "merge:state"])
-        @publish(event: "MergeState")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the INTERFACED_RELATIONSHIP_TYPE relationship."
       AddPersonInterfacedRelationshipType(
         from: _PersonInput!
@@ -7803,7 +7196,6 @@ test.cb('Test augmented schema', t => {
             "create:genre"
           ]
         )
-        @publish(event: "AddPersonInterfacedRelationshipType")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the INTERFACED_RELATIONSHIP_TYPE relationship."
       RemovePersonInterfacedRelationshipType(
         from: _PersonInput!
@@ -7822,7 +7214,6 @@ test.cb('Test augmented schema', t => {
             "delete:genre"
           ]
         )
-        @publish(event: "RemovePersonInterfacedRelationshipType")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the INTERFACED_RELATIONSHIP_TYPE relationship."
       UpdatePersonInterfacedRelationshipType(
         from: _PersonInput!
@@ -7842,7 +7233,6 @@ test.cb('Test augmented schema', t => {
             "update:genre"
           ]
         )
-        @publish(event: "UpdatePersonInterfacedRelationshipType")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the INTERFACED_RELATIONSHIP_TYPE relationship."
       MergePersonInterfacedRelationshipType(
         from: _PersonInput!
@@ -7862,7 +7252,6 @@ test.cb('Test augmented schema', t => {
             "merge:genre"
           ]
         )
-        @publish(event: "MergePersonInterfacedRelationshipType")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE relationship."
       AddPersonReflexiveInterfacedRelationshipType(
         from: _PersonInput!
@@ -7882,7 +7271,6 @@ test.cb('Test augmented schema', t => {
             "create:person"
           ]
         )
-        @publish(event: "AddPersonReflexiveInterfacedRelationshipType")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE relationship."
       RemovePersonReflexiveInterfacedRelationshipType(
         from: _PersonInput!
@@ -7901,7 +7289,6 @@ test.cb('Test augmented schema', t => {
             "delete:person"
           ]
         )
-        @publish(event: "RemovePersonReflexiveInterfacedRelationshipType")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE relationship."
       UpdatePersonReflexiveInterfacedRelationshipType(
         from: _PersonInput!
@@ -7921,7 +7308,6 @@ test.cb('Test augmented schema', t => {
             "update:person"
           ]
         )
-        @publish(event: "UpdatePersonReflexiveInterfacedRelationshipType")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE relationship."
       MergePersonReflexiveInterfacedRelationshipType(
         from: _PersonInput!
@@ -7941,7 +7327,6 @@ test.cb('Test augmented schema', t => {
             "merge:person"
           ]
         )
-        @publish(event: "MergePersonReflexiveInterfacedRelationshipType")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the ACTED_IN relationship."
       AddActorMovies(
         from: _ActorInput!
@@ -7956,7 +7341,6 @@ test.cb('Test augmented schema', t => {
             "create:movie"
           ]
         )
-        @publish(event: "AddActorMovies")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the ACTED_IN relationship."
       RemoveActorMovies(
         from: _ActorInput!
@@ -7971,7 +7355,6 @@ test.cb('Test augmented schema', t => {
             "delete:movie"
           ]
         )
-        @publish(event: "RemoveActorMovies")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the ACTED_IN relationship."
       MergeActorMovies(
         from: _ActorInput!
@@ -7981,7 +7364,6 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["Actor: Merge", "merge:actor", "Movie: Merge", "merge:movie"]
         )
-        @publish(event: "MergeActorMovies")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the KNOWS relationship."
       AddActorKnows(
         from: _ActorInput!
@@ -7996,7 +7378,6 @@ test.cb('Test augmented schema', t => {
             "create:person"
           ]
         )
-        @publish(event: "AddActorKnows")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the KNOWS relationship."
       RemoveActorKnows(
         from: _ActorInput!
@@ -8011,7 +7392,6 @@ test.cb('Test augmented schema', t => {
             "delete:person"
           ]
         )
-        @publish(event: "RemoveActorKnows")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the KNOWS relationship."
       MergeActorKnows(
         from: _ActorInput!
@@ -8026,7 +7406,6 @@ test.cb('Test augmented schema', t => {
             "merge:person"
           ]
         )
-        @publish(event: "MergeActorKnows")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the INTERFACED_RELATIONSHIP_TYPE relationship."
       AddActorInterfacedRelationshipType(
         from: _PersonInput!
@@ -8046,7 +7425,6 @@ test.cb('Test augmented schema', t => {
             "create:genre"
           ]
         )
-        @publish(event: "AddActorInterfacedRelationshipType")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the INTERFACED_RELATIONSHIP_TYPE relationship."
       RemoveActorInterfacedRelationshipType(
         from: _PersonInput!
@@ -8065,7 +7443,6 @@ test.cb('Test augmented schema', t => {
             "delete:genre"
           ]
         )
-        @publish(event: "RemoveActorInterfacedRelationshipType")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the INTERFACED_RELATIONSHIP_TYPE relationship."
       UpdateActorInterfacedRelationshipType(
         from: _PersonInput!
@@ -8085,7 +7462,6 @@ test.cb('Test augmented schema', t => {
             "update:genre"
           ]
         )
-        @publish(event: "UpdateActorInterfacedRelationshipType")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the INTERFACED_RELATIONSHIP_TYPE relationship."
       MergeActorInterfacedRelationshipType(
         from: _PersonInput!
@@ -8105,7 +7481,6 @@ test.cb('Test augmented schema', t => {
             "merge:genre"
           ]
         )
-        @publish(event: "MergeActorInterfacedRelationshipType")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE relationship."
       AddActorReflexiveInterfacedRelationshipType(
         from: _PersonInput!
@@ -8125,7 +7500,6 @@ test.cb('Test augmented schema', t => {
             "create:person"
           ]
         )
-        @publish(event: "AddActorReflexiveInterfacedRelationshipType")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE relationship."
       RemoveActorReflexiveInterfacedRelationshipType(
         from: _PersonInput!
@@ -8144,7 +7518,6 @@ test.cb('Test augmented schema', t => {
             "delete:person"
           ]
         )
-        @publish(event: "RemoveActorReflexiveInterfacedRelationshipType")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE relationship."
       UpdateActorReflexiveInterfacedRelationshipType(
         from: _PersonInput!
@@ -8164,7 +7537,6 @@ test.cb('Test augmented schema', t => {
             "update:person"
           ]
         )
-        @publish(event: "UpdateActorReflexiveInterfacedRelationshipType")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE relationship."
       MergeActorReflexiveInterfacedRelationshipType(
         from: _PersonInput!
@@ -8184,7 +7556,6 @@ test.cb('Test augmented schema', t => {
             "merge:person"
           ]
         )
-        @publish(event: "MergeActorReflexiveInterfacedRelationshipType")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#create) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-nodes) a Actor node."
       CreateActor(
         userId: ID
@@ -8192,9 +7563,7 @@ test.cb('Test augmented schema', t => {
         extensionScalar: String
         datetimes: [_Neo4jDateTimeInput]
         strings: [String]
-      ): Actor
-        @hasScope(scopes: ["Actor: Create", "create:actor"])
-        @publish(event: "CreateActor")
+      ): Actor @hasScope(scopes: ["Actor: Create", "create:actor"])
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#update) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) a Actor node."
       UpdateActor(
         userId: ID!
@@ -8202,13 +7571,10 @@ test.cb('Test augmented schema', t => {
         extensionScalar: String
         datetimes: [_Neo4jDateTimeInput]
         strings: [String]
-      ): Actor
-        @hasScope(scopes: ["Actor: Update", "update:actor"])
-        @publish(event: "UpdateActor")
+      ): Actor @hasScope(scopes: ["Actor: Update", "update:actor"])
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#delete) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-single-node) a Actor node."
       DeleteActor(userId: ID!): Actor
         @hasScope(scopes: ["Actor: Delete", "delete:actor"])
-        @publish(event: "DeleteActor")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#merge) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-node-derived) a Actor node."
       MergeActor(
         userId: ID!
@@ -8216,9 +7582,7 @@ test.cb('Test augmented schema', t => {
         extensionScalar: String
         datetimes: [_Neo4jDateTimeInput]
         strings: [String]
-      ): Actor
-        @hasScope(scopes: ["Actor: Merge", "merge:actor"])
-        @publish(event: "MergeActor")
+      ): Actor @hasScope(scopes: ["Actor: Merge", "merge:actor"])
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the INTERFACED_RELATIONSHIP_TYPE relationship."
       AddUserInterfacedRelationshipType(
         from: _PersonInput!
@@ -8238,7 +7602,6 @@ test.cb('Test augmented schema', t => {
             "create:genre"
           ]
         )
-        @publish(event: "AddUserInterfacedRelationshipType")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the INTERFACED_RELATIONSHIP_TYPE relationship."
       RemoveUserInterfacedRelationshipType(
         from: _PersonInput!
@@ -8257,7 +7620,6 @@ test.cb('Test augmented schema', t => {
             "delete:genre"
           ]
         )
-        @publish(event: "RemoveUserInterfacedRelationshipType")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the INTERFACED_RELATIONSHIP_TYPE relationship."
       UpdateUserInterfacedRelationshipType(
         from: _PersonInput!
@@ -8277,7 +7639,6 @@ test.cb('Test augmented schema', t => {
             "update:genre"
           ]
         )
-        @publish(event: "UpdateUserInterfacedRelationshipType")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the INTERFACED_RELATIONSHIP_TYPE relationship."
       MergeUserInterfacedRelationshipType(
         from: _PersonInput!
@@ -8297,7 +7658,6 @@ test.cb('Test augmented schema', t => {
             "merge:genre"
           ]
         )
-        @publish(event: "MergeUserInterfacedRelationshipType")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE relationship."
       AddUserReflexiveInterfacedRelationshipType(
         from: _PersonInput!
@@ -8317,7 +7677,6 @@ test.cb('Test augmented schema', t => {
             "create:person"
           ]
         )
-        @publish(event: "AddUserReflexiveInterfacedRelationshipType")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE relationship."
       RemoveUserReflexiveInterfacedRelationshipType(
         from: _PersonInput!
@@ -8336,7 +7695,6 @@ test.cb('Test augmented schema', t => {
             "delete:person"
           ]
         )
-        @publish(event: "RemoveUserReflexiveInterfacedRelationshipType")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE relationship."
       UpdateUserReflexiveInterfacedRelationshipType(
         from: _PersonInput!
@@ -8356,7 +7714,6 @@ test.cb('Test augmented schema', t => {
             "update:person"
           ]
         )
-        @publish(event: "UpdateUserReflexiveInterfacedRelationshipType")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE relationship."
       MergeUserReflexiveInterfacedRelationshipType(
         from: _PersonInput!
@@ -8376,7 +7733,6 @@ test.cb('Test augmented schema', t => {
             "merge:person"
           ]
         )
-        @publish(event: "MergeUserReflexiveInterfacedRelationshipType")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the RATED relationship."
       AddUserRated(
         from: _UserInput!
@@ -8392,7 +7748,6 @@ test.cb('Test augmented schema', t => {
             "create:movie"
           ]
         )
-        @publish(event: "AddUserRated")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the RATED relationship."
       RemoveUserRated(
         from: _UserInput!
@@ -8407,7 +7762,6 @@ test.cb('Test augmented schema', t => {
             "delete:movie"
           ]
         )
-        @publish(event: "RemoveUserRated")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the RATED relationship."
       UpdateUserRated(
         from: _UserInput!
@@ -8423,7 +7777,6 @@ test.cb('Test augmented schema', t => {
             "update:movie"
           ]
         )
-        @publish(event: "UpdateUserRated")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the RATED relationship."
       MergeUserRated(
         from: _UserInput!
@@ -8434,7 +7787,6 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["User: Merge", "merge:user", "Movie: Merge", "merge:movie"]
         )
-        @publish(event: "MergeUserRated")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the RATED_CUSTOM_FROM relationship."
       AddUserRatedCustomFrom(
         ratedBy: _UserInput!
@@ -8454,7 +7806,6 @@ test.cb('Test augmented schema', t => {
             "create:movie"
           ]
         )
-        @publish(event: "AddUserRatedCustomFrom")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the RATED_CUSTOM_FROM relationship."
       RemoveUserRatedCustomFrom(
         ratedBy: _UserInput!
@@ -8473,7 +7824,6 @@ test.cb('Test augmented schema', t => {
             "delete:movie"
           ]
         )
-        @publish(event: "RemoveUserRatedCustomFrom")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the RATED_CUSTOM_FROM relationship."
       UpdateUserRatedCustomFrom(
         ratedBy: _UserInput!
@@ -8493,7 +7843,6 @@ test.cb('Test augmented schema', t => {
             "update:movie"
           ]
         )
-        @publish(event: "UpdateUserRatedCustomFrom")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the RATED_CUSTOM_FROM relationship."
       MergeUserRatedCustomFrom(
         ratedBy: _UserInput!
@@ -8508,7 +7857,6 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["User: Merge", "merge:user", "Movie: Merge", "merge:movie"]
         )
-        @publish(event: "MergeUserRatedCustomFrom")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the RATED_CUSTOM_TO relationship."
       AddUserRatedCustomTo(
         from: _UserInput!
@@ -8528,7 +7876,6 @@ test.cb('Test augmented schema', t => {
             "create:movie"
           ]
         )
-        @publish(event: "AddUserRatedCustomTo")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the RATED_CUSTOM_TO relationship."
       RemoveUserRatedCustomTo(
         from: _UserInput!
@@ -8547,7 +7894,6 @@ test.cb('Test augmented schema', t => {
             "delete:movie"
           ]
         )
-        @publish(event: "RemoveUserRatedCustomTo")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the RATED_CUSTOM_TO relationship."
       UpdateUserRatedCustomTo(
         from: _UserInput!
@@ -8567,7 +7913,6 @@ test.cb('Test augmented schema', t => {
             "update:movie"
           ]
         )
-        @publish(event: "UpdateUserRatedCustomTo")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the RATED_CUSTOM_TO relationship."
       MergeUserRatedCustomTo(
         from: _UserInput!
@@ -8582,7 +7927,6 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["User: Merge", "merge:user", "Movie: Merge", "merge:movie"]
         )
-        @publish(event: "MergeUserRatedCustomTo")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the RATED_CUSTOM_FROM_TO relationship."
       AddUserRatedCustomFromTo(
         ratedBy: _UserInput!
@@ -8602,7 +7946,6 @@ test.cb('Test augmented schema', t => {
             "create:movie"
           ]
         )
-        @publish(event: "AddUserRatedCustomFromTo")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the RATED_CUSTOM_FROM_TO relationship."
       RemoveUserRatedCustomFromTo(
         ratedBy: _UserInput!
@@ -8621,7 +7964,6 @@ test.cb('Test augmented schema', t => {
             "delete:movie"
           ]
         )
-        @publish(event: "RemoveUserRatedCustomFromTo")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the RATED_CUSTOM_FROM_TO relationship."
       UpdateUserRatedCustomFromTo(
         ratedBy: _UserInput!
@@ -8641,7 +7983,6 @@ test.cb('Test augmented schema', t => {
             "update:movie"
           ]
         )
-        @publish(event: "UpdateUserRatedCustomFromTo")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the RATED_CUSTOM_FROM_TO relationship."
       MergeUserRatedCustomFromTo(
         ratedBy: _UserInput!
@@ -8656,7 +7997,6 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["User: Merge", "merge:user", "Movie: Merge", "merge:movie"]
         )
-        @publish(event: "MergeUserRatedCustomFromTo")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the FRIEND_OF relationship."
       AddUserFriends(
         from: _UserInput!
@@ -8667,7 +8007,6 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["User: Create", "create:user", "User: Create", "create:user"]
         )
-        @publish(event: "AddUserFriends")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the FRIEND_OF relationship."
       RemoveUserFriends(
         from: _UserInput!
@@ -8677,7 +8016,6 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["User: Delete", "delete:user", "User: Delete", "delete:user"]
         )
-        @publish(event: "RemoveUserFriends")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the FRIEND_OF relationship."
       UpdateUserFriends(
         from: _UserInput!
@@ -8688,7 +8026,6 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["User: Update", "update:user", "User: Update", "update:user"]
         )
-        @publish(event: "UpdateUserFriends")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the FRIEND_OF relationship."
       MergeUserFriends(
         from: _UserInput!
@@ -8699,7 +8036,6 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["User: Merge", "merge:user", "User: Merge", "merge:user"]
         )
-        @publish(event: "MergeUserFriends")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the FRIEND_OF_CUSTOM_FROM relationship."
       AddUserFriendsCustomFrom(
         friendedBy: _UserInput!
@@ -8714,7 +8050,6 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["User: Create", "create:user", "User: Create", "create:user"]
         )
-        @publish(event: "AddUserFriendsCustomFrom")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the FRIEND_OF_CUSTOM_FROM relationship."
       RemoveUserFriendsCustomFrom(
         friendedBy: _UserInput!
@@ -8728,7 +8063,6 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["User: Delete", "delete:user", "User: Delete", "delete:user"]
         )
-        @publish(event: "RemoveUserFriendsCustomFrom")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the FRIEND_OF_CUSTOM_FROM relationship."
       UpdateUserFriendsCustomFrom(
         friendedBy: _UserInput!
@@ -8743,7 +8077,6 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["User: Update", "update:user", "User: Update", "update:user"]
         )
-        @publish(event: "UpdateUserFriendsCustomFrom")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the FRIEND_OF_CUSTOM_FROM relationship."
       MergeUserFriendsCustomFrom(
         friendedBy: _UserInput!
@@ -8758,7 +8091,6 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["User: Merge", "merge:user", "User: Merge", "merge:user"]
         )
-        @publish(event: "MergeUserFriendsCustomFrom")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the FRIEND_OF_CUSTOM_TO relationship."
       AddUserFriendsCustomTo(
         from: _UserInput!
@@ -8773,7 +8105,6 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["User: Create", "create:user", "User: Create", "create:user"]
         )
-        @publish(event: "AddUserFriendsCustomTo")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the FRIEND_OF_CUSTOM_TO relationship."
       RemoveUserFriendsCustomTo(
         from: _UserInput!
@@ -8787,7 +8118,6 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["User: Delete", "delete:user", "User: Delete", "delete:user"]
         )
-        @publish(event: "RemoveUserFriendsCustomTo")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the FRIEND_OF_CUSTOM_TO relationship."
       UpdateUserFriendsCustomTo(
         from: _UserInput!
@@ -8802,7 +8132,6 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["User: Update", "update:user", "User: Update", "update:user"]
         )
-        @publish(event: "UpdateUserFriendsCustomTo")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the FRIEND_OF_CUSTOM_TO relationship."
       MergeUserFriendsCustomTo(
         from: _UserInput!
@@ -8817,7 +8146,6 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["User: Merge", "merge:user", "User: Merge", "merge:user"]
         )
-        @publish(event: "MergeUserFriendsCustomTo")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the FRIEND_OF_CUSTOM_FROM_TO relationship."
       AddUserFriendsCustomFromTo(
         friendedBy: _UserInput!
@@ -8832,7 +8160,6 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["User: Create", "create:user", "User: Create", "create:user"]
         )
-        @publish(event: "AddUserFriendsCustomFromTo")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the FRIEND_OF_CUSTOM_FROM_TO relationship."
       RemoveUserFriendsCustomFromTo(
         friendedBy: _UserInput!
@@ -8846,7 +8173,6 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["User: Delete", "delete:user", "User: Delete", "delete:user"]
         )
-        @publish(event: "RemoveUserFriendsCustomFromTo")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the FRIEND_OF_CUSTOM_FROM_TO relationship."
       UpdateUserFriendsCustomFromTo(
         friendedBy: _UserInput!
@@ -8861,7 +8187,6 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["User: Update", "update:user", "User: Update", "update:user"]
         )
-        @publish(event: "UpdateUserFriendsCustomFromTo")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the FRIEND_OF_CUSTOM_FROM_TO relationship."
       MergeUserFriendsCustomFromTo(
         friendedBy: _UserInput!
@@ -8876,7 +8201,6 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["User: Merge", "merge:user", "User: Merge", "merge:user"]
         )
-        @publish(event: "MergeUserFriendsCustomFromTo")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the FAVORITED relationship."
       AddUserFavorites(
         from: _UserInput!
@@ -8891,7 +8215,6 @@ test.cb('Test augmented schema', t => {
             "create:movie"
           ]
         )
-        @publish(event: "AddUserFavorites")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the FAVORITED relationship."
       RemoveUserFavorites(
         from: _UserInput!
@@ -8906,7 +8229,6 @@ test.cb('Test augmented schema', t => {
             "delete:movie"
           ]
         )
-        @publish(event: "RemoveUserFavorites")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the FAVORITED relationship."
       MergeUserFavorites(
         from: _UserInput!
@@ -8916,35 +8238,27 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["User: Merge", "merge:user", "Movie: Merge", "merge:movie"]
         )
-        @publish(event: "MergeUserFavorites")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#create) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-nodes) a User node."
       CreateUser(userId: ID, name: String, extensionScalar: String): User
         @hasScope(scopes: ["User: Create", "create:user"])
-        @publish(event: "CreateUser")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#update) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) a User node."
       UpdateUser(userId: ID!, name: String, extensionScalar: String): User
         @hasScope(scopes: ["User: Update", "update:user"])
-        @publish(event: "UpdateUser")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#delete) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-single-node) a User node."
       DeleteUser(userId: ID!): User
         @hasScope(scopes: ["User: Delete", "delete:user"])
-        @publish(event: "DeleteUser")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#merge) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-node-derived) a User node."
       MergeUser(userId: ID!, name: String, extensionScalar: String): User
         @hasScope(scopes: ["User: Merge", "merge:user"])
-        @publish(event: "MergeUser")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#create) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-nodes) a Book node."
       CreateBook(genre: BookGenre): Book
         @hasScope(scopes: ["Book: Create", "create:book"])
-        @publish(event: "CreateBook")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#delete) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-single-node) a Book node."
       DeleteBook(genre: BookGenre!): Book
         @hasScope(scopes: ["Book: Delete", "delete:book"])
-        @publish(event: "DeleteBook")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#merge) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-node-derived) a Book node."
       MergeBook(genre: BookGenre!): Book
         @hasScope(scopes: ["Book: Merge", "merge:book"])
-        @publish(event: "MergeBook")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#create) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-nodes) a NodeTypeMutationTest node."
       CreateNodeTypeMutationTest(
         NodeTypeMutationTest: BookGenre
@@ -8955,7 +8269,6 @@ test.cb('Test augmented schema', t => {
             "create:nodetypemutationtest"
           ]
         )
-        @publish(event: "CreateNodeTypeMutationTest")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#delete) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-single-node) a NodeTypeMutationTest node."
       DeleteNodeTypeMutationTest(
         NodeTypeMutationTest: BookGenre!
@@ -8966,7 +8279,6 @@ test.cb('Test augmented schema', t => {
             "delete:nodetypemutationtest"
           ]
         )
-        @publish(event: "DeleteNodeTypeMutationTest")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#merge) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-node-derived) a NodeTypeMutationTest node."
       MergeNodeTypeMutationTest(
         NodeTypeMutationTest: BookGenre!
@@ -8974,19 +8286,15 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["NodeTypeMutationTest: Merge", "merge:nodetypemutationtest"]
         )
-        @publish(event: "MergeNodeTypeMutationTest")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#create) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-nodes) a currentUserId node."
       CreatecurrentUserId(userId: String): currentUserId
         @hasScope(scopes: ["currentUserId: Create", "create:currentuserid"])
-        @publish(event: "CreatecurrentUserId")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#delete) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-single-node) a currentUserId node."
       DeletecurrentUserId(userId: String!): currentUserId
         @hasScope(scopes: ["currentUserId: Delete", "delete:currentuserid"])
-        @publish(event: "DeletecurrentUserId")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#merge) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-node-derived) a currentUserId node."
       MergecurrentUserId(userId: String!): currentUserId
         @hasScope(scopes: ["currentUserId: Merge", "merge:currentuserid"])
-        @publish(event: "MergecurrentUserId")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the TEMPORAL relationship."
       AddTemporalNodeTemporalNodes(
         from: _TemporalNodeInput!
@@ -9005,7 +8313,6 @@ test.cb('Test augmented schema', t => {
             "create:temporalnode"
           ]
         )
-        @publish(event: "AddTemporalNodeTemporalNodes")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the TEMPORAL relationship."
       RemoveTemporalNodeTemporalNodes(
         from: _TemporalNodeInput!
@@ -9024,7 +8331,6 @@ test.cb('Test augmented schema', t => {
             "delete:temporalnode"
           ]
         )
-        @publish(event: "RemoveTemporalNodeTemporalNodes")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the TEMPORAL relationship."
       MergeTemporalNodeTemporalNodes(
         from: _TemporalNodeInput!
@@ -9043,7 +8349,6 @@ test.cb('Test augmented schema', t => {
             "merge:temporalnode"
           ]
         )
-        @publish(event: "MergeTemporalNodeTemporalNodes")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#create) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-nodes) a TemporalNode node."
       CreateTemporalNode(
         datetime: _Neo4jDateTimeInput
@@ -9055,7 +8360,6 @@ test.cb('Test augmented schema', t => {
         localdatetimes: [_Neo4jLocalDateTimeInput]
       ): TemporalNode
         @hasScope(scopes: ["TemporalNode: Create", "create:temporalnode"])
-        @publish(event: "CreateTemporalNode")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#update) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) a TemporalNode node."
       UpdateTemporalNode(
         datetime: _Neo4jDateTimeInput
@@ -9067,11 +8371,9 @@ test.cb('Test augmented schema', t => {
         localdatetimes: [_Neo4jLocalDateTimeInput]
       ): TemporalNode
         @hasScope(scopes: ["TemporalNode: Update", "update:temporalnode"])
-        @publish(event: "UpdateTemporalNode")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#delete) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-single-node) a TemporalNode node."
       DeleteTemporalNode(name: String!): TemporalNode
         @hasScope(scopes: ["TemporalNode: Delete", "delete:temporalnode"])
-        @publish(event: "DeleteTemporalNode")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#merge) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-node-derived) a TemporalNode node."
       MergeTemporalNode(
         datetime: _Neo4jDateTimeInput
@@ -9083,7 +8385,6 @@ test.cb('Test augmented schema', t => {
         localdatetimes: [_Neo4jLocalDateTimeInput]
       ): TemporalNode
         @hasScope(scopes: ["TemporalNode: Merge", "merge:temporalnode"])
-        @publish(event: "MergeTemporalNode")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the SPATIAL relationship."
       AddSpatialNodeSpatialNodes(
         from: _SpatialNodeInput!
@@ -9102,7 +8403,6 @@ test.cb('Test augmented schema', t => {
             "create:spatialnode"
           ]
         )
-        @publish(event: "AddSpatialNodeSpatialNodes")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the SPATIAL relationship."
       RemoveSpatialNodeSpatialNodes(
         from: _SpatialNodeInput!
@@ -9121,7 +8421,6 @@ test.cb('Test augmented schema', t => {
             "delete:spatialnode"
           ]
         )
-        @publish(event: "RemoveSpatialNodeSpatialNodes")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the SPATIAL relationship."
       MergeSpatialNodeSpatialNodes(
         from: _SpatialNodeInput!
@@ -9140,23 +8439,18 @@ test.cb('Test augmented schema', t => {
             "merge:spatialnode"
           ]
         )
-        @publish(event: "MergeSpatialNodeSpatialNodes")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#create) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-nodes) a SpatialNode node."
       CreateSpatialNode(id: ID, point: _Neo4jPointInput): SpatialNode
         @hasScope(scopes: ["SpatialNode: Create", "create:spatialnode"])
-        @publish(event: "CreateSpatialNode")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#update) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) a SpatialNode node."
       UpdateSpatialNode(id: ID!, point: _Neo4jPointInput): SpatialNode
         @hasScope(scopes: ["SpatialNode: Update", "update:spatialnode"])
-        @publish(event: "UpdateSpatialNode")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#delete) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-single-node) a SpatialNode node."
       DeleteSpatialNode(id: ID!): SpatialNode
         @hasScope(scopes: ["SpatialNode: Delete", "delete:spatialnode"])
-        @publish(event: "DeleteSpatialNode")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#merge) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-node-derived) a SpatialNode node."
       MergeSpatialNode(id: ID!, point: _Neo4jPointInput): SpatialNode
         @hasScope(scopes: ["SpatialNode: Merge", "merge:spatialnode"])
-        @publish(event: "MergeSpatialNode")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the FILMED_IN relationship."
       AddCasedTypeState(
         from: _CasedTypeInput!
@@ -9171,7 +8465,6 @@ test.cb('Test augmented schema', t => {
             "create:state"
           ]
         )
-        @publish(event: "AddCasedTypeState")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the FILMED_IN relationship."
       RemoveCasedTypeState(
         from: _CasedTypeInput!
@@ -9186,7 +8479,6 @@ test.cb('Test augmented schema', t => {
             "delete:state"
           ]
         )
-        @publish(event: "RemoveCasedTypeState")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the FILMED_IN relationship."
       MergeCasedTypeState(
         from: _CasedTypeInput!
@@ -9201,19 +8493,15 @@ test.cb('Test augmented schema', t => {
             "merge:state"
           ]
         )
-        @publish(event: "MergeCasedTypeState")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#create) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-nodes) a CasedType node."
       CreateCasedType(name: String): CasedType
         @hasScope(scopes: ["CasedType: Create", "create:casedtype"])
-        @publish(event: "CreateCasedType")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#delete) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-single-node) a CasedType node."
       DeleteCasedType(name: String!): CasedType
         @hasScope(scopes: ["CasedType: Delete", "delete:casedtype"])
-        @publish(event: "DeleteCasedType")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#merge) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-node-derived) a CasedType node."
       MergeCasedType(name: String!): CasedType
         @hasScope(scopes: ["CasedType: Merge", "merge:casedtype"])
-        @publish(event: "MergeCasedType")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the cameras relationship."
       AddCameraOperators(
         from: _PersonInput!
@@ -9228,7 +8516,6 @@ test.cb('Test augmented schema', t => {
             "create:camera"
           ]
         )
-        @publish(event: "AddCameraOperators")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the cameras relationship."
       RemoveCameraOperators(
         from: _PersonInput!
@@ -9243,7 +8530,6 @@ test.cb('Test augmented schema', t => {
             "delete:camera"
           ]
         )
-        @publish(event: "RemoveCameraOperators")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the cameras relationship."
       MergeCameraOperators(
         from: _PersonInput!
@@ -9258,7 +8544,6 @@ test.cb('Test augmented schema', t => {
             "merge:camera"
           ]
         )
-        @publish(event: "MergeCameraOperators")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the REFLEXIVE_INTERFACE_RELATIONSHIP relationship."
       AddCameraReflexiveInterfaceRelationship(
         from: _CameraInput!
@@ -9277,7 +8562,6 @@ test.cb('Test augmented schema', t => {
             "create:camera"
           ]
         )
-        @publish(event: "AddCameraReflexiveInterfaceRelationship")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the REFLEXIVE_INTERFACE_RELATIONSHIP relationship."
       RemoveCameraReflexiveInterfaceRelationship(
         from: _CameraInput!
@@ -9296,7 +8580,6 @@ test.cb('Test augmented schema', t => {
             "delete:camera"
           ]
         )
-        @publish(event: "RemoveCameraReflexiveInterfaceRelationship")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the REFLEXIVE_INTERFACE_RELATIONSHIP relationship."
       MergeCameraReflexiveInterfaceRelationship(
         from: _CameraInput!
@@ -9315,7 +8598,6 @@ test.cb('Test augmented schema', t => {
             "merge:camera"
           ]
         )
-        @publish(event: "MergeCameraReflexiveInterfaceRelationship")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the cameras relationship."
       AddOldCameraOperators(
         from: _PersonInput!
@@ -9330,7 +8612,6 @@ test.cb('Test augmented schema', t => {
             "create:oldcamera"
           ]
         )
-        @publish(event: "AddOldCameraOperators")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the cameras relationship."
       RemoveOldCameraOperators(
         from: _PersonInput!
@@ -9345,7 +8626,6 @@ test.cb('Test augmented schema', t => {
             "delete:oldcamera"
           ]
         )
-        @publish(event: "RemoveOldCameraOperators")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the cameras relationship."
       MergeOldCameraOperators(
         from: _PersonInput!
@@ -9360,7 +8640,6 @@ test.cb('Test augmented schema', t => {
             "merge:oldcamera"
           ]
         )
-        @publish(event: "MergeOldCameraOperators")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the REFLEXIVE_INTERFACE_RELATIONSHIP relationship."
       AddOldCameraReflexiveInterfaceRelationship(
         from: _OldCameraInput!
@@ -9379,7 +8658,6 @@ test.cb('Test augmented schema', t => {
             "create:camera"
           ]
         )
-        @publish(event: "AddOldCameraReflexiveInterfaceRelationship")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the REFLEXIVE_INTERFACE_RELATIONSHIP relationship."
       RemoveOldCameraReflexiveInterfaceRelationship(
         from: _OldCameraInput!
@@ -9398,7 +8676,6 @@ test.cb('Test augmented schema', t => {
             "delete:camera"
           ]
         )
-        @publish(event: "RemoveOldCameraReflexiveInterfaceRelationship")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the REFLEXIVE_INTERFACE_RELATIONSHIP relationship."
       MergeOldCameraReflexiveInterfaceRelationship(
         from: _OldCameraInput!
@@ -9417,7 +8694,6 @@ test.cb('Test augmented schema', t => {
             "merge:camera"
           ]
         )
-        @publish(event: "MergeOldCameraReflexiveInterfaceRelationship")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#create) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-nodes) a OldCamera node."
       CreateOldCamera(
         type: String
@@ -9425,9 +8701,7 @@ test.cb('Test augmented schema', t => {
         make: String
         weight: Int
         smell: String
-      ): OldCamera
-        @hasScope(scopes: ["OldCamera: Create", "create:oldcamera"])
-        @publish(event: "CreateOldCamera")
+      ): OldCamera @hasScope(scopes: ["OldCamera: Create", "create:oldcamera"])
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#update) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) a OldCamera node."
       UpdateOldCamera(
         type: String
@@ -9435,13 +8709,10 @@ test.cb('Test augmented schema', t => {
         make: String
         weight: Int
         smell: String
-      ): OldCamera
-        @hasScope(scopes: ["OldCamera: Update", "update:oldcamera"])
-        @publish(event: "UpdateOldCamera")
+      ): OldCamera @hasScope(scopes: ["OldCamera: Update", "update:oldcamera"])
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#delete) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-single-node) a OldCamera node."
       DeleteOldCamera(id: ID!): OldCamera
         @hasScope(scopes: ["OldCamera: Delete", "delete:oldcamera"])
-        @publish(event: "DeleteOldCamera")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#merge) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-node-derived) a OldCamera node."
       MergeOldCamera(
         type: String
@@ -9449,9 +8720,7 @@ test.cb('Test augmented schema', t => {
         make: String
         weight: Int
         smell: String
-      ): OldCamera
-        @hasScope(scopes: ["OldCamera: Merge", "merge:oldcamera"])
-        @publish(event: "MergeOldCamera")
+      ): OldCamera @hasScope(scopes: ["OldCamera: Merge", "merge:oldcamera"])
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the cameras relationship."
       AddNewCameraOperators(
         from: _PersonInput!
@@ -9466,7 +8735,6 @@ test.cb('Test augmented schema', t => {
             "create:newcamera"
           ]
         )
-        @publish(event: "AddNewCameraOperators")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the cameras relationship."
       RemoveNewCameraOperators(
         from: _PersonInput!
@@ -9481,7 +8749,6 @@ test.cb('Test augmented schema', t => {
             "delete:newcamera"
           ]
         )
-        @publish(event: "RemoveNewCameraOperators")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the cameras relationship."
       MergeNewCameraOperators(
         from: _PersonInput!
@@ -9496,7 +8763,6 @@ test.cb('Test augmented schema', t => {
             "merge:newcamera"
           ]
         )
-        @publish(event: "MergeNewCameraOperators")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the REFLEXIVE_INTERFACE_RELATIONSHIP relationship."
       AddNewCameraReflexiveInterfaceRelationship(
         from: _NewCameraInput!
@@ -9515,7 +8781,6 @@ test.cb('Test augmented schema', t => {
             "create:camera"
           ]
         )
-        @publish(event: "AddNewCameraReflexiveInterfaceRelationship")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the REFLEXIVE_INTERFACE_RELATIONSHIP relationship."
       RemoveNewCameraReflexiveInterfaceRelationship(
         from: _NewCameraInput!
@@ -9534,7 +8799,6 @@ test.cb('Test augmented schema', t => {
             "delete:camera"
           ]
         )
-        @publish(event: "RemoveNewCameraReflexiveInterfaceRelationship")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the REFLEXIVE_INTERFACE_RELATIONSHIP relationship."
       MergeNewCameraReflexiveInterfaceRelationship(
         from: _NewCameraInput!
@@ -9553,7 +8817,6 @@ test.cb('Test augmented schema', t => {
             "merge:camera"
           ]
         )
-        @publish(event: "MergeNewCameraReflexiveInterfaceRelationship")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#create) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-nodes) a NewCamera node."
       CreateNewCamera(
         type: String
@@ -9561,9 +8824,7 @@ test.cb('Test augmented schema', t => {
         make: String
         weight: Int
         features: [String]
-      ): NewCamera
-        @hasScope(scopes: ["NewCamera: Create", "create:newcamera"])
-        @publish(event: "CreateNewCamera")
+      ): NewCamera @hasScope(scopes: ["NewCamera: Create", "create:newcamera"])
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#update) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) a NewCamera node."
       UpdateNewCamera(
         type: String
@@ -9571,13 +8832,10 @@ test.cb('Test augmented schema', t => {
         make: String
         weight: Int
         features: [String]
-      ): NewCamera
-        @hasScope(scopes: ["NewCamera: Update", "update:newcamera"])
-        @publish(event: "UpdateNewCamera")
+      ): NewCamera @hasScope(scopes: ["NewCamera: Update", "update:newcamera"])
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#delete) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-single-node) a NewCamera node."
       DeleteNewCamera(id: ID!): NewCamera
         @hasScope(scopes: ["NewCamera: Delete", "delete:newcamera"])
-        @publish(event: "DeleteNewCamera")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#merge) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-node-derived) a NewCamera node."
       MergeNewCamera(
         type: String
@@ -9585,9 +8843,7 @@ test.cb('Test augmented schema', t => {
         make: String
         weight: Int
         features: [String]
-      ): NewCamera
-        @hasScope(scopes: ["NewCamera: Merge", "merge:newcamera"])
-        @publish(event: "MergeNewCamera")
+      ): NewCamera @hasScope(scopes: ["NewCamera: Merge", "merge:newcamera"])
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the favoriteCamera relationship."
       AddCameraManFavoriteCamera(
         from: _CameraManInput!
@@ -9606,7 +8862,6 @@ test.cb('Test augmented schema', t => {
             "create:camera"
           ]
         )
-        @publish(event: "AddCameraManFavoriteCamera")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the favoriteCamera relationship."
       RemoveCameraManFavoriteCamera(
         from: _CameraManInput!
@@ -9625,7 +8880,6 @@ test.cb('Test augmented schema', t => {
             "delete:camera"
           ]
         )
-        @publish(event: "RemoveCameraManFavoriteCamera")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the favoriteCamera relationship."
       MergeCameraManFavoriteCamera(
         from: _CameraManInput!
@@ -9644,7 +8898,6 @@ test.cb('Test augmented schema', t => {
             "merge:camera"
           ]
         )
-        @publish(event: "MergeCameraManFavoriteCamera")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the cameras relationship."
       AddCameraManCameras(
         from: _CameraManInput!
@@ -9659,7 +8912,6 @@ test.cb('Test augmented schema', t => {
             "create:camera"
           ]
         )
-        @publish(event: "AddCameraManCameras")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the cameras relationship."
       RemoveCameraManCameras(
         from: _CameraManInput!
@@ -9674,7 +8926,6 @@ test.cb('Test augmented schema', t => {
             "delete:camera"
           ]
         )
-        @publish(event: "RemoveCameraManCameras")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the cameras relationship."
       MergeCameraManCameras(
         from: _CameraManInput!
@@ -9689,7 +8940,6 @@ test.cb('Test augmented schema', t => {
             "merge:camera"
           ]
         )
-        @publish(event: "MergeCameraManCameras")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the cameraBuddy relationship."
       AddCameraManCameraBuddy(
         from: _CameraManInput!
@@ -9708,7 +8958,6 @@ test.cb('Test augmented schema', t => {
             "create:person"
           ]
         )
-        @publish(event: "AddCameraManCameraBuddy")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the cameraBuddy relationship."
       RemoveCameraManCameraBuddy(
         from: _CameraManInput!
@@ -9727,7 +8976,6 @@ test.cb('Test augmented schema', t => {
             "delete:person"
           ]
         )
-        @publish(event: "RemoveCameraManCameraBuddy")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the cameraBuddy relationship."
       MergeCameraManCameraBuddy(
         from: _CameraManInput!
@@ -9746,7 +8994,6 @@ test.cb('Test augmented schema', t => {
             "merge:person"
           ]
         )
-        @publish(event: "MergeCameraManCameraBuddy")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the INTERFACED_RELATIONSHIP_TYPE relationship."
       AddCameraManInterfacedRelationshipType(
         from: _PersonInput!
@@ -9766,7 +9013,6 @@ test.cb('Test augmented schema', t => {
             "create:genre"
           ]
         )
-        @publish(event: "AddCameraManInterfacedRelationshipType")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the INTERFACED_RELATIONSHIP_TYPE relationship."
       RemoveCameraManInterfacedRelationshipType(
         from: _PersonInput!
@@ -9785,7 +9031,6 @@ test.cb('Test augmented schema', t => {
             "delete:genre"
           ]
         )
-        @publish(event: "RemoveCameraManInterfacedRelationshipType")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the INTERFACED_RELATIONSHIP_TYPE relationship."
       UpdateCameraManInterfacedRelationshipType(
         from: _PersonInput!
@@ -9805,7 +9050,6 @@ test.cb('Test augmented schema', t => {
             "update:genre"
           ]
         )
-        @publish(event: "UpdateCameraManInterfacedRelationshipType")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the INTERFACED_RELATIONSHIP_TYPE relationship."
       MergeCameraManInterfacedRelationshipType(
         from: _PersonInput!
@@ -9825,7 +9069,6 @@ test.cb('Test augmented schema', t => {
             "merge:genre"
           ]
         )
-        @publish(event: "MergeCameraManInterfacedRelationshipType")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE relationship."
       AddCameraManReflexiveInterfacedRelationshipType(
         from: _PersonInput!
@@ -9845,7 +9088,6 @@ test.cb('Test augmented schema', t => {
             "create:person"
           ]
         )
-        @publish(event: "AddCameraManReflexiveInterfacedRelationshipType")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE relationship."
       RemoveCameraManReflexiveInterfacedRelationshipType(
         from: _PersonInput!
@@ -9864,7 +9106,6 @@ test.cb('Test augmented schema', t => {
             "delete:person"
           ]
         )
-        @publish(event: "RemoveCameraManReflexiveInterfacedRelationshipType")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE relationship."
       UpdateCameraManReflexiveInterfacedRelationshipType(
         from: _PersonInput!
@@ -9884,7 +9125,6 @@ test.cb('Test augmented schema', t => {
             "update:person"
           ]
         )
-        @publish(event: "UpdateCameraManReflexiveInterfacedRelationshipType")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE relationship."
       MergeCameraManReflexiveInterfacedRelationshipType(
         from: _PersonInput!
@@ -9904,35 +9144,27 @@ test.cb('Test augmented schema', t => {
             "merge:person"
           ]
         )
-        @publish(event: "MergeCameraManReflexiveInterfacedRelationshipType")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#create) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-nodes) a CameraMan node."
       CreateCameraMan(
         userId: ID
         name: String
         extensionScalar: String
-      ): CameraMan
-        @hasScope(scopes: ["CameraMan: Create", "create:cameraman"])
-        @publish(event: "CreateCameraMan")
+      ): CameraMan @hasScope(scopes: ["CameraMan: Create", "create:cameraman"])
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#update) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) a CameraMan node."
       UpdateCameraMan(
         userId: ID!
         name: String
         extensionScalar: String
-      ): CameraMan
-        @hasScope(scopes: ["CameraMan: Update", "update:cameraman"])
-        @publish(event: "UpdateCameraMan")
+      ): CameraMan @hasScope(scopes: ["CameraMan: Update", "update:cameraman"])
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#delete) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-single-node) a CameraMan node."
       DeleteCameraMan(userId: ID!): CameraMan
         @hasScope(scopes: ["CameraMan: Delete", "delete:cameraman"])
-        @publish(event: "DeleteCameraMan")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#merge) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-node-derived) a CameraMan node."
       MergeCameraMan(
         userId: ID!
         name: String
         extensionScalar: String
-      ): CameraMan
-        @hasScope(scopes: ["CameraMan: Merge", "merge:cameraman"])
-        @publish(event: "MergeCameraMan")
+      ): CameraMan @hasScope(scopes: ["CameraMan: Merge", "merge:cameraman"])
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the TEST_RELATION relationship."
       AddUniqueNodeTestRelation(
         from: _UniqueNodeInput!
@@ -9951,7 +9183,6 @@ test.cb('Test augmented schema', t => {
             "create:uniquestringnode"
           ]
         )
-        @publish(event: "AddUniqueNodeTestRelation")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the TEST_RELATION relationship."
       RemoveUniqueNodeTestRelation(
         from: _UniqueNodeInput!
@@ -9970,7 +9201,6 @@ test.cb('Test augmented schema', t => {
             "delete:uniquestringnode"
           ]
         )
-        @publish(event: "RemoveUniqueNodeTestRelation")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the TEST_RELATION relationship."
       MergeUniqueNodeTestRelation(
         from: _UniqueNodeInput!
@@ -9989,23 +9219,18 @@ test.cb('Test augmented schema', t => {
             "merge:uniquestringnode"
           ]
         )
-        @publish(event: "MergeUniqueNodeTestRelation")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#create) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-nodes) a UniqueNode node."
       CreateUniqueNode(string: String, id: ID, anotherId: ID): UniqueNode
         @hasScope(scopes: ["UniqueNode: Create", "create:uniquenode"])
-        @publish(event: "CreateUniqueNode")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#update) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) a UniqueNode node."
       UpdateUniqueNode(string: String, id: ID!, anotherId: ID): UniqueNode
         @hasScope(scopes: ["UniqueNode: Update", "update:uniquenode"])
-        @publish(event: "UpdateUniqueNode")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#delete) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-single-node) a UniqueNode node."
       DeleteUniqueNode(id: ID!): UniqueNode
         @hasScope(scopes: ["UniqueNode: Delete", "delete:uniquenode"])
-        @publish(event: "DeleteUniqueNode")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#merge) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-node-derived) a UniqueNode node."
       MergeUniqueNode(string: String, id: ID!, anotherId: ID): UniqueNode
         @hasScope(scopes: ["UniqueNode: Merge", "merge:uniquenode"])
-        @publish(event: "MergeUniqueNode")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the TEST_RELATION relationship."
       AddUniqueStringNodeTestRelation(
         from: _UniqueNodeInput!
@@ -10024,7 +9249,6 @@ test.cb('Test augmented schema', t => {
             "create:uniquestringnode"
           ]
         )
-        @publish(event: "AddUniqueStringNodeTestRelation")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the TEST_RELATION relationship."
       RemoveUniqueStringNodeTestRelation(
         from: _UniqueNodeInput!
@@ -10043,7 +9267,6 @@ test.cb('Test augmented schema', t => {
             "delete:uniquestringnode"
           ]
         )
-        @publish(event: "RemoveUniqueStringNodeTestRelation")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the TEST_RELATION relationship."
       MergeUniqueStringNodeTestRelation(
         from: _UniqueNodeInput!
@@ -10062,431 +9285,35 @@ test.cb('Test augmented schema', t => {
             "merge:uniquestringnode"
           ]
         )
-        @publish(event: "MergeUniqueStringNodeTestRelation")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#create) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-nodes) a UniqueStringNode node."
       CreateUniqueStringNode(id: ID!, uniqueString: String): UniqueStringNode
         @hasScope(
           scopes: ["UniqueStringNode: Create", "create:uniquestringnode"]
         )
-        @publish(event: "CreateUniqueStringNode")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#update) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) a UniqueStringNode node."
       UpdateUniqueStringNode(id: ID, uniqueString: String!): UniqueStringNode
         @hasScope(
           scopes: ["UniqueStringNode: Update", "update:uniquestringnode"]
         )
-        @publish(event: "UpdateUniqueStringNode")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#delete) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-single-node) a UniqueStringNode node."
       DeleteUniqueStringNode(uniqueString: String!): UniqueStringNode
         @hasScope(
           scopes: ["UniqueStringNode: Delete", "delete:uniquestringnode"]
         )
-        @publish(event: "DeleteUniqueStringNode")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#merge) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-node-derived) a UniqueStringNode node."
       MergeUniqueStringNode(id: ID, uniqueString: String!): UniqueStringNode
         @hasScope(scopes: ["UniqueStringNode: Merge", "merge:uniquestringnode"])
-        @publish(event: "MergeUniqueStringNode")
-      CustomCamera: Camera
-        @cypher(
-          statement: "CREATE (newCamera:Camera:NewCamera {id: apoc.create.uuid(), type: 'macro'}) RETURN newCamera"
-        )
-      CustomCameras: [Camera]
-        @cypher(
-          statement: "CREATE (newCamera:Camera:NewCamera {id: apoc.create.uuid(), type: 'macro', features: ['selfie', 'zoom']}) CREATE (oldCamera:Camera:OldCamera {id: apoc.create.uuid(), type: 'floating', smell: 'rusty' }) RETURN [newCamera, oldCamera]"
-        )
     }
+
     type SubscriptionC {
       testSubscribe: Boolean
-      AddMovieExtensionNode: _AddMovieExtensionNodePayload
-        @subscribe(to: "AddMovieExtensionNode")
-      RemoveMovieExtensionNode: _RemoveMovieExtensionNodePayload
-        @subscribe(to: "RemoveMovieExtensionNode")
-      MergeMovieExtensionNode: _MergeMovieExtensionNodePayload
-        @subscribe(to: "MergeMovieExtensionNode")
-      AddMovieGenres: _AddMovieGenresPayload @subscribe(to: "AddMovieGenres")
-      RemoveMovieGenres: _RemoveMovieGenresPayload
-        @subscribe(to: "RemoveMovieGenres")
-      MergeMovieGenres: _MergeMovieGenresPayload
-        @subscribe(to: "MergeMovieGenres")
-      AddMovieActors: _AddMovieActorsPayload @subscribe(to: "AddMovieActors")
-      RemoveMovieActors: _RemoveMovieActorsPayload
-        @subscribe(to: "RemoveMovieActors")
-      MergeMovieActors: _MergeMovieActorsPayload
-        @subscribe(to: "MergeMovieActors")
-      AddMovieFilmedIn: _AddMovieFilmedInPayload
-        @subscribe(to: "AddMovieFilmedIn")
-      RemoveMovieFilmedIn: _RemoveMovieFilmedInPayload
-        @subscribe(to: "RemoveMovieFilmedIn")
-      MergeMovieFilmedIn: _MergeMovieFilmedInPayload
-        @subscribe(to: "MergeMovieFilmedIn")
-      AddMovieRatings: _AddMovieRatingsPayload @subscribe(to: "AddMovieRatings")
-      RemoveMovieRatings: _RemoveMovieRatingsPayload
-        @subscribe(to: "RemoveMovieRatings")
-      UpdateMovieRatings: _UpdateMovieRatingsPayload
-        @subscribe(to: "UpdateMovieRatings")
-      MergeMovieRatings: _MergeMovieRatingsPayload
-        @subscribe(to: "MergeMovieRatings")
-      AddMovieRatingsNoProps: _AddMovieRatingsNoPropsPayload
-        @subscribe(to: "AddMovieRatingsNoProps")
-      RemoveMovieRatingsNoProps: _RemoveMovieRatingsNoPropsPayload
-        @subscribe(to: "RemoveMovieRatingsNoProps")
-      MergeMovieRatingsNoProps: _MergeMovieRatingsNoPropsPayload
-        @subscribe(to: "MergeMovieRatingsNoProps")
-      AddMovieRatingsCustomFrom: _AddMovieRatingsCustomFromPayload
-        @subscribe(to: "AddMovieRatingsCustomFrom")
-      RemoveMovieRatingsCustomFrom: _RemoveMovieRatingsCustomFromPayload
-        @subscribe(to: "RemoveMovieRatingsCustomFrom")
-      UpdateMovieRatingsCustomFrom: _UpdateMovieRatingsCustomFromPayload
-        @subscribe(to: "UpdateMovieRatingsCustomFrom")
-      MergeMovieRatingsCustomFrom: _MergeMovieRatingsCustomFromPayload
-        @subscribe(to: "MergeMovieRatingsCustomFrom")
-      AddMovieRatingsCustomTo: _AddMovieRatingsCustomToPayload
-        @subscribe(to: "AddMovieRatingsCustomTo")
-      RemoveMovieRatingsCustomTo: _RemoveMovieRatingsCustomToPayload
-        @subscribe(to: "RemoveMovieRatingsCustomTo")
-      UpdateMovieRatingsCustomTo: _UpdateMovieRatingsCustomToPayload
-        @subscribe(to: "UpdateMovieRatingsCustomTo")
-      MergeMovieRatingsCustomTo: _MergeMovieRatingsCustomToPayload
-        @subscribe(to: "MergeMovieRatingsCustomTo")
-      AddMovieRatingsCustomFromTo: _AddMovieRatingsCustomFromToPayload
-        @subscribe(to: "AddMovieRatingsCustomFromTo")
-      RemoveMovieRatingsCustomFromTo: _RemoveMovieRatingsCustomFromToPayload
-        @subscribe(to: "RemoveMovieRatingsCustomFromTo")
-      UpdateMovieRatingsCustomFromTo: _UpdateMovieRatingsCustomFromToPayload
-        @subscribe(to: "UpdateMovieRatingsCustomFromTo")
-      MergeMovieRatingsCustomFromTo: _MergeMovieRatingsCustomFromToPayload
-        @subscribe(to: "MergeMovieRatingsCustomFromTo")
-      CreateMovie: Movie @subscribe(to: "CreateMovie")
-      UpdateMovie: Movie @subscribe(to: "UpdateMovie")
-      DeleteMovie: Movie @subscribe(to: "DeleteMovie")
-      MergeMovie: Movie @subscribe(to: "MergeMovie")
-      AddGenreMovies: _AddGenreMoviesPayload @subscribe(to: "AddGenreMovies")
-      RemoveGenreMovies: _RemoveGenreMoviesPayload
-        @subscribe(to: "RemoveGenreMovies")
-      MergeGenreMovies: _MergeGenreMoviesPayload
-        @subscribe(to: "MergeGenreMovies")
-      AddGenreInterfacedRelationshipType: _AddGenreInterfacedRelationshipTypePayload
-        @subscribe(to: "AddGenreInterfacedRelationshipType")
-      RemoveGenreInterfacedRelationshipType: _RemoveGenreInterfacedRelationshipTypePayload
-        @subscribe(to: "RemoveGenreInterfacedRelationshipType")
-      UpdateGenreInterfacedRelationshipType: _UpdateGenreInterfacedRelationshipTypePayload
-        @subscribe(to: "UpdateGenreInterfacedRelationshipType")
-      MergeGenreInterfacedRelationshipType: _MergeGenreInterfacedRelationshipTypePayload
-        @subscribe(to: "MergeGenreInterfacedRelationshipType")
-      CreateGenre: Genre @subscribe(to: "CreateGenre")
-      DeleteGenre: Genre @subscribe(to: "DeleteGenre")
-      MergeGenre: Genre @subscribe(to: "MergeGenre")
-      CreateState: State @subscribe(to: "CreateState")
-      UpdateState: State @subscribe(to: "UpdateState")
-      DeleteState: State @subscribe(to: "DeleteState")
-      MergeState: State @subscribe(to: "MergeState")
-      AddPersonInterfacedRelationshipType: _AddPersonInterfacedRelationshipTypePayload
-        @subscribe(to: "AddPersonInterfacedRelationshipType")
-      RemovePersonInterfacedRelationshipType: _RemovePersonInterfacedRelationshipTypePayload
-        @subscribe(to: "RemovePersonInterfacedRelationshipType")
-      UpdatePersonInterfacedRelationshipType: _UpdatePersonInterfacedRelationshipTypePayload
-        @subscribe(to: "UpdatePersonInterfacedRelationshipType")
-      MergePersonInterfacedRelationshipType: _MergePersonInterfacedRelationshipTypePayload
-        @subscribe(to: "MergePersonInterfacedRelationshipType")
-      AddPersonReflexiveInterfacedRelationshipType: _AddPersonReflexiveInterfacedRelationshipTypePayload
-        @subscribe(to: "AddPersonReflexiveInterfacedRelationshipType")
-      RemovePersonReflexiveInterfacedRelationshipType: _RemovePersonReflexiveInterfacedRelationshipTypePayload
-        @subscribe(to: "RemovePersonReflexiveInterfacedRelationshipType")
-      UpdatePersonReflexiveInterfacedRelationshipType: _UpdatePersonReflexiveInterfacedRelationshipTypePayload
-        @subscribe(to: "UpdatePersonReflexiveInterfacedRelationshipType")
-      MergePersonReflexiveInterfacedRelationshipType: _MergePersonReflexiveInterfacedRelationshipTypePayload
-        @subscribe(to: "MergePersonReflexiveInterfacedRelationshipType")
-      AddActorMovies: _AddActorMoviesPayload @subscribe(to: "AddActorMovies")
-      RemoveActorMovies: _RemoveActorMoviesPayload
-        @subscribe(to: "RemoveActorMovies")
-      MergeActorMovies: _MergeActorMoviesPayload
-        @subscribe(to: "MergeActorMovies")
-      AddActorKnows: _AddActorKnowsPayload @subscribe(to: "AddActorKnows")
-      RemoveActorKnows: _RemoveActorKnowsPayload
-        @subscribe(to: "RemoveActorKnows")
-      MergeActorKnows: _MergeActorKnowsPayload @subscribe(to: "MergeActorKnows")
-      AddActorInterfacedRelationshipType: _AddActorInterfacedRelationshipTypePayload
-        @subscribe(to: "AddActorInterfacedRelationshipType")
-      RemoveActorInterfacedRelationshipType: _RemoveActorInterfacedRelationshipTypePayload
-        @subscribe(to: "RemoveActorInterfacedRelationshipType")
-      UpdateActorInterfacedRelationshipType: _UpdateActorInterfacedRelationshipTypePayload
-        @subscribe(to: "UpdateActorInterfacedRelationshipType")
-      MergeActorInterfacedRelationshipType: _MergeActorInterfacedRelationshipTypePayload
-        @subscribe(to: "MergeActorInterfacedRelationshipType")
-      AddActorReflexiveInterfacedRelationshipType: _AddActorReflexiveInterfacedRelationshipTypePayload
-        @subscribe(to: "AddActorReflexiveInterfacedRelationshipType")
-      RemoveActorReflexiveInterfacedRelationshipType: _RemoveActorReflexiveInterfacedRelationshipTypePayload
-        @subscribe(to: "RemoveActorReflexiveInterfacedRelationshipType")
-      UpdateActorReflexiveInterfacedRelationshipType: _UpdateActorReflexiveInterfacedRelationshipTypePayload
-        @subscribe(to: "UpdateActorReflexiveInterfacedRelationshipType")
-      MergeActorReflexiveInterfacedRelationshipType: _MergeActorReflexiveInterfacedRelationshipTypePayload
-        @subscribe(to: "MergeActorReflexiveInterfacedRelationshipType")
-      CreateActor: Actor @subscribe(to: "CreateActor")
-      UpdateActor: Actor @subscribe(to: "UpdateActor")
-      DeleteActor: Actor @subscribe(to: "DeleteActor")
-      MergeActor: Actor @subscribe(to: "MergeActor")
-      AddUserInterfacedRelationshipType: _AddUserInterfacedRelationshipTypePayload
-        @subscribe(to: "AddUserInterfacedRelationshipType")
-      RemoveUserInterfacedRelationshipType: _RemoveUserInterfacedRelationshipTypePayload
-        @subscribe(to: "RemoveUserInterfacedRelationshipType")
-      UpdateUserInterfacedRelationshipType: _UpdateUserInterfacedRelationshipTypePayload
-        @subscribe(to: "UpdateUserInterfacedRelationshipType")
-      MergeUserInterfacedRelationshipType: _MergeUserInterfacedRelationshipTypePayload
-        @subscribe(to: "MergeUserInterfacedRelationshipType")
-      AddUserReflexiveInterfacedRelationshipType: _AddUserReflexiveInterfacedRelationshipTypePayload
-        @subscribe(to: "AddUserReflexiveInterfacedRelationshipType")
-      RemoveUserReflexiveInterfacedRelationshipType: _RemoveUserReflexiveInterfacedRelationshipTypePayload
-        @subscribe(to: "RemoveUserReflexiveInterfacedRelationshipType")
-      UpdateUserReflexiveInterfacedRelationshipType: _UpdateUserReflexiveInterfacedRelationshipTypePayload
-        @subscribe(to: "UpdateUserReflexiveInterfacedRelationshipType")
-      MergeUserReflexiveInterfacedRelationshipType: _MergeUserReflexiveInterfacedRelationshipTypePayload
-        @subscribe(to: "MergeUserReflexiveInterfacedRelationshipType")
-      AddUserRated: _AddUserRatedPayload @subscribe(to: "AddUserRated")
-      RemoveUserRated: _RemoveUserRatedPayload @subscribe(to: "RemoveUserRated")
-      UpdateUserRated: _UpdateUserRatedPayload @subscribe(to: "UpdateUserRated")
-      MergeUserRated: _MergeUserRatedPayload @subscribe(to: "MergeUserRated")
-      AddUserRatedCustomFrom: _AddUserRatedCustomFromPayload
-        @subscribe(to: "AddUserRatedCustomFrom")
-      RemoveUserRatedCustomFrom: _RemoveUserRatedCustomFromPayload
-        @subscribe(to: "RemoveUserRatedCustomFrom")
-      UpdateUserRatedCustomFrom: _UpdateUserRatedCustomFromPayload
-        @subscribe(to: "UpdateUserRatedCustomFrom")
-      MergeUserRatedCustomFrom: _MergeUserRatedCustomFromPayload
-        @subscribe(to: "MergeUserRatedCustomFrom")
-      AddUserRatedCustomTo: _AddUserRatedCustomToPayload
-        @subscribe(to: "AddUserRatedCustomTo")
-      RemoveUserRatedCustomTo: _RemoveUserRatedCustomToPayload
-        @subscribe(to: "RemoveUserRatedCustomTo")
-      UpdateUserRatedCustomTo: _UpdateUserRatedCustomToPayload
-        @subscribe(to: "UpdateUserRatedCustomTo")
-      MergeUserRatedCustomTo: _MergeUserRatedCustomToPayload
-        @subscribe(to: "MergeUserRatedCustomTo")
-      AddUserRatedCustomFromTo: _AddUserRatedCustomFromToPayload
-        @subscribe(to: "AddUserRatedCustomFromTo")
-      RemoveUserRatedCustomFromTo: _RemoveUserRatedCustomFromToPayload
-        @subscribe(to: "RemoveUserRatedCustomFromTo")
-      UpdateUserRatedCustomFromTo: _UpdateUserRatedCustomFromToPayload
-        @subscribe(to: "UpdateUserRatedCustomFromTo")
-      MergeUserRatedCustomFromTo: _MergeUserRatedCustomFromToPayload
-        @subscribe(to: "MergeUserRatedCustomFromTo")
-      AddUserFriends: _AddUserFriendsPayload @subscribe(to: "AddUserFriends")
-      RemoveUserFriends: _RemoveUserFriendsPayload
-        @subscribe(to: "RemoveUserFriends")
-      UpdateUserFriends: _UpdateUserFriendsPayload
-        @subscribe(to: "UpdateUserFriends")
-      MergeUserFriends: _MergeUserFriendsPayload
-        @subscribe(to: "MergeUserFriends")
-      AddUserFriendsCustomFrom: _AddUserFriendsCustomFromPayload
-        @subscribe(to: "AddUserFriendsCustomFrom")
-      RemoveUserFriendsCustomFrom: _RemoveUserFriendsCustomFromPayload
-        @subscribe(to: "RemoveUserFriendsCustomFrom")
-      UpdateUserFriendsCustomFrom: _UpdateUserFriendsCustomFromPayload
-        @subscribe(to: "UpdateUserFriendsCustomFrom")
-      MergeUserFriendsCustomFrom: _MergeUserFriendsCustomFromPayload
-        @subscribe(to: "MergeUserFriendsCustomFrom")
-      AddUserFriendsCustomTo: _AddUserFriendsCustomToPayload
-        @subscribe(to: "AddUserFriendsCustomTo")
-      RemoveUserFriendsCustomTo: _RemoveUserFriendsCustomToPayload
-        @subscribe(to: "RemoveUserFriendsCustomTo")
-      UpdateUserFriendsCustomTo: _UpdateUserFriendsCustomToPayload
-        @subscribe(to: "UpdateUserFriendsCustomTo")
-      MergeUserFriendsCustomTo: _MergeUserFriendsCustomToPayload
-        @subscribe(to: "MergeUserFriendsCustomTo")
-      AddUserFriendsCustomFromTo: _AddUserFriendsCustomFromToPayload
-        @subscribe(to: "AddUserFriendsCustomFromTo")
-      RemoveUserFriendsCustomFromTo: _RemoveUserFriendsCustomFromToPayload
-        @subscribe(to: "RemoveUserFriendsCustomFromTo")
-      UpdateUserFriendsCustomFromTo: _UpdateUserFriendsCustomFromToPayload
-        @subscribe(to: "UpdateUserFriendsCustomFromTo")
-      MergeUserFriendsCustomFromTo: _MergeUserFriendsCustomFromToPayload
-        @subscribe(to: "MergeUserFriendsCustomFromTo")
-      AddUserFavorites: _AddUserFavoritesPayload
-        @subscribe(to: "AddUserFavorites")
-      RemoveUserFavorites: _RemoveUserFavoritesPayload
-        @subscribe(to: "RemoveUserFavorites")
-      MergeUserFavorites: _MergeUserFavoritesPayload
-        @subscribe(to: "MergeUserFavorites")
-      CreateUser: User @subscribe(to: "CreateUser")
-      UpdateUser: User @subscribe(to: "UpdateUser")
-      DeleteUser: User @subscribe(to: "DeleteUser")
-      MergeUser: User @subscribe(to: "MergeUser")
-      CreateBook: Book @subscribe(to: "CreateBook")
-      DeleteBook: Book @subscribe(to: "DeleteBook")
-      MergeBook: Book @subscribe(to: "MergeBook")
-      CreateNodeTypeMutationTest: NodeTypeMutationTest
-        @subscribe(to: "CreateNodeTypeMutationTest")
-      DeleteNodeTypeMutationTest: NodeTypeMutationTest
-        @subscribe(to: "DeleteNodeTypeMutationTest")
-      MergeNodeTypeMutationTest: NodeTypeMutationTest
-        @subscribe(to: "MergeNodeTypeMutationTest")
-      CreatecurrentUserId: currentUserId @subscribe(to: "CreatecurrentUserId")
-      DeletecurrentUserId: currentUserId @subscribe(to: "DeletecurrentUserId")
-      MergecurrentUserId: currentUserId @subscribe(to: "MergecurrentUserId")
-      AddTemporalNodeTemporalNodes: _AddTemporalNodeTemporalNodesPayload
-        @subscribe(to: "AddTemporalNodeTemporalNodes")
-      RemoveTemporalNodeTemporalNodes: _RemoveTemporalNodeTemporalNodesPayload
-        @subscribe(to: "RemoveTemporalNodeTemporalNodes")
-      MergeTemporalNodeTemporalNodes: _MergeTemporalNodeTemporalNodesPayload
-        @subscribe(to: "MergeTemporalNodeTemporalNodes")
-      CreateTemporalNode: TemporalNode @subscribe(to: "CreateTemporalNode")
-      UpdateTemporalNode: TemporalNode @subscribe(to: "UpdateTemporalNode")
-      DeleteTemporalNode: TemporalNode @subscribe(to: "DeleteTemporalNode")
-      MergeTemporalNode: TemporalNode @subscribe(to: "MergeTemporalNode")
-      AddSpatialNodeSpatialNodes: _AddSpatialNodeSpatialNodesPayload
-        @subscribe(to: "AddSpatialNodeSpatialNodes")
-      RemoveSpatialNodeSpatialNodes: _RemoveSpatialNodeSpatialNodesPayload
-        @subscribe(to: "RemoveSpatialNodeSpatialNodes")
-      MergeSpatialNodeSpatialNodes: _MergeSpatialNodeSpatialNodesPayload
-        @subscribe(to: "MergeSpatialNodeSpatialNodes")
-      CreateSpatialNode: SpatialNode @subscribe(to: "CreateSpatialNode")
-      UpdateSpatialNode: SpatialNode @subscribe(to: "UpdateSpatialNode")
-      DeleteSpatialNode: SpatialNode @subscribe(to: "DeleteSpatialNode")
-      MergeSpatialNode: SpatialNode @subscribe(to: "MergeSpatialNode")
-      AddCasedTypeState: _AddCasedTypeStatePayload
-        @subscribe(to: "AddCasedTypeState")
-      RemoveCasedTypeState: _RemoveCasedTypeStatePayload
-        @subscribe(to: "RemoveCasedTypeState")
-      MergeCasedTypeState: _MergeCasedTypeStatePayload
-        @subscribe(to: "MergeCasedTypeState")
-      CreateCasedType: CasedType @subscribe(to: "CreateCasedType")
-      DeleteCasedType: CasedType @subscribe(to: "DeleteCasedType")
-      MergeCasedType: CasedType @subscribe(to: "MergeCasedType")
-      AddCameraOperators: _AddCameraOperatorsPayload
-        @subscribe(to: "AddCameraOperators")
-      RemoveCameraOperators: _RemoveCameraOperatorsPayload
-        @subscribe(to: "RemoveCameraOperators")
-      MergeCameraOperators: _MergeCameraOperatorsPayload
-        @subscribe(to: "MergeCameraOperators")
-      AddCameraReflexiveInterfaceRelationship: _AddCameraReflexiveInterfaceRelationshipPayload
-        @subscribe(to: "AddCameraReflexiveInterfaceRelationship")
-      RemoveCameraReflexiveInterfaceRelationship: _RemoveCameraReflexiveInterfaceRelationshipPayload
-        @subscribe(to: "RemoveCameraReflexiveInterfaceRelationship")
-      MergeCameraReflexiveInterfaceRelationship: _MergeCameraReflexiveInterfaceRelationshipPayload
-        @subscribe(to: "MergeCameraReflexiveInterfaceRelationship")
-      AddOldCameraOperators: _AddOldCameraOperatorsPayload
-        @subscribe(to: "AddOldCameraOperators")
-      RemoveOldCameraOperators: _RemoveOldCameraOperatorsPayload
-        @subscribe(to: "RemoveOldCameraOperators")
-      MergeOldCameraOperators: _MergeOldCameraOperatorsPayload
-        @subscribe(to: "MergeOldCameraOperators")
-      AddOldCameraReflexiveInterfaceRelationship: _AddOldCameraReflexiveInterfaceRelationshipPayload
-        @subscribe(to: "AddOldCameraReflexiveInterfaceRelationship")
-      RemoveOldCameraReflexiveInterfaceRelationship: _RemoveOldCameraReflexiveInterfaceRelationshipPayload
-        @subscribe(to: "RemoveOldCameraReflexiveInterfaceRelationship")
-      MergeOldCameraReflexiveInterfaceRelationship: _MergeOldCameraReflexiveInterfaceRelationshipPayload
-        @subscribe(to: "MergeOldCameraReflexiveInterfaceRelationship")
-      CreateOldCamera: OldCamera @subscribe(to: "CreateOldCamera")
-      UpdateOldCamera: OldCamera @subscribe(to: "UpdateOldCamera")
-      DeleteOldCamera: OldCamera @subscribe(to: "DeleteOldCamera")
-      MergeOldCamera: OldCamera @subscribe(to: "MergeOldCamera")
-      AddNewCameraOperators: _AddNewCameraOperatorsPayload
-        @subscribe(to: "AddNewCameraOperators")
-      RemoveNewCameraOperators: _RemoveNewCameraOperatorsPayload
-        @subscribe(to: "RemoveNewCameraOperators")
-      MergeNewCameraOperators: _MergeNewCameraOperatorsPayload
-        @subscribe(to: "MergeNewCameraOperators")
-      AddNewCameraReflexiveInterfaceRelationship: _AddNewCameraReflexiveInterfaceRelationshipPayload
-        @subscribe(to: "AddNewCameraReflexiveInterfaceRelationship")
-      RemoveNewCameraReflexiveInterfaceRelationship: _RemoveNewCameraReflexiveInterfaceRelationshipPayload
-        @subscribe(to: "RemoveNewCameraReflexiveInterfaceRelationship")
-      MergeNewCameraReflexiveInterfaceRelationship: _MergeNewCameraReflexiveInterfaceRelationshipPayload
-        @subscribe(to: "MergeNewCameraReflexiveInterfaceRelationship")
-      CreateNewCamera: NewCamera @subscribe(to: "CreateNewCamera")
-      UpdateNewCamera: NewCamera @subscribe(to: "UpdateNewCamera")
-      DeleteNewCamera: NewCamera @subscribe(to: "DeleteNewCamera")
-      MergeNewCamera: NewCamera @subscribe(to: "MergeNewCamera")
-      AddCameraManFavoriteCamera: _AddCameraManFavoriteCameraPayload
-        @subscribe(to: "AddCameraManFavoriteCamera")
-      RemoveCameraManFavoriteCamera: _RemoveCameraManFavoriteCameraPayload
-        @subscribe(to: "RemoveCameraManFavoriteCamera")
-      MergeCameraManFavoriteCamera: _MergeCameraManFavoriteCameraPayload
-        @subscribe(to: "MergeCameraManFavoriteCamera")
-      AddCameraManCameras: _AddCameraManCamerasPayload
-        @subscribe(to: "AddCameraManCameras")
-      RemoveCameraManCameras: _RemoveCameraManCamerasPayload
-        @subscribe(to: "RemoveCameraManCameras")
-      MergeCameraManCameras: _MergeCameraManCamerasPayload
-        @subscribe(to: "MergeCameraManCameras")
-      AddCameraManCameraBuddy: _AddCameraManCameraBuddyPayload
-        @subscribe(to: "AddCameraManCameraBuddy")
-      RemoveCameraManCameraBuddy: _RemoveCameraManCameraBuddyPayload
-        @subscribe(to: "RemoveCameraManCameraBuddy")
-      MergeCameraManCameraBuddy: _MergeCameraManCameraBuddyPayload
-        @subscribe(to: "MergeCameraManCameraBuddy")
-      AddCameraManInterfacedRelationshipType: _AddCameraManInterfacedRelationshipTypePayload
-        @subscribe(to: "AddCameraManInterfacedRelationshipType")
-      RemoveCameraManInterfacedRelationshipType: _RemoveCameraManInterfacedRelationshipTypePayload
-        @subscribe(to: "RemoveCameraManInterfacedRelationshipType")
-      UpdateCameraManInterfacedRelationshipType: _UpdateCameraManInterfacedRelationshipTypePayload
-        @subscribe(to: "UpdateCameraManInterfacedRelationshipType")
-      MergeCameraManInterfacedRelationshipType: _MergeCameraManInterfacedRelationshipTypePayload
-        @subscribe(to: "MergeCameraManInterfacedRelationshipType")
-      AddCameraManReflexiveInterfacedRelationshipType: _AddCameraManReflexiveInterfacedRelationshipTypePayload
-        @subscribe(to: "AddCameraManReflexiveInterfacedRelationshipType")
-      RemoveCameraManReflexiveInterfacedRelationshipType: _RemoveCameraManReflexiveInterfacedRelationshipTypePayload
-        @subscribe(to: "RemoveCameraManReflexiveInterfacedRelationshipType")
-      UpdateCameraManReflexiveInterfacedRelationshipType: _UpdateCameraManReflexiveInterfacedRelationshipTypePayload
-        @subscribe(to: "UpdateCameraManReflexiveInterfacedRelationshipType")
-      MergeCameraManReflexiveInterfacedRelationshipType: _MergeCameraManReflexiveInterfacedRelationshipTypePayload
-        @subscribe(to: "MergeCameraManReflexiveInterfacedRelationshipType")
-      CreateCameraMan: CameraMan @subscribe(to: "CreateCameraMan")
-      UpdateCameraMan: CameraMan @subscribe(to: "UpdateCameraMan")
-      DeleteCameraMan: CameraMan @subscribe(to: "DeleteCameraMan")
-      MergeCameraMan: CameraMan @subscribe(to: "MergeCameraMan")
-      AddUniqueNodeTestRelation: _AddUniqueNodeTestRelationPayload
-        @subscribe(to: "AddUniqueNodeTestRelation")
-      RemoveUniqueNodeTestRelation: _RemoveUniqueNodeTestRelationPayload
-        @subscribe(to: "RemoveUniqueNodeTestRelation")
-      MergeUniqueNodeTestRelation: _MergeUniqueNodeTestRelationPayload
-        @subscribe(to: "MergeUniqueNodeTestRelation")
-      CreateUniqueNode: UniqueNode @subscribe(to: "CreateUniqueNode")
-      UpdateUniqueNode: UniqueNode @subscribe(to: "UpdateUniqueNode")
-      DeleteUniqueNode: UniqueNode @subscribe(to: "DeleteUniqueNode")
-      MergeUniqueNode: UniqueNode @subscribe(to: "MergeUniqueNode")
-      AddUniqueStringNodeTestRelation: _AddUniqueStringNodeTestRelationPayload
-        @subscribe(to: "AddUniqueStringNodeTestRelation")
-      RemoveUniqueStringNodeTestRelation: _RemoveUniqueStringNodeTestRelationPayload
-        @subscribe(to: "RemoveUniqueStringNodeTestRelation")
-      MergeUniqueStringNodeTestRelation: _MergeUniqueStringNodeTestRelationPayload
-        @subscribe(to: "MergeUniqueStringNodeTestRelation")
-      CreateUniqueStringNode: UniqueStringNode
-        @subscribe(to: "CreateUniqueStringNode")
-      UpdateUniqueStringNode: UniqueStringNode
-        @subscribe(to: "UpdateUniqueStringNode")
-      DeleteUniqueStringNode: UniqueStringNode
-        @subscribe(to: "DeleteUniqueStringNode")
-      MergeUniqueStringNode: UniqueStringNode
-        @subscribe(to: "MergeUniqueStringNode")
     }
-    """
-    Directive definition
-    block
-    description
-    """
-    directive @cypher(
-      statement: String
-    ) on FIELD_DEFINITION | INPUT_FIELD_DEFINITION
-    directive @relation(
-      name: String
-      direction: _RelationDirections
-      from: String
-      to: String
-    ) on FIELD_DEFINITION | OBJECT
-    directive @additionalLabels(labels: [String]) on OBJECT
-    directive @MutationMeta(
-      relationship: String
-      from: String
-      to: String
-    ) on FIELD_DEFINITION
-    directive @neo4j_ignore on FIELD_DEFINITION
-    directive @id on FIELD_DEFINITION
-    directive @unique on FIELD_DEFINITION
-    directive @index on FIELD_DEFINITION
-    directive @search(index: String) on FIELD_DEFINITION
-    directive @subscribe(to: [String]) on FIELD_DEFINITION
-    directive @publish(event: String) on FIELD_DEFINITION
-    directive @isAuthenticated on OBJECT | FIELD_DEFINITION
-    directive @hasRole(roles: [Role]) on OBJECT | FIELD_DEFINITION
-    directive @hasScope(scopes: [String]) on OBJECT | FIELD_DEFINITION
+
+    schema {
+      query: QueryA
+      subscription: SubscriptionC
+      mutation: Mutation
+    }
   `;
 
   const expectedSchema = buildSchema(expectedTypeDefs);

@@ -797,7 +797,6 @@ test.cb('Test augmented schema', t => {
             "create:movie"
           ]
         )
-        @publish(event: "AddUserLiked")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the RATING relationship."
       RemoveUserLiked(
         from: _UserWhere!
@@ -812,7 +811,6 @@ test.cb('Test augmented schema', t => {
             "delete:movie"
           ]
         )
-        @publish(event: "RemoveUserLiked")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the RATING relationship."
       MergeUserLiked(
         from: _UserWhere!
@@ -822,7 +820,6 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["User: Merge", "merge:user", "Movie: Merge", "merge:movie"]
         )
-        @publish(event: "MergeUserLiked")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the RATING relationship."
       AddUserRated(
         user: _UserWhere!
@@ -838,7 +835,6 @@ test.cb('Test augmented schema', t => {
             "create:movie"
           ]
         )
-        @publish(event: "AddUserRated")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the RATING relationship."
       RemoveUserRated(
         user: _UserWhere!
@@ -853,7 +849,6 @@ test.cb('Test augmented schema', t => {
             "delete:movie"
           ]
         )
-        @publish(event: "RemoveUserRated")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the RATING relationship."
       UpdateUserRated(
         user: _UserWhere!
@@ -869,7 +864,6 @@ test.cb('Test augmented schema', t => {
             "update:movie"
           ]
         )
-        @publish(event: "UpdateUserRated")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the RATING relationship."
       MergeUserRated(
         user: _UserWhere!
@@ -880,23 +874,18 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["User: Merge", "merge:user", "Movie: Merge", "merge:movie"]
         )
-        @publish(event: "MergeUserRated")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#create) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-nodes) a User node."
       CreateUser(data: _UserCreate!): User
         @hasScope(scopes: ["User: Create", "create:user"])
-        @publish(event: "CreateUser")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#update) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) a User node."
       UpdateUser(where: _UserWhere!, data: _UserUpdate!): User
         @hasScope(scopes: ["User: Update", "update:user"])
-        @publish(event: "UpdateUser")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#delete) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-single-node) a User node."
       DeleteUser(where: _UserWhere!): User
         @hasScope(scopes: ["User: Delete", "delete:user"])
-        @publish(event: "DeleteUser")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#merge) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-node-derived) a User node."
       MergeUser(where: _UserKeys!, data: _UserCreate!): User
         @hasScope(scopes: ["User: Merge", "merge:user"])
-        @publish(event: "MergeUser")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the RATING relationship."
       AddMovieLikedBy(
         from: _UserWhere!
@@ -911,7 +900,6 @@ test.cb('Test augmented schema', t => {
             "create:movie"
           ]
         )
-        @publish(event: "AddMovieLikedBy")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the RATING relationship."
       RemoveMovieLikedBy(
         from: _UserWhere!
@@ -926,7 +914,6 @@ test.cb('Test augmented schema', t => {
             "delete:movie"
           ]
         )
-        @publish(event: "RemoveMovieLikedBy")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the RATING relationship."
       MergeMovieLikedBy(
         from: _UserWhere!
@@ -936,7 +923,6 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["User: Merge", "merge:user", "Movie: Merge", "merge:movie"]
         )
-        @publish(event: "MergeMovieLikedBy")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-relationships) the RATING relationship."
       AddMovieRatedBy(
         user: _UserWhere!
@@ -952,7 +938,6 @@ test.cb('Test augmented schema', t => {
             "create:movie"
           ]
         )
-        @publish(event: "AddMovieRatedBy")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##add--remove-relationship) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-relationships-only) the RATING relationship."
       RemoveMovieRatedBy(
         user: _UserWhere!
@@ -967,7 +952,6 @@ test.cb('Test augmented schema', t => {
             "delete:movie"
           ]
         )
-        @publish(event: "RemoveMovieRatedBy")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##update-relationship) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) the RATING relationship."
       UpdateMovieRatedBy(
         user: _UserWhere!
@@ -983,7 +967,6 @@ test.cb('Test augmented schema', t => {
             "update:movie"
           ]
         )
-        @publish(event: "UpdateMovieRatedBy")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/##merge-relationship) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-relationships) the RATING relationship."
       MergeMovieRatedBy(
         user: _UserWhere!
@@ -994,59 +977,18 @@ test.cb('Test augmented schema', t => {
         @hasScope(
           scopes: ["User: Merge", "merge:user", "Movie: Merge", "merge:movie"]
         )
-        @publish(event: "MergeMovieRatedBy")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#create) for [creating](https://neo4j.com/docs/cypher-manual/4.1/clauses/create/#create-nodes) a Movie node."
       CreateMovie(data: _MovieCreate!): Movie
         @hasScope(scopes: ["Movie: Create", "create:movie"])
-        @publish(event: "CreateMovie")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#update) for [updating](https://neo4j.com/docs/cypher-manual/4.1/clauses/set/#set-update-a-property) a Movie node."
       UpdateMovie(where: _MovieWhere!, data: _MovieUpdate!): Movie
         @hasScope(scopes: ["Movie: Update", "update:movie"])
-        @publish(event: "UpdateMovie")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#delete) for [deleting](https://neo4j.com/docs/cypher-manual/4.1/clauses/delete/#delete-delete-single-node) a Movie node."
       DeleteMovie(where: _MovieWhere!): Movie
         @hasScope(scopes: ["Movie: Delete", "delete:movie"])
-        @publish(event: "DeleteMovie")
       "[Generated mutation](https://grandstack.io/docs/graphql-schema-generation-augmentation/#merge) for [merging](https://neo4j.com/docs/cypher-manual/4.1/clauses/merge/#query-merge-node-derived) a Movie node."
       MergeMovie(where: _MovieKeys!, data: _MovieCreate!): Movie
         @hasScope(scopes: ["Movie: Merge", "merge:movie"])
-        @publish(event: "MergeMovie")
-    }
-
-    type Subscription {
-      AddUserLiked: _AddUserLikedPayload @subscribe(to: "AddUserLiked")
-      RemoveUserLiked: _RemoveUserLikedPayload @subscribe(to: "RemoveUserLiked")
-      MergeUserLiked: _MergeUserLikedPayload @subscribe(to: "MergeUserLiked")
-      AddUserRated: _AddUserRatedPayload @subscribe(to: "AddUserRated")
-      RemoveUserRated: _RemoveUserRatedPayload @subscribe(to: "RemoveUserRated")
-      UpdateUserRated: _UpdateUserRatedPayload @subscribe(to: "UpdateUserRated")
-      MergeUserRated: _MergeUserRatedPayload @subscribe(to: "MergeUserRated")
-      CreateUser: User @subscribe(to: "CreateUser")
-      UpdateUser: User @subscribe(to: "UpdateUser")
-      DeleteUser: User @subscribe(to: "DeleteUser")
-      MergeUser: User @subscribe(to: "MergeUser")
-      AddMovieLikedBy: _AddMovieLikedByPayload @subscribe(to: "AddMovieLikedBy")
-      RemoveMovieLikedBy: _RemoveMovieLikedByPayload
-        @subscribe(to: "RemoveMovieLikedBy")
-      MergeMovieLikedBy: _MergeMovieLikedByPayload
-        @subscribe(to: "MergeMovieLikedBy")
-      AddMovieRatedBy: _AddMovieRatedByPayload @subscribe(to: "AddMovieRatedBy")
-      RemoveMovieRatedBy: _RemoveMovieRatedByPayload
-        @subscribe(to: "RemoveMovieRatedBy")
-      UpdateMovieRatedBy: _UpdateMovieRatedByPayload
-        @subscribe(to: "UpdateMovieRatedBy")
-      MergeMovieRatedBy: _MergeMovieRatedByPayload
-        @subscribe(to: "MergeMovieRatedBy")
-      CreateMovie: Movie @subscribe(to: "CreateMovie")
-      UpdateMovie: Movie @subscribe(to: "UpdateMovie")
-      DeleteMovie: Movie @subscribe(to: "DeleteMovie")
-      MergeMovie: Movie @subscribe(to: "MergeMovie")
-    }
-
-    schema {
-      query: Query
-      mutation: Mutation
-      subscription: Subscription
     }
   `;
 
