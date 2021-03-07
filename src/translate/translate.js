@@ -2878,7 +2878,12 @@ const buildNeo4jTypeTranslation = ({
         if (isTemporalFormatted) {
           return `(${nullFieldPredicate}${operatorExpression} ${cypherTypeConstructor}(${listVariable}.${filterName}))`;
         } else {
-          return `(${nullFieldPredicate}${propertyPath}.${filterName} = ${listVariable}.${filterName})`;
+          let filterNameOprType = buildOperatorExpression({
+            filterOperationType: filterOperationType,
+            propertyPath: '',
+            isListFilterArgument: false
+          });
+          return `(${nullFieldPredicate}${propertyPath}.${filterName} ${filterNameOprType} ${listVariable}.${filterName})`;
         }
       }
     );
