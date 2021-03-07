@@ -2876,7 +2876,7 @@ const buildNeo4jTypeTranslation = ({
           nullFieldPredicate = `${listVariable}.${filterName} IS NULL OR `;
         }
         if (isTemporalFormatted) {
-          return `(${nullFieldPredicate}${propertyPath} = ${cypherTypeConstructor}(${listVariable}.${filterName}))`;
+          return `(${nullFieldPredicate}${operatorExpression} ${cypherTypeConstructor}(${listVariable}.${filterName}))`;
         } else {
           return `(${nullFieldPredicate}${propertyPath}.${filterName} = ${listVariable}.${filterName})`;
         }
