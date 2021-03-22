@@ -629,7 +629,7 @@ export const analyzeMutationArguments = ({
         const unwrappedType = unwrapNamedType({ type });
         const typeName = unwrappedType[TypeWrappers.NAME];
         let argumentValue = serialized[name];
-        if (argumentValue !== undefined) {
+        if (argumentValue !== undefined && argumentValue !== null) {
           const schemaType = schema.getType(typeName);
           if (isInputObjectType(schemaType)) {
             const fieldMap = schemaType.getFields();
