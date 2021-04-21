@@ -8,7 +8,7 @@
 
 declare module 'neo4j-graphql-js' {
     import { Driver } from 'neo4j-driver';
-    import { GraphQLSchema, GraphQLFieldResolver, GraphQLResolveInfo, ExecutionResult, DocumentNode } from 'graphql';
+    import { GraphQLSchema, GraphQLFieldResolver, GraphQLResolveInfo, DocumentNode } from 'graphql';
     import { IResolvers } from 'graphql-tools';
 
     /**
@@ -21,6 +21,7 @@ declare module 'neo4j-graphql-js' {
 
     /**
      * neo4jgraphql
+     * @async
      * @description This function's signature matches that of {@link https://graphql.org/learn/execution/#root-fields-resolvers|GraphQL resolver functions}. and thus the parameters match the parameters passed into resolve by GraphQL implementations like graphql-js.
      *
      * It can be called within a resolver to generate a Cypher query and handle the database call to Neo4j to completely resolve the GraphQL request. Alternatively, use `cypherQuery` or `cypherMutation` within a resolver to only generate the Cypher query and handle the database call yourself.
@@ -30,13 +31,13 @@ declare module 'neo4j-graphql-js' {
      * @param {GraphQLResolveInfo} resolveInfo  Holds field-specific information relevant to the current query as well as the GraphQL schema.
      * @param {boolean} debug                   Specifies whether to log the generated Cypher queries for each GraphQL request. Logging is enabled by default.
      */
-    export function neo4jgraphql(
-        object: any,
+    export function neo4jgraphql<TData>(
+        object: TData,
         args: RequestArguments,
         context: Neo4jContext,
         resolveInfo: GraphQLResolveInfo,
         debug?: boolean,
-    ): ExecutionResult;
+    ): Promise<TData & { FRAGMENT_TYPE: string }>;
 
     /**
      * augmentSchema
