@@ -1,12 +1,12 @@
 > ⚠️ NOTE: This project is no longer actively maintained. Please consider using the [official Neo4j GraphQL Library.](https://neo4j.com/docs/graphql-manual/current/)
 
-[![CI status](https://circleci.com/gh/neo4j-graphql/neo4j-graphql-js.svg?style=shield&circle-token=d01ffa752fbeb43585631c78370f7dd40528fbd3)](https://circleci.com/gh/neo4j-graphql/neo4j-graphql-js) [![npm version](https://badge.fury.io/js/neo4j-graphql-js.svg)](https://badge.fury.io/js/neo4j-graphql-js) [![Docs link](https://img.shields.io/badge/Docs-GRANDstack.io-brightgreen.svg)](https://github.com/neo4j-graphql/neo4j-graphql-js/docs/)
+[![CI status](https://circleci.com/gh/neo4j-graphql/neo4j-graphql-js.svg?style=shield&circle-token=d01ffa752fbeb43585631c78370f7dd40528fbd3)](https://circleci.com/gh/neo4j-graphql/neo4j-graphql-js) [![npm version](https://badge.fury.io/js/neo4j-graphql-js.svg)](https://badge.fury.io/js/neo4j-graphql-js) [![Docs link](https://img.shields.io/badge/Docs-GRANDstack.io-brightgreen.svg)](https://github.com/neo4j-graphql/neo4j-graphql-js/tree/master/docs)
 
 # neo4j-graphql.js
 
 A GraphQL to Cypher query execution layer for Neo4j and JavaScript GraphQL implementations.
 
-- [Read the docs](https://github.com/neo4j-graphql/neo4j-graphql-js/docs/)
+- [Read the docs](https://github.com/neo4j-graphql/neo4j-graphql-js/tree/master/docs)
 - [Read the changelog](https://github.com/neo4j-graphql/neo4j-graphql-js/blob/master/CHANGELOG.md)
 
 neo4j-graphql.js is facilitated by [Neo4j Labs](https://neo4j.com/labs/).
