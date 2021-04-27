@@ -1,13 +1,15 @@
-[![CI status](https://circleci.com/gh/neo4j-graphql/neo4j-graphql-js.svg?style=shield&circle-token=d01ffa752fbeb43585631c78370f7dd40528fbd3)](https://circleci.com/gh/neo4j-graphql/neo4j-graphql-js) [![codecov](https://codecov.io/gh/neo4j-graphql/neo4j-graphql-js/branch/master/graph/badge.svg)](https://codecov.io/gh/neo4j-graphql/neo4j-graphql-js) [![npm version](https://badge.fury.io/js/neo4j-graphql-js.svg)](https://badge.fury.io/js/neo4j-graphql-js) [![Docs link](https://img.shields.io/badge/Docs-GRANDstack.io-brightgreen.svg)](http://grandstack.io/docs/neo4j-graphql-js.html)
+> ⚠️ NOTE: This project is no longer actively maintained. Please consider using the [official Neo4j GraphQL Library.](https://neo4j.com/docs/graphql-manual/current/)
+
+[![CI status](https://circleci.com/gh/neo4j-graphql/neo4j-graphql-js.svg?style=shield&circle-token=d01ffa752fbeb43585631c78370f7dd40528fbd3)](https://circleci.com/gh/neo4j-graphql/neo4j-graphql-js) [![npm version](https://badge.fury.io/js/neo4j-graphql-js.svg)](https://badge.fury.io/js/neo4j-graphql-js) [![Docs link](https://img.shields.io/badge/Docs-GRANDstack.io-brightgreen.svg)](https://github.com/neo4j-graphql/neo4j-graphql-js/docs/)
 
 # neo4j-graphql.js
 
 A GraphQL to Cypher query execution layer for Neo4j and JavaScript GraphQL implementations.
 
-- [Read the docs](https://grandstack.io/docs/neo4j-graphql-js.html)
+- [Read the docs](https://github.com/neo4j-graphql/neo4j-graphql-js/docs/)
 - [Read the changelog](https://github.com/neo4j-graphql/neo4j-graphql-js/blob/master/CHANGELOG.md)
 
-> NOTE: neo4j-graphql.js is facilitated by [Neo4j Labs](https://neo4j.com/labs/). Work has begun on an official Neo4j GraphQL library ([`@neo4j/graphql`](https://www.npmjs.com/package/@neo4j/graphql)), which is currently available as an alpha release on [npm](https://www.npmjs.com/package/@neo4j/graphql). You can find more information and documentation for the `@neo4j/graphql` library [here.](https://github.com/neo4j/graphql-tracker-temp) 
+neo4j-graphql.js is facilitated by [Neo4j Labs](https://neo4j.com/labs/).
 
 ## Installation and usage
 
@@ -107,9 +109,9 @@ See our [detailed contribution guidelines](./CONTRIBUTING.md).
 
 See [/examples](https://github.com/neo4j-graphql/neo4j-graphql-js/tree/master/example/apollo-server)
 
-## [Documentation](http://grandstack.io/docs/neo4j-graphql-js.html)
+## [Documentation](docs/)
 
-Full docs can be found on [GRANDstack.io/docs](http://grandstack.io/docs/neo4j-graphql-js.html)
+Full docs can be found in [docs/](docs/)
 
 ## Debugging and Tuning
 
