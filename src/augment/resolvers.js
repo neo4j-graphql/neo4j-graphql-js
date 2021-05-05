@@ -167,7 +167,7 @@ export const augmentResolvers = ({
     resolvers[e] = {};
 
     resolvers[e]['__resolveType'] = (obj, context, info) => {
-      return obj['FRAGMENT_TYPE'];
+        return obj['__typeName'] ? obj['__typeName'] : obj['FRAGMENT_TYPE'];
     };
   });
 
