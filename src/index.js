@@ -341,8 +341,14 @@ export const assertSchema = ({
   });
 };
 
-export const searchSchema = async ({ driver, schema, debug = false }) => {
-  const session = driver.session();
+export const searchSchema = async ({
+  driver,
+  schema,
+  debug = false,
+  sessionParams = {}
+}) => {
+  const session = driver.session(sessionParams);
+
   // drop all search indexes, given they cannot be updated via a second CALL to createNodeIndex
   const dropStatement = `
   CALL db.indexes() YIELD name, provider WHERE provider = "fulltext-1.0"
