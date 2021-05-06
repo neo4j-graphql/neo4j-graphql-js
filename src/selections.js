@@ -40,6 +40,20 @@ import {
 } from './augment/fields';
 import { selectUnselectedOrderedFields } from './augment/input-values';
 
+const getNextParamIndex = (paramIndex, usedParamIndexes) => {
+  let nextParamIndex = parseInt(paramIndex);
+
+  if (usedParamIndexes.includes(nextParamIndex)) {
+    const highestParamIndex = usedParamIndexes.reduce((highest, paramI) => {
+      return paramI > highest ? paramI : highest;
+    }, 1);
+
+    nextParamIndex = parseInt(highestParamIndex) + 1;
+  }
+
+  return nextParamIndex;
+};
+
 export function buildCypherSelection({
   initial = '',
   cypherParams,
@@ -51,9 +65,16 @@ export function buildCypherSelection({
   parentSelectionInfo = {},
   secondParentSelectionInfo = {},
   isFederatedOperation = false,
-  context
+  context,
+  usedParamIndexes = []
 }) {
+  // correctly sets paramIndex such that it doesn't overwrite existing filters
+  // https://github.com/neo4j-graphql/neo4j-graphql-js/issues/589
+  paramIndex = getNextParamIndex(paramIndex, usedParamIndexes);
+  usedParamIndexes.push(paramIndex);
+
   if (!selections.length) return [initial, {}];
+
   const typeMap = resolveInfo.schema.getTypeMap();
   const schemaTypeName = schemaType.name;
   const schemaTypeAstNode = typeMap[schemaTypeName].astNode;
@@ -79,10 +100,14 @@ export function buildCypherSelection({
   // TODO move recurse out of buildCypherSelection, refactoring paramIndex
   const recurse = args => {
     paramIndex =
-      Object.keys(shallowFilterParams).length > 0 ? paramIndex + 1 : paramIndex;
+      Object.keys(shallowFilterParams).length > 0
+        ? getNextParamIndex(paramIndex, usedParamIndexes)
+        : paramIndex;
+
     const [subSelection, subFilterParams] = buildCypherSelection({
       ...args,
-      ...{ paramIndex }
+      paramIndex,
+      usedParamIndexes
     });
     const derivedTypesParams = Object.entries(args)
       .filter(([key]) => key.endsWith('_derivedTypes'))
@@ -190,7 +215,8 @@ export function buildCypherSelection({
               ...tailParams,
               schemaType,
               selections: mergedTypeSelections,
-              paramIndex
+              paramIndex,
+              usedParamIndexes
             });
             if (isFragmentedInterfaceType || isUnionType) {
               // Build a more complex list comprehension for
@@ -321,7 +347,8 @@ export function buildCypherSelection({
         },
         secondParentSelectionInfo: parentSelectionInfo,
         isFederatedOperation,
-        context
+        context,
+        usedParamIndexes
       });
 
       const fieldArgs =
@@ -502,7 +529,7 @@ export function buildCypherSelection({
     }
   }
   if (translationConfig) {
-    selection = recurse(translationConfig);
+    selection = recurse({ ...translationConfig, usedParamIndexes });
   }
   return [selection[0], { ...selection[1], ...subSelection[1] }];
 }
