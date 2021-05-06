@@ -1405,6 +1405,13 @@ const translateNestedOrderingArgument = ({
               .reduce((temporalSubFields, t) => {
                 // temporal type subfields, year, minute, etc.
                 const subFieldName = t.name.value;
+
+                // fix for 'no such field __typename' on orderBy
+                // https://github.com/neo4j-graphql/neo4j-graphql-js/issues/581
+                if (subFieldName === '__typename') {
+                  return temporalSubFields;
+                }
+
                 if (subFieldName === 'formatted') {
                   temporalSubFields.push(
                     `${subFieldName}: toString(sortedElement.${fieldName})`
