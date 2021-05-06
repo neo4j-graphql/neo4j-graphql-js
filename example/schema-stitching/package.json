@@ -1,0 +1,46 @@
+{
+  "name": "neo4j-graphql-js-example-schema-stitching",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "lint": "eslint .",
+    "test": "jest",
+    "test:debug": "node inspect node_modules/jest/bin/jest.js",
+    "dev": "nodemon -r esm index.js",
+    "dev:debug": "nodemon inspect -r esm index.js",
+    "db:seed": "node -r esm src/db/seed.js",
+    "db:clean": "node -r esm src/db/clean.js"
+  },
+  "dependencies": {
+    "@graphql-tools/delegate": "^7.0.7",
+    "@graphql-tools/graphql-file-loader": "^6.2.6",
+    "@graphql-tools/load": "^6.2.5",
+    "@graphql-tools/schema": "^7.1.2",
+    "@graphql-tools/stitch": "^7.1.4",
+    "@graphql-tools/wrap": "^7.0.4",
+    "apollo-datasource": "^0.7.2",
+    "apollo-server": "^2.19.0",
+    "bcrypt": "^5.0.0",
+    "dotenv-flow": "^3.2.0",
+    "graphql-tools": "^7.0.2",
+    "jsonwebtoken": "^8.5.1",
+    "neo4j-driver": "^4.2.1",
+    "neo4j-graphql-js": "^2.17.1",
+    "neode": "^0.4.6"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.12.9",
+    "@babel/preset-env": "^7.12.7",
+    "apollo-server-testing": "^2.19.0",
+    "babel-eslint": "^10.1.0",
+    "babel-jest": "^26.6.3",
+    "eslint": "^7.14.0",
+    "eslint-config-airbnb-base": "^14.2.1",
+    "eslint-plugin-import": "^2.22.1",
+    "eslint-plugin-jest": "^24.1.3",
+    "esm": "^3.2.25",
+    "jest": "^26.6.3",
+    "nodemon": "^2.0.6"
+  }
+}
