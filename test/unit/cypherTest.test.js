@@ -7667,7 +7667,7 @@ test('Query node using only formatted temporal filter value nested in logical OR
     }
   }
   `,
-    expectedCypherQuery = `MATCH (\`temporalNode\`:\`TemporalNode\`) WHERE (ANY(_OR IN $filter.OR WHERE (((_OR.datetime_gte.formatted IS NULL OR \`temporalNode\`.datetime = datetime(_OR.datetime_gte.formatted)))))) RETURN \`temporalNode\` {_id: ID(\`temporalNode\`),datetime: { year: \`temporalNode\`.datetime.year , month: \`temporalNode\`.datetime.month , day: \`temporalNode\`.datetime.day , hour: \`temporalNode\`.datetime.hour , minute: \`temporalNode\`.datetime.minute , second: \`temporalNode\`.datetime.second , millisecond: \`temporalNode\`.datetime.millisecond , microsecond: \`temporalNode\`.datetime.microsecond , nanosecond: \`temporalNode\`.datetime.nanosecond , timezone: \`temporalNode\`.datetime.timezone , formatted: toString(\`temporalNode\`.datetime) }} AS \`temporalNode\``,
+    expectedCypherQuery = `MATCH (\`temporalNode\`:\`TemporalNode\`) WHERE (ANY(_OR IN $filter.OR WHERE (((_OR.datetime_gte.formatted IS NULL OR \`temporalNode\`.datetime >= datetime(_OR.datetime_gte.formatted)))))) RETURN \`temporalNode\` {_id: ID(\`temporalNode\`),datetime: { year: \`temporalNode\`.datetime.year , month: \`temporalNode\`.datetime.month , day: \`temporalNode\`.datetime.day , hour: \`temporalNode\`.datetime.hour , minute: \`temporalNode\`.datetime.minute , second: \`temporalNode\`.datetime.second , millisecond: \`temporalNode\`.datetime.millisecond , microsecond: \`temporalNode\`.datetime.microsecond , nanosecond: \`temporalNode\`.datetime.nanosecond , timezone: \`temporalNode\`.datetime.timezone , formatted: toString(\`temporalNode\`.datetime) }} AS \`temporalNode\``,
     expectedParams = {
       offset: 0,
       first: -1,
