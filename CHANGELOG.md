@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.19.3
+
+- [Escape Cypher parameters](https://github.com/neo4j-graphql/neo4j-graphql-js/commit/ce5d1a71e73f164f97d17c8df07bbcb4d05403a2)
+
 ## 2.19.2
 
 - Update `graphql-auth-directives` dependency
