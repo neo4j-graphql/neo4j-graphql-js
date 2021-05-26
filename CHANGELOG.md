@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.19.4
+
+- [Add docs](https://github.com/neo4j-graphql/neo4j-graphql-js/commit/a4be5687020bd02bd1788f88740630f93e7eabf6)
+- [Add TypeScript definitions to package](https://github.com/neo4j-graphql/neo4j-graphql-js/pull/597)
+
 ## 2.19.3
 
 - [Escape Cypher parameters](https://github.com/neo4j-graphql/neo4j-graphql-js/commit/ce5d1a71e73f164f97d17c8df07bbcb4d05403a2)
