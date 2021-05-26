@@ -146,7 +146,7 @@ export function cypherDirectiveArgs(
       federatedOperationParams[e] === undefined
     ) {
       // Use only if value exists
-      args.push(`${e}: $${paramIndex}_${e}`);
+      args.push(`${e}: $\`${paramIndex}_${e}\``);
     }
   });
   // Return the comma separated join of all param
@@ -306,11 +306,13 @@ export function innerFilterParams(
 export function paramsToString(params, cypherParams) {
   if (params.length > 0) {
     const strings = _.map(params, param => {
-      return `${param.key}:${param.paramKey ? `$${param.paramKey}.` : '$'}${
+      return `${param.key}:${
+        param.paramKey ? `$\`${param.paramKey}\`.` : '$`'
+      }${
         !param.value || typeof param.value.index === 'undefined'
           ? param.key
           : `${param.value.index}_${param.key}`
-      }`;
+      }\``;
     });
     return `{${strings.join(', ')}${
       cypherParams ? `, cypherParams: $cypherParams}` : '}'

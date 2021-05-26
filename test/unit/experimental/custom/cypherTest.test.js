@@ -2227,7 +2227,7 @@ test('Delete node mutation with @cypher deleting related node (experimental api)
     }
   }
   `,
-    expectedCypherQuery = `MATCH (\`user\`:\`User\`) WHERE (\`user\`.idField = $where.idField) 
+    expectedCypherQuery = `MATCH (\`user\`:\`User\`) WHERE (\`user\`.idField = $\`where\`.idField) 
 
 CALL {
   WITH *
@@ -2897,7 +2897,7 @@ CALL {
   SET custom.computed = CustomComputedInput.value * 10
   RETURN COUNT(*) AS _computed_multiply_
 }
-RETURN custom", {id:$id, sideEffects:$sideEffects, computed:$computed, first:$first, offset:$offset, cypherParams: $cypherParams}) YIELD value
+RETURN custom", {id:$\`id\`, sideEffects:$\`sideEffects\`, computed:$\`computed\`, first:$\`first\`, offset:$\`offset\`, cypherParams: $cypherParams}) YIELD value
     WITH apoc.map.values(value, [keys(value)[0]])[0] AS \`custom\`
     RETURN \`custom\` { .id , .computed ,nested: [(\`custom\`)-[:\`RELATED\`]->(\`custom_nested\`:\`Custom\`) | \`custom_nested\` { .id ,nested: [(\`custom_nested\`)-[:\`RELATED\`]->(\`custom_nested_nested\`:\`Custom\`) | \`custom_nested_nested\` { .id }] }] } AS \`custom\``,
     expectedParams = {
@@ -3130,7 +3130,7 @@ CALL {
   SET custom.computed = CustomComputedInput.value * 10
   RETURN COUNT(*) AS _computed_multiply_
 }
-RETURN custom", {data:$data, nestedBatch:$nestedBatch, sideEffects:$sideEffects, otherData:$otherData, computed:$computed, first:$first, offset:$offset, cypherParams: $cypherParams}) YIELD value
+RETURN custom", {data:$\`data\`, nestedBatch:$\`nestedBatch\`, sideEffects:$\`sideEffects\`, otherData:$\`otherData\`, computed:$\`computed\`, first:$\`first\`, offset:$\`offset\`, cypherParams: $cypherParams}) YIELD value
     WITH apoc.map.values(value, [keys(value)[0]])[0] AS \`custom\`
     RETURN \`custom\` { .id , .computed ,nested: [(\`custom\`)-[:\`RELATED\`]->(\`custom_nested\`:\`Custom\`) | \`custom_nested\` { .id }] } AS \`custom\``,
     expectedParams = {
@@ -3424,7 +3424,7 @@ CALL {
   SET custom.computed = CustomComputedInput.value * 10
   RETURN COUNT(*) AS _computed_multiply_
 }
-RETURN custom", {data:$data, nestedBatch:$nestedBatch, sideEffects:$sideEffects, otherData:$otherData, computed:$computed, first:$first, offset:$offset, cypherParams: $cypherParams}) YIELD value
+RETURN custom", {data:$\`data\`, nestedBatch:$\`nestedBatch\`, sideEffects:$\`sideEffects\`, otherData:$\`otherData\`, computed:$\`computed\`, first:$\`first\`, offset:$\`offset\`, cypherParams: $cypherParams}) YIELD value
     WITH apoc.map.values(value, [keys(value)[0]])[0] AS \`custom\`
     RETURN \`custom\` { .id , .computed ,nested: [(\`custom\`)-[:\`RELATED\`]->(\`custom_nested\`:\`Custom\`) | \`custom_nested\` { .id }] } AS \`custom\``,
     expectedParams = {
@@ -3567,7 +3567,7 @@ test('Custom @cypher mutation with RETURN clause and no nested @cypher input (ex
 MERGE (custom: Custom {
   id: CustomData.id
 })
-RETURN custom", {data:$data, first:$first, offset:$offset, cypherParams: $cypherParams}) YIELD value
+RETURN custom", {data:$\`data\`, first:$\`first\`, offset:$\`offset\`, cypherParams: $cypherParams}) YIELD value
     WITH apoc.map.values(value, [keys(value)[0]])[0] AS \`custom\`
     RETURN \`custom\` { .id } AS \`custom\``,
     expectedParams = {
@@ -3660,7 +3660,7 @@ MERGE (yNode)-[:YZ]->(zNode)
 }
   RETURN COUNT(*) AS _xy_merge_
 }
-RETURN xNode", {xNodes:$xNodes, first:$first, offset:$offset, cypherParams: $cypherParams}) YIELD value
+RETURN xNode", {xNodes:$\`xNodes\`, first:$\`first\`, offset:$\`offset\`, cypherParams: $cypherParams}) YIELD value
     WITH apoc.map.values(value, [keys(value)[0]])[0] AS \`xNode\`
     RETURN \`xNode\` { .id ,xy: [(\`xNode\`)-[:\`XY\`]->(\`xNode_xy\`:\`YNode\`) | \`xNode_xy\` { .id ,yz: [(\`xNode_xy\`)-[:\`YZ\`]->(\`xNode_xy_yz\`:\`ZNode\`) | \`xNode_xy_yz\` { .id }] }] } AS \`xNode\``,
     expectedParams = {
@@ -3803,7 +3803,7 @@ CALL {
 MERGE (yNode)-[:YZ]->(zNode)
   RETURN COUNT(*) AS _yz_merge_
 }
-RETURN xNode", {xNodes:$xNodes, yNodes:$yNodes, first:$first, offset:$offset, cypherParams: $cypherParams}) YIELD value
+RETURN xNode", {xNodes:$\`xNodes\`, yNodes:$\`yNodes\`, first:$\`first\`, offset:$\`offset\`, cypherParams: $cypherParams}) YIELD value
     WITH apoc.map.values(value, [keys(value)[0]])[0] AS \`xNode\`
     RETURN \`xNode\` { .id ,xy: [(\`xNode\`)-[:\`XY\`]->(\`xNode_xy\`:\`YNode\`) | \`xNode_xy\` { .id ,yz: [(\`xNode_xy\`)-[:\`YZ\`]->(\`xNode_xy_yz\`:\`ZNode\`) | \`xNode_xy_yz\` { .id }] }] } AS \`xNode\``,
     expectedParams = {

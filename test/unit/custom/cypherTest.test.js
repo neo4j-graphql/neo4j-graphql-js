@@ -884,7 +884,7 @@ CALL {
 SET custom.computed = CustomComputedInput.value * 10
   RETURN COUNT(*) AS _computed_multiply_
 }
-RETURN custom", {id:$id, sideEffects:$sideEffects, computed:$computed, first:$first, offset:$offset, cypherParams: $cypherParams}) YIELD value
+RETURN custom", {id:$\`id\`, sideEffects:$\`sideEffects\`, computed:$\`computed\`, first:$\`first\`, offset:$\`offset\`, cypherParams: $cypherParams}) YIELD value
     WITH apoc.map.values(value, [keys(value)[0]])[0] AS \`custom\`
     RETURN \`custom\` { .id , .computed ,nested: [(\`custom\`)-[:\`RELATED\`]->(\`custom_nested\`:\`Custom\`) | \`custom_nested\` { .id ,nested: [(\`custom_nested\`)-[:\`RELATED\`]->(\`custom_nested_nested\`:\`Custom\`) | \`custom_nested_nested\` { .id }] }] } AS \`custom\``,
     expectedParams = {

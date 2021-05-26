@@ -106,7 +106,7 @@ test('Update node mutation using data input object argument', t => {
     }
   }
   `,
-    expectedCypherQuery = `MATCH (\`user\`:\`User\`) WHERE ($where._idField_not_null = TRUE AND EXISTS(\`user\`.idField)) AND (\`user\`.indexedInt IN $where.indexedInt_in) 
+    expectedCypherQuery = `MATCH (\`user\`:\`User\`) WHERE ($\`where\`._idField_not_null = TRUE AND EXISTS(\`user\`.idField)) AND (\`user\`.indexedInt IN $\`where\`.indexedInt_in) 
 SET \`user\` += {name:$data.name,birthday: datetime($data.birthday),indexedInt:$data.indexedInt} 
 RETURN \`user\` { .idField , .name , .indexedInt ,birthday: { year: \`user\`.birthday.year , month: \`user\`.birthday.month , day: \`user\`.birthday.day }} AS \`user\``,
     expectedParams = {
@@ -186,7 +186,7 @@ test('Delete node mutation using data input object argument', t => {
     }
   }
   `,
-    expectedCypherQuery = `MATCH (\`user\`:\`User\`) WHERE ($where._idField_not_null = TRUE AND EXISTS(\`user\`.idField)) AND (\`user\`.indexedInt IN $where.indexedInt_in) 
+    expectedCypherQuery = `MATCH (\`user\`:\`User\`) WHERE ($\`where\`._idField_not_null = TRUE AND EXISTS(\`user\`.idField)) AND (\`user\`.indexedInt IN $\`where\`.indexedInt_in) 
 WITH \`user\` AS \`user_toDelete\`, \`user\` { .idField , .name , .indexedInt ,birthday: { year: \`user\`.birthday.year , month: \`user\`.birthday.month , day: \`user\`.birthday.day }} AS \`user\`
 DETACH DELETE \`user_toDelete\`
 RETURN \`user\``,
@@ -516,8 +516,8 @@ test('Add relationship mutation using complex node selection arguments', t => {
   }  
   `,
     expectedCypherQuery = `
-      MATCH (\`user_user\`:\`User\`) WHERE (\`user_user\`.indexedInt IN $user.indexedInt_in) 
-      MATCH (\`movie_movie\`:\`Movie\`) WHERE (NOT \`movie_movie\`.title =  $movie.title_not) 
+      MATCH (\`user_user\`:\`User\`) WHERE (\`user_user\`.indexedInt IN $\`user\`.indexedInt_in) 
+      MATCH (\`movie_movie\`:\`Movie\`) WHERE (NOT \`movie_movie\`.title =  $\`movie\`.title_not) 
       CREATE (\`user_user\`)-[\`rating_relation\`:\`RATING\` {rating:$data.rating}]->(\`movie_movie\`)
       RETURN \`rating_relation\` { user: \`user_user\` { .idField , .indexedInt , .name } ,movie: \`movie_movie\` { .id , .title }  } AS \`_AddUserRatedPayload\`;
     `,
@@ -580,8 +580,8 @@ test('Update relationship mutation using complex node selection arguments', t =>
   }  
   `,
     expectedCypherQuery = `
-      MATCH (\`user_user\`:\`User\`) WHERE (\`user_user\`.indexedInt IN $user.indexedInt_in) 
-      MATCH (\`movie_movie\`:\`Movie\`) WHERE (\`movie_movie\`.title = $movie.title) 
+      MATCH (\`user_user\`:\`User\`) WHERE (\`user_user\`.indexedInt IN $\`user\`.indexedInt_in) 
+      MATCH (\`movie_movie\`:\`Movie\`) WHERE (\`movie_movie\`.title = $\`movie\`.title) 
       MATCH (\`user_user\`)-[\`rating_relation\`:\`RATING\`]->(\`movie_movie\`)
       SET \`rating_relation\` += {rating:$data.rating} 
       RETURN \`rating_relation\` { user: \`user_user\` { .idField , .indexedInt , .name } ,movie: \`movie_movie\` { .id , .title }  } AS \`_UpdateUserRatedPayload\`;
@@ -642,8 +642,8 @@ test('Remove relationship mutation using complex node selection arguments', t =>
   }  
   `,
     expectedCypherQuery = `
-      MATCH (\`user_user\`:\`User\`) WHERE (\`user_user\`.indexedInt IN $user.indexedInt_in) 
-      MATCH (\`movie_movie\`:\`Movie\`) WHERE (NOT \`movie_movie\`.title =  $movie.title_not) 
+      MATCH (\`user_user\`:\`User\`) WHERE (\`user_user\`.indexedInt IN $\`user\`.indexedInt_in) 
+      MATCH (\`movie_movie\`:\`Movie\`) WHERE (NOT \`movie_movie\`.title =  $\`movie\`.title_not) 
       OPTIONAL MATCH (\`user_user\`)-[\`user_usermovie_movie\`:\`RATING\`]->(\`movie_movie\`)
       DELETE \`user_usermovie_movie\`
       WITH COUNT(*) AS scope, \`user_user\` AS \`_user_user\`, \`movie_movie\` AS \`_movie_movie\`
@@ -702,8 +702,8 @@ test('Merge relationship mutation using complex node selection arguments', t => 
   }
   `,
     expectedCypherQuery = `
-      MATCH (\`user_user\`:\`User\`) WHERE (\`user_user\`.indexedInt IN $user.indexedInt_in) 
-      MATCH (\`movie_movie\`:\`Movie\`) WHERE (\`movie_movie\`.title = $movie.title) 
+      MATCH (\`user_user\`:\`User\`) WHERE (\`user_user\`.indexedInt IN $\`user\`.indexedInt_in) 
+      MATCH (\`movie_movie\`:\`Movie\`) WHERE (\`movie_movie\`.title = $\`movie\`.title) 
       MERGE (\`user_user\`)-[\`rating_relation\`:\`RATING\`]->(\`movie_movie\`)
       SET \`rating_relation\` += {rating:$data.rating} 
       RETURN \`rating_relation\` { user: \`user_user\` { .idField , .indexedInt , .name } ,movie: \`movie_movie\` { .id , .title }  } AS \`_MergeUserRatedPayload\`;

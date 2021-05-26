@@ -44,7 +44,7 @@ test('Filters with unfiltered parents, nested relationship types', async t => {
   `;
 
   const expectedCypherQuery =
-    'MATCH (`a`:`A`) RETURN `a` {bArray: [(`a`)-[`a_bArray_relation`:`A_TO_B`]->(:`B`) | a_bArray_relation {B: head([(:`A`)-[`a_bArray_relation`]->(`a_bArray_B`:`B`) | a_bArray_B {cArray: [(`a_bArray_B`)-[`a_bArray_B_cArray_relation`:`B_TO_C`]->(:`C`) WHERE (`a_bArray_B_cArray_relation`.active = $1_filter.active) | a_bArray_B_cArray_relation {C: head([(:`B`)-[`a_bArray_B_cArray_relation`]->(`a_bArray_B_cArray_C`:`C`) | a_bArray_B_cArray_C { .id }]) }] }]) }] } AS `a`';
+    'MATCH (`a`:`A`) RETURN `a` {bArray: [(`a`)-[`a_bArray_relation`:`A_TO_B`]->(:`B`) | a_bArray_relation {B: head([(:`A`)-[`a_bArray_relation`]->(`a_bArray_B`:`B`) | a_bArray_B {cArray: [(`a_bArray_B`)-[`a_bArray_B_cArray_relation`:`B_TO_C`]->(:`C`) WHERE (`a_bArray_B_cArray_relation`.active = $`1_filter`.active) | a_bArray_B_cArray_relation {C: head([(:`B`)-[`a_bArray_B_cArray_relation`]->(`a_bArray_B_cArray_C`:`C`) | a_bArray_B_cArray_C { .id }]) }] }]) }] } AS `a`';
   const expectedCypherParams = {
     '1_filter': { active: true },
     first: -1,

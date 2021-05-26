@@ -1490,7 +1490,7 @@ export const processFilterArgument = ({
     : undefined;
   const filterParamKey =
     paramIndex > 1 ? `${paramIndex - 1}_${argumentName}` : argumentName;
-  const filterCypherParam = `$${filterParamKey}`;
+  const filterCypherParam = `$\`${filterParamKey}\``;
   let translations = [];
   // allows an exception for the existence of the filter argument AST
   // if isFederatedOperation
@@ -2969,9 +2969,9 @@ export const translateListArguments = ({
       const paramIndex = indexedParam.index;
       const field = schemaType.getFields()[argumentName];
       const listVariable = `${safeVariableName}.${safeVar(argumentName)}`;
-      let paramPath = `$${argumentName}`;
+      let paramPath = `$\`${argumentName}\``;
       // Possibly use the already generated index used when naming nested parameters
-      if (paramIndex >= 1) paramPath = `$${paramIndex}_${argumentName}`;
+      if (paramIndex >= 1) paramPath = `$\`${paramIndex}_${argumentName}\``;
       let translation = '';
       if (field) {
         // list argument matches the name of a field

@@ -19,7 +19,7 @@ test('simple Cypher query', t => {
       title
     }
   }`,
-    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {title:$title}) RETURN \`movie\` { .title } AS \`movie\``,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {title:$\`title\`}) RETURN \`movie\` { .title } AS \`movie\``,
     expectedParams = {
       title: 'River Runs Through It, A',
       first: -1,
@@ -48,7 +48,7 @@ test('Simple skip limit', t => {
   }
 }
   `,
-    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {title:$title}) RETURN \`movie\` { .title , .year } AS \`movie\` SKIP toInteger($offset) LIMIT toInteger($first)`,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {title:$\`title\`}) RETURN \`movie\` { .title , .year } AS \`movie\` SKIP toInteger($offset) LIMIT toInteger($first)`,
     expectedParams = {
       title: 'River Runs Through It, A',
       first: 2,
@@ -81,7 +81,7 @@ test('Cypher projection skip limit', t => {
       }
     }
   }`,
-    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {title:$title}) RETURN \`movie\` { .title ,actors: [(\`movie\`)<-[:\`ACTED_IN\`]-(\`movie_actors\`:\`Actor\`) | \`movie_actors\` { .name }] ,similar: [ movie_similar IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie, cypherParams: $cypherParams, offset: 0, first: $1_first}, true) | movie_similar { .title }][..3] } AS \`movie\``,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {title:$\`title\`}) RETURN \`movie\` { .title ,actors: [(\`movie\`)<-[:\`ACTED_IN\`]-(\`movie_actors\`:\`Actor\`) | \`movie_actors\` { .name }] ,similar: [ movie_similar IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie, cypherParams: $cypherParams, offset: 0, first: $\`1_first\`}, true) | movie_similar { .title }][..3] } AS \`movie\``,
     expectedParams = {
       title: 'River Runs Through It, A',
       '1_first': 3,
@@ -110,7 +110,7 @@ test('Handle Query with name not aligning to type', t => {
   }
 }
   `,
-    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {year:$year}) RETURN \`movie\` { .title } AS \`movie\``,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {year:$\`year\`}) RETURN \`movie\` { .title } AS \`movie\``,
     expectedParams = {
       year: 2010,
       first: -1,
@@ -164,7 +164,7 @@ test('Query single object', t => {
       title
     }
   }`,
-    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {movieId:$movieId}) RETURN \`movie\` { .title } AS \`movie\``,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {movieId:$\`movieId\`}) RETURN \`movie\` { .title } AS \`movie\``,
     expectedParams = {
       movieId: '18',
       first: -1,
@@ -196,7 +196,7 @@ test('Query single object relation', t => {
       }
     }
   `,
-    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {movieId:$movieId}) RETURN \`movie\` { .title ,filmedIn: head([(\`movie\`)-[:\`FILMED_IN\`]->(\`movie_filmedIn\`:\`State\`) | \`movie_filmedIn\` { .name }]) } AS \`movie\``,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {movieId:$\`movieId\`}) RETURN \`movie\` { .title ,filmedIn: head([(\`movie\`)-[:\`FILMED_IN\`]->(\`movie_filmedIn\`:\`State\`) | \`movie_filmedIn\` { .name }]) } AS \`movie\``,
     expectedParams = {
       movieId: '3100',
       first: -1,
@@ -230,7 +230,7 @@ test('Query single object and array of objects relations', t => {
         }
       }
     }`,
-    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {movieId:$movieId}) RETURN \`movie\` { .title ,actors: [(\`movie\`)<-[:\`ACTED_IN\`]-(\`movie_actors\`:\`Actor\`) | \`movie_actors\` { .name }] ,filmedIn: head([(\`movie\`)-[:\`FILMED_IN\`]->(\`movie_filmedIn\`:\`State\`) | \`movie_filmedIn\` { .name }]) } AS \`movie\``,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {movieId:$\`movieId\`}) RETURN \`movie\` { .title ,actors: [(\`movie\`)<-[:\`ACTED_IN\`]-(\`movie_actors\`:\`Actor\`) | \`movie_actors\` { .name }] ,filmedIn: head([(\`movie\`)-[:\`FILMED_IN\`]->(\`movie_filmedIn\`:\`State\`) | \`movie_filmedIn\` { .name }]) } AS \`movie\``,
     expectedParams = {
       movieId: '3100',
       first: -1,
@@ -275,7 +275,7 @@ test('Deeply nested object query', t => {
     }
   }
 }`,
-    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {title:$title}) RETURN \`movie\` { .title ,actors: [(\`movie\`)<-[:\`ACTED_IN\`]-(\`movie_actors\`:\`Actor\`) | \`movie_actors\` { .name ,movies: [(\`movie_actors\`)-[:\`ACTED_IN\`]->(\`movie_actors_movies\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) | \`movie_actors_movies\` { .title ,actors: [(\`movie_actors_movies\`)<-[:\`ACTED_IN\`]-(\`movie_actors_movies_actors\`:\`Actor\`{name:$1_name}) | \`movie_actors_movies_actors\` { .name ,movies: [(\`movie_actors_movies_actors\`)-[:\`ACTED_IN\`]->(\`movie_actors_movies_actors_movies\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) | \`movie_actors_movies_actors_movies\` { .title , .year ,similar: [ movie_actors_movies_actors_movies_similar IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie_actors_movies_actors_movies, cypherParams: $cypherParams, offset: 0, first: $2_first}, true) | movie_actors_movies_actors_movies_similar { .title , .year }][..3] }] }] }] }] } AS \`movie\``,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {title:$\`title\`}) RETURN \`movie\` { .title ,actors: [(\`movie\`)<-[:\`ACTED_IN\`]-(\`movie_actors\`:\`Actor\`) | \`movie_actors\` { .name ,movies: [(\`movie_actors\`)-[:\`ACTED_IN\`]->(\`movie_actors_movies\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) | \`movie_actors_movies\` { .title ,actors: [(\`movie_actors_movies\`)<-[:\`ACTED_IN\`]-(\`movie_actors_movies_actors\`:\`Actor\`{name:$\`1_name\`}) | \`movie_actors_movies_actors\` { .name ,movies: [(\`movie_actors_movies_actors\`)-[:\`ACTED_IN\`]->(\`movie_actors_movies_actors_movies\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) | \`movie_actors_movies_actors_movies\` { .title , .year ,similar: [ movie_actors_movies_actors_movies_similar IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie_actors_movies_actors_movies, cypherParams: $cypherParams, offset: 0, first: $\`2_first\`}, true) | movie_actors_movies_actors_movies_similar { .title , .year }][..3] }] }] }] }] } AS \`movie\``,
     expectedParams = {
       title: 'River Runs Through It, A',
       '1_name': 'Tom Hanks',
@@ -306,7 +306,7 @@ test('Handle meta field at beginning of selection set', t => {
       title
     }
   }`,
-    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {title:$title}) RETURN \`movie\` { .title } AS \`movie\``,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {title:$\`title\`}) RETURN \`movie\` { .title } AS \`movie\``,
     expectedParams = {
       title: 'River Runs Through It, A',
       first: -1,
@@ -336,7 +336,7 @@ test('Handle meta field at end of selection set', t => {
     }
   }
   `,
-    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {title:$title}) RETURN \`movie\` { .title } AS \`movie\``,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {title:$\`title\`}) RETURN \`movie\` { .title } AS \`movie\``,
     expectedParams = {
       title: 'River Runs Through It, A',
       first: -1,
@@ -367,7 +367,7 @@ test('Handle meta field in middle of selection set', t => {
     }
   }
   `,
-    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {title:$title}) RETURN \`movie\` { .title , .year } AS \`movie\``,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {title:$\`title\`}) RETURN \`movie\` { .title , .year } AS \`movie\``,
     expectedParams = {
       title: 'River Runs Through It, A',
       first: -1,
@@ -398,7 +398,7 @@ test('Handle @cypher directive without any params for sub-query', t => {
     }
 
   }`,
-    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {title:$title}) RETURN \`movie\` {mostSimilar: head([ movie_mostSimilar IN apoc.cypher.runFirstColumn("WITH {this} AS this RETURN this", {this: movie, cypherParams: $cypherParams}, true) | movie_mostSimilar { .title , .year }]) } AS \`movie\``,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {title:$\`title\`}) RETURN \`movie\` {mostSimilar: head([ movie_mostSimilar IN apoc.cypher.runFirstColumn("WITH {this} AS this RETURN this", {this: movie, cypherParams: $cypherParams}, true) | movie_mostSimilar { .title , .year }]) } AS \`movie\``,
     expectedParams = {
       title: 'River Runs Through It, A',
       first: -1,
@@ -426,7 +426,7 @@ test('Pass @cypher directive default params to sub-query', t => {
     }
 
   }`,
-    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {title:$title}) RETURN \`movie\` {scaleRating: apoc.cypher.runFirstColumn("WITH $this AS this RETURN $scale * this.imdbRating", {this: movie, cypherParams: $cypherParams, scale: 3}, false)} AS \`movie\``,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {title:$\`title\`}) RETURN \`movie\` {scaleRating: apoc.cypher.runFirstColumn("WITH $this AS this RETURN $scale * this.imdbRating", {this: movie, cypherParams: $cypherParams, scale: 3}, false)} AS \`movie\``,
     expectedParams = {
       first: -1,
       cypherParams: CYPHER_PARAMS,
@@ -454,7 +454,7 @@ test('Pass @cypher directive params to sub-query', t => {
     }
 
   }`,
-    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {title:$title}) RETURN \`movie\` {scaleRating: apoc.cypher.runFirstColumn("WITH $this AS this RETURN $scale * this.imdbRating", {this: movie, cypherParams: $cypherParams, scale: $1_scale}, false)} AS \`movie\``,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {title:$\`title\`}) RETURN \`movie\` {scaleRating: apoc.cypher.runFirstColumn("WITH $this AS this RETURN $scale * this.imdbRating", {this: movie, cypherParams: $cypherParams, scale: $\`1_scale\`}, false)} AS \`movie\``,
     expectedParams = {
       first: -1,
       cypherParams: CYPHER_PARAMS,
@@ -512,7 +512,7 @@ test('Query for Neo4js internal _id and another param before _id', t => {
     }
 
   }`,
-    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {title:$title}) WHERE ID(\`movie\`)=0 RETURN \`movie\` { .title , .year } AS \`movie\``,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {title:$\`title\`}) WHERE ID(\`movie\`)=0 RETURN \`movie\` { .title , .year } AS \`movie\``,
     expectedParams = {
       title: 'River Runs Through It, A',
       first: -1,
@@ -541,7 +541,7 @@ test('Query for Neo4js internal _id and another param after _id', t => {
     }
 
   }`,
-    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {year:$year}) WHERE ID(\`movie\`)=0 RETURN \`movie\` { .title , .year } AS \`movie\``,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {year:$\`year\`}) WHERE ID(\`movie\`)=0 RETURN \`movie\` { .title , .year } AS \`movie\``,
     expectedParams = {
       first: -1,
       cypherParams: CYPHER_PARAMS,
@@ -624,7 +624,7 @@ test(`Query for null value combined with internal ID and another param`, t => {
         year
       }
     }`,
-    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {year:$year}) WHERE ID(\`movie\`)=0 AND movie.poster IS NULL RETURN \`movie\` { .title , .year } AS \`movie\``,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {year:$\`year\`}) WHERE ID(\`movie\`)=0 AND movie.poster IS NULL RETURN \`movie\` { .title , .year } AS \`movie\``,
     expectedParams = {
       year: 2010,
       first: -1,
@@ -656,7 +656,7 @@ test(`query for relationship internal ID`, t => {
       }
     }
   }`,
-    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {title:$title}) RETURN \`movie\` { .movieId , .title ,ratings: [(\`movie\`)<-[\`movie_ratings_relation\`:\`RATED\`]-(:\`User\`) | movie_ratings_relation { .rating ,_id: ID(\`movie_ratings_relation\`)}] } AS \`movie\``,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {title:$\`title\`}) RETURN \`movie\` { .movieId , .title ,ratings: [(\`movie\`)<-[\`movie_ratings_relation\`:\`RATED\`]-(:\`User\`) | movie_ratings_relation { .rating ,_id: ID(\`movie_ratings_relation\`)}] } AS \`movie\``,
     expectedParams = {
       offset: 0,
       first: -1,
@@ -719,7 +719,7 @@ test('Cypher subquery filters', t => {
         }
       }
     }`,
-    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {title:$title}) RETURN \`movie\` { .title ,actors: [(\`movie\`)<-[:\`ACTED_IN\`]-(\`movie_actors\`:\`Actor\`{name:$1_name}) | \`movie_actors\` { .name }] ,similar: [ movie_similar IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie, cypherParams: $cypherParams, offset: 0, first: $3_first}, true) | movie_similar { .title }][..3] } AS \`movie\``,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {title:$\`title\`}) RETURN \`movie\` { .title ,actors: [(\`movie\`)<-[:\`ACTED_IN\`]-(\`movie_actors\`:\`Actor\`{name:$\`1_name\`}) | \`movie_actors\` { .name }] ,similar: [ movie_similar IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie, cypherParams: $cypherParams, offset: 0, first: $\`3_first\`}, true) | movie_similar { .title }][..3] } AS \`movie\``,
     expectedParams = {
       title: 'River Runs Through It, A',
       first: -1,
@@ -753,7 +753,7 @@ test('cypher subquery preserves case through filters', t => {
       }
     }`,
     expectedCypherQuery =
-      'MATCH (`casedType`:`CasedType`) WHERE (EXISTS((`casedType`)-[:FILMED_IN]->(:State)) AND ALL(`state` IN [(`casedType`)-[:FILMED_IN]->(`_state`:State) | `_state`] WHERE (`state`.name = $filter.state.name))) RETURN `casedType` { .name ,state: head([(`casedType`)-[:`FILMED_IN`]->(`casedType_state`:`State`) | `casedType_state` { .name }]) } AS `casedType`',
+      'MATCH (`casedType`:`CasedType`) WHERE (EXISTS((`casedType`)-[:FILMED_IN]->(:State)) AND ALL(`state` IN [(`casedType`)-[:FILMED_IN]->(`_state`:State) | `_state`] WHERE (`state`.name = $`filter`.state.name))) RETURN `casedType` { .name ,state: head([(`casedType`)-[:`FILMED_IN`]->(`casedType_state`:`State`) | `casedType_state` { .name }]) } AS `casedType`',
     expectedParams = {
       first: -1,
       cypherParams: CYPHER_PARAMS,
@@ -790,7 +790,7 @@ test('Cypher subquery filters with paging', t => {
         }
       }
     }`,
-    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {title:$title}) RETURN \`movie\` { .title ,actors: [(\`movie\`)<-[:\`ACTED_IN\`]-(\`movie_actors\`:\`Actor\`{name:$1_name}) | \`movie_actors\` { .name }][..3] ,similar: [ movie_similar IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie, cypherParams: $cypherParams, offset: 0, first: $3_first}, true) | movie_similar { .title }][..3] } AS \`movie\``,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {title:$\`title\`}) RETURN \`movie\` { .title ,actors: [(\`movie\`)<-[:\`ACTED_IN\`]-(\`movie_actors\`:\`Actor\`{name:$\`1_name\`}) | \`movie_actors\` { .name }][..3] ,similar: [ movie_similar IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie, cypherParams: $cypherParams, offset: 0, first: $\`3_first\`}, true) | movie_similar { .title }][..3] } AS \`movie\``,
     expectedParams = {
       title: 'River Runs Through It, A',
       cypherParams: CYPHER_PARAMS,
@@ -825,7 +825,7 @@ test('Handle @cypher directive on Query Type', t => {
   }
 }
   `,
-    expectedCypherQuery = `WITH apoc.cypher.runFirstColumn("MATCH (g:Genre) WHERE toLower(g.name) CONTAINS toLower($substring) RETURN g", {offset:$offset, first:$first, substring:$substring, cypherParams: $cypherParams}, True) AS x UNWIND x AS \`genre\` RETURN \`genre\` { .name ,movies: [(\`genre\`)<-[:\`IN_GENRE\`]-(\`genre_movies\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) | \`genre_movies\` { .title }][..3] } AS \`genre\``,
+    expectedCypherQuery = `WITH apoc.cypher.runFirstColumn("MATCH (g:Genre) WHERE toLower(g.name) CONTAINS toLower($substring) RETURN g", {offset:$\`offset\`, first:$\`first\`, substring:$\`substring\`, cypherParams: $cypherParams}, True) AS x UNWIND x AS \`genre\` RETURN \`genre\` { .name ,movies: [(\`genre\`)<-[:\`IN_GENRE\`]-(\`genre_movies\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) | \`genre_movies\` { .title }][..3] } AS \`genre\``,
     expectedParams = {
       substring: 'Action',
       first: -1,
@@ -853,7 +853,7 @@ test('Handle @cypher directive on Mutation type', t => {
     name
   }
 }`,
-    expectedCypherQuery = `CALL apoc.cypher.doIt("CREATE (g:Genre) SET g.name = $name RETURN g", {name:$name, first:$first, offset:$offset, cypherParams: $cypherParams}) YIELD value
+    expectedCypherQuery = `CALL apoc.cypher.doIt("CREATE (g:Genre) SET g.name = $name RETURN g", {name:$\`name\`, first:$\`first\`, offset:$\`offset\`, cypherParams: $cypherParams}) YIELD value
     WITH apoc.map.values(value, [keys(value)[0]])[0] AS \`genre\`
     RETURN \`genre\` { .name } AS \`genre\``,
     expectedParams = {
@@ -877,7 +877,7 @@ test('Handle @cypher directive on Mutation type with nested @cypher directive on
       }
     }
 }`,
-    expectedCypherQuery = `CALL apoc.cypher.doIt("CREATE (g:Genre) SET g.name = $name RETURN g", {name:$name, first:$first, offset:$offset, cypherParams: $cypherParams}) YIELD value
+    expectedCypherQuery = `CALL apoc.cypher.doIt("CREATE (g:Genre) SET g.name = $name RETURN g", {name:$\`name\`, first:$\`first\`, offset:$\`offset\`, cypherParams: $cypherParams}) YIELD value
     WITH apoc.map.values(value, [keys(value)[0]])[0] AS \`genre\`
     RETURN \`genre\` {highestRatedMovie: head([ genre_highestRatedMovie IN apoc.cypher.runFirstColumn("MATCH (m:Movie)-[:IN_GENRE]->(this) RETURN m ORDER BY m.imdbRating DESC LIMIT 1", {this: genre, cypherParams: $cypherParams}, true) | genre_highestRatedMovie { .movieId }]) } AS \`genre\``,
     expectedParams = {
@@ -2408,7 +2408,7 @@ test('Handle GraphQL variables in nested selection - first/offset', t => {
       year: 2016,
       first: 3
     },
-    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {year:$year}) RETURN \`movie\` { .title , .year ,similar: [ movie_similar IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie, cypherParams: $cypherParams, offset: 0, first: $1_first}, true) | movie_similar { .title }][..3] } AS \`movie\``,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {year:$\`year\`}) RETURN \`movie\` { .title , .year ,similar: [ movie_similar IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie, cypherParams: $cypherParams, offset: 0, first: $\`1_first\`}, true) | movie_similar { .title }][..3] } AS \`movie\``,
     expectedParams = {
       '1_first': 3,
       cypherParams: CYPHER_PARAMS,
@@ -2453,7 +2453,7 @@ test('Handle GraphQL variables in nest selection - @cypher param (not first/offs
       first: 3,
       scale: 5
     },
-    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {year:$year}) RETURN \`movie\` { .title , .year ,similar: [ movie_similar IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie, cypherParams: $cypherParams, offset: 0, first: $1_first}, true) | movie_similar { .title ,scaleRating: apoc.cypher.runFirstColumn("WITH $this AS this RETURN $scale * this.imdbRating", {this: movie_similar, cypherParams: $cypherParams, scale: $2_scale}, false)}][..3] } AS \`movie\``,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {year:$\`year\`}) RETURN \`movie\` { .title , .year ,similar: [ movie_similar IN apoc.cypher.runFirstColumn("WITH {this} AS this MATCH (this)--(:Genre)--(o:Movie) RETURN o", {this: movie, cypherParams: $cypherParams, offset: 0, first: $\`1_first\`}, true) | movie_similar { .title ,scaleRating: apoc.cypher.runFirstColumn("WITH $this AS this RETURN $scale * this.imdbRating", {this: movie_similar, cypherParams: $cypherParams, scale: $\`2_scale\`}, false)}][..3] } AS \`movie\``,
     expectedParams = {
       year: 2016,
       first: -1,
@@ -2495,7 +2495,7 @@ test('Return internal node id for _id field', t => {
     }
   }
   `,
-    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {year:$year}) RETURN \`movie\` {_id: ID(\`movie\`), .title , .year ,genres: [(\`movie\`)-[:\`IN_GENRE\`]->(\`movie_genres\`:\`Genre\`) | \`movie_genres\` {_id: ID(\`movie_genres\`), .name }] } AS \`movie\``,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {year:$\`year\`}) RETURN \`movie\` {_id: ID(\`movie\`), .title , .year ,genres: [(\`movie\`)-[:\`IN_GENRE\`]->(\`movie_genres\`:\`Genre\`) | \`movie_genres\` {_id: ID(\`movie_genres\`), .name }] } AS \`movie\``,
     expectedParams = {
       year: 2016,
       cypherParams: CYPHER_PARAMS,
@@ -2558,7 +2558,7 @@ test('Handle fragment spread on object type', t => {
         year
       }
     }`,
-    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {title:$title}) RETURN \`movie\` { .title ,actors: [(\`movie\`)<-[:\`ACTED_IN\`]-(\`movie_actors\`:\`Actor\`) | \`movie_actors\` { .name }] , .year } AS \`movie\``,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {title:$\`title\`}) RETURN \`movie\` { .title ,actors: [(\`movie\`)<-[:\`ACTED_IN\`]-(\`movie_actors\`:\`Actor\`) | \`movie_actors\` { .name }] , .year } AS \`movie\``,
     expectedParams = {
       cypherParams: CYPHER_PARAMS,
       title: 'River Runs Through It, A',
@@ -2591,7 +2591,7 @@ test('Handle inline fragment on object type', t => {
       year
     }
   }`,
-    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {title:$title}) RETURN \`movie\` { .title ,actors: [(\`movie\`)<-[:\`ACTED_IN\`]-(\`movie_actors\`:\`Actor\`) | \`movie_actors\` { .name }] , .year } AS \`movie\``,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {title:$\`title\`}) RETURN \`movie\` { .title ,actors: [(\`movie\`)<-[:\`ACTED_IN\`]-(\`movie_actors\`:\`Actor\`) | \`movie_actors\` { .name }] , .year } AS \`movie\``,
     expectedParams = {
       cypherParams: CYPHER_PARAMS,
       title: 'River Runs Through It, A',
@@ -2632,7 +2632,7 @@ test('Handle multiple query fragments on object type', t => {
       }
     }
   `,
-    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {title:$title}) RETURN \`movie\` { .title ,actors: [(\`movie\`)<-[:\`ACTED_IN\`]-(\`movie_actors\`:\`Actor\`) | \`movie_actors\` { .name }] , .year } AS \`movie\``,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {title:$\`title\`}) RETURN \`movie\` { .title ,actors: [(\`movie\`)<-[:\`ACTED_IN\`]-(\`movie_actors\`:\`Actor\`) | \`movie_actors\` { .name }] , .year } AS \`movie\``,
     expectedParams = {
       cypherParams: CYPHER_PARAMS,
       title: 'River Runs Through It, A',
@@ -2669,7 +2669,7 @@ test('query object type using inline fragment and fragment spread', t => {
       year
     }
   }`,
-    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {title:$title}) RETURN \`movie\` { .title ,actors: [(\`movie\`)<-[:\`ACTED_IN\`]-(\`movie_actors\`:\`Actor\`) | \`movie_actors\` { .name }] , .year } AS \`movie\``,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {title:$\`title\`}) RETURN \`movie\` { .title ,actors: [(\`movie\`)<-[:\`ACTED_IN\`]-(\`movie_actors\`:\`Actor\`) | \`movie_actors\` { .name }] , .year } AS \`movie\``,
     expectedParams = {
       cypherParams: CYPHER_PARAMS,
       title: 'River Runs Through It, A',
@@ -2706,7 +2706,7 @@ test('nested fragments on object type', t => {
     fragment Bar on Movie {
       year
     }`,
-    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {year:$year}) RETURN \`movie\` { .title , .year } AS \`movie\``,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {year:$\`year\`}) RETURN \`movie\` { .title , .year } AS \`movie\``,
     expectedParams = {
       cypherParams: CYPHER_PARAMS,
       year: 2010,
@@ -2741,7 +2741,7 @@ test('fragments on object type relations', t => {
     fragment Foo on Actor {
       name
     }`,
-    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {year:$year}) RETURN \`movie\` { .title ,actors: [(\`movie\`)<-[:\`ACTED_IN\`]-(\`movie_actors\`:\`Actor\`) | \`movie_actors\` { .name }] } AS \`movie\``,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {year:$\`year\`}) RETURN \`movie\` { .title ,actors: [(\`movie\`)<-[:\`ACTED_IN\`]-(\`movie_actors\`:\`Actor\`) | \`movie_actors\` { .name }] } AS \`movie\``,
     expectedParams = {
       year: 2010,
       cypherParams: CYPHER_PARAMS,
@@ -2781,7 +2781,7 @@ test('nested fragments on object type relations', t => {
     fragment Bar on Actor {
       name
     }`,
-    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {year:$year}) RETURN \`movie\` { .title ,actors: [(\`movie\`)<-[:\`ACTED_IN\`]-(\`movie_actors\`:\`Actor\`) | \`movie_actors\` { .userId , .name }] } AS \`movie\``,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {year:$\`year\`}) RETURN \`movie\` { .title ,actors: [(\`movie\`)<-[:\`ACTED_IN\`]-(\`movie_actors\`:\`Actor\`) | \`movie_actors\` { .userId , .name }] } AS \`movie\``,
     expectedParams = {
       cypherParams: CYPHER_PARAMS,
       year: 2010,
@@ -2811,7 +2811,7 @@ test('orderBy test - descending, top level - augmented schema', t => {
       }
     }
   }`,
-    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {year:$year}) WITH \`movie\` ORDER BY movie.title DESC RETURN \`movie\` { .title ,actors: [(\`movie\`)<-[:\`ACTED_IN\`]-(\`movie_actors\`:\`Actor\`) | \`movie_actors\` { .name }][..3] } AS \`movie\` LIMIT toInteger($first)`,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {year:$\`year\`}) WITH \`movie\` ORDER BY movie.title DESC RETURN \`movie\` { .title ,actors: [(\`movie\`)<-[:\`ACTED_IN\`]-(\`movie_actors\`:\`Actor\`) | \`movie_actors\` { .name }][..3] } AS \`movie\` LIMIT toInteger($first)`,
     expectedParams = {
       offset: 0,
       first: 10,
@@ -2842,7 +2842,7 @@ test('query for relationship properties', t => {
       }
     }
   }`,
-    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {title:$title}) RETURN \`movie\` { .title ,ratings: [(\`movie\`)<-[\`movie_ratings_relation\`:\`RATED\`]-(:\`User\`) | movie_ratings_relation { .rating ,User: head([(:\`Movie\`${ADDITIONAL_MOVIE_LABELS})<-[\`movie_ratings_relation\`]-(\`movie_ratings_User\`:\`User\`) | movie_ratings_User { .name }]) }] } AS \`movie\``,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {title:$\`title\`}) RETURN \`movie\` { .title ,ratings: [(\`movie\`)<-[\`movie_ratings_relation\`:\`RATED\`]-(:\`User\`) | movie_ratings_relation { .rating ,User: head([(:\`Movie\`${ADDITIONAL_MOVIE_LABELS})<-[\`movie_ratings_relation\`]-(\`movie_ratings_User\`:\`User\`) | movie_ratings_User { .name }]) }] } AS \`movie\``,
     expectedParams = {
       cypherParams: CYPHER_PARAMS,
       title: 'River Runs Through It, A',
@@ -2874,7 +2874,7 @@ test('query relationship properties and order by unselected field', t => {
     }
   }
   `,
-    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`:\`u_user-id\`:\`newMovieLabel\` {title:$title}) RETURN \`movie\` { .title ,ratings: [sortedElement IN apoc.coll.sortMulti([(\`movie\`)<-[\`movie_ratings_relation\`:\`RATED\`]-(:\`User\`) | movie_ratings_relation { .rating ,User: head([(:\`Movie\`:\`u_user-id\`:\`newMovieLabel\`)<-[\`movie_ratings_relation\`]-(\`movie_ratings_User\`:\`User\`) | movie_ratings_User { .userId , .name }]) ,datetime: \`movie_ratings_relation\`.datetime}], ['^datetime']) | sortedElement { .* }] } AS \`movie\``,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`:\`u_user-id\`:\`newMovieLabel\` {title:$\`title\`}) RETURN \`movie\` { .title ,ratings: [sortedElement IN apoc.coll.sortMulti([(\`movie\`)<-[\`movie_ratings_relation\`:\`RATED\`]-(:\`User\`) | movie_ratings_relation { .rating ,User: head([(:\`Movie\`:\`u_user-id\`:\`newMovieLabel\`)<-[\`movie_ratings_relation\`]-(\`movie_ratings_User\`:\`User\`) | movie_ratings_User { .userId , .name }]) ,datetime: \`movie_ratings_relation\`.datetime}], ['^datetime']) | sortedElement { .* }] } AS \`movie\``,
     expectedParams = {
       offset: 0,
       first: -1,
@@ -2905,7 +2905,7 @@ test('query relationship properties and order by internal ID', t => {
     }
   }
   `,
-    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {title:$title}) RETURN \`movie\` { .movieId , .title ,ratings: apoc.coll.sortMulti([(\`movie\`)<-[\`movie_ratings_relation\`:\`RATED\`]-(:\`User\`) | movie_ratings_relation { .rating ,_id: ID(\`movie_ratings_relation\`)}], ['^_id']) } AS \`movie\``,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {title:$\`title\`}) RETURN \`movie\` { .movieId , .title ,ratings: apoc.coll.sortMulti([(\`movie\`)<-[\`movie_ratings_relation\`:\`RATED\`]-(:\`User\`) | movie_ratings_relation { .rating ,_id: ID(\`movie_ratings_relation\`)}], ['^_id']) } AS \`movie\``,
     expectedParams = {
       offset: 0,
       first: -1,
@@ -3082,7 +3082,7 @@ test('query relation type with argument', t => {
       }
     }
   }`,
-    expectedCypherQuery = `MATCH (\`user\`:\`User\`) RETURN \`user\` {_id: ID(\`user\`), .name ,rated: [(\`user\`)-[\`user_rated_relation\`:\`RATED\`{rating:$1_rating}]->(:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) | user_rated_relation { .rating ,Movie: head([(:\`User\`)-[\`user_rated_relation\`]->(\`user_rated_Movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) | user_rated_Movie { .title }]) }] } AS \`user\``,
+    expectedCypherQuery = `MATCH (\`user\`:\`User\`) RETURN \`user\` {_id: ID(\`user\`), .name ,rated: [(\`user\`)-[\`user_rated_relation\`:\`RATED\`{rating:$\`1_rating\`}]->(:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) | user_rated_relation { .rating ,Movie: head([(:\`User\`)-[\`user_rated_relation\`]->(\`user_rated_Movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) | user_rated_Movie { .title }]) }] } AS \`user\``,
     expectedParams = {
       offset: 0,
       first: -1,
@@ -3122,7 +3122,7 @@ test('query reflexive relation type with arguments', t => {
     }
   }
   `,
-    expectedCypherQuery = `MATCH (\`user\`:\`User\`) RETURN \`user\` { .userId , .name ,friends: {from: [(\`user\`)<-[\`user_from_relation\`:\`FRIEND_OF\`{since:$1_since}]-(\`user_from\`:\`User\`) | user_from_relation { .since ,User: user_from { .name } }] ,to: [(\`user\`)-[\`user_to_relation\`:\`FRIEND_OF\`{since:$3_since}]->(\`user_to\`:\`User\`) | user_to_relation { .since ,User: user_to { .name } }] } } AS \`user\``,
+    expectedCypherQuery = `MATCH (\`user\`:\`User\`) RETURN \`user\` { .userId , .name ,friends: {from: [(\`user\`)<-[\`user_from_relation\`:\`FRIEND_OF\`{since:$\`1_since\`}]-(\`user_from\`:\`User\`) | user_from_relation { .since ,User: user_from { .name } }] ,to: [(\`user\`)-[\`user_to_relation\`:\`FRIEND_OF\`{since:$\`3_since\`}]->(\`user_to\`:\`User\`) | user_to_relation { .since ,User: user_to { .name } }] } } AS \`user\``,
     expectedParams = {
       offset: 0,
       first: -1,
@@ -3159,7 +3159,7 @@ test('query using inline fragment on object type - including cypherParams', t =>
     }
   }
   `,
-    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {title:$title}) RETURN \`movie\` { .title ,ratings: [(\`movie\`)<-[\`movie_ratings_relation\`:\`RATED\`]-(:\`User\`) | movie_ratings_relation { .rating ,User: head([(:\`Movie\`${ADDITIONAL_MOVIE_LABELS})<-[\`movie_ratings_relation\`]-(\`movie_ratings_User\`:\`User\`) | movie_ratings_User { .name , .userId ,currentUserId: apoc.cypher.runFirstColumn("RETURN $cypherParams.currentUserId AS cypherParamsUserId", {this: movie_ratings_User, cypherParams: $cypherParams, strArg: "Neo4j"}, false)}]) }] } AS \`movie\``,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS} {title:$\`title\`}) RETURN \`movie\` { .title ,ratings: [(\`movie\`)<-[\`movie_ratings_relation\`:\`RATED\`]-(:\`User\`) | movie_ratings_relation { .rating ,User: head([(:\`Movie\`${ADDITIONAL_MOVIE_LABELS})<-[\`movie_ratings_relation\`]-(\`movie_ratings_User\`:\`User\`) | movie_ratings_User { .name , .userId ,currentUserId: apoc.cypher.runFirstColumn("RETURN $cypherParams.currentUserId AS cypherParamsUserId", {this: movie_ratings_User, cypherParams: $cypherParams, strArg: "Neo4j"}, false)}]) }] } AS \`movie\``,
     expectedParams = {
       offset: 0,
       first: -1,
@@ -3407,7 +3407,7 @@ test('fliter interfaced relationship type field for outgoing object type nodes',
       }
     }
   }`,
-    expectedCypherQuery = `MATCH (\`person\`:\`Person\`) WHERE (EXISTS((\`person\`)-[:INTERFACED_RELATIONSHIP_TYPE]->(:Genre)) AND ALL(\`person_filter_genre\` IN [(\`person\`)-[\`_person_filter_genre\`:INTERFACED_RELATIONSHIP_TYPE]->(:Genre) | \`_person_filter_genre\`] WHERE (ALL(\`genre\` IN [(\`person\`)-[\`person_filter_genre\`]->(\`_genre\`:Genre) | \`_genre\`] WHERE (\`genre\`.name = $filter.interfacedRelationshipType.Genre.name))))) RETURN \`person\` {FRAGMENT_TYPE: head( [ label IN labels(\`person\`) WHERE label IN $Person_derivedTypes ] ), .userId , .name ,interfacedRelationshipType: [(\`person\`)-[\`person_interfacedRelationshipType_relation\`:\`INTERFACED_RELATIONSHIP_TYPE\`]->(:\`Genre\`) WHERE (\`person_interfacedRelationshipType_relation\`.string = $1_filter.string) | person_interfacedRelationshipType_relation { .string ,Genre: head([(:\`Person\`)-[\`person_interfacedRelationshipType_relation\`]->(\`person_interfacedRelationshipType_Genre\`:\`Genre\`) | person_interfacedRelationshipType_Genre { .name }]) }] } AS \`person\``,
+    expectedCypherQuery = `MATCH (\`person\`:\`Person\`) WHERE (EXISTS((\`person\`)-[:INTERFACED_RELATIONSHIP_TYPE]->(:Genre)) AND ALL(\`person_filter_genre\` IN [(\`person\`)-[\`_person_filter_genre\`:INTERFACED_RELATIONSHIP_TYPE]->(:Genre) | \`_person_filter_genre\`] WHERE (ALL(\`genre\` IN [(\`person\`)-[\`person_filter_genre\`]->(\`_genre\`:Genre) | \`_genre\`] WHERE (\`genre\`.name = $\`filter\`.interfacedRelationshipType.Genre.name))))) RETURN \`person\` {FRAGMENT_TYPE: head( [ label IN labels(\`person\`) WHERE label IN $Person_derivedTypes ] ), .userId , .name ,interfacedRelationshipType: [(\`person\`)-[\`person_interfacedRelationshipType_relation\`:\`INTERFACED_RELATIONSHIP_TYPE\`]->(:\`Genre\`) WHERE (\`person_interfacedRelationshipType_relation\`.string = $\`1_filter\`.string) | person_interfacedRelationshipType_relation { .string ,Genre: head([(:\`Person\`)-[\`person_interfacedRelationshipType_relation\`]->(\`person_interfacedRelationshipType_Genre\`:\`Genre\`) | person_interfacedRelationshipType_Genre { .name }]) }] } AS \`person\``,
     expectedParams = {
       offset: 0,
       first: -1,
@@ -3522,7 +3522,7 @@ test('fliter interfaced relationship type field for incoming interface type node
       }
     }
   }`,
-    expectedCypherQuery = `MATCH (\`genre\`:\`Genre\`) WHERE (EXISTS((\`genre\`)<-[:INTERFACED_RELATIONSHIP_TYPE]-(:Person)) AND ALL(\`genre_filter_person\` IN [(\`genre\`)<-[\`_genre_filter_person\`:INTERFACED_RELATIONSHIP_TYPE]-(:Person) | \`_genre_filter_person\`] WHERE (ALL(\`person\` IN [(\`genre\`)<-[\`genre_filter_person\`]-(\`_person\`:Person) | \`_person\`] WHERE (\`person\`.userId = $filter.interfacedRelationshipType.Person.userId))))) RETURN \`genre\` { .name ,interfacedRelationshipType: [(\`genre\`)<-[\`genre_interfacedRelationshipType_relation\`:\`INTERFACED_RELATIONSHIP_TYPE\`]-(:\`Person\`) WHERE (\`genre_interfacedRelationshipType_relation\`.string = $1_filter.string) AND (ALL(\`genre_filter_person\` IN [(\`genre\`)<-[\`genre_interfacedRelationshipType_relation\`]-(\`_person\`:Person) | \`_person\`] WHERE (\`genre_filter_person\`.name IN $1_filter.Person.name_in))) | genre_interfacedRelationshipType_relation { .string ,Person: head([(:\`Genre\`)<-[\`genre_interfacedRelationshipType_relation\`]-(\`genre_interfacedRelationshipType_Person\`:\`Person\`) | genre_interfacedRelationshipType_Person {FRAGMENT_TYPE: head( [ label IN labels(genre_interfacedRelationshipType_Person) WHERE label IN $Person_derivedTypes ] ), .userId , .name }]) }] } AS \`genre\``,
+    expectedCypherQuery = `MATCH (\`genre\`:\`Genre\`) WHERE (EXISTS((\`genre\`)<-[:INTERFACED_RELATIONSHIP_TYPE]-(:Person)) AND ALL(\`genre_filter_person\` IN [(\`genre\`)<-[\`_genre_filter_person\`:INTERFACED_RELATIONSHIP_TYPE]-(:Person) | \`_genre_filter_person\`] WHERE (ALL(\`person\` IN [(\`genre\`)<-[\`genre_filter_person\`]-(\`_person\`:Person) | \`_person\`] WHERE (\`person\`.userId = $\`filter\`.interfacedRelationshipType.Person.userId))))) RETURN \`genre\` { .name ,interfacedRelationshipType: [(\`genre\`)<-[\`genre_interfacedRelationshipType_relation\`:\`INTERFACED_RELATIONSHIP_TYPE\`]-(:\`Person\`) WHERE (\`genre_interfacedRelationshipType_relation\`.string = $\`1_filter\`.string) AND (ALL(\`genre_filter_person\` IN [(\`genre\`)<-[\`genre_interfacedRelationshipType_relation\`]-(\`_person\`:Person) | \`_person\`] WHERE (\`genre_filter_person\`.name IN $\`1_filter\`.Person.name_in))) | genre_interfacedRelationshipType_relation { .string ,Person: head([(:\`Genre\`)<-[\`genre_interfacedRelationshipType_relation\`]-(\`genre_interfacedRelationshipType_Person\`:\`Person\`) | genre_interfacedRelationshipType_Person {FRAGMENT_TYPE: head( [ label IN labels(genre_interfacedRelationshipType_Person) WHERE label IN $Person_derivedTypes ] ), .userId , .name }]) }] } AS \`genre\``,
     expectedParams = {
       offset: 0,
       first: -1,
@@ -3644,7 +3644,7 @@ test('filter incoming interface type nodes using only fragments in relationship 
     }
   }
   `,
-    expectedCypherQuery = `MATCH (\`genre\`:\`Genre\`) RETURN \`genre\` { .name ,interfacedRelationshipType: [(\`genre\`)<-[\`genre_interfacedRelationshipType_relation\`:\`INTERFACED_RELATIONSHIP_TYPE\`]-(:\`Person\`) WHERE (ALL(\`genre_filter_person\` IN [(\`genre\`)<-[\`genre_interfacedRelationshipType_relation\`]-(\`_person\`:Person) | \`_person\`] WHERE (NOT \`genre_filter_person\`.name IN $1_filter.Person.name_not_in))) | genre_interfacedRelationshipType_relation { .string ,Person: head([(:\`Genre\`)<-[\`genre_interfacedRelationshipType_relation\`]-(\`genre_interfacedRelationshipType_Person\`:\`Person\`) WHERE ("User" IN labels(genre_interfacedRelationshipType_Person)) | head([\`genre_interfacedRelationshipType_Person\` IN [\`genre_interfacedRelationshipType_Person\`] WHERE "User" IN labels(\`genre_interfacedRelationshipType_Person\`) | \`genre_interfacedRelationshipType_Person\` { FRAGMENT_TYPE: "User",  .userId  }])]) }] } AS \`genre\``,
+    expectedCypherQuery = `MATCH (\`genre\`:\`Genre\`) RETURN \`genre\` { .name ,interfacedRelationshipType: [(\`genre\`)<-[\`genre_interfacedRelationshipType_relation\`:\`INTERFACED_RELATIONSHIP_TYPE\`]-(:\`Person\`) WHERE (ALL(\`genre_filter_person\` IN [(\`genre\`)<-[\`genre_interfacedRelationshipType_relation\`]-(\`_person\`:Person) | \`_person\`] WHERE (NOT \`genre_filter_person\`.name IN $\`1_filter\`.Person.name_not_in))) | genre_interfacedRelationshipType_relation { .string ,Person: head([(:\`Genre\`)<-[\`genre_interfacedRelationshipType_relation\`]-(\`genre_interfacedRelationshipType_Person\`:\`Person\`) WHERE ("User" IN labels(genre_interfacedRelationshipType_Person)) | head([\`genre_interfacedRelationshipType_Person\` IN [\`genre_interfacedRelationshipType_Person\`] WHERE "User" IN labels(\`genre_interfacedRelationshipType_Person\`) | \`genre_interfacedRelationshipType_Person\` { FRAGMENT_TYPE: "User",  .userId  }])]) }] } AS \`genre\``,
     expectedParams = {
       offset: 0,
       first: -1,
@@ -3786,7 +3786,7 @@ test('filter reflexive interfaced relationship type field', t => {
       }
     }
   }`,
-    expectedCypherQuery = `MATCH (\`person\`:\`Person\`) WHERE (\`person\`.name IN $filter.name_in) AND ((EXISTS((\`person\`)-[:REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE]->(:Person)) AND ALL(\`person_filter_person\` IN [(\`person\`)-[\`_person_filter_person\`:REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE]->(:Person) | \`_person_filter_person\`] WHERE (ALL(\`person\` IN [(\`person\`)-[\`person_filter_person\`]->(\`_person\`:Person) | \`_person\`] WHERE (\`person\`.name IN $filter.reflexiveInterfacedRelationshipType.to.Person.name_in)))))) RETURN \`person\` {FRAGMENT_TYPE: head( [ label IN labels(\`person\`) WHERE label IN $Person_derivedTypes ] ), .userId , .name ,reflexiveInterfacedRelationshipType: {to: [(\`person\`)-[\`person_to_relation\`:\`REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE\`]->(\`person_to\`:\`Person\`) WHERE (\`person_to_relation\`.boolean = $1_filter.boolean) | person_to_relation { .boolean ,Person: person_to {FRAGMENT_TYPE: head( [ label IN labels(person_to) WHERE label IN $Person_derivedTypes ] ), .userId , .name ,interfacedRelationshipType: [(\`person_to\`)-[\`person_to_interfacedRelationshipType_relation\`:\`INTERFACED_RELATIONSHIP_TYPE\`]->(:\`Genre\`) | person_to_interfacedRelationshipType_relation { .string ,Genre: head([(:\`Person\`)-[\`person_to_interfacedRelationshipType_relation\`]->(\`person_to_interfacedRelationshipType_Genre\`:\`Genre\`) | person_to_interfacedRelationshipType_Genre { .name }]) }][..1] } }][0..1] } } AS \`person\``,
+    expectedCypherQuery = `MATCH (\`person\`:\`Person\`) WHERE (\`person\`.name IN $\`filter\`.name_in) AND ((EXISTS((\`person\`)-[:REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE]->(:Person)) AND ALL(\`person_filter_person\` IN [(\`person\`)-[\`_person_filter_person\`:REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE]->(:Person) | \`_person_filter_person\`] WHERE (ALL(\`person\` IN [(\`person\`)-[\`person_filter_person\`]->(\`_person\`:Person) | \`_person\`] WHERE (\`person\`.name IN $\`filter\`.reflexiveInterfacedRelationshipType.to.Person.name_in)))))) RETURN \`person\` {FRAGMENT_TYPE: head( [ label IN labels(\`person\`) WHERE label IN $Person_derivedTypes ] ), .userId , .name ,reflexiveInterfacedRelationshipType: {to: [(\`person\`)-[\`person_to_relation\`:\`REFLEXIVE_INTERFACED_RELATIONSHIP_TYPE\`]->(\`person_to\`:\`Person\`) WHERE (\`person_to_relation\`.boolean = $\`1_filter\`.boolean) | person_to_relation { .boolean ,Person: person_to {FRAGMENT_TYPE: head( [ label IN labels(person_to) WHERE label IN $Person_derivedTypes ] ), .userId , .name ,interfacedRelationshipType: [(\`person_to\`)-[\`person_to_interfacedRelationshipType_relation\`:\`INTERFACED_RELATIONSHIP_TYPE\`]->(:\`Genre\`) | person_to_interfacedRelationshipType_relation { .string ,Genre: head([(:\`Person\`)-[\`person_to_interfacedRelationshipType_relation\`]->(\`person_to_interfacedRelationshipType_Genre\`:\`Genre\`) | person_to_interfacedRelationshipType_Genre { .name }]) }][..1] } }][0..1] } } AS \`person\``,
     expectedParams = {
       offset: 0,
       first: -1,
@@ -6110,7 +6110,7 @@ test('Query nested temporal properties on relationships using temporal arguments
       }
     }
   }`,
-    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) RETURN \`movie\` {_id: ID(\`movie\`), .title ,ratings: [(\`movie\`)<-[\`movie_ratings_relation\`:\`RATED\`{rating:$1_rating}]-(:\`User\`) WHERE movie_ratings_relation.time = time($1_time.formatted) AND movie_ratings_relation.date.year = $1_date.year AND movie_ratings_relation.date.month = $1_date.month AND movie_ratings_relation.date.day = $1_date.day AND movie_ratings_relation.datetime.year = $1_datetime.year AND movie_ratings_relation.datetime.month = $1_datetime.month AND movie_ratings_relation.datetime.day = $1_datetime.day AND movie_ratings_relation.datetime.hour = $1_datetime.hour AND movie_ratings_relation.datetime.minute = $1_datetime.minute AND movie_ratings_relation.datetime.second = $1_datetime.second AND movie_ratings_relation.datetime.millisecond = $1_datetime.millisecond AND movie_ratings_relation.datetime.microsecond = $1_datetime.microsecond AND movie_ratings_relation.datetime.nanosecond = $1_datetime.nanosecond AND movie_ratings_relation.datetime.timezone = $1_datetime.timezone AND movie_ratings_relation.localtime.hour = $1_localtime.hour AND movie_ratings_relation.localtime.minute = $1_localtime.minute AND movie_ratings_relation.localtime.second = $1_localtime.second AND movie_ratings_relation.localtime.millisecond = $1_localtime.millisecond AND movie_ratings_relation.localtime.microsecond = $1_localtime.microsecond AND movie_ratings_relation.localtime.nanosecond = $1_localtime.nanosecond AND movie_ratings_relation.localdatetime.year = $1_localdatetime.year AND movie_ratings_relation.localdatetime.month = $1_localdatetime.month AND movie_ratings_relation.localdatetime.day = $1_localdatetime.day AND movie_ratings_relation.localdatetime.hour = $1_localdatetime.hour AND movie_ratings_relation.localdatetime.minute = $1_localdatetime.minute AND movie_ratings_relation.localdatetime.second = $1_localdatetime.second AND movie_ratings_relation.localdatetime.millisecond = $1_localdatetime.millisecond AND movie_ratings_relation.localdatetime.microsecond = $1_localdatetime.microsecond AND movie_ratings_relation.localdatetime.nanosecond = $1_localdatetime.nanosecond | movie_ratings_relation { .rating ,time: { hour: \`movie_ratings_relation\`.time.hour , minute: \`movie_ratings_relation\`.time.minute , second: \`movie_ratings_relation\`.time.second , millisecond: \`movie_ratings_relation\`.time.millisecond , microsecond: \`movie_ratings_relation\`.time.microsecond , nanosecond: \`movie_ratings_relation\`.time.nanosecond , timezone: \`movie_ratings_relation\`.time.timezone , formatted: toString(\`movie_ratings_relation\`.time) },date: { year: \`movie_ratings_relation\`.date.year , month: \`movie_ratings_relation\`.date.month , day: \`movie_ratings_relation\`.date.day , formatted: toString(\`movie_ratings_relation\`.date) },datetime: { year: \`movie_ratings_relation\`.datetime.year , month: \`movie_ratings_relation\`.datetime.month , day: \`movie_ratings_relation\`.datetime.day , hour: \`movie_ratings_relation\`.datetime.hour , minute: \`movie_ratings_relation\`.datetime.minute , second: \`movie_ratings_relation\`.datetime.second , millisecond: \`movie_ratings_relation\`.datetime.millisecond , microsecond: \`movie_ratings_relation\`.datetime.microsecond , nanosecond: \`movie_ratings_relation\`.datetime.nanosecond , timezone: \`movie_ratings_relation\`.datetime.timezone , formatted: toString(\`movie_ratings_relation\`.datetime) },localtime: { hour: \`movie_ratings_relation\`.localtime.hour , minute: \`movie_ratings_relation\`.localtime.minute , second: \`movie_ratings_relation\`.localtime.second , millisecond: \`movie_ratings_relation\`.localtime.millisecond , microsecond: \`movie_ratings_relation\`.localtime.microsecond , nanosecond: \`movie_ratings_relation\`.localtime.nanosecond , formatted: toString(\`movie_ratings_relation\`.localtime) },localdatetime: { year: \`movie_ratings_relation\`.localdatetime.year , month: \`movie_ratings_relation\`.localdatetime.month , day: \`movie_ratings_relation\`.localdatetime.day , hour: \`movie_ratings_relation\`.localdatetime.hour , minute: \`movie_ratings_relation\`.localdatetime.minute , second: \`movie_ratings_relation\`.localdatetime.second , millisecond: \`movie_ratings_relation\`.localdatetime.millisecond , microsecond: \`movie_ratings_relation\`.localdatetime.microsecond , nanosecond: \`movie_ratings_relation\`.localdatetime.nanosecond , formatted: toString(\`movie_ratings_relation\`.localdatetime) },User: head([(:\`Movie\`${ADDITIONAL_MOVIE_LABELS})<-[\`movie_ratings_relation\`]-(\`movie_ratings_User\`:\`User\`) | movie_ratings_User {_id: ID(\`movie_ratings_User\`), .name ,rated: [(\`movie_ratings_User\`)-[\`movie_ratings_User_rated_relation\`:\`RATED\`{rating:$2_rating}]->(:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) WHERE movie_ratings_User_rated_relation.time = time($2_time.formatted) AND movie_ratings_User_rated_relation.datetime.year = $2_datetime.year | movie_ratings_User_rated_relation { .rating ,time: { hour: \`movie_ratings_User_rated_relation\`.time.hour , minute: \`movie_ratings_User_rated_relation\`.time.minute , second: \`movie_ratings_User_rated_relation\`.time.second , millisecond: \`movie_ratings_User_rated_relation\`.time.millisecond , microsecond: \`movie_ratings_User_rated_relation\`.time.microsecond , nanosecond: \`movie_ratings_User_rated_relation\`.time.nanosecond , timezone: \`movie_ratings_User_rated_relation\`.time.timezone , formatted: toString(\`movie_ratings_User_rated_relation\`.time) },date: { year: \`movie_ratings_User_rated_relation\`.date.year , month: \`movie_ratings_User_rated_relation\`.date.month , day: \`movie_ratings_User_rated_relation\`.date.day , formatted: toString(\`movie_ratings_User_rated_relation\`.date) },datetime: { year: \`movie_ratings_User_rated_relation\`.datetime.year , month: \`movie_ratings_User_rated_relation\`.datetime.month , day: \`movie_ratings_User_rated_relation\`.datetime.day , hour: \`movie_ratings_User_rated_relation\`.datetime.hour , minute: \`movie_ratings_User_rated_relation\`.datetime.minute , second: \`movie_ratings_User_rated_relation\`.datetime.second , millisecond: \`movie_ratings_User_rated_relation\`.datetime.millisecond , microsecond: \`movie_ratings_User_rated_relation\`.datetime.microsecond , nanosecond: \`movie_ratings_User_rated_relation\`.datetime.nanosecond , timezone: \`movie_ratings_User_rated_relation\`.datetime.timezone , formatted: toString(\`movie_ratings_User_rated_relation\`.datetime) },localtime: { hour: \`movie_ratings_User_rated_relation\`.localtime.hour , minute: \`movie_ratings_User_rated_relation\`.localtime.minute , second: \`movie_ratings_User_rated_relation\`.localtime.second , millisecond: \`movie_ratings_User_rated_relation\`.localtime.millisecond , microsecond: \`movie_ratings_User_rated_relation\`.localtime.microsecond , nanosecond: \`movie_ratings_User_rated_relation\`.localtime.nanosecond , formatted: toString(\`movie_ratings_User_rated_relation\`.localtime) },localdatetime: { year: \`movie_ratings_User_rated_relation\`.localdatetime.year , month: \`movie_ratings_User_rated_relation\`.localdatetime.month , day: \`movie_ratings_User_rated_relation\`.localdatetime.day , hour: \`movie_ratings_User_rated_relation\`.localdatetime.hour , minute: \`movie_ratings_User_rated_relation\`.localdatetime.minute , second: \`movie_ratings_User_rated_relation\`.localdatetime.second , millisecond: \`movie_ratings_User_rated_relation\`.localdatetime.millisecond , microsecond: \`movie_ratings_User_rated_relation\`.localdatetime.microsecond , nanosecond: \`movie_ratings_User_rated_relation\`.localdatetime.nanosecond , formatted: toString(\`movie_ratings_User_rated_relation\`.localdatetime) }}] }]) }] } AS \`movie\``,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) RETURN \`movie\` {_id: ID(\`movie\`), .title ,ratings: [(\`movie\`)<-[\`movie_ratings_relation\`:\`RATED\`{rating:$\`1_rating\`}]-(:\`User\`) WHERE movie_ratings_relation.time = time($1_time.formatted) AND movie_ratings_relation.date.year = $1_date.year AND movie_ratings_relation.date.month = $1_date.month AND movie_ratings_relation.date.day = $1_date.day AND movie_ratings_relation.datetime.year = $1_datetime.year AND movie_ratings_relation.datetime.month = $1_datetime.month AND movie_ratings_relation.datetime.day = $1_datetime.day AND movie_ratings_relation.datetime.hour = $1_datetime.hour AND movie_ratings_relation.datetime.minute = $1_datetime.minute AND movie_ratings_relation.datetime.second = $1_datetime.second AND movie_ratings_relation.datetime.millisecond = $1_datetime.millisecond AND movie_ratings_relation.datetime.microsecond = $1_datetime.microsecond AND movie_ratings_relation.datetime.nanosecond = $1_datetime.nanosecond AND movie_ratings_relation.datetime.timezone = $1_datetime.timezone AND movie_ratings_relation.localtime.hour = $1_localtime.hour AND movie_ratings_relation.localtime.minute = $1_localtime.minute AND movie_ratings_relation.localtime.second = $1_localtime.second AND movie_ratings_relation.localtime.millisecond = $1_localtime.millisecond AND movie_ratings_relation.localtime.microsecond = $1_localtime.microsecond AND movie_ratings_relation.localtime.nanosecond = $1_localtime.nanosecond AND movie_ratings_relation.localdatetime.year = $1_localdatetime.year AND movie_ratings_relation.localdatetime.month = $1_localdatetime.month AND movie_ratings_relation.localdatetime.day = $1_localdatetime.day AND movie_ratings_relation.localdatetime.hour = $1_localdatetime.hour AND movie_ratings_relation.localdatetime.minute = $1_localdatetime.minute AND movie_ratings_relation.localdatetime.second = $1_localdatetime.second AND movie_ratings_relation.localdatetime.millisecond = $1_localdatetime.millisecond AND movie_ratings_relation.localdatetime.microsecond = $1_localdatetime.microsecond AND movie_ratings_relation.localdatetime.nanosecond = $1_localdatetime.nanosecond | movie_ratings_relation { .rating ,time: { hour: \`movie_ratings_relation\`.time.hour , minute: \`movie_ratings_relation\`.time.minute , second: \`movie_ratings_relation\`.time.second , millisecond: \`movie_ratings_relation\`.time.millisecond , microsecond: \`movie_ratings_relation\`.time.microsecond , nanosecond: \`movie_ratings_relation\`.time.nanosecond , timezone: \`movie_ratings_relation\`.time.timezone , formatted: toString(\`movie_ratings_relation\`.time) },date: { year: \`movie_ratings_relation\`.date.year , month: \`movie_ratings_relation\`.date.month , day: \`movie_ratings_relation\`.date.day , formatted: toString(\`movie_ratings_relation\`.date) },datetime: { year: \`movie_ratings_relation\`.datetime.year , month: \`movie_ratings_relation\`.datetime.month , day: \`movie_ratings_relation\`.datetime.day , hour: \`movie_ratings_relation\`.datetime.hour , minute: \`movie_ratings_relation\`.datetime.minute , second: \`movie_ratings_relation\`.datetime.second , millisecond: \`movie_ratings_relation\`.datetime.millisecond , microsecond: \`movie_ratings_relation\`.datetime.microsecond , nanosecond: \`movie_ratings_relation\`.datetime.nanosecond , timezone: \`movie_ratings_relation\`.datetime.timezone , formatted: toString(\`movie_ratings_relation\`.datetime) },localtime: { hour: \`movie_ratings_relation\`.localtime.hour , minute: \`movie_ratings_relation\`.localtime.minute , second: \`movie_ratings_relation\`.localtime.second , millisecond: \`movie_ratings_relation\`.localtime.millisecond , microsecond: \`movie_ratings_relation\`.localtime.microsecond , nanosecond: \`movie_ratings_relation\`.localtime.nanosecond , formatted: toString(\`movie_ratings_relation\`.localtime) },localdatetime: { year: \`movie_ratings_relation\`.localdatetime.year , month: \`movie_ratings_relation\`.localdatetime.month , day: \`movie_ratings_relation\`.localdatetime.day , hour: \`movie_ratings_relation\`.localdatetime.hour , minute: \`movie_ratings_relation\`.localdatetime.minute , second: \`movie_ratings_relation\`.localdatetime.second , millisecond: \`movie_ratings_relation\`.localdatetime.millisecond , microsecond: \`movie_ratings_relation\`.localdatetime.microsecond , nanosecond: \`movie_ratings_relation\`.localdatetime.nanosecond , formatted: toString(\`movie_ratings_relation\`.localdatetime) },User: head([(:\`Movie\`${ADDITIONAL_MOVIE_LABELS})<-[\`movie_ratings_relation\`]-(\`movie_ratings_User\`:\`User\`) | movie_ratings_User {_id: ID(\`movie_ratings_User\`), .name ,rated: [(\`movie_ratings_User\`)-[\`movie_ratings_User_rated_relation\`:\`RATED\`{rating:$\`2_rating\`}]->(:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) WHERE movie_ratings_User_rated_relation.time = time($2_time.formatted) AND movie_ratings_User_rated_relation.datetime.year = $2_datetime.year | movie_ratings_User_rated_relation { .rating ,time: { hour: \`movie_ratings_User_rated_relation\`.time.hour , minute: \`movie_ratings_User_rated_relation\`.time.minute , second: \`movie_ratings_User_rated_relation\`.time.second , millisecond: \`movie_ratings_User_rated_relation\`.time.millisecond , microsecond: \`movie_ratings_User_rated_relation\`.time.microsecond , nanosecond: \`movie_ratings_User_rated_relation\`.time.nanosecond , timezone: \`movie_ratings_User_rated_relation\`.time.timezone , formatted: toString(\`movie_ratings_User_rated_relation\`.time) },date: { year: \`movie_ratings_User_rated_relation\`.date.year , month: \`movie_ratings_User_rated_relation\`.date.month , day: \`movie_ratings_User_rated_relation\`.date.day , formatted: toString(\`movie_ratings_User_rated_relation\`.date) },datetime: { year: \`movie_ratings_User_rated_relation\`.datetime.year , month: \`movie_ratings_User_rated_relation\`.datetime.month , day: \`movie_ratings_User_rated_relation\`.datetime.day , hour: \`movie_ratings_User_rated_relation\`.datetime.hour , minute: \`movie_ratings_User_rated_relation\`.datetime.minute , second: \`movie_ratings_User_rated_relation\`.datetime.second , millisecond: \`movie_ratings_User_rated_relation\`.datetime.millisecond , microsecond: \`movie_ratings_User_rated_relation\`.datetime.microsecond , nanosecond: \`movie_ratings_User_rated_relation\`.datetime.nanosecond , timezone: \`movie_ratings_User_rated_relation\`.datetime.timezone , formatted: toString(\`movie_ratings_User_rated_relation\`.datetime) },localtime: { hour: \`movie_ratings_User_rated_relation\`.localtime.hour , minute: \`movie_ratings_User_rated_relation\`.localtime.minute , second: \`movie_ratings_User_rated_relation\`.localtime.second , millisecond: \`movie_ratings_User_rated_relation\`.localtime.millisecond , microsecond: \`movie_ratings_User_rated_relation\`.localtime.microsecond , nanosecond: \`movie_ratings_User_rated_relation\`.localtime.nanosecond , formatted: toString(\`movie_ratings_User_rated_relation\`.localtime) },localdatetime: { year: \`movie_ratings_User_rated_relation\`.localdatetime.year , month: \`movie_ratings_User_rated_relation\`.localdatetime.month , day: \`movie_ratings_User_rated_relation\`.localdatetime.day , hour: \`movie_ratings_User_rated_relation\`.localdatetime.hour , minute: \`movie_ratings_User_rated_relation\`.localdatetime.minute , second: \`movie_ratings_User_rated_relation\`.localdatetime.second , millisecond: \`movie_ratings_User_rated_relation\`.localdatetime.millisecond , microsecond: \`movie_ratings_User_rated_relation\`.localdatetime.microsecond , nanosecond: \`movie_ratings_User_rated_relation\`.localdatetime.nanosecond , formatted: toString(\`movie_ratings_User_rated_relation\`.localdatetime) }}] }]) }] } AS \`movie\``,
     expectedParams = {
       offset: 0,
       first: -1,
@@ -6600,7 +6600,7 @@ test('Query list properties on node type using list arguments', t => {
     }
   }
   `,
-    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) WHERE [value IN $locations WHERE [prop IN \`movie\`.\`locations\` WHERE ((value.x IS NULL OR prop.x = value.x) AND (value.y IS NULL OR prop.y = value.y) AND (value.z IS NULL OR prop.z = value.z))]] AND [value IN $years WHERE value IN \`movie\`.\`years\`] AND [value IN $titles WHERE value IN \`movie\`.\`titles\`] AND [value IN $imdbRatings WHERE value IN \`movie\`.\`imdbRatings\`] AND [value IN $releases WHERE [prop IN \`movie\`.\`releases\` WHERE ((value.year IS NULL OR prop.year = value.year) AND (value.month IS NULL OR prop.month = value.month) AND (value.day IS NULL OR prop.day = value.day) AND (value.formatted IS NULL OR prop = datetime(value.formatted)))]] AND [value IN $booleans WHERE value IN \`movie\`.\`booleans\`] AND [value IN $enums WHERE value IN \`movie\`.\`enums\`] RETURN \`movie\` {_id: ID(\`movie\`),locations: reduce(a = [], INSTANCE IN movie.locations | a + { x: INSTANCE.x , y: INSTANCE.y , z: INSTANCE.z , srid: INSTANCE.srid }),releases: reduce(a = [], INSTANCE IN movie.releases | a + { year: INSTANCE.year , month: INSTANCE.month , day: INSTANCE.day , formatted: toString(INSTANCE) }), .titles , .imdbRatings , .years , .booleans } AS \`movie\``,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) WHERE [value IN $\`locations\` WHERE [prop IN \`movie\`.\`locations\` WHERE ((value.x IS NULL OR prop.x = value.x) AND (value.y IS NULL OR prop.y = value.y) AND (value.z IS NULL OR prop.z = value.z))]] AND [value IN $\`years\` WHERE value IN \`movie\`.\`years\`] AND [value IN $\`titles\` WHERE value IN \`movie\`.\`titles\`] AND [value IN $\`imdbRatings\` WHERE value IN \`movie\`.\`imdbRatings\`] AND [value IN $\`releases\` WHERE [prop IN \`movie\`.\`releases\` WHERE ((value.year IS NULL OR prop.year = value.year) AND (value.month IS NULL OR prop.month = value.month) AND (value.day IS NULL OR prop.day = value.day) AND (value.formatted IS NULL OR prop = datetime(value.formatted)))]] AND [value IN $\`booleans\` WHERE value IN \`movie\`.\`booleans\`] AND [value IN $\`enums\` WHERE value IN \`movie\`.\`enums\`] RETURN \`movie\` {_id: ID(\`movie\`),locations: reduce(a = [], INSTANCE IN movie.locations | a + { x: INSTANCE.x , y: INSTANCE.y , z: INSTANCE.z , srid: INSTANCE.srid }),releases: reduce(a = [], INSTANCE IN movie.releases | a + { year: INSTANCE.year , month: INSTANCE.month , day: INSTANCE.day , formatted: toString(INSTANCE) }), .titles , .imdbRatings , .years , .booleans } AS \`movie\``,
     expectedParams = {
       offset: 0,
       first: -1,
@@ -6665,7 +6665,7 @@ test('Query list properties on nested node type using list arguments', t => {
     }
   }
   `,
-    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) RETURN \`movie\` {_id: ID(\`movie\`), .year ,actors: [(\`movie\`)<-[:\`ACTED_IN\`]-(\`movie_actors\`:\`Actor\`) WHERE [value IN $1_strings WHERE value IN \`movie_actors\`.\`strings\`] AND [value IN $1_datetimes WHERE [prop IN \`movie_actors\`.\`datetimes\` WHERE ((value.year IS NULL OR prop.year = value.year) AND (value.month IS NULL OR prop.month = value.month) AND (value.day IS NULL OR prop.day = value.day) AND (value.formatted IS NULL OR prop = datetime(value.formatted)))]] | \`movie_actors\` { .name }] } AS \`movie\``,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) RETURN \`movie\` {_id: ID(\`movie\`), .year ,actors: [(\`movie\`)<-[:\`ACTED_IN\`]-(\`movie_actors\`:\`Actor\`) WHERE [value IN $\`1_strings\` WHERE value IN \`movie_actors\`.\`strings\`] AND [value IN $\`1_datetimes\` WHERE [prop IN \`movie_actors\`.\`datetimes\` WHERE ((value.year IS NULL OR prop.year = value.year) AND (value.month IS NULL OR prop.month = value.month) AND (value.day IS NULL OR prop.day = value.day) AND (value.formatted IS NULL OR prop = datetime(value.formatted)))]] | \`movie_actors\` { .name }] } AS \`movie\``,
     expectedParams = {
       offset: 0,
       first: -1,
@@ -6725,7 +6725,7 @@ test('Query list properties on relationship type field using list arguments', t 
     }
   }
   `,
-    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) RETURN \`movie\` {_id: ID(\`movie\`), .year ,ratings: [(\`movie\`)<-[\`movie_ratings_relation\`:\`RATED\`]-(:\`User\`) WHERE [value IN $1_ratings WHERE value IN \`movie_ratings_relation\`.\`ratings\`] AND [value IN $1_datetimes WHERE [prop IN \`movie_ratings_relation\`.\`datetimes\` WHERE ((value.year IS NULL OR prop.year = value.year) AND (value.month IS NULL OR prop.month = value.month) AND (value.day IS NULL OR prop.day = value.day) AND (value.formatted IS NULL OR prop = datetime(value.formatted)))]] | movie_ratings_relation { .ratings ,datetimes: reduce(a = [], INSTANCE IN movie_ratings_relation.datetimes | a + { year: INSTANCE.year , month: INSTANCE.month , day: INSTANCE.day , formatted: toString(INSTANCE) })}] } AS \`movie\``,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) RETURN \`movie\` {_id: ID(\`movie\`), .year ,ratings: [(\`movie\`)<-[\`movie_ratings_relation\`:\`RATED\`]-(:\`User\`) WHERE [value IN $\`1_ratings\` WHERE value IN \`movie_ratings_relation\`.\`ratings\`] AND [value IN $\`1_datetimes\` WHERE [prop IN \`movie_ratings_relation\`.\`datetimes\` WHERE ((value.year IS NULL OR prop.year = value.year) AND (value.month IS NULL OR prop.month = value.month) AND (value.day IS NULL OR prop.day = value.day) AND (value.formatted IS NULL OR prop = datetime(value.formatted)))]] | movie_ratings_relation { .ratings ,datetimes: reduce(a = [], INSTANCE IN movie_ratings_relation.datetimes | a + { year: INSTANCE.year , month: INSTANCE.month , day: INSTANCE.day , formatted: toString(INSTANCE) })}] } AS \`movie\``,
     expectedParams = {
       offset: 0,
       first: -1,
@@ -6805,7 +6805,7 @@ test('Query list properties on reflexive relationship type field using list argu
     }
   }
   `,
-    expectedCypherQuery = `MATCH (\`user\`:\`User\`) RETURN \`user\` {friends: {to: [(\`user\`)-[\`user_to_relation\`:\`FRIEND_OF\`]->(\`user_to\`:\`User\`) WHERE [value IN $1_ratings WHERE value IN \`user_to_relation\`.\`ratings\`] AND [value IN $1_datetimes WHERE [prop IN \`user_to_relation\`.\`datetimes\` WHERE ((value.year IS NULL OR prop.year = value.year) AND (value.month IS NULL OR prop.month = value.month) AND (value.day IS NULL OR prop.day = value.day) AND (value.formatted IS NULL OR prop = datetime(value.formatted)))]] | user_to_relation {_id: ID(\`user_to_relation\`), .ratings ,datetimes: reduce(a = [], INSTANCE IN user_to_relation.datetimes | a + { year: INSTANCE.year , month: INSTANCE.month , day: INSTANCE.day , formatted: toString(INSTANCE) })}] ,from: [(\`user\`)<-[\`user_from_relation\`:\`FRIEND_OF\`]-(\`user_from\`:\`User\`) WHERE [value IN $3_ratings WHERE value IN \`user_from_relation\`.\`ratings\`] AND [value IN $3_datetimes WHERE [prop IN \`user_from_relation\`.\`datetimes\` WHERE ((value.year IS NULL OR prop.year = value.year) AND (value.month IS NULL OR prop.month = value.month) AND (value.day IS NULL OR prop.day = value.day) AND (value.formatted IS NULL OR prop = datetime(value.formatted)))]] | user_from_relation {_id: ID(\`user_from_relation\`), .ratings ,datetimes: reduce(a = [], INSTANCE IN user_from_relation.datetimes | a + { year: INSTANCE.year , month: INSTANCE.month , day: INSTANCE.day , formatted: toString(INSTANCE) })}] } } AS \`user\``,
+    expectedCypherQuery = `MATCH (\`user\`:\`User\`) RETURN \`user\` {friends: {to: [(\`user\`)-[\`user_to_relation\`:\`FRIEND_OF\`]->(\`user_to\`:\`User\`) WHERE [value IN $\`1_ratings\` WHERE value IN \`user_to_relation\`.\`ratings\`] AND [value IN $\`1_datetimes\` WHERE [prop IN \`user_to_relation\`.\`datetimes\` WHERE ((value.year IS NULL OR prop.year = value.year) AND (value.month IS NULL OR prop.month = value.month) AND (value.day IS NULL OR prop.day = value.day) AND (value.formatted IS NULL OR prop = datetime(value.formatted)))]] | user_to_relation {_id: ID(\`user_to_relation\`), .ratings ,datetimes: reduce(a = [], INSTANCE IN user_to_relation.datetimes | a + { year: INSTANCE.year , month: INSTANCE.month , day: INSTANCE.day , formatted: toString(INSTANCE) })}] ,from: [(\`user\`)<-[\`user_from_relation\`:\`FRIEND_OF\`]-(\`user_from\`:\`User\`) WHERE [value IN $\`3_ratings\` WHERE value IN \`user_from_relation\`.\`ratings\`] AND [value IN $\`3_datetimes\` WHERE [prop IN \`user_from_relation\`.\`datetimes\` WHERE ((value.year IS NULL OR prop.year = value.year) AND (value.month IS NULL OR prop.month = value.month) AND (value.day IS NULL OR prop.day = value.day) AND (value.formatted IS NULL OR prop = datetime(value.formatted)))]] | user_from_relation {_id: ID(\`user_from_relation\`), .ratings ,datetimes: reduce(a = [], INSTANCE IN user_from_relation.datetimes | a + { year: INSTANCE.year , month: INSTANCE.month , day: INSTANCE.day , formatted: toString(INSTANCE) })}] } } AS \`user\``,
     expectedParams = {
       offset: 0,
       first: -1,
@@ -6867,7 +6867,7 @@ test('Custom query for non-list property on node type using list argument', t =>
       }
     }
     `,
-    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) WHERE \`movie\`.\`year\` IN $year AND [value IN $released WHERE ((value.year IS NULL OR \`movie\`.\`released\`.year = value.year) AND (value.month IS NULL OR \`movie\`.\`released\`.month = value.month) AND (value.day IS NULL OR \`movie\`.\`released\`.day = value.day) AND (value.formatted IS NULL OR \`movie\`.\`released\` = datetime(value.formatted)))] RETURN \`movie\` {_id: ID(\`movie\`), .year ,released: { formatted: toString(\`movie\`.released) }} AS \`movie\``,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) WHERE \`movie\`.\`year\` IN $\`year\` AND [value IN $\`released\` WHERE ((value.year IS NULL OR \`movie\`.\`released\`.year = value.year) AND (value.month IS NULL OR \`movie\`.\`released\`.month = value.month) AND (value.day IS NULL OR \`movie\`.\`released\`.day = value.day) AND (value.formatted IS NULL OR \`movie\`.\`released\` = datetime(value.formatted)))] RETURN \`movie\` {_id: ID(\`movie\`), .year ,released: { formatted: toString(\`movie\`.released) }} AS \`movie\``,
     expectedParams = {
       offset: 0,
       first: -1,
@@ -6908,7 +6908,7 @@ test('Custom query for nested non-list property on node type using list argument
         }
       }
     }`,
-    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) WHERE \`movie\`.\`year\` IN $year RETURN \`movie\` { .title ,actors: [(\`movie\`)<-[:\`ACTED_IN\`]-(\`movie_actors\`:\`Actor\`) WHERE \`movie_actors\`.\`names\` IN $1_names | \`movie_actors\` { .name }] } AS \`movie\``,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) WHERE \`movie\`.\`year\` IN $\`year\` RETURN \`movie\` { .title ,actors: [(\`movie\`)<-[:\`ACTED_IN\`]-(\`movie_actors\`:\`Actor\`) WHERE \`movie_actors\`.\`names\` IN $\`1_names\` | \`movie_actors\` { .name }] } AS \`movie\``,
     expectedParams = {
       year: [1998],
       '1_names': ['Jeff Bridges', 'John Goodman'],
@@ -6949,7 +6949,7 @@ test('Query node type using String type list filters', t => {
     }
   }  
   `,
-    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) WHERE ([value IN $filter.titles WHERE value IN \`movie\`.titles]) AND (NONE(value IN $filter.titles_not WHERE [prop IN \`movie\`.titles WHERE prop = value])) AND ([value IN $filter.titles_contains WHERE [prop IN \`movie\`.titles WHERE prop CONTAINS value]]) AND ([value IN $filter.titles_not_contains WHERE [prop IN \`movie\`.titles WHERE NOT prop CONTAINS value]]) AND ([value IN $filter.titles_starts_with WHERE [prop IN \`movie\`.titles WHERE prop STARTS WITH value]]) AND ([value IN $filter.titles_not_starts_with WHERE [prop IN \`movie\`.titles WHERE NOT prop STARTS WITH value]]) AND ([value IN $filter.titles_ends_with WHERE [prop IN \`movie\`.titles WHERE prop ENDS WITH value]]) AND ([value IN $filter.titles_not_ends_with WHERE [prop IN \`movie\`.titles WHERE NOT prop ENDS WITH value]]) RETURN \`movie\` {_id: ID(\`movie\`), .titles } AS \`movie\``,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) WHERE ([value IN $\`filter\`.titles WHERE value IN \`movie\`.titles]) AND (NONE(value IN $\`filter\`.titles_not WHERE [prop IN \`movie\`.titles WHERE prop = value])) AND ([value IN $\`filter\`.titles_contains WHERE [prop IN \`movie\`.titles WHERE prop CONTAINS value]]) AND ([value IN $\`filter\`.titles_not_contains WHERE [prop IN \`movie\`.titles WHERE NOT prop CONTAINS value]]) AND ([value IN $\`filter\`.titles_starts_with WHERE [prop IN \`movie\`.titles WHERE prop STARTS WITH value]]) AND ([value IN $\`filter\`.titles_not_starts_with WHERE [prop IN \`movie\`.titles WHERE NOT prop STARTS WITH value]]) AND ([value IN $\`filter\`.titles_ends_with WHERE [prop IN \`movie\`.titles WHERE prop ENDS WITH value]]) AND ([value IN $\`filter\`.titles_not_ends_with WHERE [prop IN \`movie\`.titles WHERE NOT prop ENDS WITH value]]) RETURN \`movie\` {_id: ID(\`movie\`), .titles } AS \`movie\``,
     expectedParams = {
       offset: 0,
       first: -1,
@@ -6995,7 +6995,7 @@ test('Query node type using Int type list filters', t => {
     }
   }   
   `,
-    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) WHERE ([value IN $filter.years WHERE value IN \`movie\`.years]) AND (NONE(value IN $filter.years_not WHERE [prop IN \`movie\`.years WHERE prop = value])) AND ([value IN $filter.years_lt WHERE [prop IN \`movie\`.years WHERE prop < value]]) AND ([value IN $filter.years_lte WHERE [prop IN \`movie\`.years WHERE prop <= value]]) AND ([value IN $filter.years_gt WHERE [prop IN \`movie\`.years WHERE prop > value]]) AND ([value IN $filter.years_gte WHERE [prop IN \`movie\`.years WHERE prop >= value]]) RETURN \`movie\` {_id: ID(\`movie\`), .years } AS \`movie\``,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) WHERE ([value IN $\`filter\`.years WHERE value IN \`movie\`.years]) AND (NONE(value IN $\`filter\`.years_not WHERE [prop IN \`movie\`.years WHERE prop = value])) AND ([value IN $\`filter\`.years_lt WHERE [prop IN \`movie\`.years WHERE prop < value]]) AND ([value IN $\`filter\`.years_lte WHERE [prop IN \`movie\`.years WHERE prop <= value]]) AND ([value IN $\`filter\`.years_gt WHERE [prop IN \`movie\`.years WHERE prop > value]]) AND ([value IN $\`filter\`.years_gte WHERE [prop IN \`movie\`.years WHERE prop >= value]]) RETURN \`movie\` {_id: ID(\`movie\`), .years } AS \`movie\``,
     expectedParams = {
       offset: 0,
       first: -1,
@@ -7039,7 +7039,7 @@ test('Query node type using Float type list filters', t => {
     }
   }
   `,
-    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) WHERE ([value IN $filter.imdbRatings WHERE value IN \`movie\`.imdbRatings]) AND (NONE(value IN $filter.imdbRatings_not WHERE [prop IN \`movie\`.imdbRatings WHERE prop = value])) AND ([value IN $filter.imdbRatings_lt WHERE [prop IN \`movie\`.imdbRatings WHERE prop < value]]) AND ([value IN $filter.imdbRatings_lte WHERE [prop IN \`movie\`.imdbRatings WHERE prop <= value]]) AND ([value IN $filter.imdbRatings_gt WHERE [prop IN \`movie\`.imdbRatings WHERE prop > value]]) AND ([value IN $filter.imdbRatings_gte WHERE [prop IN \`movie\`.imdbRatings WHERE prop >= value]]) RETURN \`movie\` {_id: ID(\`movie\`), .imdbRatings } AS \`movie\``,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) WHERE ([value IN $\`filter\`.imdbRatings WHERE value IN \`movie\`.imdbRatings]) AND (NONE(value IN $\`filter\`.imdbRatings_not WHERE [prop IN \`movie\`.imdbRatings WHERE prop = value])) AND ([value IN $\`filter\`.imdbRatings_lt WHERE [prop IN \`movie\`.imdbRatings WHERE prop < value]]) AND ([value IN $\`filter\`.imdbRatings_lte WHERE [prop IN \`movie\`.imdbRatings WHERE prop <= value]]) AND ([value IN $\`filter\`.imdbRatings_gt WHERE [prop IN \`movie\`.imdbRatings WHERE prop > value]]) AND ([value IN $\`filter\`.imdbRatings_gte WHERE [prop IN \`movie\`.imdbRatings WHERE prop >= value]]) RETURN \`movie\` {_id: ID(\`movie\`), .imdbRatings } AS \`movie\``,
     expectedParams = {
       offset: 0,
       first: -1,
@@ -7082,7 +7082,7 @@ test('Query node type using Boolean and Enum type list filters', t => {
     }
   }
   `,
-    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) WHERE ([value IN $filter.booleans WHERE value IN \`movie\`.booleans]) AND (NONE(value IN $filter.booleans_not WHERE [prop IN \`movie\`.booleans WHERE prop = value])) AND ([value IN $filter.enums WHERE value IN \`movie\`.enums]) AND (NONE(value IN $filter.enums_not WHERE [prop IN \`movie\`.enums WHERE prop = value])) RETURN \`movie\` {_id: ID(\`movie\`), .booleans , .enums } AS \`movie\``,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) WHERE ([value IN $\`filter\`.booleans WHERE value IN \`movie\`.booleans]) AND (NONE(value IN $\`filter\`.booleans_not WHERE [prop IN \`movie\`.booleans WHERE prop = value])) AND ([value IN $\`filter\`.enums WHERE value IN \`movie\`.enums]) AND (NONE(value IN $\`filter\`.enums_not WHERE [prop IN \`movie\`.enums WHERE prop = value])) RETURN \`movie\` {_id: ID(\`movie\`), .booleans , .enums } AS \`movie\``,
     expectedParams = {
       offset: 0,
       first: -1,
@@ -7152,7 +7152,7 @@ test('Query node type using Temporal type list filters', t => {
     }
   }  
   `,
-    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) WHERE ([value IN $filter.releases WHERE [prop IN \`movie\`.releases WHERE ((value.year IS NULL OR prop.year = value.year))]]) AND (NONE(value IN $filter.releases_not WHERE [prop IN \`movie\`.releases WHERE ((value.year IS NULL OR prop.year = value.year))])) AND ([value IN $filter.releases_lt WHERE [prop IN \`movie\`.releases WHERE ((value.year IS NULL OR prop.year < value.year) AND (value.day IS NULL OR prop.day < value.day))]]) AND ([value IN $filter.releases_lte WHERE [prop IN \`movie\`.releases WHERE ((value.year IS NULL OR prop.year <= value.year) AND (value.day IS NULL OR prop.day <= value.day))]]) AND ([value IN $filter.releases_gt WHERE [prop IN \`movie\`.releases WHERE ((value.formatted IS NULL OR prop > datetime(value.formatted)))]]) AND ([value IN $filter.releases_gte WHERE [prop IN \`movie\`.releases WHERE ((value.year IS NULL OR prop.year >= value.year) AND (value.day IS NULL OR prop.day >= value.day))]]) RETURN \`movie\` {_id: ID(\`movie\`),releases: reduce(a = [], INSTANCE IN movie.releases | a + { year: INSTANCE.year , day: INSTANCE.day , month: INSTANCE.month , hour: INSTANCE.hour , minute: INSTANCE.minute , second: INSTANCE.second , formatted: toString(INSTANCE) })} AS \`movie\``,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) WHERE ([value IN $\`filter\`.releases WHERE [prop IN \`movie\`.releases WHERE ((value.year IS NULL OR prop.year = value.year))]]) AND (NONE(value IN $\`filter\`.releases_not WHERE [prop IN \`movie\`.releases WHERE ((value.year IS NULL OR prop.year = value.year))])) AND ([value IN $\`filter\`.releases_lt WHERE [prop IN \`movie\`.releases WHERE ((value.year IS NULL OR prop.year < value.year) AND (value.day IS NULL OR prop.day < value.day))]]) AND ([value IN $\`filter\`.releases_lte WHERE [prop IN \`movie\`.releases WHERE ((value.year IS NULL OR prop.year <= value.year) AND (value.day IS NULL OR prop.day <= value.day))]]) AND ([value IN $\`filter\`.releases_gt WHERE [prop IN \`movie\`.releases WHERE ((value.formatted IS NULL OR prop > datetime(value.formatted)))]]) AND ([value IN $\`filter\`.releases_gte WHERE [prop IN \`movie\`.releases WHERE ((value.year IS NULL OR prop.year >= value.year) AND (value.day IS NULL OR prop.day >= value.day))]]) RETURN \`movie\` {_id: ID(\`movie\`),releases: reduce(a = [], INSTANCE IN movie.releases | a + { year: INSTANCE.year , day: INSTANCE.day , month: INSTANCE.month , hour: INSTANCE.hour , minute: INSTANCE.minute , second: INSTANCE.second , formatted: toString(INSTANCE) })} AS \`movie\``,
     expectedParams = {
       offset: 0,
       first: -1,
@@ -7315,7 +7315,7 @@ test('Query node type using Spatial type list filters', t => {
     }
   }    
   `,
-    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) WHERE ([value IN $filter.locations WHERE [prop IN \`movie\`.locations WHERE ((value.x IS NULL OR prop.x = value.x))]]) AND (NONE(value IN $filter.locations_not WHERE [prop IN \`movie\`.locations WHERE ((value.z IS NULL OR prop.z = value.z))])) AND ([value IN $filter.locations_distance WHERE [prop IN \`movie\`.locations WHERE ((distance(prop, point(value.point)) =value.distance))]]) AND ([value IN $filter.locations_distance_lt WHERE [prop IN \`movie\`.locations WHERE ((distance(prop, point(value.point)) <value.distance))]]) AND ([value IN $filter.locations_distance_lte WHERE [prop IN \`movie\`.locations WHERE ((distance(prop, point(value.point)) <=value.distance))]]) AND ([value IN $filter.locations_distance_gt WHERE [prop IN \`movie\`.locations WHERE ((distance(prop, point(value.point)) >value.distance))]]) AND ([value IN $filter.locations_distance_gte WHERE [prop IN \`movie\`.locations WHERE ((distance(prop, point(value.point)) >=value.distance))]]) RETURN \`movie\` {_id: ID(\`movie\`),locations: reduce(a = [], INSTANCE IN movie.locations | a + { x: INSTANCE.x , y: INSTANCE.y , z: INSTANCE.z })} AS \`movie\``,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) WHERE ([value IN $\`filter\`.locations WHERE [prop IN \`movie\`.locations WHERE ((value.x IS NULL OR prop.x = value.x))]]) AND (NONE(value IN $\`filter\`.locations_not WHERE [prop IN \`movie\`.locations WHERE ((value.z IS NULL OR prop.z = value.z))])) AND ([value IN $\`filter\`.locations_distance WHERE [prop IN \`movie\`.locations WHERE ((distance(prop, point(value.point)) =value.distance))]]) AND ([value IN $\`filter\`.locations_distance_lt WHERE [prop IN \`movie\`.locations WHERE ((distance(prop, point(value.point)) <value.distance))]]) AND ([value IN $\`filter\`.locations_distance_lte WHERE [prop IN \`movie\`.locations WHERE ((distance(prop, point(value.point)) <=value.distance))]]) AND ([value IN $\`filter\`.locations_distance_gt WHERE [prop IN \`movie\`.locations WHERE ((distance(prop, point(value.point)) >value.distance))]]) AND ([value IN $\`filter\`.locations_distance_gte WHERE [prop IN \`movie\`.locations WHERE ((distance(prop, point(value.point)) >=value.distance))]]) RETURN \`movie\` {_id: ID(\`movie\`),locations: reduce(a = [], INSTANCE IN movie.locations | a + { x: INSTANCE.x , y: INSTANCE.y , z: INSTANCE.z })} AS \`movie\``,
     expectedParams = {
       offset: 0,
       first: -1,
@@ -7419,7 +7419,7 @@ test('Query using filters that check for existence of list properties', t => {
     }
   }
   `,
-    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) WHERE ($filter._locations_null = TRUE AND NOT EXISTS(\`movie\`.locations)) AND ($filter._locations_not_null = TRUE AND EXISTS(\`movie\`.locations)) AND ($filter._years_null = TRUE AND NOT EXISTS(\`movie\`.years)) AND ($filter._years_not_null = TRUE AND EXISTS(\`movie\`.years)) AND ($filter._titles_null = TRUE AND NOT EXISTS(\`movie\`.titles)) AND ($filter._titles_not_null = TRUE AND EXISTS(\`movie\`.titles)) AND ($filter._imdbRatings_null = TRUE AND NOT EXISTS(\`movie\`.imdbRatings)) AND ($filter._imdbRatings_not_null = TRUE AND EXISTS(\`movie\`.imdbRatings)) AND ($filter._releases_null = TRUE AND NOT EXISTS(\`movie\`.releases)) AND ($filter._releases_not_null = TRUE AND EXISTS(\`movie\`.releases)) RETURN \`movie\` {_id: ID(\`movie\`)} AS \`movie\``,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) WHERE ($\`filter\`._locations_null = TRUE AND NOT EXISTS(\`movie\`.locations)) AND ($\`filter\`._locations_not_null = TRUE AND EXISTS(\`movie\`.locations)) AND ($\`filter\`._years_null = TRUE AND NOT EXISTS(\`movie\`.years)) AND ($\`filter\`._years_not_null = TRUE AND EXISTS(\`movie\`.years)) AND ($\`filter\`._titles_null = TRUE AND NOT EXISTS(\`movie\`.titles)) AND ($\`filter\`._titles_not_null = TRUE AND EXISTS(\`movie\`.titles)) AND ($\`filter\`._imdbRatings_null = TRUE AND NOT EXISTS(\`movie\`.imdbRatings)) AND ($\`filter\`._imdbRatings_not_null = TRUE AND EXISTS(\`movie\`.imdbRatings)) AND ($\`filter\`._releases_null = TRUE AND NOT EXISTS(\`movie\`.releases)) AND ($\`filter\`._releases_not_null = TRUE AND EXISTS(\`movie\`.releases)) RETURN \`movie\` {_id: ID(\`movie\`)} AS \`movie\``,
     expectedParams = {
       offset: 0,
       first: -1,
@@ -7541,7 +7541,7 @@ test('Query relationship type using list field filters', t => {
     }
   }  
   `,
-    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) WHERE ($filter._ratings_not_null = TRUE AND EXISTS((\`movie\`)<-[:RATED]-(:User))) RETURN \`movie\` {_id: ID(\`movie\`), .titles ,ratings: [(\`movie\`)<-[\`movie_ratings_relation\`:\`RATED\`]-(:\`User\`) WHERE ((size(\`movie_ratings_relation\`.ratings) > 0)) AND ([value IN $1_filter.ratings WHERE value IN \`movie_ratings_relation\`.ratings]) AND ([value IN $1_filter.ratings_lt WHERE [prop IN \`movie_ratings_relation\`.ratings WHERE prop < value]]) AND ([value IN $1_filter.ratings_gt WHERE [prop IN \`movie_ratings_relation\`.ratings WHERE prop > value]]) AND ([value IN $1_filter.ratings_lte WHERE [prop IN \`movie_ratings_relation\`.ratings WHERE prop <= value]]) AND ([value IN $1_filter.ratings_gte WHERE [prop IN \`movie_ratings_relation\`.ratings WHERE prop >= value]]) AND ([value IN $1_filter.datetimes WHERE [prop IN \`movie_ratings_relation\`.datetimes WHERE ((value.year IS NULL OR prop.year = value.year) AND (value.hour IS NULL OR prop.hour = value.hour) AND (value.formatted IS NULL OR prop = datetime(value.formatted)))]]) AND (NONE(value IN $1_filter.datetimes_not WHERE [prop IN \`movie_ratings_relation\`.datetimes WHERE ((value.year IS NULL OR prop.year = value.year))])) AND ([value IN $1_filter.datetimes_lt WHERE [prop IN \`movie_ratings_relation\`.datetimes WHERE ((value.day IS NULL OR prop.day < value.day))]]) AND ([value IN $1_filter.datetimes_lte WHERE [prop IN \`movie_ratings_relation\`.datetimes WHERE ((value.day IS NULL OR prop.day <= value.day))]]) AND ([value IN $1_filter.datetimes_gt WHERE [prop IN \`movie_ratings_relation\`.datetimes WHERE ((value.hour IS NULL OR prop.hour > value.hour) AND (value.minute IS NULL OR prop.minute > value.minute))]]) AND ([value IN $1_filter.datetimes_gte WHERE [prop IN \`movie_ratings_relation\`.datetimes WHERE ((value.hour IS NULL OR prop.hour >= value.hour))]]) | movie_ratings_relation { .ratings ,datetimes: reduce(a = [], INSTANCE IN movie_ratings_relation.datetimes | a + { year: INSTANCE.year , month: INSTANCE.month , day: INSTANCE.day , hour: INSTANCE.hour , minute: INSTANCE.minute , second: INSTANCE.second , formatted: toString(INSTANCE) })}] } AS \`movie\``,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) WHERE ($\`filter\`._ratings_not_null = TRUE AND EXISTS((\`movie\`)<-[:RATED]-(:User))) RETURN \`movie\` {_id: ID(\`movie\`), .titles ,ratings: [(\`movie\`)<-[\`movie_ratings_relation\`:\`RATED\`]-(:\`User\`) WHERE ((size(\`movie_ratings_relation\`.ratings) > 0)) AND ([value IN $\`1_filter\`.ratings WHERE value IN \`movie_ratings_relation\`.ratings]) AND ([value IN $\`1_filter\`.ratings_lt WHERE [prop IN \`movie_ratings_relation\`.ratings WHERE prop < value]]) AND ([value IN $\`1_filter\`.ratings_gt WHERE [prop IN \`movie_ratings_relation\`.ratings WHERE prop > value]]) AND ([value IN $\`1_filter\`.ratings_lte WHERE [prop IN \`movie_ratings_relation\`.ratings WHERE prop <= value]]) AND ([value IN $\`1_filter\`.ratings_gte WHERE [prop IN \`movie_ratings_relation\`.ratings WHERE prop >= value]]) AND ([value IN $\`1_filter\`.datetimes WHERE [prop IN \`movie_ratings_relation\`.datetimes WHERE ((value.year IS NULL OR prop.year = value.year) AND (value.hour IS NULL OR prop.hour = value.hour) AND (value.formatted IS NULL OR prop = datetime(value.formatted)))]]) AND (NONE(value IN $\`1_filter\`.datetimes_not WHERE [prop IN \`movie_ratings_relation\`.datetimes WHERE ((value.year IS NULL OR prop.year = value.year))])) AND ([value IN $\`1_filter\`.datetimes_lt WHERE [prop IN \`movie_ratings_relation\`.datetimes WHERE ((value.day IS NULL OR prop.day < value.day))]]) AND ([value IN $\`1_filter\`.datetimes_lte WHERE [prop IN \`movie_ratings_relation\`.datetimes WHERE ((value.day IS NULL OR prop.day <= value.day))]]) AND ([value IN $\`1_filter\`.datetimes_gt WHERE [prop IN \`movie_ratings_relation\`.datetimes WHERE ((value.hour IS NULL OR prop.hour > value.hour) AND (value.minute IS NULL OR prop.minute > value.minute))]]) AND ([value IN $\`1_filter\`.datetimes_gte WHERE [prop IN \`movie_ratings_relation\`.datetimes WHERE ((value.hour IS NULL OR prop.hour >= value.hour))]]) | movie_ratings_relation { .ratings ,datetimes: reduce(a = [], INSTANCE IN movie_ratings_relation.datetimes | a + { year: INSTANCE.year , month: INSTANCE.month , day: INSTANCE.day , hour: INSTANCE.hour , minute: INSTANCE.minute , second: INSTANCE.second , formatted: toString(INSTANCE) })}] } AS \`movie\``,
     expectedParams = {
       offset: 0,
       first: -1,
@@ -7667,7 +7667,7 @@ test('Query node using only formatted temporal filter value nested in logical OR
     }
   }
   `,
-    expectedCypherQuery = `MATCH (\`temporalNode\`:\`TemporalNode\`) WHERE (ANY(_OR IN $filter.OR WHERE (((_OR.datetime_gte.formatted IS NULL OR \`temporalNode\`.datetime = datetime(_OR.datetime_gte.formatted)))))) RETURN \`temporalNode\` {_id: ID(\`temporalNode\`),datetime: { year: \`temporalNode\`.datetime.year , month: \`temporalNode\`.datetime.month , day: \`temporalNode\`.datetime.day , hour: \`temporalNode\`.datetime.hour , minute: \`temporalNode\`.datetime.minute , second: \`temporalNode\`.datetime.second , millisecond: \`temporalNode\`.datetime.millisecond , microsecond: \`temporalNode\`.datetime.microsecond , nanosecond: \`temporalNode\`.datetime.nanosecond , timezone: \`temporalNode\`.datetime.timezone , formatted: toString(\`temporalNode\`.datetime) }} AS \`temporalNode\``,
+    expectedCypherQuery = `MATCH (\`temporalNode\`:\`TemporalNode\`) WHERE (ANY(_OR IN $\`filter\`.OR WHERE (((_OR.datetime_gte.formatted IS NULL OR \`temporalNode\`.datetime = datetime(_OR.datetime_gte.formatted)))))) RETURN \`temporalNode\` {_id: ID(\`temporalNode\`),datetime: { year: \`temporalNode\`.datetime.year , month: \`temporalNode\`.datetime.month , day: \`temporalNode\`.datetime.day , hour: \`temporalNode\`.datetime.hour , minute: \`temporalNode\`.datetime.minute , second: \`temporalNode\`.datetime.second , millisecond: \`temporalNode\`.datetime.millisecond , microsecond: \`temporalNode\`.datetime.microsecond , nanosecond: \`temporalNode\`.datetime.nanosecond , timezone: \`temporalNode\`.datetime.timezone , formatted: toString(\`temporalNode\`.datetime) }} AS \`temporalNode\``,
     expectedParams = {
       offset: 0,
       first: -1,
@@ -8176,7 +8176,7 @@ test('Handle @cypher query using cypherParams with String payload', t => {
   const graphQLQuery = `query {
     currentUserId
   }`,
-    expectedCypherQuery = `WITH apoc.cypher.runFirstColumn("RETURN $cypherParams.currentUserId AS currentUserId", {offset:$offset, first:$first, cypherParams: $cypherParams}, True) AS x UNWIND x AS \`string\` RETURN \`string\` `,
+    expectedCypherQuery = `WITH apoc.cypher.runFirstColumn("RETURN $cypherParams.currentUserId AS currentUserId", {offset:$\`offset\`, first:$\`first\`, cypherParams: $cypherParams}, True) AS x UNWIND x AS \`string\` RETURN \`string\` `,
     expectedParams = {
       first: -1,
       cypherParams: CYPHER_PARAMS,
@@ -8202,7 +8202,7 @@ test('Handle @cypher query using cypherParams with Object payload', t => {
       userId
     }
   }`,
-    expectedCypherQuery = `WITH apoc.cypher.runFirstColumn("RETURN { userId: $cypherParams.currentUserId }", {offset:$offset, first:$first, cypherParams: $cypherParams}, True) AS x UNWIND x AS \`currentUserId\` RETURN \`currentUserId\` { .userId } AS \`currentUserId\``,
+    expectedCypherQuery = `WITH apoc.cypher.runFirstColumn("RETURN { userId: $cypherParams.currentUserId }", {offset:$\`offset\`, first:$\`first\`, cypherParams: $cypherParams}, True) AS x UNWIND x AS \`currentUserId\` RETURN \`currentUserId\` { .userId } AS \`currentUserId\``,
     expectedParams = {
       first: -1,
       cypherParams: CYPHER_PARAMS,
@@ -8226,7 +8226,7 @@ test('Handle @cypher query with Boolean payload', t => {
   const graphQLQuery = `query {
     computedBoolean
   }`,
-    expectedCypherQuery = `WITH apoc.cypher.runFirstColumn("RETURN true", {offset:$offset, first:$first, cypherParams: $cypherParams}, True) AS x UNWIND x AS \`boolean\` RETURN \`boolean\` `,
+    expectedCypherQuery = `WITH apoc.cypher.runFirstColumn("RETURN true", {offset:$\`offset\`, first:$\`first\`, cypherParams: $cypherParams}, True) AS x UNWIND x AS \`boolean\` RETURN \`boolean\` `,
     expectedParams = {
       first: -1,
       cypherParams: CYPHER_PARAMS,
@@ -8250,7 +8250,7 @@ test('Handle @cypher query with Int payload', t => {
   const graphQLQuery = `query {
     computedInt
   }`,
-    expectedCypherQuery = `WITH apoc.cypher.runFirstColumn("RETURN 1", {offset:$offset, first:$first, cypherParams: $cypherParams}, True) AS x UNWIND x AS \`int\` RETURN \`int\` `,
+    expectedCypherQuery = `WITH apoc.cypher.runFirstColumn("RETURN 1", {offset:$\`offset\`, first:$\`first\`, cypherParams: $cypherParams}, True) AS x UNWIND x AS \`int\` RETURN \`int\` `,
     expectedParams = {
       first: -1,
       cypherParams: CYPHER_PARAMS,
@@ -8274,7 +8274,7 @@ test('Handle @cypher query with Float payload', t => {
   const graphQLQuery = `query {
     computedFloat
   }`,
-    expectedCypherQuery = `WITH apoc.cypher.runFirstColumn("RETURN 3.14", {offset:$offset, first:$first, cypherParams: $cypherParams}, True) AS x UNWIND x AS \`float\` RETURN \`float\` `,
+    expectedCypherQuery = `WITH apoc.cypher.runFirstColumn("RETURN 3.14", {offset:$\`offset\`, first:$\`first\`, cypherParams: $cypherParams}, True) AS x UNWIND x AS \`float\` RETURN \`float\` `,
     expectedParams = {
       first: -1,
       cypherParams: CYPHER_PARAMS,
@@ -8298,7 +8298,7 @@ test('Handle @cypher query with String list payload', t => {
   const graphQLQuery = `query {
     computedStringList
   }`,
-    expectedCypherQuery = `WITH apoc.cypher.runFirstColumn("UNWIND ['hello', 'world'] AS stringList RETURN stringList", {offset:$offset, first:$first, cypherParams: $cypherParams}, True) AS x UNWIND x AS \`string\` RETURN \`string\` `,
+    expectedCypherQuery = `WITH apoc.cypher.runFirstColumn("UNWIND ['hello', 'world'] AS stringList RETURN stringList", {offset:$\`offset\`, first:$\`first\`, cypherParams: $cypherParams}, True) AS x UNWIND x AS \`string\` RETURN \`string\` `,
     expectedParams = {
       first: -1,
       cypherParams: CYPHER_PARAMS,
@@ -8322,7 +8322,7 @@ test('Handle @cypher query with Int list payload', t => {
   const graphQLQuery = `query {
     computedIntList
   }`,
-    expectedCypherQuery = `WITH apoc.cypher.runFirstColumn("UNWIND [1, 2, 3] AS intList RETURN intList", {offset:$offset, first:$first, cypherParams: $cypherParams}, True) AS x UNWIND x AS \`int\` RETURN \`int\` `,
+    expectedCypherQuery = `WITH apoc.cypher.runFirstColumn("UNWIND [1, 2, 3] AS intList RETURN intList", {offset:$\`offset\`, first:$\`first\`, cypherParams: $cypherParams}, True) AS x UNWIND x AS \`int\` RETURN \`int\` `,
     expectedParams = {
       first: -1,
       cypherParams: CYPHER_PARAMS,
@@ -8358,7 +8358,7 @@ test('Handle @cypher query with temporal payload', t => {
       formatted
     }
   }`,
-    expectedCypherQuery = `WITH apoc.cypher.runFirstColumn("WITH datetime() AS now RETURN { year: now.year, month: now.month , day: now.day , hour: now.hour , minute: now.minute , second: now.second , millisecond: now.millisecond , microsecond: now.microsecond , nanosecond: now.nanosecond , timezone: now.timezone , formatted: toString(now) }", {offset:$offset, first:$first, cypherParams: $cypherParams}, True) AS x UNWIND x AS \`_Neo4jDateTime\` RETURN \`_Neo4jDateTime\` `,
+    expectedCypherQuery = `WITH apoc.cypher.runFirstColumn("WITH datetime() AS now RETURN { year: now.year, month: now.month , day: now.day , hour: now.hour , minute: now.minute , second: now.second , millisecond: now.millisecond , microsecond: now.microsecond , nanosecond: now.nanosecond , timezone: now.timezone , formatted: toString(now) }", {offset:$\`offset\`, first:$\`first\`, cypherParams: $cypherParams}, True) AS x UNWIND x AS \`_Neo4jDateTime\` RETURN \`_Neo4jDateTime\` `,
     expectedParams = {
       first: -1,
       cypherParams: CYPHER_PARAMS,
@@ -8387,7 +8387,7 @@ test('Handle @cypher query with spatial payload', t => {
       crs
     }
   }`,
-    expectedCypherQuery = `WITH apoc.cypher.runFirstColumn("WITH point({ x: 10, y: 20, z: 15 }) AS instance RETURN { x: instance.x, y: instance.y, z: instance.z, crs: instance.crs }", {offset:$offset, first:$first, cypherParams: $cypherParams}, True) AS x UNWIND x AS \`_Neo4jPoint\` RETURN \`_Neo4jPoint\` `,
+    expectedCypherQuery = `WITH apoc.cypher.runFirstColumn("WITH point({ x: 10, y: 20, z: 15 }) AS instance RETURN { x: instance.x, y: instance.y, z: instance.z, crs: instance.crs }", {offset:$\`offset\`, first:$\`first\`, cypherParams: $cypherParams}, True) AS x UNWIND x AS \`_Neo4jPoint\` RETURN \`_Neo4jPoint\` `,
     expectedParams = {
       first: -1,
       cypherParams: CYPHER_PARAMS,
@@ -8411,7 +8411,7 @@ test('Handle @cypher mutation using cypherParams with String payload', t => {
   const graphQLQuery = `mutation {
     currentUserId
   }`,
-    expectedCypherQuery = `CALL apoc.cypher.doIt("RETURN $cypherParams.currentUserId", {first:$first, offset:$offset, cypherParams: $cypherParams}) YIELD value
+    expectedCypherQuery = `CALL apoc.cypher.doIt("RETURN $cypherParams.currentUserId", {first:$\`first\`, offset:$\`offset\`, cypherParams: $cypherParams}) YIELD value
     WITH apoc.map.values(value, [keys(value)[0]])[0] AS \`string\`
     RETURN \`string\` `,
     expectedParams = {
@@ -8439,7 +8439,7 @@ test('Handle @cypher mutation using cypherParams with Object payload', t => {
       userId
     }
   }`,
-    expectedCypherQuery = `CALL apoc.cypher.doIt("RETURN { userId: $cypherParams.currentUserId }", {first:$first, offset:$offset, cypherParams: $cypherParams}) YIELD value
+    expectedCypherQuery = `CALL apoc.cypher.doIt("RETURN { userId: $cypherParams.currentUserId }", {first:$\`first\`, offset:$\`offset\`, cypherParams: $cypherParams}) YIELD value
     WITH apoc.map.values(value, [keys(value)[0]])[0] AS \`currentUserId\`
     RETURN \`currentUserId\` { .userId } AS \`currentUserId\``,
     expectedParams = {
@@ -8465,7 +8465,7 @@ test('Handle @cypher mutation with String list payload', t => {
   const graphQLQuery = `mutation {
     computedStringList
   }`,
-    expectedCypherQuery = `CALL apoc.cypher.doIt("UNWIND ['hello', 'world'] AS stringList RETURN stringList", {first:$first, offset:$offset, cypherParams: $cypherParams}) YIELD value
+    expectedCypherQuery = `CALL apoc.cypher.doIt("UNWIND ['hello', 'world'] AS stringList RETURN stringList", {first:$\`first\`, offset:$\`offset\`, cypherParams: $cypherParams}) YIELD value
     WITH apoc.map.values(value, [keys(value)[0]])[0] AS \`string\`
     RETURN \`string\` `,
     expectedParams = {
@@ -8503,7 +8503,7 @@ test('Handle @cypher mutation with temporal payload', t => {
       formatted
     }
   }`,
-    expectedCypherQuery = `CALL apoc.cypher.doIt("WITH datetime() AS now RETURN { year: now.year, month: now.month , day: now.day , hour: now.hour , minute: now.minute , second: now.second , millisecond: now.millisecond , microsecond: now.microsecond , nanosecond: now.nanosecond , timezone: now.timezone , formatted: toString(now) }", {first:$first, offset:$offset, cypherParams: $cypherParams}) YIELD value
+    expectedCypherQuery = `CALL apoc.cypher.doIt("WITH datetime() AS now RETURN { year: now.year, month: now.month , day: now.day , hour: now.hour , minute: now.minute , second: now.second , millisecond: now.millisecond , microsecond: now.microsecond , nanosecond: now.nanosecond , timezone: now.timezone , formatted: toString(now) }", {first:$\`first\`, offset:$\`offset\`, cypherParams: $cypherParams}) YIELD value
     WITH apoc.map.values(value, [keys(value)[0]])[0] AS \`_Neo4jDateTime\`
     RETURN \`_Neo4jDateTime\` `,
     expectedParams = {
@@ -8534,7 +8534,7 @@ test('Handle @cypher mutation with spatial payload', t => {
       crs
     }
   }`,
-    expectedCypherQuery = `CALL apoc.cypher.doIt("WITH point({ x: 10, y: 20, z: 15 }) AS instance RETURN { x: instance.x, y: instance.y, z: instance.z, crs: instance.crs }", {first:$first, offset:$offset, cypherParams: $cypherParams}) YIELD value
+    expectedCypherQuery = `CALL apoc.cypher.doIt("WITH point({ x: 10, y: 20, z: 15 }) AS instance RETURN { x: instance.x, y: instance.y, z: instance.z, crs: instance.crs }", {first:$\`first\`, offset:$\`offset\`, cypherParams: $cypherParams}) YIELD value
     WITH apoc.map.values(value, [keys(value)[0]])[0] AS \`_Neo4jPoint\`
     RETURN \`_Neo4jPoint\` `,
     expectedParams = {
@@ -8584,7 +8584,7 @@ test('Handle nested @cypher fields using parameterized arguments and cypherParam
       },
       cypherParams: CYPHER_PARAMS
     },
-    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) RETURN \`movie\` {_id: ID(\`movie\`),currentUserId: apoc.cypher.runFirstColumn("RETURN $cypherParams.currentUserId AS cypherParamsUserId", {this: movie, cypherParams: $cypherParams, strArg: $1_strArg}, false),ratings: [(\`movie\`)<-[\`movie_ratings_relation\`:\`RATED\`]-(:\`User\`) | movie_ratings_relation {currentUserId: apoc.cypher.runFirstColumn("RETURN $cypherParams.currentUserId AS cypherParamsUserId", {this: movie_ratings_relation, cypherParams: $cypherParams, strArg: $2_strArg}, false),User: head([(:\`Movie\`${ADDITIONAL_MOVIE_LABELS})<-[\`movie_ratings_relation\`]-(\`movie_ratings_User\`:\`User\`) | movie_ratings_User { .name ,currentUserId: apoc.cypher.runFirstColumn("RETURN $cypherParams.currentUserId AS cypherParamsUserId", {this: movie_ratings_User, cypherParams: $cypherParams, strArg: $3_strArg, strInputArg: $3_strInputArg}, false)}]) }] } AS \`movie\``,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) RETURN \`movie\` {_id: ID(\`movie\`),currentUserId: apoc.cypher.runFirstColumn("RETURN $cypherParams.currentUserId AS cypherParamsUserId", {this: movie, cypherParams: $cypherParams, strArg: $\`1_strArg\`}, false),ratings: [(\`movie\`)<-[\`movie_ratings_relation\`:\`RATED\`]-(:\`User\`) | movie_ratings_relation {currentUserId: apoc.cypher.runFirstColumn("RETURN $cypherParams.currentUserId AS cypherParamsUserId", {this: movie_ratings_relation, cypherParams: $cypherParams, strArg: $\`2_strArg\`}, false),User: head([(:\`Movie\`${ADDITIONAL_MOVIE_LABELS})<-[\`movie_ratings_relation\`]-(\`movie_ratings_User\`:\`User\`) | movie_ratings_User { .name ,currentUserId: apoc.cypher.runFirstColumn("RETURN $cypherParams.currentUserId AS cypherParamsUserId", {this: movie_ratings_User, cypherParams: $cypherParams, strArg: $\`3_strArg\`, strInputArg: $\`3_strInputArg\`}, false)}]) }] } AS \`movie\``,
     expectedParams = {
       offset: 0,
       first: -1,
@@ -8619,7 +8619,7 @@ test('Handle @cypher mutation with input type argument', t => {
         strArg: 'World'
       }
     },
-    expectedCypherQuery = `CALL apoc.cypher.doIt("RETURN $strInputArg.strArg", {strArg:$strArg, strInputArg:$strInputArg, first:$first, offset:$offset, cypherParams: $cypherParams}) YIELD value
+    expectedCypherQuery = `CALL apoc.cypher.doIt("RETURN $strInputArg.strArg", {strArg:$\`strArg\`, strInputArg:$\`strInputArg\`, first:$\`first\`, offset:$\`offset\`, cypherParams: $cypherParams}) YIELD value
     WITH apoc.map.values(value, [keys(value)[0]])[0] AS \`string\`
     RETURN \`string\` `,
     expectedParams = {
@@ -8681,7 +8681,7 @@ test('Handle @cypher mutation with list arguments', t => {
         { x: 10.2, y: 11.3, z: 12.4 }
       ]
     },
-    expectedCypherQuery = `CALL apoc.cypher.doIt("CREATE (n:Node { integer: $integer, datetime: datetime($datetime), point: point($point), integers: $integers, datetimes: [value IN $datetimes | datetime(value)], points: [value IN $points | point(value)] }) RETURN TRUE", {integer:$integer, datetime:$datetime, integers:$integers, datetimes:$datetimes, point:$point, points:$points, first:$first, offset:$offset, cypherParams: $cypherParams}) YIELD value
+    expectedCypherQuery = `CALL apoc.cypher.doIt("CREATE (n:Node { integer: $integer, datetime: datetime($datetime), point: point($point), integers: $integers, datetimes: [value IN $datetimes | datetime(value)], points: [value IN $points | point(value)] }) RETURN TRUE", {integer:$\`integer\`, datetime:$\`datetime\`, integers:$\`integers\`, datetimes:$\`datetimes\`, point:$\`point\`, points:$\`points\`, first:$\`first\`, offset:$\`offset\`, cypherParams: $cypherParams}) YIELD value
     WITH apoc.map.values(value, [keys(value)[0]])[0] AS \`boolean\`
     RETURN \`boolean\` `,
     expectedParams = {
@@ -8784,7 +8784,7 @@ test('Handle @cypher query with parameterized input type argument', t => {
         strArg: 'World'
       }
     },
-    expectedCypherQuery = `WITH apoc.cypher.runFirstColumn("RETURN $strInputArg.strArg", {offset:$offset, first:$first, strArg:$strArg, strInputArg:$strInputArg, cypherParams: $cypherParams}, True) AS x UNWIND x AS \`string\` RETURN \`string\` `,
+    expectedCypherQuery = `WITH apoc.cypher.runFirstColumn("RETURN $strInputArg.strArg", {offset:$\`offset\`, first:$\`first\`, strArg:$\`strArg\`, strInputArg:$\`strInputArg\`, cypherParams: $cypherParams}, True) AS x UNWIND x AS \`string\` RETURN \`string\` `,
     expectedParams = {
       first: -1,
       offset: 0,
@@ -8852,7 +8852,7 @@ test('Handle @cypher field with parameterized value for field of input type argu
     graphqlParams = {
       strArg: 'Yo Dawg'
     },
-    expectedCypherQuery = `MATCH (\`user\`:\`User\`) RETURN \`user\` { .name ,currentUserId: apoc.cypher.runFirstColumn("RETURN $cypherParams.currentUserId AS cypherParamsUserId", {this: user, cypherParams: $cypherParams, strArg: "Neo4j", strInputArg: $1_strInputArg}, false)} AS \`user\``,
+    expectedCypherQuery = `MATCH (\`user\`:\`User\`) RETURN \`user\` { .name ,currentUserId: apoc.cypher.runFirstColumn("RETURN $cypherParams.currentUserId AS cypherParamsUserId", {this: user, cypherParams: $cypherParams, strArg: "Neo4j", strInputArg: $\`1_strInputArg\`}, false)} AS \`user\``,
     expectedParams = {
       '1_strInputArg': {
         strArg: 'Yo Dawg'
@@ -8914,7 +8914,7 @@ test('Handle order by field with underscores - nested field ', t => {
   }
   `,
     expectedCypherQuery =
-      'WITH apoc.cypher.runFirstColumn("MATCH (g:Genre) WHERE toLower(g.name) CONTAINS toLower($substring) RETURN g", {offset:$offset, first:$first, substring:$substring, cypherParams: $cypherParams}, True) AS x UNWIND x AS `genre` RETURN `genre` {movies: apoc.coll.sortMulti([(`genre`)<-[:`IN_GENRE`]-(`genre_movies`:`Movie`:`u_user-id`:`newMovieLabel`) | `genre_movies` { .title , .someprefix_title_with_underscores }], [\'someprefix_title_with_underscores\']) } AS `genre`',
+      'WITH apoc.cypher.runFirstColumn("MATCH (g:Genre) WHERE toLower(g.name) CONTAINS toLower($substring) RETURN g", {offset:$`offset`, first:$`first`, substring:$`substring`, cypherParams: $cypherParams}, True) AS x UNWIND x AS `genre` RETURN `genre` {movies: apoc.coll.sortMulti([(`genre`)<-[:`IN_GENRE`]-(`genre_movies`:`Movie`:`u_user-id`:`newMovieLabel`) | `genre_movies` { .title , .someprefix_title_with_underscores }], [\'someprefix_title_with_underscores\']) } AS `genre`',
     expectedParams = {
       '1_orderBy': 'someprefix_title_with_underscores_desc',
       cypherParams: CYPHER_PARAMS,
@@ -9060,7 +9060,7 @@ test('query only computed interface fields', t => {
       weight
     }
   }`,
-    expectedCypherQuery = `WITH apoc.cypher.runFirstColumn("MATCH (c:Camera) RETURN c", {offset:$offset, first:$first, cypherParams: $cypherParams}, True) AS x UNWIND x AS \`camera\` RETURN \`camera\` {FRAGMENT_TYPE: head( [ label IN labels(\`camera\`) WHERE label IN $Camera_derivedTypes ] ), .id , .type , .make , .weight } AS \`camera\``,
+    expectedCypherQuery = `WITH apoc.cypher.runFirstColumn("MATCH (c:Camera) RETURN c", {offset:$\`offset\`, first:$\`first\`, cypherParams: $cypherParams}, True) AS x UNWIND x AS \`camera\` RETURN \`camera\` {FRAGMENT_TYPE: head( [ label IN labels(\`camera\`) WHERE label IN $Camera_derivedTypes ] ), .id , .type , .make , .weight } AS \`camera\``,
     expectedParams = {
       first: -1,
       offset: 0,
@@ -9237,7 +9237,7 @@ test('query computed interface type relationship field', t => {
       }
     }
   }`,
-    expectedCypherQuery = `WITH apoc.cypher.runFirstColumn("MATCH (c:Camera) RETURN c", {offset:$offset, first:$first, cypherParams: $cypherParams}, True) AS x UNWIND x AS \`camera\` RETURN \`camera\` {FRAGMENT_TYPE: head( [ label IN labels(\`camera\`) WHERE label IN $Camera_derivedTypes ] ), .id , .type , .make , .weight ,computedOperators: [ camera_computedOperators IN apoc.cypher.runFirstColumn("MATCH (this)<-[:cameras]-(p:Person) RETURN p", {this: camera, cypherParams: $cypherParams}, true) | camera_computedOperators {FRAGMENT_TYPE: head( [ label IN labels(camera_computedOperators) WHERE label IN $Person_derivedTypes ] ), .userId , .name }] } AS \`camera\``,
+    expectedCypherQuery = `WITH apoc.cypher.runFirstColumn("MATCH (c:Camera) RETURN c", {offset:$\`offset\`, first:$\`first\`, cypherParams: $cypherParams}, True) AS x UNWIND x AS \`camera\` RETURN \`camera\` {FRAGMENT_TYPE: head( [ label IN labels(\`camera\`) WHERE label IN $Camera_derivedTypes ] ), .id , .type , .make , .weight ,computedOperators: [ camera_computedOperators IN apoc.cypher.runFirstColumn("MATCH (this)<-[:cameras]-(p:Person) RETURN p", {this: camera, cypherParams: $cypherParams}, true) | camera_computedOperators {FRAGMENT_TYPE: head( [ label IN labels(camera_computedOperators) WHERE label IN $Person_derivedTypes ] ), .userId , .name }] } AS \`camera\``,
     expectedParams = {
       offset: 0,
       first: -1,
@@ -9274,7 +9274,7 @@ test('query computed interface type relationship field using only an inline frag
       }
     }
   }`,
-    expectedCypherQuery = `WITH apoc.cypher.runFirstColumn("MATCH (c:Camera) RETURN c", {offset:$offset, first:$first, cypherParams: $cypherParams}, True) AS x UNWIND x AS \`camera\` RETURN \`camera\` {FRAGMENT_TYPE: head( [ label IN labels(\`camera\`) WHERE label IN $Camera_derivedTypes ] ), .id , .type , .make , .weight ,computedOperators: [camera_computedOperators IN [ camera_computedOperators IN apoc.cypher.runFirstColumn("MATCH (this)<-[:cameras]-(p:Person) RETURN p", {this: camera, cypherParams: $cypherParams}, true) WHERE ("CameraMan" IN labels(camera_computedOperators)) | camera_computedOperators] | head([\`camera_computedOperators\` IN [\`camera_computedOperators\`] WHERE "CameraMan" IN labels(\`camera_computedOperators\`) | \`camera_computedOperators\` { FRAGMENT_TYPE: "CameraMan",  .userId , .name  }])] } AS \`camera\``,
+    expectedCypherQuery = `WITH apoc.cypher.runFirstColumn("MATCH (c:Camera) RETURN c", {offset:$\`offset\`, first:$\`first\`, cypherParams: $cypherParams}, True) AS x UNWIND x AS \`camera\` RETURN \`camera\` {FRAGMENT_TYPE: head( [ label IN labels(\`camera\`) WHERE label IN $Camera_derivedTypes ] ), .id , .type , .make , .weight ,computedOperators: [camera_computedOperators IN [ camera_computedOperators IN apoc.cypher.runFirstColumn("MATCH (this)<-[:cameras]-(p:Person) RETURN p", {this: camera, cypherParams: $cypherParams}, true) WHERE ("CameraMan" IN labels(camera_computedOperators)) | camera_computedOperators] | head([\`camera_computedOperators\` IN [\`camera_computedOperators\`] WHERE "CameraMan" IN labels(\`camera_computedOperators\`) | \`camera_computedOperators\` { FRAGMENT_TYPE: "CameraMan",  .userId , .name  }])] } AS \`camera\``,
     expectedParams = {
       offset: 0,
       first: -1,
@@ -9591,7 +9591,7 @@ test('filtering used on root and nested interface type field with only fragments
       }
     }
   }`,
-    expectedCypherQuery = `MATCH (\`camera\`:\`Camera\`) WHERE ("NewCamera" IN labels(\`camera\`)) AND ($filter._operators_not_null = TRUE AND EXISTS((\`camera\`)<-[:cameras]-(:Person))) RETURN head([\`camera\` IN [\`camera\`] WHERE "NewCamera" IN labels(\`camera\`) | \`camera\` { FRAGMENT_TYPE: "NewCamera", operators: [(\`camera\`)<-[:\`cameras\`]-(\`camera_operators\`:\`Person\`) WHERE ("CameraMan" IN labels(\`camera_operators\`)) AND ($1_filter._name_not_null = TRUE AND EXISTS(\`camera_operators\`.name)) | head([\`camera_operators\` IN [\`camera_operators\`] WHERE "CameraMan" IN labels(\`camera_operators\`) | \`camera_operators\` { FRAGMENT_TYPE: "CameraMan",  .name  }])]  }]) AS \`camera\``,
+    expectedCypherQuery = `MATCH (\`camera\`:\`Camera\`) WHERE ("NewCamera" IN labels(\`camera\`)) AND ($\`filter\`._operators_not_null = TRUE AND EXISTS((\`camera\`)<-[:cameras]-(:Person))) RETURN head([\`camera\` IN [\`camera\`] WHERE "NewCamera" IN labels(\`camera\`) | \`camera\` { FRAGMENT_TYPE: "NewCamera", operators: [(\`camera\`)<-[:\`cameras\`]-(\`camera_operators\`:\`Person\`) WHERE ("CameraMan" IN labels(\`camera_operators\`)) AND ($\`1_filter\`._name_not_null = TRUE AND EXISTS(\`camera_operators\`.name)) | head([\`camera_operators\` IN [\`camera_operators\`] WHERE "CameraMan" IN labels(\`camera_operators\`) | \`camera_operators\` { FRAGMENT_TYPE: "CameraMan",  .name  }])]  }]) AS \`camera\``,
     expectedParams = {
       offset: 0,
       first: -1,
@@ -9648,7 +9648,7 @@ test('filtering used on root and nested interface using fragments and query vari
       },
       computedOperatorName: 'Johnnie Zoom'
     },
-    expectedCypherQuery = `MATCH (\`camera\`:\`Camera\` {type:$type}) WHERE ("NewCamera" IN labels(\`camera\`) OR "OldCamera" IN labels(\`camera\`)) RETURN head([\`camera\` IN [\`camera\`] WHERE "NewCamera" IN labels(\`camera\`) | \`camera\` { FRAGMENT_TYPE: "NewCamera", operators: [(\`camera\`)<-[:\`cameras\`]-(\`camera_operators\`:\`Person\`) WHERE (\`camera_operators\`.userId = $1_filter.userId) | \`camera_operators\` {FRAGMENT_TYPE: head( [ label IN labels(\`camera_operators\`) WHERE label IN $Person_derivedTypes ] ), .userId }] , .id , .type ,computedOperators: [ camera_computedOperators IN apoc.cypher.runFirstColumn("MATCH (this)<-[:cameras]-(p:Person) RETURN p", {this: camera, cypherParams: $cypherParams, name: $3_name}, true) | camera_computedOperators {FRAGMENT_TYPE: head( [ label IN labels(camera_computedOperators) WHERE label IN $Person_derivedTypes ] ), .userId , .name }]  }] + [\`camera\` IN [\`camera\`] WHERE "OldCamera" IN labels(\`camera\`) | \`camera\` { FRAGMENT_TYPE: "OldCamera", operators: [(\`camera\`)<-[:\`cameras\`]-(\`camera_operators\`:\`Person\`) WHERE (\`camera_operators\`.userId = $1_filter.userId) | \`camera_operators\` {FRAGMENT_TYPE: head( [ label IN labels(\`camera_operators\`) WHERE label IN $Person_derivedTypes ] ), .userId }] , .id , .type ,computedOperators: [ camera_computedOperators IN apoc.cypher.runFirstColumn("MATCH (this)<-[:cameras]-(p:Person) RETURN p", {this: camera, cypherParams: $cypherParams, name: $3_name}, true) | camera_computedOperators {FRAGMENT_TYPE: head( [ label IN labels(camera_computedOperators) WHERE label IN $Person_derivedTypes ] ), .userId , .name }]  }]) AS \`camera\``,
+    expectedCypherQuery = `MATCH (\`camera\`:\`Camera\` {type:$\`type\`}) WHERE ("NewCamera" IN labels(\`camera\`) OR "OldCamera" IN labels(\`camera\`)) RETURN head([\`camera\` IN [\`camera\`] WHERE "NewCamera" IN labels(\`camera\`) | \`camera\` { FRAGMENT_TYPE: "NewCamera", operators: [(\`camera\`)<-[:\`cameras\`]-(\`camera_operators\`:\`Person\`) WHERE (\`camera_operators\`.userId = $\`1_filter\`.userId) | \`camera_operators\` {FRAGMENT_TYPE: head( [ label IN labels(\`camera_operators\`) WHERE label IN $Person_derivedTypes ] ), .userId }] , .id , .type ,computedOperators: [ camera_computedOperators IN apoc.cypher.runFirstColumn("MATCH (this)<-[:cameras]-(p:Person) RETURN p", {this: camera, cypherParams: $cypherParams, name: $\`3_name\`}, true) | camera_computedOperators {FRAGMENT_TYPE: head( [ label IN labels(camera_computedOperators) WHERE label IN $Person_derivedTypes ] ), .userId , .name }]  }] + [\`camera\` IN [\`camera\`] WHERE "OldCamera" IN labels(\`camera\`) | \`camera\` { FRAGMENT_TYPE: "OldCamera", operators: [(\`camera\`)<-[:\`cameras\`]-(\`camera_operators\`:\`Person\`) WHERE (\`camera_operators\`.userId = $\`1_filter\`.userId) | \`camera_operators\` {FRAGMENT_TYPE: head( [ label IN labels(\`camera_operators\`) WHERE label IN $Person_derivedTypes ] ), .userId }] , .id , .type ,computedOperators: [ camera_computedOperators IN apoc.cypher.runFirstColumn("MATCH (this)<-[:cameras]-(p:Person) RETURN p", {this: camera, cypherParams: $cypherParams, name: $\`3_name\`}, true) | camera_computedOperators {FRAGMENT_TYPE: head( [ label IN labels(camera_computedOperators) WHERE label IN $Person_derivedTypes ] ), .userId , .name }]  }]) AS \`camera\``,
     expectedParams = {
       offset: 0,
       first: -1,
@@ -9689,7 +9689,7 @@ test('query only computed fields on an implementing type using an inline fragmen
       }
     }
   }`,
-    expectedCypherQuery = `WITH apoc.cypher.runFirstColumn("MATCH (c:Camera) RETURN c", {offset:$offset, first:$first, cypherParams: $cypherParams}, True) AS x WITH [\`camera\` IN x WHERE ("OldCamera" IN labels(\`camera\`)) | \`camera\`] AS x UNWIND x AS \`camera\` RETURN head([\`camera\` IN [\`camera\`] WHERE "OldCamera" IN labels(\`camera\`) | \`camera\` { FRAGMENT_TYPE: "OldCamera",  .id , .type  }]) AS \`camera\``,
+    expectedCypherQuery = `WITH apoc.cypher.runFirstColumn("MATCH (c:Camera) RETURN c", {offset:$\`offset\`, first:$\`first\`, cypherParams: $cypherParams}, True) AS x WITH [\`camera\` IN x WHERE ("OldCamera" IN labels(\`camera\`)) | \`camera\`] AS x UNWIND x AS \`camera\` RETURN head([\`camera\` IN [\`camera\`] WHERE "OldCamera" IN labels(\`camera\`) | \`camera\` { FRAGMENT_TYPE: "OldCamera",  .id , .type  }]) AS \`camera\``,
     expectedParams = {
       offset: 0,
       first: -1,
@@ -9725,7 +9725,7 @@ test('query computed interface fields using fragments on implementing types', t 
     type
     weight
   }`,
-    expectedCypherQuery = `WITH apoc.cypher.runFirstColumn("MATCH (c:Camera) RETURN c", {offset:$offset, first:$first, cypherParams: $cypherParams}, True) AS x WITH [\`camera\` IN x WHERE ("NewCamera" IN labels(\`camera\`) OR "OldCamera" IN labels(\`camera\`)) | \`camera\`] AS x UNWIND x AS \`camera\` RETURN head([\`camera\` IN [\`camera\`] WHERE "NewCamera" IN labels(\`camera\`) | \`camera\` { FRAGMENT_TYPE: "NewCamera",  .type , .weight , .id  }] + [\`camera\` IN [\`camera\`] WHERE "OldCamera" IN labels(\`camera\`) | \`camera\` { FRAGMENT_TYPE: "OldCamera",  .type , .id  }]) AS \`camera\``,
+    expectedCypherQuery = `WITH apoc.cypher.runFirstColumn("MATCH (c:Camera) RETURN c", {offset:$\`offset\`, first:$\`first\`, cypherParams: $cypherParams}, True) AS x WITH [\`camera\` IN x WHERE ("NewCamera" IN labels(\`camera\`) OR "OldCamera" IN labels(\`camera\`)) | \`camera\`] AS x UNWIND x AS \`camera\` RETURN head([\`camera\` IN [\`camera\`] WHERE "NewCamera" IN labels(\`camera\`) | \`camera\` { FRAGMENT_TYPE: "NewCamera",  .type , .weight , .id  }] + [\`camera\` IN [\`camera\`] WHERE "OldCamera" IN labels(\`camera\`) | \`camera\` { FRAGMENT_TYPE: "OldCamera",  .type , .id  }]) AS \`camera\``,
     expectedParams = {
       offset: 0,
       first: -1,
@@ -10068,7 +10068,7 @@ test('query interface type payload of @cypher mutation field', t => {
       type
     }
   }`,
-    expectedCypherQuery = `CALL apoc.cypher.doIt("CREATE (newCamera:Camera:NewCamera {id: apoc.create.uuid(), type: 'macro'}) RETURN newCamera", {first:$first, offset:$offset, cypherParams: $cypherParams}) YIELD value
+    expectedCypherQuery = `CALL apoc.cypher.doIt("CREATE (newCamera:Camera:NewCamera {id: apoc.create.uuid(), type: 'macro'}) RETURN newCamera", {first:$\`first\`, offset:$\`offset\`, cypherParams: $cypherParams}) YIELD value
     WITH apoc.map.values(value, [keys(value)[0]])[0] AS \`camera\`
     RETURN \`camera\` {FRAGMENT_TYPE: head( [ label IN labels(\`camera\`) WHERE label IN $Camera_derivedTypes ] ), .id , .type } AS \`camera\``,
     expectedParams = {
@@ -10108,7 +10108,7 @@ test('query interface type list payload of @cypher mutation field using fragment
   fragment OldCameraFragment on OldCamera {
     smell
   }`,
-    expectedCypherQuery = `CALL apoc.cypher.doIt("CREATE (newCamera:Camera:NewCamera {id: apoc.create.uuid(), type: 'macro', features: ['selfie', 'zoom']}) CREATE (oldCamera:Camera:OldCamera {id: apoc.create.uuid(), type: 'floating', smell: 'rusty' }) RETURN [newCamera, oldCamera]", {first:$first, offset:$offset, cypherParams: $cypherParams}) YIELD value
+    expectedCypherQuery = `CALL apoc.cypher.doIt("CREATE (newCamera:Camera:NewCamera {id: apoc.create.uuid(), type: 'macro', features: ['selfie', 'zoom']}) CREATE (oldCamera:Camera:OldCamera {id: apoc.create.uuid(), type: 'floating', smell: 'rusty' }) RETURN [newCamera, oldCamera]", {first:$\`first\`, offset:$\`offset\`, cypherParams: $cypherParams}) YIELD value
     UNWIND [\`camera\` IN apoc.map.values(value, [keys(value)[0]])[0]  WHERE ("NewCamera" IN labels(\`camera\`) OR "OldCamera" IN labels(\`camera\`)) | \`camera\`] AS \`camera\`
     RETURN head([\`camera\` IN [\`camera\`] WHERE "NewCamera" IN labels(\`camera\`) | \`camera\` { FRAGMENT_TYPE: "NewCamera",  .features , .id , .type  }] + [\`camera\` IN [\`camera\`] WHERE "OldCamera" IN labels(\`camera\`) | \`camera\` { FRAGMENT_TYPE: "OldCamera",  .smell , .id , .type  }]) AS \`camera\``,
     expectedParams = {
@@ -10143,7 +10143,7 @@ test('query interface type list payload of @cypher mutation field using only fra
   fragment OldCameraFragment on OldCamera {
     smell
   }`,
-    expectedCypherQuery = `CALL apoc.cypher.doIt("CREATE (newCamera:Camera:NewCamera {id: apoc.create.uuid(), type: 'macro', features: ['selfie', 'zoom']}) CREATE (oldCamera:Camera:OldCamera {id: apoc.create.uuid(), type: 'floating', smell: 'rusty' }) RETURN [newCamera, oldCamera]", {first:$first, offset:$offset, cypherParams: $cypherParams}) YIELD value
+    expectedCypherQuery = `CALL apoc.cypher.doIt("CREATE (newCamera:Camera:NewCamera {id: apoc.create.uuid(), type: 'macro', features: ['selfie', 'zoom']}) CREATE (oldCamera:Camera:OldCamera {id: apoc.create.uuid(), type: 'floating', smell: 'rusty' }) RETURN [newCamera, oldCamera]", {first:$\`first\`, offset:$\`offset\`, cypherParams: $cypherParams}) YIELD value
     UNWIND [\`camera\` IN apoc.map.values(value, [keys(value)[0]])[0]  WHERE ("NewCamera" IN labels(\`camera\`) OR "OldCamera" IN labels(\`camera\`)) | \`camera\`] AS \`camera\`
     RETURN head([\`camera\` IN [\`camera\`] WHERE "NewCamera" IN labels(\`camera\`) | \`camera\` { FRAGMENT_TYPE: "NewCamera",  .features  }] + [\`camera\` IN [\`camera\`] WHERE "OldCamera" IN labels(\`camera\`) | \`camera\` { FRAGMENT_TYPE: "OldCamera",  .smell  }]) AS \`camera\``,
     expectedParams = {
@@ -10788,7 +10788,7 @@ test('query computed union type using fragments', t => {
   fragment MovieSearchGenre on Genre {
     name
   }`,
-    expectedCypherQuery = `WITH apoc.cypher.runFirstColumn("MATCH (ms:MovieSearch) RETURN ms", {offset:$offset, first:$first, cypherParams: $cypherParams}, True) AS x WITH [\`movieSearch\` IN x WHERE ("Genre" IN labels(\`movieSearch\`) OR "Movie" IN labels(\`movieSearch\`)) | \`movieSearch\`] AS x UNWIND x AS \`movieSearch\` RETURN head([\`movieSearch\` IN [\`movieSearch\`] WHERE "Genre" IN labels(\`movieSearch\`) | \`movieSearch\` { FRAGMENT_TYPE: "Genre",  .name  }] + [\`movieSearch\` IN [\`movieSearch\`] WHERE "Movie" IN labels(\`movieSearch\`) | \`movieSearch\` { FRAGMENT_TYPE: "Movie",  .movieId , .title  }]) AS \`movieSearch\``,
+    expectedCypherQuery = `WITH apoc.cypher.runFirstColumn("MATCH (ms:MovieSearch) RETURN ms", {offset:$\`offset\`, first:$\`first\`, cypherParams: $cypherParams}, True) AS x WITH [\`movieSearch\` IN x WHERE ("Genre" IN labels(\`movieSearch\`) OR "Movie" IN labels(\`movieSearch\`)) | \`movieSearch\`] AS x UNWIND x AS \`movieSearch\` RETURN head([\`movieSearch\` IN [\`movieSearch\`] WHERE "Genre" IN labels(\`movieSearch\`) | \`movieSearch\` { FRAGMENT_TYPE: "Genre",  .name  }] + [\`movieSearch\` IN [\`movieSearch\`] WHERE "Movie" IN labels(\`movieSearch\`) | \`movieSearch\` { FRAGMENT_TYPE: "Movie",  .movieId , .title  }]) AS \`movieSearch\``,
     expectedParams = {
       first: -1,
       offset: 0,
@@ -10963,7 +10963,7 @@ test('query union type payload of computed mutation field', t => {
       }
     }
   }`,
-    expectedCypherQuery = `CALL apoc.cypher.doIt("MATCH (ms:MovieSearch) RETURN ms", {first:$first, offset:$offset, cypherParams: $cypherParams}) YIELD value
+    expectedCypherQuery = `CALL apoc.cypher.doIt("MATCH (ms:MovieSearch) RETURN ms", {first:$\`first\`, offset:$\`offset\`, cypherParams: $cypherParams}) YIELD value
     UNWIND [\`movieSearch\` IN apoc.map.values(value, [keys(value)[0]])[0]  WHERE ("Movie" IN labels(\`movieSearch\`)) | \`movieSearch\`] AS \`movieSearch\`
     RETURN head([\`movieSearch\` IN [\`movieSearch\`] WHERE "Movie" IN labels(\`movieSearch\`) | \`movieSearch\` { FRAGMENT_TYPE: "Movie",  .title  }]) AS \`movieSearch\``,
     expectedParams = {
@@ -11229,7 +11229,7 @@ test('query computed union type relationship using pagination', t => {
   fragment MovieSearchGenre on Genre {
     name
   }`,
-    expectedCypherQuery = `WITH apoc.cypher.runFirstColumn("MATCH (ms:MovieSearch) RETURN ms", {offset:$offset, first:$first, cypherParams: $cypherParams}, True) AS x WITH [\`movieSearch\` IN x WHERE ("Genre" IN labels(\`movieSearch\`) OR "Movie" IN labels(\`movieSearch\`)) | \`movieSearch\`] AS x UNWIND x AS \`movieSearch\` RETURN head([\`movieSearch\` IN [\`movieSearch\`] WHERE "Genre" IN labels(\`movieSearch\`) | \`movieSearch\` { FRAGMENT_TYPE: "Genre",  .name  }] + [\`movieSearch\` IN [\`movieSearch\`] WHERE "Movie" IN labels(\`movieSearch\`) | \`movieSearch\` { FRAGMENT_TYPE: "Movie",  .movieId , .title  }]) AS \`movieSearch\` SKIP toInteger($offset) LIMIT toInteger($first)`,
+    expectedCypherQuery = `WITH apoc.cypher.runFirstColumn("MATCH (ms:MovieSearch) RETURN ms", {offset:$\`offset\`, first:$\`first\`, cypherParams: $cypherParams}, True) AS x WITH [\`movieSearch\` IN x WHERE ("Genre" IN labels(\`movieSearch\`) OR "Movie" IN labels(\`movieSearch\`)) | \`movieSearch\`] AS x UNWIND x AS \`movieSearch\` RETURN head([\`movieSearch\` IN [\`movieSearch\`] WHERE "Genre" IN labels(\`movieSearch\`) | \`movieSearch\` { FRAGMENT_TYPE: "Genre",  .name  }] + [\`movieSearch\` IN [\`movieSearch\`] WHERE "Movie" IN labels(\`movieSearch\`) | \`movieSearch\` { FRAGMENT_TYPE: "Movie",  .movieId , .title  }]) AS \`movieSearch\` SKIP toInteger($offset) LIMIT toInteger($first)`,
     expectedParams = {
       offset: 2,
       first: 5,
@@ -11328,7 +11328,7 @@ test('filter relationship type field on tail node type with a custom field name 
     }
   }
   `,
-    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`:\`u_user-id\`:\`newMovieLabel\`) WHERE (EXISTS((\`movie\`)<-[:RATED_CUSTOM_TO]-(:User)) AND ALL(\`movie_filter_user\` IN [(\`movie\`)<-[\`_movie_filter_user\`:RATED_CUSTOM_TO]-(:User) | \`_movie_filter_user\`] WHERE (ALL(\`user\` IN [(\`movie\`)<-[\`movie_filter_user\`]-(\`_user\`:User) | \`_user\`] WHERE ($filter.ratingsCustomTo.User._name_not_null = TRUE AND EXISTS(\`user\`.name)))))) RETURN \`movie\` { .movieId ,ratingsCustomTo: [(\`movie\`)<-[\`movie_ratingsCustomTo_relation\`:\`RATED_CUSTOM_TO\`]-(:\`User\`) | movie_ratingsCustomTo_relation { .rating , .ratings ,User: head([(:\`Movie\`:\`u_user-id\`:\`newMovieLabel\`)<-[\`movie_ratingsCustomTo_relation\`]-(\`movie_ratingsCustomTo_User\`:\`User\`) | movie_ratingsCustomTo_User { .userId , .name }]) }] } AS \`movie\``,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`:\`u_user-id\`:\`newMovieLabel\`) WHERE (EXISTS((\`movie\`)<-[:RATED_CUSTOM_TO]-(:User)) AND ALL(\`movie_filter_user\` IN [(\`movie\`)<-[\`_movie_filter_user\`:RATED_CUSTOM_TO]-(:User) | \`_movie_filter_user\`] WHERE (ALL(\`user\` IN [(\`movie\`)<-[\`movie_filter_user\`]-(\`_user\`:User) | \`_user\`] WHERE ($\`filter\`.ratingsCustomTo.User._name_not_null = TRUE AND EXISTS(\`user\`.name)))))) RETURN \`movie\` { .movieId ,ratingsCustomTo: [(\`movie\`)<-[\`movie_ratingsCustomTo_relation\`:\`RATED_CUSTOM_TO\`]-(:\`User\`) | movie_ratingsCustomTo_relation { .rating , .ratings ,User: head([(:\`Movie\`:\`u_user-id\`:\`newMovieLabel\`)<-[\`movie_ratingsCustomTo_relation\`]-(\`movie_ratingsCustomTo_User\`:\`User\`) | movie_ratingsCustomTo_User { .userId , .name }]) }] } AS \`movie\``,
     expectedParams = {
       offset: 0,
       first: -1,
@@ -11409,7 +11409,7 @@ test('filter relationship type field on tail node type with a custom field name 
       }
     }
   }`,
-    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`:\`u_user-id\`:\`newMovieLabel\`) WHERE (EXISTS((\`movie\`)<-[:RATED_CUSTOM_FROM]-(:User)) AND ALL(\`movie_filter_user\` IN [(\`movie\`)<-[\`_movie_filter_user\`:RATED_CUSTOM_FROM]-(:User) | \`_movie_filter_user\`] WHERE (ALL(\`user\` IN [(\`movie\`)<-[\`movie_filter_user\`]-(\`_user\`:User) | \`_user\`] WHERE (\`user\`.userId = $filter.ratingsCustomFrom.ratedBy.userId))))) RETURN \`movie\` { .movieId ,ratingsCustomFrom: [(\`movie\`)<-[\`movie_ratingsCustomFrom_relation\`:\`RATED_CUSTOM_FROM\`]-(:\`User\`) | movie_ratingsCustomFrom_relation { .rating , .ratings ,ratedBy: head([(:\`Movie\`:\`u_user-id\`:\`newMovieLabel\`)<-[\`movie_ratingsCustomFrom_relation\`]-(\`movie_ratingsCustomFrom_ratedBy\`:\`User\`) | movie_ratingsCustomFrom_ratedBy { .userId , .name }]) }] } AS \`movie\``,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`:\`u_user-id\`:\`newMovieLabel\`) WHERE (EXISTS((\`movie\`)<-[:RATED_CUSTOM_FROM]-(:User)) AND ALL(\`movie_filter_user\` IN [(\`movie\`)<-[\`_movie_filter_user\`:RATED_CUSTOM_FROM]-(:User) | \`_movie_filter_user\`] WHERE (ALL(\`user\` IN [(\`movie\`)<-[\`movie_filter_user\`]-(\`_user\`:User) | \`_user\`] WHERE (\`user\`.userId = $\`filter\`.ratingsCustomFrom.ratedBy.userId))))) RETURN \`movie\` { .movieId ,ratingsCustomFrom: [(\`movie\`)<-[\`movie_ratingsCustomFrom_relation\`:\`RATED_CUSTOM_FROM\`]-(:\`User\`) | movie_ratingsCustomFrom_relation { .rating , .ratings ,ratedBy: head([(:\`Movie\`:\`u_user-id\`:\`newMovieLabel\`)<-[\`movie_ratingsCustomFrom_relation\`]-(\`movie_ratingsCustomFrom_ratedBy\`:\`User\`) | movie_ratingsCustomFrom_ratedBy { .userId , .name }]) }] } AS \`movie\``,
     expectedParams = {
       offset: 0,
       first: -1,
@@ -11514,7 +11514,7 @@ test('filter relationship type field on head node type with a custom field name 
     }
   }
   `,
-    expectedCypherQuery = `MATCH (\`user\`:\`User\`) WHERE (EXISTS((\`user\`)-[:RATED_CUSTOM_FROM]->(:Movie)) AND ANY(\`user_filter_movie\` IN [(\`user\`)-[\`_user_filter_movie\`:RATED_CUSTOM_FROM]->(:Movie) | \`_user_filter_movie\`] WHERE (ALL(\`movie\` IN [(\`user\`)-[\`user_filter_movie\`]->(\`_movie\`:Movie) | \`_movie\`] WHERE (\`movie\`.movieId = $filter.ratedCustomFrom_some.Movie.movieId))))) RETURN \`user\` { .userId ,ratedCustomFrom: [(\`user\`)-[\`user_ratedCustomFrom_relation\`:\`RATED_CUSTOM_FROM\`]->(:\`Movie\`:\`u_user-id\`:\`newMovieLabel\`) | user_ratedCustomFrom_relation { .rating , .ratings ,Movie: head([(:\`User\`)-[\`user_ratedCustomFrom_relation\`]->(\`user_ratedCustomFrom_Movie\`:\`Movie\`:\`u_user-id\`:\`newMovieLabel\`) | user_ratedCustomFrom_Movie { .movieId }]) }] } AS \`user\``,
+    expectedCypherQuery = `MATCH (\`user\`:\`User\`) WHERE (EXISTS((\`user\`)-[:RATED_CUSTOM_FROM]->(:Movie)) AND ANY(\`user_filter_movie\` IN [(\`user\`)-[\`_user_filter_movie\`:RATED_CUSTOM_FROM]->(:Movie) | \`_user_filter_movie\`] WHERE (ALL(\`movie\` IN [(\`user\`)-[\`user_filter_movie\`]->(\`_movie\`:Movie) | \`_movie\`] WHERE (\`movie\`.movieId = $\`filter\`.ratedCustomFrom_some.Movie.movieId))))) RETURN \`user\` { .userId ,ratedCustomFrom: [(\`user\`)-[\`user_ratedCustomFrom_relation\`:\`RATED_CUSTOM_FROM\`]->(:\`Movie\`:\`u_user-id\`:\`newMovieLabel\`) | user_ratedCustomFrom_relation { .rating , .ratings ,Movie: head([(:\`User\`)-[\`user_ratedCustomFrom_relation\`]->(\`user_ratedCustomFrom_Movie\`:\`Movie\`:\`u_user-id\`:\`newMovieLabel\`) | user_ratedCustomFrom_Movie { .movieId }]) }] } AS \`user\``,
     expectedParams = {
       offset: 0,
       first: -1,
@@ -11594,7 +11594,7 @@ test('filter relationship type field on head node type with a custom field name 
     }
   }  
   `,
-    expectedCypherQuery = `MATCH (\`user\`:\`User\`) WHERE (EXISTS((\`user\`)-[:RATED_CUSTOM_TO]->(:Movie)) AND ALL(\`user_filter_movie\` IN [(\`user\`)-[\`_user_filter_movie\`:RATED_CUSTOM_TO]->(:Movie) | \`_user_filter_movie\`] WHERE (ALL(\`movie\` IN [(\`user\`)-[\`user_filter_movie\`]->(\`_movie\`:Movie) | \`_movie\`] WHERE ($filter.ratedCustomTo.movie._movieId_not_null = TRUE AND EXISTS(\`movie\`.movieId)))))) RETURN \`user\` { .userId ,ratedCustomTo: [(\`user\`)-[\`user_ratedCustomTo_relation\`:\`RATED_CUSTOM_TO\`]->(:\`Movie\`:\`u_user-id\`:\`newMovieLabel\`) | user_ratedCustomTo_relation { .rating , .ratings ,movie: head([(:\`User\`)-[\`user_ratedCustomTo_relation\`]->(\`user_ratedCustomTo_movie\`:\`Movie\`:\`u_user-id\`:\`newMovieLabel\`) | user_ratedCustomTo_movie { .movieId }]) }] } AS \`user\``,
+    expectedCypherQuery = `MATCH (\`user\`:\`User\`) WHERE (EXISTS((\`user\`)-[:RATED_CUSTOM_TO]->(:Movie)) AND ALL(\`user_filter_movie\` IN [(\`user\`)-[\`_user_filter_movie\`:RATED_CUSTOM_TO]->(:Movie) | \`_user_filter_movie\`] WHERE (ALL(\`movie\` IN [(\`user\`)-[\`user_filter_movie\`]->(\`_movie\`:Movie) | \`_movie\`] WHERE ($\`filter\`.ratedCustomTo.movie._movieId_not_null = TRUE AND EXISTS(\`movie\`.movieId)))))) RETURN \`user\` { .userId ,ratedCustomTo: [(\`user\`)-[\`user_ratedCustomTo_relation\`:\`RATED_CUSTOM_TO\`]->(:\`Movie\`:\`u_user-id\`:\`newMovieLabel\`) | user_ratedCustomTo_relation { .rating , .ratings ,movie: head([(:\`User\`)-[\`user_ratedCustomTo_relation\`]->(\`user_ratedCustomTo_movie\`:\`Movie\`:\`u_user-id\`:\`newMovieLabel\`) | user_ratedCustomTo_movie { .movieId }]) }] } AS \`user\``,
     expectedParams = {
       offset: 0,
       first: -1,
@@ -11680,7 +11680,7 @@ test('filter relationship type field with a custom field name for both related n
     }
   }
   `,
-    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`:\`u_user-id\`:\`newMovieLabel\`) WHERE (EXISTS((\`movie\`)<-[:RATED_CUSTOM_FROM_TO]-(:User)) AND ALL(\`movie_filter_user\` IN [(\`movie\`)<-[\`_movie_filter_user\`:RATED_CUSTOM_FROM_TO]-(:User) | \`_movie_filter_user\`] WHERE (\`movie_filter_user\`.from = $filter.ratingsCustomFromTo.from) AND (\`movie_filter_user\`.to = $filter.ratingsCustomFromTo.to) AND (ALL(\`user\` IN [(\`movie\`)<-[\`movie_filter_user\`]-(\`_user\`:User) | \`_user\`] WHERE ($filter.ratingsCustomFromTo.ratedBy._name_not_null = TRUE AND EXISTS(\`user\`.name)))))) RETURN \`movie\` { .movieId ,ratingsCustomFromTo: [(\`movie\`)<-[\`movie_ratingsCustomFromTo_relation\`:\`RATED_CUSTOM_FROM_TO\`{from:$1_from, to:$1_to}]-(:\`User\`) | movie_ratingsCustomFromTo_relation { .rating , .ratings , .from , .to ,ratedBy: head([(:\`Movie\`:\`u_user-id\`:\`newMovieLabel\`)<-[\`movie_ratingsCustomFromTo_relation\`]-(\`movie_ratingsCustomFromTo_ratedBy\`:\`User\`) | movie_ratingsCustomFromTo_ratedBy { .userId , .name }]) }] } AS \`movie\``,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`:\`u_user-id\`:\`newMovieLabel\`) WHERE (EXISTS((\`movie\`)<-[:RATED_CUSTOM_FROM_TO]-(:User)) AND ALL(\`movie_filter_user\` IN [(\`movie\`)<-[\`_movie_filter_user\`:RATED_CUSTOM_FROM_TO]-(:User) | \`_movie_filter_user\`] WHERE (\`movie_filter_user\`.from = $\`filter\`.ratingsCustomFromTo.from) AND (\`movie_filter_user\`.to = $\`filter\`.ratingsCustomFromTo.to) AND (ALL(\`user\` IN [(\`movie\`)<-[\`movie_filter_user\`]-(\`_user\`:User) | \`_user\`] WHERE ($\`filter\`.ratingsCustomFromTo.ratedBy._name_not_null = TRUE AND EXISTS(\`user\`.name)))))) RETURN \`movie\` { .movieId ,ratingsCustomFromTo: [(\`movie\`)<-[\`movie_ratingsCustomFromTo_relation\`:\`RATED_CUSTOM_FROM_TO\`{from:$\`1_from\`, to:$\`1_to\`}]-(:\`User\`) | movie_ratingsCustomFromTo_relation { .rating , .ratings , .from , .to ,ratedBy: head([(:\`Movie\`:\`u_user-id\`:\`newMovieLabel\`)<-[\`movie_ratingsCustomFromTo_relation\`]-(\`movie_ratingsCustomFromTo_ratedBy\`:\`User\`) | movie_ratingsCustomFromTo_ratedBy { .userId , .name }]) }] } AS \`movie\``,
     expectedParams = {
       offset: 0,
       first: -1,
@@ -11784,7 +11784,7 @@ test('filter reflexive relationship type field on tail node type with custom a f
     }
   } 
   `,
-    expectedCypherQuery = `MATCH (\`user\`:\`User\`) WHERE ((EXISTS((\`user\`)<-[:FRIEND_OF_CUSTOM_FROM]-(:User)) AND ALL(\`user_filter_user\` IN [(\`user\`)<-[\`_user_filter_user\`:FRIEND_OF_CUSTOM_FROM]-(:User) | \`_user_filter_user\`] WHERE (ALL(\`user\` IN [(\`user\`)-[\`user_filter_user\`]->(\`_user\`:User) | \`_user\`] WHERE ($filter.friendsCustomFrom.friendedBy.User._userId_not_null = TRUE AND EXISTS(\`user\`.userId)))))) AND ($filter.friendsCustomFrom._to_null = TRUE AND NOT EXISTS((\`user\`)-[:FRIEND_OF_CUSTOM_FROM]->(:User)))) RETURN \`user\` { .userId ,friendsCustomFrom: {friendedBy: [(\`user\`)<-[\`user_to_relation\`:\`FRIEND_OF_CUSTOM_FROM\`]-(\`user_friendedBy\`:\`User\`) | user_to_relation { .ratings ,User: user_friendedBy { .userId , .name } }] ,to: [(\`user\`)-[\`user_to_relation\`:\`FRIEND_OF_CUSTOM_FROM\`]->(\`user_to\`:\`User\`) | user_to_relation { .ratings ,User: user_to { .userId , .name } }] } } AS \`user\``,
+    expectedCypherQuery = `MATCH (\`user\`:\`User\`) WHERE ((EXISTS((\`user\`)<-[:FRIEND_OF_CUSTOM_FROM]-(:User)) AND ALL(\`user_filter_user\` IN [(\`user\`)<-[\`_user_filter_user\`:FRIEND_OF_CUSTOM_FROM]-(:User) | \`_user_filter_user\`] WHERE (ALL(\`user\` IN [(\`user\`)-[\`user_filter_user\`]->(\`_user\`:User) | \`_user\`] WHERE ($\`filter\`.friendsCustomFrom.friendedBy.User._userId_not_null = TRUE AND EXISTS(\`user\`.userId)))))) AND ($\`filter\`.friendsCustomFrom._to_null = TRUE AND NOT EXISTS((\`user\`)-[:FRIEND_OF_CUSTOM_FROM]->(:User)))) RETURN \`user\` { .userId ,friendsCustomFrom: {friendedBy: [(\`user\`)<-[\`user_to_relation\`:\`FRIEND_OF_CUSTOM_FROM\`]-(\`user_friendedBy\`:\`User\`) | user_to_relation { .ratings ,User: user_friendedBy { .userId , .name } }] ,to: [(\`user\`)-[\`user_to_relation\`:\`FRIEND_OF_CUSTOM_FROM\`]->(\`user_to\`:\`User\`) | user_to_relation { .ratings ,User: user_to { .userId , .name } }] } } AS \`user\``,
     expectedParams = {
       offset: 0,
       first: -1,
@@ -11933,7 +11933,7 @@ test('filter reflexive relationship type field on tail node type with custom a f
     }
   }  
   `,
-    expectedCypherQuery = `MATCH (\`user\`:\`User\`) WHERE (($filter.friendsCustomTo._from_null = TRUE AND NOT EXISTS((\`user\`)<-[:FRIEND_OF_CUSTOM_TO]-(:User))) AND (EXISTS((\`user\`)-[:FRIEND_OF_CUSTOM_TO]->(:User)) AND ALL(\`user_filter_user\` IN [(\`user\`)-[\`_user_filter_user\`:FRIEND_OF_CUSTOM_TO]->(:User) | \`_user_filter_user\`] WHERE (ALL(\`user\` IN [(\`user\`)-[\`user_filter_user\`]->(\`_user\`:User) | \`_user\`] WHERE ($filter.friendsCustomTo.friended.User._name_null = TRUE AND NOT EXISTS(\`user\`.name))))))) RETURN \`user\` { .userId ,friendsCustomTo: {from: [(\`user\`)<-[\`user_from_relation\`:\`FRIEND_OF_CUSTOM_TO\`]-(\`user_from\`:\`User\`) | user_from_relation { .ratings ,User: user_from { .userId } }] ,friended: [(\`user\`)-[\`user_to_relation\`:\`FRIEND_OF_CUSTOM_TO\`]->(\`user_friended\`:\`User\`) | user_to_relation { .ratings ,User: user_friended { .userId } }] } } AS \`user\``,
+    expectedCypherQuery = `MATCH (\`user\`:\`User\`) WHERE (($\`filter\`.friendsCustomTo._from_null = TRUE AND NOT EXISTS((\`user\`)<-[:FRIEND_OF_CUSTOM_TO]-(:User))) AND (EXISTS((\`user\`)-[:FRIEND_OF_CUSTOM_TO]->(:User)) AND ALL(\`user_filter_user\` IN [(\`user\`)-[\`_user_filter_user\`:FRIEND_OF_CUSTOM_TO]->(:User) | \`_user_filter_user\`] WHERE (ALL(\`user\` IN [(\`user\`)-[\`user_filter_user\`]->(\`_user\`:User) | \`_user\`] WHERE ($\`filter\`.friendsCustomTo.friended.User._name_null = TRUE AND NOT EXISTS(\`user\`.name))))))) RETURN \`user\` { .userId ,friendsCustomTo: {from: [(\`user\`)<-[\`user_from_relation\`:\`FRIEND_OF_CUSTOM_TO\`]-(\`user_from\`:\`User\`) | user_from_relation { .ratings ,User: user_from { .userId } }] ,friended: [(\`user\`)-[\`user_to_relation\`:\`FRIEND_OF_CUSTOM_TO\`]->(\`user_friended\`:\`User\`) | user_to_relation { .ratings ,User: user_friended { .userId } }] } } AS \`user\``,
     expectedParams = {
       offset: 0,
       first: -1,
@@ -12046,7 +12046,7 @@ test('filter reflexive relationship type field with custom a field name both rel
     }
   }
   `,
-    expectedCypherQuery = `MATCH (\`user\`:\`User\`) WHERE ((EXISTS((\`user\`)<-[:FRIEND_OF_CUSTOM_FROM_TO]-(:User)) AND ALL(\`user_filter_user\` IN [(\`user\`)<-[\`_user_filter_user\`:FRIEND_OF_CUSTOM_FROM_TO]-(:User) | \`_user_filter_user\`] WHERE (\`user_filter_user\`.from = $filter.friendsCustomFromTo.friendedBy.from) AND (\`user_filter_user\`.to = $filter.friendsCustomFromTo.friendedBy.to) AND (ALL(\`user\` IN [(\`user\`)-[\`user_filter_user\`]->(\`_user\`:User) | \`_user\`] WHERE ($filter.friendsCustomFromTo.friendedBy.User._userId_not_null = TRUE AND EXISTS(\`user\`.userId)))))) AND (EXISTS((\`user\`)-[:FRIEND_OF_CUSTOM_FROM_TO]->(:User)) AND ALL(\`user_filter_user\` IN [(\`user\`)-[\`_user_filter_user\`:FRIEND_OF_CUSTOM_FROM_TO]->(:User) | \`_user_filter_user\`] WHERE (\`user_filter_user\`.from = $filter.friendsCustomFromTo.friended.from) AND (\`user_filter_user\`.to = $filter.friendsCustomFromTo.friended.to) AND (ALL(\`user\` IN [(\`user\`)-[\`user_filter_user\`]->(\`_user\`:User) | \`_user\`] WHERE ($filter.friendsCustomFromTo.friended.User._name_null = TRUE AND NOT EXISTS(\`user\`.name))))))) RETURN \`user\` { .userId ,friendsCustomFromTo: {friendedBy: [(\`user\`)<-[\`user_to_relation\`:\`FRIEND_OF_CUSTOM_FROM_TO\`{from:$1_from, to:$1_to}]-(\`user_friendedBy\`:\`User\`) | user_to_relation { .from , .to , .ratings ,User: user_friendedBy { .userId } }] ,friended: [(\`user\`)-[\`user_to_relation\`:\`FRIEND_OF_CUSTOM_FROM_TO\`{to:$3_to, from:$3_from}]->(\`user_friended\`:\`User\`) | user_to_relation { .ratings ,User: user_friended { .userId } , .to , .from }] } } AS \`user\``,
+    expectedCypherQuery = `MATCH (\`user\`:\`User\`) WHERE ((EXISTS((\`user\`)<-[:FRIEND_OF_CUSTOM_FROM_TO]-(:User)) AND ALL(\`user_filter_user\` IN [(\`user\`)<-[\`_user_filter_user\`:FRIEND_OF_CUSTOM_FROM_TO]-(:User) | \`_user_filter_user\`] WHERE (\`user_filter_user\`.from = $\`filter\`.friendsCustomFromTo.friendedBy.from) AND (\`user_filter_user\`.to = $\`filter\`.friendsCustomFromTo.friendedBy.to) AND (ALL(\`user\` IN [(\`user\`)-[\`user_filter_user\`]->(\`_user\`:User) | \`_user\`] WHERE ($\`filter\`.friendsCustomFromTo.friendedBy.User._userId_not_null = TRUE AND EXISTS(\`user\`.userId)))))) AND (EXISTS((\`user\`)-[:FRIEND_OF_CUSTOM_FROM_TO]->(:User)) AND ALL(\`user_filter_user\` IN [(\`user\`)-[\`_user_filter_user\`:FRIEND_OF_CUSTOM_FROM_TO]->(:User) | \`_user_filter_user\`] WHERE (\`user_filter_user\`.from = $\`filter\`.friendsCustomFromTo.friended.from) AND (\`user_filter_user\`.to = $\`filter\`.friendsCustomFromTo.friended.to) AND (ALL(\`user\` IN [(\`user\`)-[\`user_filter_user\`]->(\`_user\`:User) | \`_user\`] WHERE ($\`filter\`.friendsCustomFromTo.friended.User._name_null = TRUE AND NOT EXISTS(\`user\`.name))))))) RETURN \`user\` { .userId ,friendsCustomFromTo: {friendedBy: [(\`user\`)<-[\`user_to_relation\`:\`FRIEND_OF_CUSTOM_FROM_TO\`{from:$\`1_from\`, to:$\`1_to\`}]-(\`user_friendedBy\`:\`User\`) | user_to_relation { .from , .to , .ratings ,User: user_friendedBy { .userId } }] ,friended: [(\`user\`)-[\`user_to_relation\`:\`FRIEND_OF_CUSTOM_FROM_TO\`{to:$\`3_to\`, from:$\`3_from\`}]->(\`user_friended\`:\`User\`) | user_to_relation { .ratings ,User: user_friended { .userId } , .to , .from }] } } AS \`user\``,
     expectedParams = {
       offset: 0,
       first: -1,
@@ -12123,7 +12123,7 @@ test('logical OR filter for reflexive relationship type field with a custom fiel
     }
   }
   `,
-    expectedCypherQuery = `MATCH (\`user\`:\`User\`) WHERE (ANY(_OR IN $filter.OR WHERE ((_OR.friendsCustomFromTo.friendedBy IS NULL OR EXISTS((\`user\`)<-[:FRIEND_OF_CUSTOM_FROM_TO]-(:User)) AND ALL(\`user_filter_user\` IN [(\`user\`)<-[\`_user_filter_user\`:FRIEND_OF_CUSTOM_FROM_TO]-(:User) | \`_user_filter_user\`] WHERE (_OR.friendsCustomFromTo.friendedBy.User IS NULL OR ALL(\`user\` IN [(\`user\`)-[\`user_filter_user\`]->(\`_user\`:User) | \`_user\`] WHERE (_OR.friendsCustomFromTo.friendedBy.User._userId_not_null IS NULL OR _OR.friendsCustomFromTo.friendedBy.User._userId_not_null = TRUE AND EXISTS(\`user\`.userId)))))) AND (_OR.friendsCustomFromTo.friended IS NULL OR EXISTS((\`user\`)-[:FRIEND_OF_CUSTOM_FROM_TO]->(:User)) AND ALL(\`user_filter_user\` IN [(\`user\`)-[\`_user_filter_user\`:FRIEND_OF_CUSTOM_FROM_TO]->(:User) | \`_user_filter_user\`] WHERE (_OR.friendsCustomFromTo.friended.User IS NULL OR ALL(\`user\` IN [(\`user\`)-[\`user_filter_user\`]->(\`_user\`:User) | \`_user\`] WHERE (_OR.friendsCustomFromTo.friended.User._name_null IS NULL OR _OR.friendsCustomFromTo.friended.User._name_null = TRUE AND NOT EXISTS(\`user\`.name))))))))) RETURN \`user\` { .userId ,friendsCustomFromTo: {friendedBy: [(\`user\`)<-[\`user_to_relation\`:\`FRIEND_OF_CUSTOM_FROM_TO\`]-(\`user_friendedBy\`:\`User\`) | user_to_relation { .ratings ,User: user_friendedBy { .userId } }] ,friended: [(\`user\`)-[\`user_to_relation\`:\`FRIEND_OF_CUSTOM_FROM_TO\`]->(\`user_friended\`:\`User\`) | user_to_relation { .ratings ,User: user_friended { .userId } }] } } AS \`user\``,
+    expectedCypherQuery = `MATCH (\`user\`:\`User\`) WHERE (ANY(_OR IN $\`filter\`.OR WHERE ((_OR.friendsCustomFromTo.friendedBy IS NULL OR EXISTS((\`user\`)<-[:FRIEND_OF_CUSTOM_FROM_TO]-(:User)) AND ALL(\`user_filter_user\` IN [(\`user\`)<-[\`_user_filter_user\`:FRIEND_OF_CUSTOM_FROM_TO]-(:User) | \`_user_filter_user\`] WHERE (_OR.friendsCustomFromTo.friendedBy.User IS NULL OR ALL(\`user\` IN [(\`user\`)-[\`user_filter_user\`]->(\`_user\`:User) | \`_user\`] WHERE (_OR.friendsCustomFromTo.friendedBy.User._userId_not_null IS NULL OR _OR.friendsCustomFromTo.friendedBy.User._userId_not_null = TRUE AND EXISTS(\`user\`.userId)))))) AND (_OR.friendsCustomFromTo.friended IS NULL OR EXISTS((\`user\`)-[:FRIEND_OF_CUSTOM_FROM_TO]->(:User)) AND ALL(\`user_filter_user\` IN [(\`user\`)-[\`_user_filter_user\`:FRIEND_OF_CUSTOM_FROM_TO]->(:User) | \`_user_filter_user\`] WHERE (_OR.friendsCustomFromTo.friended.User IS NULL OR ALL(\`user\` IN [(\`user\`)-[\`user_filter_user\`]->(\`_user\`:User) | \`_user\`] WHERE (_OR.friendsCustomFromTo.friended.User._name_null IS NULL OR _OR.friendsCustomFromTo.friended.User._name_null = TRUE AND NOT EXISTS(\`user\`.name))))))))) RETURN \`user\` { .userId ,friendsCustomFromTo: {friendedBy: [(\`user\`)<-[\`user_to_relation\`:\`FRIEND_OF_CUSTOM_FROM_TO\`]-(\`user_friendedBy\`:\`User\`) | user_to_relation { .ratings ,User: user_friendedBy { .userId } }] ,friended: [(\`user\`)-[\`user_to_relation\`:\`FRIEND_OF_CUSTOM_FROM_TO\`]->(\`user_friended\`:\`User\`) | user_to_relation { .ratings ,User: user_friended { .userId } }] } } AS \`user\``,
     expectedParams = {
       offset: 0,
       first: -1,
@@ -12683,7 +12683,7 @@ test('Query node type using search argument with filtering, ordering, and pagina
     }
   }
   `,
-    expectedCypherQuery = `CALL db.index.fulltext.queryNodes("MovieSearch", "river") YIELD node AS \`movie\`, score  WHERE score >= 0.08 AND (\`movie\`.title CONTAINS $filter.title_contains) WITH \`movie\` ORDER BY movie.title DESC RETURN \`movie\` { .movieId , .title } AS \`movie\` LIMIT toInteger($first)`,
+    expectedCypherQuery = `CALL db.index.fulltext.queryNodes("MovieSearch", "river") YIELD node AS \`movie\`, score  WHERE score >= 0.08 AND (\`movie\`.title CONTAINS $\`filter\`.title_contains) WITH \`movie\` ORDER BY movie.title DESC RETURN \`movie\` { .movieId , .title } AS \`movie\` LIMIT toInteger($first)`,
     expectedParams = {
       offset: 0,
       first: 2,
@@ -12776,7 +12776,7 @@ test('Filter node type using regexp filter on String type fields', t => {
     }
   }  
   `,
-    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) WHERE (\`movie\`.title =~ $filter.title_regexp) AND ([value IN $filter.titles_regexp WHERE [prop IN \`movie\`.titles WHERE prop =~ value]]) RETURN \`movie\` {_id: ID(\`movie\`), .title , .titles } AS \`movie\``,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) WHERE (\`movie\`.title =~ $\`filter\`.title_regexp) AND ([value IN $\`filter\`.titles_regexp WHERE [prop IN \`movie\`.titles WHERE prop =~ value]]) RETURN \`movie\` {_id: ID(\`movie\`), .title , .titles } AS \`movie\``,
     expectedParams = {
       offset: 0,
       first: -1,
@@ -12823,7 +12823,7 @@ test('Filter relationship using regexp filter on String type field', t => {
     }
   }
   `,
-    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) WHERE (\`movie\`.title =~ $filter.title_regexp) AND (EXISTS((\`movie\`)<-[:ACTED_IN]-(:Actor)) AND ALL(\`actor\` IN [(\`movie\`)<-[:ACTED_IN]-(\`_actor\`:Actor) | \`_actor\`] WHERE (\`actor\`.name =~ $filter.actors.name_regexp))) AND ([value IN $filter.titles_regexp WHERE [prop IN \`movie\`.titles WHERE prop =~ value]]) RETURN \`movie\` {_id: ID(\`movie\`), .title , .titles ,actors: [(\`movie\`)<-[:\`ACTED_IN\`]-(\`movie_actors\`:\`Actor\`) WHERE (\`movie_actors\`.name =~ $1_filter.name_regexp) | \`movie_actors\` { .name }] } AS \`movie\``,
+    expectedCypherQuery = `MATCH (\`movie\`:\`Movie\`${ADDITIONAL_MOVIE_LABELS}) WHERE (\`movie\`.title =~ $\`filter\`.title_regexp) AND (EXISTS((\`movie\`)<-[:ACTED_IN]-(:Actor)) AND ALL(\`actor\` IN [(\`movie\`)<-[:ACTED_IN]-(\`_actor\`:Actor) | \`_actor\`] WHERE (\`actor\`.name =~ $\`filter\`.actors.name_regexp))) AND ([value IN $\`filter\`.titles_regexp WHERE [prop IN \`movie\`.titles WHERE prop =~ value]]) RETURN \`movie\` {_id: ID(\`movie\`), .title , .titles ,actors: [(\`movie\`)<-[:\`ACTED_IN\`]-(\`movie_actors\`:\`Actor\`) WHERE (\`movie_actors\`.name =~ $\`1_filter\`.name_regexp) | \`movie_actors\` { .name }] } AS \`movie\``,
     expectedParams = {
       offset: 0,
       first: -1,
