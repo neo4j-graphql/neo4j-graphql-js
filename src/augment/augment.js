@@ -40,7 +40,7 @@ export const makeAugmentedExecutableSchema = ({
   const isParsedTypeDefs = isSchemaDocument({ definition: typeDefs });
   let definitions = [];
   if (isParsedTypeDefs) {
-    // Print if we recieved parsed type definitions in a GraphQL Document
+    // Print if we received parsed type definitions in a GraphQL Document
     definitions = _.cloneDeep(typeDefs.definitions);
   } else {
     // Otherwise parse the SDL and get its definitions
@@ -123,7 +123,7 @@ export const makeAugmentedExecutableSchema = ({
 };
 
 /**
- * The main export for augmnetation a schema
+ * The main export for augmenting a schema
  */
 export const augmentedSchema = (schema, config) => {
   config = setDefaultConfig({ config });
@@ -364,7 +364,7 @@ export const extractSchemaDefinitions = ({ schema = {} }) => {
 };
 
 /**
- * Getter for an array of type names excludes from an operation type
+ * Getter for an array of type names excluded from an operation type
  */
 const getExcludedTypes = (config, operationTypeName) => {
   return config &&
