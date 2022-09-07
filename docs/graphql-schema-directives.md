@@ -1,0 +1,31 @@
+# GraphQL Schema Directives
+
+This page provides an overview of the various GraphQL schema directives made available in neo4j-graphql.js. See the links in the table below for full documentation of each directive.
+
+## What Are GraphQL Schema Directives
+
+GraphQL schema directives are a powerful feature of GraphQL that can be used in the type definitions of a GraphQL schema to indicate non-default logic and can be applied to either fields on types. Think of a schema directive as a way to indicate custom logic that should be executed on the GraphQL server.
+
+In neo4j-graphql.js we use schema directives to:
+
+- help describe our data model (`@relation`, `@id`, `@unique`, `@index`)
+- implement custom logic in our GraphQL service (`@cypher`, `@neo4j_ignore`)
+- help implement authorization logic (`@additionalLabel`, `@isAuthenticated`, `@hasRole`, `@hasScope`)
+
+## Neo4j GraphQL Schema Directives
+
+The following GraphQL schema directives are declared during the schema augmentation process and can be used in the type definitions passed to `makeAugmentedSchema`.
+
+| Directive           | Arguments           | Description                                                                                                                                  | Notes                                                                                                                                                                                                               |
+| ------------------- | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@relation`         | `name`, `direction` | Used to define relationship fields and types in the GraphQL schema.                                                                          | See [Designing Your GraphQL Schema Guide](guide-graphql-schema-design.mdx)                                                                                                                                          |
+| `@id`               |                     | Used on fields to (optionally) specify the field to be used as the ID for the type.                                                          | See [API Reference](https://grandstack.io/docs/neo4j-graphql-js-api#assertschemaoptionsnull)                                                                                                                        |
+| `@unique`           |                     | Used on fields to (optionally) specify fields that should have a uniqueness constraint.                                                      | See [API Reference](https://grandstack.io/docs/neo4j-graphql-js-api#assertschemaoptionsnull)                                                                                                                        |
+| `@index`            |                     | Used on fields to indicate an index should be created on this field.                                                                         | See [API Reference](https://grandstack.io/docs/neo4j-graphql-js-api#assertschemaoptionsnull)                                                                                                                        |
+| `@cypher`           | `statement`         | Used to define custom logic using Cypher.                                                                                                    | See [Defining Custom Logic](graphql-custom-logic.mdx#the-cypher-graphql-schema-directive), and [Designing Your GraphQL Schema](guide-graphql-schema-design.mdx#defining-custom-logic-with-cypher-schema-directives) |
+| `@search`           | `index`             | Used on fields to set full-text search indexes.                                                                                              | See [API Reference](https://grandstack.io/docs/neo4j-graphql-js-api#searchschemaoptionsnull)                                                                                                                        |
+| `@neo4j_ignore`     |                     | Used to exclude fields or types from the Cypher query generation process. Use when implementing a custom resolver.                           | See [Defining Custom Logic](graphql-custom-logic.mdx#implementing-custom-resolvers)                                                                                                                                 |
+| `@additionalLabels` | `labels`            | Used for adding additional node labels to types. Can be useful for multi-tenant scenarios where an additional node label is used per tenant. | See [GraphQL Authorization](neo4j-graphql-js-middleware-authorization.mdx#additionallabels)                                                                                                                         |
+| `@isAuthenticated`  |                     | Protects fields and types by requiring a valid signed JWT                                                                                    | See [GraphQL Authorization](neo4j-graphql-js-middleware-authorization.mdx#isauthenticated)                                                                                                                          |
+| `@hasRole`          | `roles`             | Protects fields and types by limiting access to only requests with valid roles                                                               | See [GraphQL Authorization](neo4j-graphql-js-middleware-authorization.mdx#hasrole)                                                                                                                                  |
+| `@hasScope`         | `scopes`            | Protects fields and types by limiting access to only requests with valid scopes                                                              | See [GraphQL Authorization](neo4j-graphql-js-middleware-authorization.mdx#hasscope)                                                                                                                                 |
